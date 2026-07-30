@@ -7,7 +7,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 ## The authority
 
 `src/reasonsmith/table7.toml` is a verbatim transcription of Table 7 of *Symbols and Neurons: A
-Review of Symbolic XAI in Deep Learning* (Stan, Sciavicco & Napoletano, JAIR 2026, p. 6:22), whose
+Review of Symbolic XAI in Deep Learning* (Stan, Sciavicco & Napoletano, JAIR 2026, p. 36:22), whose
 first author owns this repository. The conformance checks come from Table 19 of the same paper. The
 paper is the authority: where a design and the table disagree, the table wins, or the disagreement
 is reported as a finding. Do not improve, extend or modernise the wording — the transcription's
