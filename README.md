@@ -4,13 +4,13 @@
 [![Python >= 3.11](https://img.shields.io/badge/python->=3.11-blue.svg)](https://www.python.org/)
 [![MIT licence](https://img.shields.io/github/license/eduardstan/reasonsmith)](https://github.com/eduardstan/reasonsmith/blob/main/LICENSE)
 
-A decision that affects a person carries a legal duty to give reasons. `reasonsmith` turns that duty into machine-checkable records: given a decision, the symbolic artifact behind it, and the applicable regulatory duty, it emits the minimal evidence record required—and plainly reports any fields it could not produce. For proof-based systems, exact inference enumerates every reason so that reason-deletion certificates can compare actual engine behavior against ground truth and attribute dropped reasons.
+A decision that affects a person carries a legal duty to give reasons. `reasonsmith` turns that duty into machine-checkable records: given a decision, the symbolic artifact behind it, and the applicable regulatory duty, it emits the minimal evidence record required—and plainly reports any fields it could not produce. For proof-based systems, exact inference enumerates every reason so that reason-deletion certificates can compare actual engine behaviour against ground truth and attribute dropped reasons.
 
 ## Key Finding
 
 **Form completeness does not imply truth or reason fidelity.**
 
-In the credit demonstration (`python -m reasonsmith.demo`), `reasonsmith` produces an evidence record that is marked **COMPLETE** under Table 7 form checks while its reason-deletion certificate shows that **four of its five reasons are missing**. 
+In the credit demonstration (`python -m reasonsmith.demo`), `reasonsmith` produces an evidence record that is marked **COMPLETE** under Table 7 form checks while its reason-deletion certificate shows that **four of its five reasons are missing**.
 
 Evaluating structural form alone can launder severe compliance and reasoning gaps into documents that appear authoritative. Reason-deletion certificates provide the ground-truth verification needed alongside regulatory evidence records.
 

@@ -34,7 +34,7 @@ All three commands must pass without errors or warnings. Continuous integration 
 If you encounter a bug or have a question:
 1. Check existing issues to see if it has already been discussed.
 2. Note that **GitHub Discussions is disabled** for this repository. All questions, bug reports, and feature requests should be submitted as [GitHub Issues](https://github.com/eduardstan/reasonsmith/issues).
-3. Provide clear reproduction steps, expected vs. actual behavior, and details about your environment.
+3. Provide clear reproduction steps, expected vs. actual behaviour, and details about your environment.
 
 ## Submitting Pull Requests
 
