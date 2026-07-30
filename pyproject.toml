@@ -10,6 +10,17 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Ionel Eduard Stan" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Legal Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     # nesyarena supplies the ground-program IR, bounded proof enumeration, the exact WMC oracle and
     # the adapter protocol. It is not on PyPI, so it is pinned here to an immutable commit of the
@@ -21,6 +32,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.4"]
+
+[project.urls]
+Homepage = "https://github.com/eduardstan/reasonsmith"
+Repository = "https://github.com/eduardstan/reasonsmith"
+Issues = "https://github.com/eduardstan/reasonsmith/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
