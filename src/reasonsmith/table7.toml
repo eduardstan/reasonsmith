@@ -1,0 +1,240 @@
+####################################################################################################
+# Table 7, transcribed.
+#
+# This file is data. It is a verbatim transcription of one published table, and nothing in it is an
+# interpretation, an extension, or a modernisation of that table. Every string in a `*_text` or
+# verbatim field below is quoted from the source; the only things this file adds are the `id` and
+# `key` slugs, which exist so that code can address a cell, and which carry the verbatim text they
+# stand for right next to them.
+#
+# To check this file against the paper, open the source at the page named in [source] and read the
+# six rows in order. Each [[duty]] block below is one row, in the printed order, and records the row
+# number. Within a row, `symbolic_artifacts`, `evidence_field.table7_text` and `lifecycle_placement`
+# are the semicolon-separated items of that row's third, fourth and fifth column, split at the
+# semicolons and otherwise unaltered — including the paper's own capitalisation, punctuation, quote
+# marks and en dashes.
+#
+# Nothing in this file is a compliance guarantee and nothing in it is legal advice. It records what
+# one peer-reviewed review says a duty needs; it does not establish that a record satisfying it
+# discharges the duty.
+####################################################################################################
+
+[source]
+table = "Table 7"
+caption = "Checklist that ties symbolic artifacts to legal/assurance duties and the associated logging."
+paper = "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
+authors = "Stan, Sciavicco & Napoletano"
+venue = "Journal of Artificial Intelligence Research, Vol. 4, Article 6"
+publication_date = "August 2026"
+page = "6:22"
+section = "5.3 Alignment with Regulatory and Governance Requirements"
+columns = [
+    "Requirement",
+    "Legal source",
+    "Symbolic artifact(s) to provide",
+    "Minimal evidence to retain",
+    "Where it fits",
+]
+rows = 6
+
+####################################################################################################
+
+[[duty]]
+id = "eu_ai_act_art13_transparency"
+table7_row = 1
+requirement = "Transparency and information to deployers"
+legal_source = "EU AI Act Art. 13"
+symbolic_artifacts = [
+    "Rule lists/decision paths",
+    "clause truth-value tables",
+    "KG path rationales",
+    "constraint compliance summaries",
+]
+lifecycle_placement = [
+    "Technical documentation (Art. 11)",
+    "user information package",
+    "conformity/assurance file",
+]
+
+  [[duty.evidence_field]]
+  key = "model_and_data_version_ids"
+  table7_text = "Model and data version IDs"
+
+  [[duty.evidence_field]]
+  key = "extraction_timestamp"
+  table7_text = "extraction timestamp"
+
+  [[duty.evidence_field]]
+  key = "dataset_snapshot_hash"
+  table7_text = "dataset snapshot hash"
+
+  [[duty.evidence_field]]
+  key = "fidelity_coverage_metrics"
+  table7_text = "fidelity/coverage metrics"
+
+  [[duty.evidence_field]]
+  key = "explanation_scope"
+  table7_text = "explanation scope"
+
+  [[duty.evidence_field]]
+  key = "linkage_from_decision_to_artifact"
+  table7_text = "linkage from decision to artifact"
+
+####################################################################################################
+
+[[duty]]
+id = "eu_ai_act_art12_record_keeping"
+table7_row = 2
+requirement = "Record–keeping (event logging)"
+legal_source = "EU AI Act Art. 12"
+symbolic_artifacts = [
+    "Per-decision traces (activated rules, tree paths, module layouts)",
+    "constraint satisfaction/violation records",
+]
+lifecycle_placement = [
+    "Logging subsystem",
+    "post-market monitoring",
+    "quality management system",
+]
+
+  [[duty.evidence_field]]
+  key = "automatic_event_logs"
+  table7_text = "Automatic event logs (timestamp, input/output hashes, chosen branch/module, violated/active constraints)"
+
+  [[duty.evidence_field]]
+  key = "retention_schedule"
+  table7_text = "retention schedule"
+
+  [[duty.evidence_field]]
+  key = "signer"
+  table7_text = "signer"
+
+####################################################################################################
+
+[[duty]]
+id = "gdpr_art22_meaningful_information"
+table7_row = 3
+requirement = "Automated decisions: “meaningful information about the logic involved”"
+legal_source = "GDPR Art. 22 (and Rec. 71)"
+symbolic_artifacts = [
+    "Human-readable rule summaries",
+    "monotonicity statements",
+    "concept/ontology flow graphs",
+    "rationale templates",
+]
+lifecycle_placement = [
+    "Data protection impact assessment (DPIA)",
+    "user-facing notices",
+    "model cards",
+]
+
+  [[duty.evidence_field]]
+  key = "per_decision_reason_string"
+  table7_text = "Per-decision reason string referencing rule(s)/constraint(s)"
+
+  [[duty.evidence_field]]
+  key = "feature_to_named_concept_mapping"
+  table7_text = "mapping from model features to named concepts"
+
+  [[duty.evidence_field]]
+  key = "dpia_cross_reference"
+  table7_text = "DPIA cross-reference"
+
+####################################################################################################
+
+[[duty]]
+id = "ecoa_reg_b_adverse_action"
+table7_row = 4
+requirement = "Adverse action reasons in credit decisions"
+legal_source = "ECOA / Reg B (12 CFR 1002.9)"
+symbolic_artifacts = [
+    "Rule-based “reason codes” mapped to standardized categories",
+    "monotone/eligibility constraints for fairness explanations",
+]
+lifecycle_placement = [
+    "Adverse action notice (AAN) pipeline",
+    "compliance reporting",
+]
+
+  [[duty.evidence_field]]
+  key = "stored_reasons_per_decision"
+  table7_text = "Stored reasons per decision"
+
+  [[duty.evidence_field]]
+  key = "model_version"
+  table7_text = "model version"
+
+  [[duty.evidence_field]]
+  key = "score_factors"
+  table7_text = "score factors"
+
+  [[duty.evidence_field]]
+  key = "audit_ids"
+  table7_text = "audit IDs"
+
+  [[duty.evidence_field]]
+  key = "retention_for_regulatory_lookback"
+  table7_text = "retention for regulatory lookback"
+
+####################################################################################################
+
+[[duty]]
+id = "fda_gmlp_samd"
+table7_row = 5
+requirement = "Good ML Practice/transparency for SaMD"
+legal_source = "FDA GMLP; agency transparency guidance"
+symbolic_artifacts = [
+    "Explainability specification",
+    "constraint definitions tied to hazards",
+    "proof/trace exemplars (e.g., clause activations)",
+]
+lifecycle_placement = [
+    "Design history file",
+    "quality system records",
+    "post-market surveillance",
+]
+
+  [[duty.evidence_field]]
+  key = "design_history_links"
+  table7_text = "Design history links from requirement to test to artifact"
+
+  [[duty.evidence_field]]
+  key = "verification_logs"
+  table7_text = "verification logs"
+
+  [[duty.evidence_field]]
+  key = "change_control"
+  table7_text = "change control (e.g., PCCP)"
+
+####################################################################################################
+
+[[duty]]
+id = "nist_ai_rmf_risk_evidence"
+table7_row = 6
+requirement = "Risk evidence and continuous monitoring"
+legal_source = "NIST AI RMF 1.0"
+symbolic_artifacts = [
+    "Risk evidence register: explanation coverage and stability metrics",
+    "constraint dashboards",
+    "rule drift reports",
+]
+lifecycle_placement = [
+    "RMF Govern–Map–Measure–Manage artifacts",
+    "model registry",
+]
+
+  [[duty.evidence_field]]
+  key = "continuous_monitoring_logs"
+  table7_text = "Continuous monitoring logs"
+
+  [[duty.evidence_field]]
+  key = "metric_thresholds_and_alerts"
+  table7_text = "metric thresholds and alerts"
+
+  [[duty.evidence_field]]
+  key = "reviews_and_sign_offs"
+  table7_text = "reviews and sign-offs"
+
+  [[duty.evidence_field]]
+  key = "incident_tickets"
+  table7_text = "incident tickets"

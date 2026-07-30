@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reasonsmith"
+version = "0.1.0"
+description = "Audit-grade evidence records and reason-deletion certificates for symbolic decisions"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Ionel Eduard Stan" }]
+dependencies = [
+    # nesyarena supplies the ground-program IR, bounded proof enumeration, the exact WMC oracle and
+    # the adapter protocol. It is not on PyPI; install it from its checkout (see README).
+    "nesyarena>=0.1.0.dev0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+reasonsmith = ["table7.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
