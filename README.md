@@ -68,18 +68,36 @@ assumed live.
 
 ## Install and run
 
-The exact oracle, the ground-program IR, bounded proof enumeration and the adapter protocol all come
-from [nesyarena](https://github.com/eduardstan/nesyarena), which is depended on as a library and not
-reimplemented here. It is not on PyPI:
+From a fresh clone, with Python 3.11 or newer and git:
 
 ```sh
-pip install -e path/to/nesyarena
-pip install -e .
-python -m reasonsmith.demo     # the full report: both domains, the perturbed engines, the checks
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+ruff check .
 pytest
+python -m reasonsmith.demo     # the full report: both domains, the perturbed engines, the checks
 ```
 
-`tests/conftest.py` puts `src` on the path, so the tests run without installing this package.
+That is the whole install path, and it is the one CI runs (`.github/workflows/ci.yml`) — there is no
+second route, so the tests a contributor runs are the tests the workflow runs.
+
+The exact oracle, the ground-program IR, bounded proof enumeration and the adapter protocol all come
+from [nesyarena](https://github.com/eduardstan/nesyarena), which is depended on as a library and not
+reimplemented here. It is not on PyPI, so `pyproject.toml` pins it as a direct git dependency at an
+**immutable commit**, and `pip install -e .` fetches exactly that commit. A sibling checkout at a
+path you happen to know, or a branch name that moves under you, would both mean the measured numbers
+in this repository could not be reconstructed later; a commit SHA means they can. Publishing
+nesyarena to PyPI is the alternative and is deliberately not done here. To move to a newer
+nesyarena, edit the SHA in `pyproject.toml` in a commit of its own.
+
+`tests/conftest.py` puts `src` on the path, so the tests also run without installing this package —
+but nesyarena still has to be installed, which is what the command above does.
+
+**torch is deliberately not installed.** It is an optional extra of nesyarena (`learning`), roughly
+a gigabyte, and nothing in this repository's suite touches it. The two nesyarena test modules that
+need it (`test_e6_findings.py`, `test_learning_parity.py`) live in nesyarena's own repository and
+are not collected here, so their known collection failure is not hidden — it is simply out of this
+suite. Anyone wanting them runs them there with `pip install "nesyarena[learning]"`.
 
 ## Findings
 
@@ -95,10 +113,11 @@ pytest
   not answer.
 - **Stability bites too.** Under a top-1 setting, drift in a single signal silently replaces the
   reason an applicant is given, on an unchanged file.
-- **Pre-existing in nesyarena, not fixed here.** 98 tests pass; `tests/test_e6_findings.py` and
-  `tests/test_learning_parity.py` fail to collect because `torch` is not installed. `torch` is an
-  optional extra (`learning`), so this is an environment gap rather than a code failure, and it is
-  reported rather than fixed silently.
+- **Pre-existing in nesyarena, not fixed here.** In nesyarena's own suite 98 tests pass, while
+  `tests/test_e6_findings.py` and `tests/test_learning_parity.py` fail to collect because `torch` is
+  not installed. `torch` is an optional extra (`learning`), so this is an environment gap rather
+  than a code failure, and it is reported rather than fixed silently. Those modules are not part of
+  this repository's suite (see "Install and run").
 
 ## Limits
 

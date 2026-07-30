@@ -16,8 +16,12 @@ value is that a lawyer can check it against the print.
 ## Dependency
 
 nesyarena supplies the ground-program IR, bounded proof enumeration, the exact WMC oracle and the
-adapter protocol. Depend on it; do not reimplement any of those. It is not on PyPI — `pip install -e
-path/to/nesyarena`. `tests/conftest.py` puts `src` on the path so this package needs no install.
+adapter protocol. Depend on it; do not reimplement any of those. It is not on PyPI, so
+`pyproject.toml` pins it to an immutable commit of the public repo — `pip install -e ".[dev]"` in a
+venv is the single install path, and `.github/workflows/ci.yml` uses that same one. Never point it
+at a sibling checkout or a branch: the measured numbers must stay reconstructible. `torch` is not
+installed anywhere here, by decision (see README, "Install and run"). `tests/conftest.py` puts `src`
+on the path so this package itself needs no install, but nesyarena does.
 
 ## Two rules that shaped the code
 
