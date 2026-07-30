@@ -184,16 +184,57 @@ def test_a_reason_with_no_private_fact_is_not_certified_either_way():
     assert cert.verdict == "INCONCLUSIVE"   # never silently upgraded to PASS
 
 
+def unmeasured_cert():
+    """A certificate for a query exact inference finds no reason for: nothing was probed."""
+    program = GroundProgram((Rule(Atom("q", ("APP-1",)), (Atom("a", ("APP-1",)),)),))
+    return certify(program, {Atom("a", ("APP-1",)): 0.6}, Atom("q", ("APP-9999",)),
+                   ReferenceAdapter(ExactWMC()), exact_depth=1)
+
+
 def test_a_query_with_no_reason_is_never_a_pass():
     """Nothing enumerated means nothing probed and nothing compared, which is not a clean bill."""
-    program = GroundProgram((Rule(Atom("q", ("APP-1",)), (Atom("a", ("APP-1",)),)),))
-    cert = certify(program, {Atom("a", ("APP-1",)): 0.6}, Atom("q", ("APP-9999",)),
-                   ReferenceAdapter(ExactWMC()), exact_depth=1)
+    cert = unmeasured_cert()
     assert cert.verdicts == ()
     assert cert.verdict == "INCONCLUSIVE"
-    assert conformance.coverage(cert) is None
+
+
+def test_an_engine_answer_with_no_enumerated_reason_is_attributed_to_the_gap():
+    """The nothing-was-compared attribution must not sit under a header reporting a value gap."""
+    case = credit_case()
+    cert = certify(case.program, case.base, case.query, ReferenceAdapter(ExactWMC()),
+                   exact_depth=0, labels=case.labels)
+    assert cert.verdicts == ()
+    assert abs(cert.value_gap) > cert.tol and cert.verdict == "FAIL"
+    assert cert.attribution != unmeasured_cert().attribution
+
+
+def test_no_check_scores_a_certificate_that_measured_nothing():
+    """One predicate gates every metric, so not-checked cannot score as checked-and-sound."""
+    cert = unmeasured_cert()
+    assert not conformance.measured(cert)
+    for metric in (conformance.fidelity, conformance.retained_share, conformance.coverage,
+                   conformance.reason_set_size):
+        assert metric(cert) is None
     assert conformance.reason_diversity([cert]) is None
-    assert conformance.group_stats([cert])["coverage"] is None
+    assert conformance.stability([cert]) is None
+    stats = conformance.group_stats([cert])
+    assert stats["n"] == 1 and stats["measured"] == 0
+    assert all(v is None for k, v in stats.items() if k not in ("n", "measured"))
+
+
+def test_an_unmeasured_group_never_wins_the_per_group_comparison():
+    s = conformance.stratified({"real": [certify_case(credit_case(), ReferenceAdapter(TopK(1)))],
+                                "unprovable": [unmeasured_cert()]})
+    assert s["per_group"]["unprovable"]["fidelity"] is None
+    assert s["per_group"]["unprovable"]["retained_share"] is None
+    assert all(g["best"] != "unprovable" for g in s["gaps"].values())
+    assert all(g["gap"] is None for g in s["gaps"].values())   # one measured group is no comparison
+    conformance.render(s, size_cap=3)
+
+
+def test_a_gap_needs_two_groups_that_produced_the_metric():
+    one = {"typical": [certify_case(credit_case(), ReferenceAdapter(TopK(1)))]}
+    assert all(g["gap"] is None for g in conformance.stratified(one)["gaps"].values())
 
 
 def test_an_all_empty_cohort_reports_nothing_to_measure():

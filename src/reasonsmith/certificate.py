@@ -134,6 +134,14 @@ def _attribute(verdicts, value_gap: float, tol: float) -> str:
     live = [v for v in verdicts if v.status == "live"]
     uncertified = [v for v in verdicts if v.status in ("unseparable", "inconclusive")]
     if not verdicts:
+        if abs(value_gap) > tol:
+            return (
+                f"Exact inference found no reason for this query at this depth, and yet the engine "
+                f"returns a value {value_gap:+.6f} away from it. No reason was probed, so nothing "
+                f"is certified either way, and the engine's answer rests on something this "
+                f"enumeration did not find: an unsupported query, a wrong identifier, or a proof "
+                f"bound below the one the engine itself uses."
+            )
         return (
             "Exact inference found no reason for this query at this depth, so no reason was probed "
             "and there was nothing to compare: an unsupported query, a wrong identifier or a proof "
