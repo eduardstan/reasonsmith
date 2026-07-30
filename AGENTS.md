@@ -20,7 +20,7 @@ adapter protocol. Depend on it; do not reimplement any of those. It is not on Py
 `pyproject.toml` pins it to an immutable commit of the public repo — `pip install -e ".[dev]"` in a
 venv is the single install path, and `.github/workflows/ci.yml` uses that same one. Never point it
 at a sibling checkout or a branch: the measured numbers must stay reconstructible. `torch` is not
-installed anywhere here, by decision (see README, "Install and run"). `tests/conftest.py` puts `src`
+installed anywhere here, by decision (see README, "Quick Start"). `tests/conftest.py` puts `src`
 on the path so this package itself needs no install, but nesyarena does.
 
 ## Two rules that shaped the code
