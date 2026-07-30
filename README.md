@@ -1,4 +1,4 @@
-# Audit-grade evidence records and reason-deletion certificates for symbolic decisions.
+# reasonsmith — audit-grade evidence records and reason-deletion certificates for symbolic decisions.
 
 [![tests](https://github.com/eduardstan/reasonsmith/actions/workflows/ci.yml/badge.svg)](https://github.com/eduardstan/reasonsmith/actions/workflows/ci.yml)
 [![Python >= 3.11](https://img.shields.io/badge/python->=3.11-blue.svg)](https://www.python.org/)
@@ -36,7 +36,7 @@ This single install path is used by CI (`.github/workflows/ci.yml`).
 
 ### Dependencies & PyPI
 - **`nesyarena`**: Supplies the ground-program IR, bounded proof enumeration, exact oracle, and adapter protocol. It is pinned to an immutable git commit in `pyproject.toml` so measurements stay reconstructible.
-- **`torch` is deliberately omitted**: It is an optional dependency of `nesyarena` (`learning`, ~1GB) and is not needed for this test suite or demo.
+- **`torch` is deliberately omitted**: It is an optional dependency of `nesyarena` (`learning`, ~1GB) and is not needed for this test suite or demo. Known consequence, reported rather than hidden: in `nesyarena`'s own suite 98 tests pass while `tests/test_e6_findings.py` and `tests/test_learning_parity.py` fail to collect without `torch`. Those modules live in `nesyarena`'s repository, are not collected here, and are a pre-existing environment gap not fixed here; run them there with `pip install "nesyarena[learning]"`.
 
 ## What is in the box
 
@@ -57,7 +57,7 @@ Deliberately built as focused modules rather than a generic framework:
 Compares the reasons an engine actually used against exact inference ground truth (enumerated via WMC in `nesyarena`). Using deletion probes, it tests whether disabling isolated facts changes engine output. Two independent checks must pass: the deletion probe (every reason live) and the value check against the exact oracle. Reasons that cannot be probed in isolation are reported as uncertified (`INCONCLUSIVE`).
 
 ### Summary of Empirical Findings
-- **Stratified checks**: Registered hypothesis that low-probability reasons are dropped first holds in one form, not another. Confidence scaling leaves reason ordering unchanged (flat per-group coverage, but shifting retained share/fidelity). Varying reasons per case does shift coverage.
+- **Stratified checks**: Registered hypothesis that low-probability reasons are dropped first holds in one form, not another. Confidence scaling leaves reason ordering unchanged (flat per-group coverage, but shifting retained share/fidelity). Varying reasons per case does shift coverage. The cohorts are frozen synthetic ones built to separate the two mechanisms; whether real atypical cases trip more reasons is an empirical question this does not answer.
 - **Signal stability**: Under top-1 settings, drift in a single signal can silently swap the reason given to an applicant on an unchanged file.
 
 ## Limits
