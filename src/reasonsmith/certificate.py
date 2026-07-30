@@ -59,6 +59,18 @@ class ReasonVerdict:
     engine_drop: float
     detail: str
 
+    def to_dict(self) -> dict:
+        return {
+            "reason": [str(a) for a in sorted(self.reason, key=repr)],
+            "label": self.label,
+            "score": self.score,
+            "status": self.status,
+            "probe_fact": str(self.probe_fact) if self.probe_fact is not None else None,
+            "exact_drop": self.exact_drop,
+            "engine_drop": self.engine_drop,
+            "detail": self.detail,
+        }
+
 
 @dataclass(frozen=True)
 class Certificate:
@@ -132,6 +144,32 @@ class Certificate:
         out += ["", f"ATTRIBUTION: {self.attribution}"]
         out += ["", "LIMITS OF THIS CERTIFICATE", f"  {LIMITS}"]
         return "\n".join(out)
+
+    def to_dict(self) -> dict:
+        return {
+            "verdict": self.verdict,
+            "query": str(self.query),
+            "adapter_name": self.adapter_name,
+            "claimed_semantics": self.claimed_semantics,
+            "exact_depth": self.exact_depth,
+            "exact_value": self.exact_value,
+            "engine_value": self.engine_value,
+            "value_gap": self.value_gap,
+            "tol": self.tol,
+            "reasons_found": len(self.verdicts),
+            "reasons_used": len(self.live),
+            "reasons_deleted": len(self.deleted),
+            "reasons_uncertified": len(self.uncertified),
+            "missing_reasons": self.missing_reasons(),
+            "verdicts": [v.to_dict() for v in self.verdicts],
+            "attribution": self.attribution,
+            "limits": LIMITS,
+        }
+
+    def to_json(self, indent: int | None = None) -> str:
+        import json
+        return json.dumps(self.to_dict(), indent=indent)
+
 
 
 def _attribute(verdicts, value_gap: float, tol: float) -> str:

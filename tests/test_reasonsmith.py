@@ -9,7 +9,8 @@ from nesyarena.adapters.base import ReferenceAdapter
 from nesyarena.ir import Atom, GroundProgram, Rule
 from nesyarena.suts import ExactWMC, TopK, proof_score
 
-from reasonsmith import conformance, evidence
+from reasonsmith import certificate, conformance, evidence
+
 from reasonsmith.certificate import certify
 from reasonsmith.demo import (
     CREDIT_QUERY,
@@ -321,3 +322,48 @@ def test_score_factors_are_the_measured_scores_or_absent():
 
 def test_the_whole_report_runs():
     assert len(main()) > 5000
+
+
+# ------------------------------------------------------------ json output ----
+
+
+def test_record_json_roundtrip_preserves_incomplete_status_and_missing_fields():
+    import json
+
+    withheld = {k: v for k, v in FULL.items() if k != "audit_ids"}
+    rec = evidence.emit(ECOA, "APP-1", withheld)
+
+    dict_data = rec.to_dict()
+    assert dict_data["status"] == "INCOMPLETE"
+    assert dict_data["complete"] is False
+    assert dict_data["missing"] == ["audit_ids"]
+    assert any(m.startswith("audit_ids") for m in dict_data["missing_report"])
+    assert evidence.LIMITS == dict_data["limits"]
+
+    json_str = rec.to_json(indent=2)
+    loaded = json.loads(json_str)
+    assert loaded["status"] == "INCOMPLETE"
+    assert loaded["complete"] is False
+    assert loaded["missing"] == ["audit_ids"]
+    assert loaded["limits"] == evidence.LIMITS
+
+
+def test_certificate_json_roundtrip_preserves_verdict_and_reasons():
+    import json
+
+    case = credit_case()
+    cert = certify_case(case, ReferenceAdapter(TopK(1)))
+
+    dict_data = cert.to_dict()
+    assert dict_data["verdict"] == "FAIL"
+    assert len(dict_data["missing_reasons"]) > 0
+    assert len(dict_data["verdicts"]) == len(cert.verdicts)
+    assert "limits" in dict_data
+
+    json_str = cert.to_json()
+    loaded = json.loads(json_str)
+    assert loaded["verdict"] == "FAIL"
+    assert loaded["missing_reasons"] == cert.missing_reasons()
+    assert loaded["limits"] == certificate.LIMITS
+
+

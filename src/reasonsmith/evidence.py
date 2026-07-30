@@ -123,6 +123,30 @@ class Record:
         out += ["", "LIMITS OF THIS RECORD", f"  {LIMITS}"]
         return "\n".join(out)
 
+    def to_dict(self) -> dict:
+        d = duty(self.duty_id)
+        return {
+            "status": self.status,
+            "complete": self.complete,
+            "duty_id": self.duty_id,
+            "decision_id": self.decision_id,
+            "duty": d["requirement"],
+            "legal_source": d["legal_source"],
+            "table7_source": SOURCE,
+            "symbolic_artifacts": d["symbolic_artifacts"],
+            "lifecycle_placement": d["lifecycle_placement"],
+            "fields": dict(self.fields),
+            "missing": list(self.missing),
+            "missing_report": self.missing_report(),
+            "attachments": dict(self.attachments),
+            "limits": LIMITS,
+        }
+
+    def to_json(self, indent: int | None = None) -> str:
+        import json
+        return json.dumps(self.to_dict(), indent=indent)
+
+
 
 def emit(duty_id: str, decision_id: str, fields: dict, attachments: dict | None = None) -> Record:
     """Build the minimal evidence record for `duty_id`, naming every required field it lacks.
