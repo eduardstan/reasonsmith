@@ -73,6 +73,7 @@ From a fresh clone, with Python 3.11 or newer and git:
 ```sh
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
+ruff check .
 pytest
 python -m reasonsmith.demo     # the full report: both domains, the perturbed engines, the checks
 ```

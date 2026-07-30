@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -16,5 +19,6 @@ jobs:
       # nesyarena is pinned to an immutable commit in pyproject.toml, so this environment and a
       # local one resolve to the same code. torch is deliberately not installed — see the README.
       - run: pip install -e ".[dev]"
+      - run: ruff check .
       - run: pytest
       - run: python -m reasonsmith.demo
