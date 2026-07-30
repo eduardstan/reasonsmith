@@ -21,6 +21,11 @@ What the probe establishes and what it does not:
     certificate returns INCONCLUSIVE. It is never assumed live.
   - A probe whose exact-side drop is zero carries no signal (the private fact already had zero
     probability). It is reported `inconclusive` for the same reason, and never counted as live.
+  - A query for which exact inference enumerates no reason at this depth was never probed at all,
+    so it can never be PASS: the certificate returns INCONCLUSIVE, or FAIL if the engine still
+    answers away from the exact value. A zero value gap on a query nobody enumerated is not
+    agreement, and the attribution names what that case looks like (an unsupported query, a wrong
+    identifier, a proof bound too low).
 """
 
 from __future__ import annotations

@@ -315,8 +315,8 @@ def test_score_factors_are_the_measured_scores_or_absent():
     empty = certify(program, {Atom("a", ("APP-1",)): 0.6}, Atom("q", ("APP-9999",)),
                     ReferenceAdapter(ExactWMC()), exact_depth=1)
     assert score_factors(empty) is None
-    assert evidence.emit(ECOA, "APP-9999", {**FULL, "score_factors": score_factors(empty)}).missing \
-        == ("score_factors",)
+    record = evidence.emit(ECOA, "APP-9999", {**FULL, "score_factors": score_factors(empty)})
+    assert record.missing == ("score_factors",)
 
 
 def test_the_whole_report_runs():
