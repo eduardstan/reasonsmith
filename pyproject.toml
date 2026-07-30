@@ -12,8 +12,11 @@ license = { text = "MIT" }
 authors = [{ name = "Ionel Eduard Stan" }]
 dependencies = [
     # nesyarena supplies the ground-program IR, bounded proof enumeration, the exact WMC oracle and
-    # the adapter protocol. It is not on PyPI; install it from its checkout (see README).
-    "nesyarena>=0.1.0.dev0",
+    # the adapter protocol. It is not on PyPI, so it is pinned here to an immutable commit of the
+    # public repository: `pip install -e .` therefore resolves it identically for a stranger and for
+    # CI, and the certificate numbers stay reconstructible. Bump the SHA deliberately, never to a
+    # branch name.
+    "nesyarena @ git+https://github.com/eduardstan/nesyarena@fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec",
 ]
 
 [project.optional-dependencies]
