@@ -35,11 +35,12 @@ def retained_share(cert) -> float:
     return 1.0 if cert.exact_value == 0.0 else cert.engine_value / cert.exact_value
 
 
-def coverage(cert) -> float:
+def coverage(cert) -> float | None:
     """Table 19 'coverage': the share of the exact reasons the engine's answer actually depends on.
     Reasons the probe could not certify count against coverage — an uncertified reason is not a
-    covered one."""
-    return len(cert.live) / len(cert.verdicts) if cert.verdicts else 1.0
+    covered one. `None` when exact inference found no reason at all: nothing was measured, and a
+    perfect score there would read as a clean check on a case nobody checked."""
+    return len(cert.live) / len(cert.verdicts) if cert.verdicts else None
 
 
 def reason_set_size(cert) -> int:
@@ -62,25 +63,31 @@ def stability(certs) -> float:
     return sum(len(a & b) / len(a | b) if (a | b) else 1.0 for a, b in pairs) / len(pairs)
 
 
-def reason_diversity(certs) -> float:
+def reason_diversity(certs) -> float | None:
     """Table 19 'reason diversity tests': the share of the distinct reasons available across these
     cases that the engine ever gives. Collapse toward a few stock reasons shows up here as a low
-    number even when every individual case looks well covered."""
+    number even when every individual case looks well covered. `None` when no reason was available
+    to give, for the same reason `coverage` reports nothing rather than 1.0."""
     available = {v.label for c in certs for v in c.verdicts}
     given = {v.label for c in certs for v in c.live}
-    return len(given) / len(available) if available else 1.0
+    return len(given) / len(available) if available else None
+
+
+def _mean(values) -> float | None:
+    """The mean over the cases that produced a measurement, or None when none did."""
+    vals = [v for v in values if v is not None]
+    return sum(vals) / len(vals) if vals else None
 
 
 def group_stats(certs) -> dict:
-    n = len(certs)
     return {
-        "n": n,
-        "fidelity": sum(fidelity(c) for c in certs) / n,
-        "retained_share": sum(retained_share(c) for c in certs) / n,
-        "coverage": sum(coverage(c) for c in certs) / n,
-        "reasons_found": sum(len(c.verdicts) for c in certs) / n,
-        "reasons_used": sum(reason_set_size(c) for c in certs) / n,
-        "reasons_deleted": sum(len(c.deleted) for c in certs) / n,
+        "n": len(certs),
+        "fidelity": _mean(fidelity(c) for c in certs),
+        "retained_share": _mean(retained_share(c) for c in certs),
+        "coverage": _mean(coverage(c) for c in certs),
+        "reasons_found": _mean(len(c.verdicts) for c in certs),
+        "reasons_used": _mean(reason_set_size(c) for c in certs),
+        "reasons_deleted": _mean(len(c.deleted) for c in certs),
         "reason_diversity": reason_diversity(certs),
     }
 
@@ -89,10 +96,13 @@ def stratified(groups: dict) -> dict:
     """Per-group checks, plus the gap between the best and worst group on each metric. This is the
     control Table 19 names against minority over-smoothing; the gaps are the thing it asks you to
     look at, since a healthy pooled figure can hide a group that has lost most of its reasons."""
-    per = {name: group_stats(certs) for name, certs in groups.items() if certs}
+    per = {name: group_stats(certs) for name, certs in groups.items()}
     gaps = {}
     for metric in ("fidelity", "retained_share", "coverage", "reasons_used", "reason_diversity"):
-        vals = {g: s[metric] for g, s in per.items()}
+        vals = {g: s[metric] for g, s in per.items() if s[metric] is not None}
+        if not vals:
+            gaps[metric] = {"best": None, "worst": None, "gap": None}
+            continue
         best, worst = max(vals, key=vals.get), min(vals, key=vals.get)
         gaps[metric] = {"best": best, "worst": worst, "gap": vals[best] - vals[worst]}
     return {"per_group": per, "gaps": gaps}
@@ -108,14 +118,19 @@ def render(strat: dict, size_cap: int | None = None) -> str:
            f"  {'group':<12}" + "".join(f"{c:>17}" for c in cols)]
     for name, s in strat["per_group"].items():
         row = f"  {name:<12}" + f"{s['n']:>17}"
-        row += "".join(f"{s[c]:>17.4f}" for c in cols[1:])
+        row += "".join(f"{s[c]:>17.4f}" if s[c] is not None else f"{'not measured':>17}"
+                       for c in cols[1:])
         out.append(row)
     out += ["", "  per-group gaps (best group minus worst):"]
     for metric, g in strat["gaps"].items():
-        out.append(f"    {metric:<18} {g['gap']:+.4f}   (best {g['best']}, worst {g['worst']})")
+        if g["gap"] is None:
+            out.append(f"    {metric:<18} not measured   (no group produced a value)")
+        else:
+            out.append(f"    {metric:<18} {g['gap']:+.4f}   (best {g['best']}, worst {g['worst']})")
     if size_cap is not None:
         out.append("")
         out.append(f"  reason-set size cap {size_cap}: " + "; ".join(
+            f"{name} not measured" if s["reasons_used"] is None else
             f"{name} mean {s['reasons_used']:.2f} "
             f"{'within' if s['reasons_used'] <= size_cap else 'OVER'}"
             for name, s in strat["per_group"].items()))

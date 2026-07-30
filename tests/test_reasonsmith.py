@@ -184,6 +184,26 @@ def test_a_reason_with_no_private_fact_is_not_certified_either_way():
     assert cert.verdict == "INCONCLUSIVE"   # never silently upgraded to PASS
 
 
+def test_a_query_with_no_reason_is_never_a_pass():
+    """Nothing enumerated means nothing probed and nothing compared, which is not a clean bill."""
+    program = GroundProgram((Rule(Atom("q", ("APP-1",)), (Atom("a", ("APP-1",)),)),))
+    cert = certify(program, {Atom("a", ("APP-1",)): 0.6}, Atom("q", ("APP-9999",)),
+                   ReferenceAdapter(ExactWMC()), exact_depth=1)
+    assert cert.verdicts == ()
+    assert cert.verdict == "INCONCLUSIVE"
+    assert conformance.coverage(cert) is None
+    assert conformance.reason_diversity([cert]) is None
+    assert conformance.group_stats([cert])["coverage"] is None
+
+
+def test_an_all_empty_cohort_reports_nothing_to_measure():
+    s = conformance.stratified({"typical": [], "atypical": []})
+    assert s["per_group"]["typical"]["n"] == 0
+    assert s["per_group"]["typical"]["coverage"] is None
+    assert all(g["gap"] is None for g in s["gaps"].values())
+    conformance.render(s, size_cap=3)
+
+
 def test_a_probe_with_no_signal_is_not_counted_as_live():
     q, a, b = Atom("q"), Atom("a"), Atom("b")
     program = GroundProgram((Rule(q, (a,)), Rule(q, (b,))))
@@ -240,6 +260,22 @@ def test_drift_moves_the_stated_reason_and_stability_reports_it():
     assert len({frozenset(v.label for v in c.live) for c in certs}) > 1
     assert conformance.stability(certs) < 1.0
     assert conformance.stability(certs[:1]) == 1.0
+
+
+def test_score_factors_are_the_measured_scores_or_absent():
+    """The record's score factors are read off the certificate, never asserted beside it."""
+    from reasonsmith.demo import score_factors
+
+    cert = certify_case(credit_case(), ReferenceAdapter(TopK(1)))
+    stated = [float(tok.split()[-1]) for tok in score_factors(cert).split(";")]
+    assert stated == pytest.approx(sorted((v.score for v in cert.verdicts), reverse=True), abs=1e-4)
+
+    program = GroundProgram((Rule(Atom("q", ("APP-1",)), (Atom("a", ("APP-1",)),)),))
+    empty = certify(program, {Atom("a", ("APP-1",)): 0.6}, Atom("q", ("APP-9999",)),
+                    ReferenceAdapter(ExactWMC()), exact_depth=1)
+    assert score_factors(empty) is None
+    assert evidence.emit(ECOA, "APP-9999", {**FULL, "score_factors": score_factors(empty)}).missing \
+        == ("score_factors",)
 
 
 def test_the_whole_report_runs():

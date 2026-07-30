@@ -90,7 +90,7 @@ class Certificate:
     def verdict(self) -> str:
         if self.deleted or abs(self.value_gap) > self.tol:
             return "FAIL"
-        if self.uncertified:
+        if not self.verdicts or self.uncertified:
             return "INCONCLUSIVE"
         return "PASS"
 
@@ -133,6 +133,12 @@ def _attribute(verdicts, value_gap: float, tol: float) -> str:
     deleted = [v for v in verdicts if v.status == "deleted"]
     live = [v for v in verdicts if v.status == "live"]
     uncertified = [v for v in verdicts if v.status in ("unseparable", "inconclusive")]
+    if not verdicts:
+        return (
+            "Exact inference found no reason for this query at this depth, so no reason was probed "
+            "and there was nothing to compare: an unsupported query, a wrong identifier or a proof "
+            "bound too low all look like this. Nothing about the engine is certified either way."
+        )
     if not deleted:
         if abs(value_gap) > tol:
             return (

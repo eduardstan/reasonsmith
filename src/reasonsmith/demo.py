@@ -87,6 +87,19 @@ def build_case(case_id: str, group: str, query_pred: str, reasons, level: float)
     return Case(case_id, group, query, GroundProgram(tuple(rules)), base, labels)
 
 
+def score_factors(cert) -> str | None:
+    """The Table 7 score factors, read off the certificate's measured proof scores.
+
+    None when exact inference found no reason to score: the record then reports the field missing,
+    which is the whole point — a plausible-looking figure nobody measured is the one thing this
+    package must never put in a compliance document.
+    """
+    if not cert.verdicts:
+        return None
+    return "; ".join(f"{v.label.partition(' — ')[0]} {v.score:.4f}"
+                     for v in sorted(cert.verdicts, key=lambda v: (-v.score, v.label)))
+
+
 def certify_case(case: Case, adapter):
     return certify(case.program, case.base, case.query, adapter, exact_depth=1,
                    labels=case.labels)
@@ -186,7 +199,7 @@ def credit_demo() -> str:
         {
             "stored_reasons_per_decision": reasons_line,
             "model_version": "credit-scoring-2026.03.1 / rules cs-rules-2026.03",
-            "score_factors": "C01 0.8712; C02 0.7482; C03 0.6300; C04 0.5202; C05 0.4290",
+            "score_factors": score_factors(cert_topk),
             "audit_ids": "AAN-2026-0731-1042 / trace-9f3c1b",
             "retention_for_regulatory_lookback": "25 months from notice date, per lender policy",
         },
@@ -208,7 +221,7 @@ def credit_demo() -> str:
         {
             "stored_reasons_per_decision": reasons_line,
             "model_version": "credit-scoring-2026.03.1 / rules cs-rules-2026.03",
-            "score_factors": "C01 0.8712; C02 0.7482; C03 0.6300; C04 0.5202; C05 0.4290",
+            "score_factors": score_factors(cert_topk),
             "retention_for_regulatory_lookback": "25 months from notice date, per lender policy",
         },
     )
