@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      # Same one command a stranger runs from a fresh clone (README, "Install and run"):
+      # Same one command a stranger runs from a fresh clone (README, "Quick Start"):
       # nesyarena is pinned to an immutable commit in pyproject.toml, so this environment and a
       # local one resolve to the same code. torch is deliberately not installed — see the README.
       - run: pip install -e ".[dev]"
