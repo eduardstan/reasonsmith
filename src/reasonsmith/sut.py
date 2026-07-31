@@ -69,6 +69,21 @@ def _table7_signals() -> set[str]:
 REASON_SIGNALS = frozenset({"per_decision_reason_string", "stored_reasons_per_decision"})
 
 
+def _record_from(capabilities: set[str]) -> dict[str, Any]:
+    """One decision record carrying a value for every capability the system declares.
+
+    Derived from the declared capabilities rather than from a hand-written key list, so a
+    reference system emits exactly what it says it can emit and cannot drift from the pack.
+    """
+    record: dict[str, Any] = {
+        "decision": "approved",
+        "timestamp": "2026-07-31T09:00:00Z",
+    }
+    for signal in sorted(capabilities - set(record)):
+        record[signal] = f"{signal}_value"
+    return record
+
+
 class FullCapabilitySUT(BaseSUT):
     """Reference SUT declaring every signal the Table 7 pack requires."""
 
@@ -79,20 +94,19 @@ class FullCapabilitySUT(BaseSUT):
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         self.execution_count += 1
-        record: dict[str, Any] = {
-            "decision": "approved",
-            "timestamp": "2026-07-31T09:00:00Z",
-        }
-        for signal in sorted(self.capabilities() - set(record)):
-            record[signal] = f"{signal}_value"
-        return [record]
+        return [_record_from(self.capabilities())]
 
 
 class NoReasonsSUT(BaseSUT):
     """Reference SUT declaring every Table 7 signal except the reason-giving ones.
 
-    Calling decisions() raises, so any code path that reaches for the trace while
-    answering an unattainable requirement fails loudly instead of quietly working.
+    The realistic black box: it keeps a decision trace, and that trace carries a value for
+    every signal it declares — which is every Table 7 signal but the two that name a reason.
+    So the reason-giving rows of the pack are unattainable as built while the rest stay
+    checkable against the trace.
+
+    `was_executed` records whether the trace was ever read, so a test can show that the
+    unattainable analysis answered without running the system.
     """
 
     def __init__(self):
@@ -101,6 +115,4 @@ class NoReasonsSUT(BaseSUT):
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         self.was_executed = True
-        raise AssertionError(
-            "NoReasonsSUT.decisions() must never be executed for unattainable checks!"
-        )
+        return [_record_from(self.capabilities())]

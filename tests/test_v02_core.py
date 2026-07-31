@@ -181,14 +181,26 @@ def test_pack_matches_table7_transcription():
             f"{req.id}: verbatim_text must quote the Requirement column exactly"
         )
         # The paper gives one Legal source string; the pack splits it so code can address the
-        # document separately. Both halves must still be text the paper prints.
-        assert req.source_document in duty["legal_source"], (
-            f"{req.id}: source_document {req.source_document!r} is not in the printed "
-            f"legal source {duty['legal_source']!r}"
+        # document separately. The two halves must RECONSTRUCT the printed string, separated
+        # only by punctuation: a substring test would accept "ECOA" for "ECOA / Reg B", or
+        # "Art. 22" for "Art. 22 (and Rec. 71)", silently citing less than the paper prints.
+        legal_source = duty["legal_source"]
+        assert legal_source.startswith(req.source_document), (
+            f"{req.id}: source_document {req.source_document!r} does not open the printed "
+            f"legal source {legal_source!r}"
         )
-        assert req.article_clause in duty["legal_source"], (
+        rest = legal_source[len(req.source_document) :]
+        start = rest.find(req.article_clause)
+        assert start != -1, (
             f"{req.id}: article_clause {req.article_clause!r} is not in the printed "
-            f"legal source {duty['legal_source']!r}"
+            f"legal source {legal_source!r}"
+        )
+        separators = set(" ();")
+        before, after = rest[:start], rest[start + len(req.article_clause) :]
+        assert set(before) <= separators and set(after) <= separators, (
+            f"{req.id}: source_document {req.source_document!r} and article_clause "
+            f"{req.article_clause!r} do not reconstruct the printed legal source "
+            f"{legal_source!r}; text {before + after!r} would be dropped"
         )
         assert list(req.requires) == [f["key"] for f in duty["evidence_field"]], (
             f"{req.id}: required signals must be the row's evidence fields, in printed order"
@@ -351,6 +363,28 @@ def test_unattainable_analysis_no_execution():
     assert no_reasons_sut.was_executed is False
 
 
+def test_unattainable_requirement_never_reaches_the_trace():
+    """Second, independent proof of the same guarantee: a trace that cannot be read at all.
+
+    NoReasonsSUT proves it by a flag it sets when read; this proves it by making the read
+    itself impossible, so the guarantee does not rest on one system remembering to record it.
+    """
+
+    class ExplodingTraceSUT(BaseSUT):
+        def decisions(self):
+            raise AssertionError("the trace must not be read for an unattainable requirement")
+
+    req = _requirement(requires=("signal_a", "signal_b"))
+    sut = ExplodingTraceSUT({"signal_a"})
+
+    result = evaluate_requirement(req, sut)
+    assert result.strength == Strength.UNATTAINABLE
+    assert result.signals_missing == ("signal_b",)
+
+    report = check_conformance(sut, Pack("p", "P", "", (req,)))
+    assert report.headline == "1 requirements · 1 unattainable"
+
+
 def test_check_conformance_never_executes_a_system_it_cannot_check():
     """A whole-pack run over an all-unattainable pack reads no decisions at all."""
     pack = load_pack("table7")
@@ -400,6 +434,43 @@ def test_unattainable_analysis_rejects_a_bad_capabilities_return():
 
     with pytest.raises(TypeError, match="must return a collection"):
         analyze_unattainable(_requirement(requires=("a",)), StringCapabilities())
+
+    class DictKeyCapabilities:
+        def capabilities(self):
+            return {"a": None, "b": None}.keys()
+
+        def decisions(self):
+            return []
+
+    # dict_keys is a collection of names, so it is accepted: the guard rejects a bare
+    # string, not every type that is not a set.
+    assert analyze_unattainable(_requirement(requires=("a",)), DictKeyCapabilities()) == (
+        False,
+        (),
+    )
+
+
+def test_no_reasons_system_against_the_whole_table7_pack():
+    """The headline this stage exists to produce, from the most obvious call in the API.
+
+    A system that keeps a trace but gives no reasons is checkable on four Table 7 rows and
+    unattainable on the two that need a reason — reported in one line, without either half
+    being quietly dropped or the run failing.
+    """
+    sut = NoReasonsSUT()
+    report = check_conformance(sut, load_pack("table7"), system_name="BlackBoxNeuralModel")
+
+    assert report.headline == "6 requirements · 4 observed · 2 unattainable"
+    assert sut.was_executed is True
+
+    unattainable = [r.requirement_id for r in report.results if r.strength == Strength.UNATTAINABLE]
+    assert unattainable == ["gdpr_art22_meaningful_information", "ecoa_reg_b_adverse_action"]
+    for res in report.results:
+        if res.strength == Strength.UNATTAINABLE:
+            assert set(res.signals_missing) <= REASON_SIGNALS
+        else:
+            assert res.verdict == Verdict.SATISFIED
+            assert res.strength == Strength.OBSERVED
 
 
 def test_the_whole_pack_is_checked_with_one_execution():
@@ -589,13 +660,7 @@ def test_headline_and_counts_never_disagree():
     have to be right at once.
     """
 
-    class TracedNoReasonsSUT(FullCapabilitySUT):
-        def __init__(self):
-            super().__init__()
-            self._capabilities -= REASON_SIGNALS
-
-    pack = load_pack("table7")
-    report = check_conformance(TracedNoReasonsSUT(), pack, system_name="BlackBox")
+    report = check_conformance(NoReasonsSUT(), load_pack("table7"), system_name="BlackBox")
     counts = report.counts
 
     assert counts["total"] == 6
