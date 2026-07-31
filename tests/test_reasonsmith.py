@@ -394,3 +394,40 @@ def test_certificate_json_roundtrip_preserves_verdict_and_reasons():
     assert loaded["limits"] == certificate.LIMITS
 
 
+
+# ------------------------------------ EU AI Act Art. 13 (Table 7 row 1) ----
+
+
+def art13_case_and_cert(adapter):
+    case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
+    return case, certify_case(case, adapter)
+
+
+def test_art13_metrics_field_is_measured_not_claimed():
+    from reasonsmith.demo import art13_evidence_fields
+
+    case, cert = art13_case_and_cert(ReferenceAdapter(TopK(1)))
+    metrics = art13_evidence_fields(case, cert)["fidelity_coverage_metrics"]
+    assert f"{conformance.fidelity(cert):.4f}" in metrics
+    assert f"{conformance.coverage(cert):.4f}" in metrics
+
+
+def test_art13_record_is_complete_and_discloses_the_topk_gap():
+    """Form and content part ways: every row-1 field is produced, and the produced numbers
+    themselves report that the deployed engine states one reason of five."""
+    from reasonsmith.demo import art13_evidence_fields
+
+    case, cert = art13_case_and_cert(ReferenceAdapter(TopK(1)))
+    record = evidence.emit("eu_ai_act_art13_transparency", case.case_id,
+                           art13_evidence_fields(case, cert))
+    assert record.complete
+    assert conformance.coverage(cert) == pytest.approx(1 / len(CREDIT_REASONS))
+
+
+def test_art13_exact_inference_reports_full_coverage():
+    from reasonsmith.demo import art13_evidence_fields
+
+    case, cert = art13_case_and_cert(ReferenceAdapter(ExactWMC()))
+    assert conformance.coverage(cert) == 1.0
+    assert conformance.fidelity(cert) == 1.0
+    assert "1.0000" in art13_evidence_fields(case, cert)["fidelity_coverage_metrics"]
