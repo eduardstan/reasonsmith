@@ -63,7 +63,7 @@ That commit is identified, not assumed, and both published artifacts were checke
 
 What the release commit changes relative to `57720fa212834689692e171882272140f1d1fed7` is two installed files — `src/nesyarena/__init__.py` (`__version__` `0.1.0.dev0` → `0.1.0`, the whole diff) and `pyproject.toml` — plus repository metadata that is not installed (`README.md`, `.gitignore`, `.github/workflows/ci.yml`, `AGENTS.md`, `CLAUDE.md`, `docs/PUBLISHING.md`). The rest of `src/`, and all 45 files under `tests/` and `experiments/`, are byte-identical blobs across the two commits.
 
-`reasonsmith`'s own test suite (`174 passed` on current suite, `35 passed` on v0.1 suite), `ruff check .` (0 findings), and `python -m reasonsmith.demo` (561 lines, two runs byte-identical, `md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`) were re-run against PyPI `nesyarena==0.1.0` and confirmed fully passing and unchanged. Section 1's figures are `nesyarena`'s *own* suite, measured under `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against the PyPI release. They are expected to be unchanged because `tests/` and `experiments/` are byte-identical across `fdf0d5eb…` → `57720fa…` (identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, see the Repin Note) → `22b539ba…`, and the installed source differs only in the `__version__` string — but that is an expectation from blob identity, not a measurement.
+`reasonsmith`'s own test suite (`189 passed` on current suite, `35 passed` on v0.1 suite), `ruff check .` (0 findings), and `python -m reasonsmith.demo` (561 lines, two runs byte-identical, `md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`) were re-run against PyPI `nesyarena==0.1.0` and confirmed fully passing and unchanged. Section 1's figures are `nesyarena`'s *own* suite, measured under `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against the PyPI release. They are expected to be unchanged because `tests/` and `experiments/` are byte-identical across `fdf0d5eb…` → `57720fa…` (identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, see the Repin Note) → `22b539ba…`, and the installed source differs only in the `__version__` string — but that is an expectation from blob identity, not a measurement.
 
 ### Build and Reproduction Commands
 
@@ -347,7 +347,7 @@ One unchanged applicant file, four windows, a strengthening delinquency signal: 
 
 The complete, unedited output of both demo runs (identical to each other) is 561 lines, available in [`docs/example-output.md`](docs/example-output.md). Regenerate it with `python -m reasonsmith.demo` from commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`.
 
-**Re-checked after repin to nesyarena `57720fa212834689692e171882272140f1d1fed7` and update to PyPI release `nesyarena==0.1.0` (2026-07-31):** `python -m reasonsmith.demo`, run twice against PyPI `nesyarena==0.1.0`, still produces the same 561 identical lines (`md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`), `pytest` reports 174 passed (35 passed on v0.1 suite), and `ruff check .` reports no findings.
+**Re-checked after repin to nesyarena `57720fa212834689692e171882272140f1d1fed7` and update to PyPI release `nesyarena==0.1.0` (2026-07-31):** `python -m reasonsmith.demo`, run twice against PyPI `nesyarena==0.1.0`, still produces the same 561 identical lines (`md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`), `pytest` reports 189 passed (35 passed on v0.1 suite), and `ruff check .` reports no findings.
 
 ---
 
