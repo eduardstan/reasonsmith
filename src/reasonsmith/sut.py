@@ -124,7 +124,9 @@ def _record_from(capabilities: set[str]) -> dict[str, Any]:
 class FullCapabilitySUT(BaseSUT):
     """Reference SUT declaring every signal the Table 7 pack requires."""
 
-    def __init__(self, extra_capabilities: Optional[set[str]] = None, system_scope: str = "high-risk"):
+    def __init__(
+        self, extra_capabilities: Optional[set[str]] = None, system_scope: str = "high-risk"
+    ):
         declared = _table7_signals() | {"decision", "timestamp"} | (extra_capabilities or set())
         super().__init__(declared)
         self.execution_count = 0
