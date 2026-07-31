@@ -31,10 +31,18 @@ DOCS_COMMAND = (
 )
 
 
-def _fake_git(status_out: str = "", status_rc: int = 0, head_out: str = "", head_rc: int = 0):
-    """A `subprocess.run` stand-in answering the two git calls `_source_checkout` makes."""
+def _fake_git(
+    status_out: str = "",
+    status_rc: int = 0,
+    head_out: str = "",
+    head_rc: int = 0,
+    tracked_rc: int = 0,
+):
+    """A `subprocess.run` stand-in answering the git calls `_source_checkout` makes."""
 
     def run(argv, **kwargs):
+        if "ls-files" in argv:
+            return subprocess.CompletedProcess(argv, tracked_rc, "", "")
         if "status" in argv:
             return subprocess.CompletedProcess(argv, status_rc, status_out, "")
         return subprocess.CompletedProcess(argv, head_rc, head_out, "")
@@ -199,6 +207,20 @@ def test_unidentifiable_checkout_says_so_rather_than_guessing(monkeypatch):
     assert "from commit" not in html
     assert "Generated without an identified source commit." in html
     assert "Command:" not in html
+
+
+def test_enclosing_repo_that_does_not_track_this_module_names_no_commit(monkeypatch):
+    """Installed inside an unrelated project's checkout: that project's HEAD is not provenance.
+
+    An ignored install path is absent from `status --porcelain`, so the host tree reads clean
+    and would otherwise hand back a commit containing none of the code that ran.
+    """
+    monkeypatch.setattr(subprocess, "run", _fake_git(tracked_rc=1, head_out="dead" * 10))
+
+    html = _docs_report().render_html(command="reasonsmith check")
+
+    assert "from commit" not in html
+    assert "Generated without an identified source commit." in html
 
 
 def test_clean_checkout_names_its_commit(monkeypatch):

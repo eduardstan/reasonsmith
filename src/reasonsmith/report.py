@@ -241,9 +241,16 @@ def _source_checkout() -> tuple[str, str]:
     uncommitted changes nor a checkout git cannot describe can honour that claim.
 
     The checkout inspected is the one holding this module, not the caller's working
-    directory: what a report can attest to is the code that produced it.
+    directory: what a report can attest to is the code that produced it. Git answers about
+    whatever repository encloses a directory, which is not the same question — this package
+    installed into a `.venv/` of an unrelated project sits inside that project's checkout,
+    and an ignored path is absent from `status --porcelain`, so the host tree would read as
+    clean and hand back a commit containing none of this code. So the first thing asked is
+    whether that repository tracks this very file; if it does not, it cannot describe this
+    build at all, in either direction.
     """
-    repo = str(Path(__file__).resolve().parent)
+    source = Path(__file__).resolve()
+    repo = str(source.parent)
 
     def git(*argv: str) -> subprocess.CompletedProcess[str] | None:
         try:
@@ -255,6 +262,10 @@ def _source_checkout() -> tuple[str, str]:
             )
         except (OSError, subprocess.SubprocessError):
             return None
+
+    tracked = git("ls-files", "--error-unmatch", "--", str(source))
+    if tracked is None or tracked.returncode != 0:
+        return "", "unknown"
 
     status = git("status", "--porcelain")
     if status is None or status.returncode != 0:
