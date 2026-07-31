@@ -37,7 +37,8 @@ def main(args: list[str] | None = None) -> int:
             "     requirements are reported but are not breaches, so they exit 0 too — read\n"
             "     the report for them.\n"
             "  2  at least one requirement is violated.\n"
-            "  1  usage or input error (unknown pack, unreadable system log)."
+            "  1  usage or input error (unknown pack, unreadable system log, or a\n"
+            "     --system-scope naming a class the pack limits no requirement to)."
         ),
     )
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")
@@ -67,7 +68,9 @@ def main(args: list[str] | None = None) -> int:
         help=(
             "Declared regulatory classification of the system (e.g. high-risk). Requirements "
             "limited to another class, or to any class when this is left undeclared, are "
-            "reported not applicable rather than assumed to apply"
+            "reported not applicable rather than assumed to apply. Must name a class the "
+            "chosen pack actually limits a requirement to, compared after trimming whitespace "
+            "and lowercasing; anything else is a usage error rather than a clean run"
         ),
     )
     check_parser.add_argument(
@@ -91,9 +94,13 @@ def main(args: list[str] | None = None) -> int:
             print(f"Error loading system log {parsed.system!r}: {exc}", file=sys.stderr)
             return 1
 
-        report = check_conformance(
-            sut, pack, system_name=parsed.system_name, system_scope=parsed.system_scope
-        )
+        try:
+            report = check_conformance(
+                sut, pack, system_name=parsed.system_name, system_scope=parsed.system_scope
+            )
+        except (TypeError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
 
         if parsed.json:
             print(report.to_json(indent=2))

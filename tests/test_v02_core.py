@@ -416,7 +416,8 @@ def test_unattainable_requirement_never_reaches_the_trace():
 def test_check_conformance_never_executes_a_system_it_cannot_check():
     """A whole-pack run over an all-unattainable pack reads no decisions at all."""
     pack = load_pack("table7")
-    no_reasons_sut = NoReasonsSUT()
+    # Neither row is class-limited, so a declared class would answer nothing and is refused.
+    no_reasons_sut = NoReasonsSUT(system_scope="")
     reason_pack = Pack(
         id="reason_subset",
         title="Reason Requirements",
@@ -817,8 +818,17 @@ CATEGORY_KEYS = (
 )
 
 
-@pytest.mark.parametrize("pack_name", ["table7", "eu_ai_act", "gdpr", "ecoa"])
-@pytest.mark.parametrize("declared_scope", ["", "high-risk", "limited-risk"])
+@pytest.mark.parametrize(
+    "pack_name,declared_scope",
+    [
+        ("table7", ""),
+        ("table7", "high-risk"),
+        ("eu_ai_act", ""),
+        ("eu_ai_act", "high-risk"),
+        ("gdpr", ""),
+        ("ecoa", ""),
+    ],
+)
 def test_counts_reconcile_against_both_totals(pack_name, declared_scope):
     """Neither half of the counts may lose a requirement or count one twice.
 
@@ -913,4 +923,45 @@ def test_ai_act_pack_high_risk_declaration_outcomes():
     for r in report_declared.results:
         assert r.verdict == Verdict.SATISFIED
         assert r.strength == Strength.OBSERVED
+
+    # Surrounding whitespace and letter case are not a different regulatory class.
+    for spelling in ("  high-risk  ", "HIGH-RISK", "High-Risk"):
+        same = check_conformance(SimpleSUT(), pack, system_scope=spelling)
+        assert same.counts["observed"] == 4
+
+
+def test_limits_cover_both_ways_a_requirement_becomes_not_applicable():
+    """The undeclared case is the default path, so the limits paragraph has to name it."""
+    limits = check_conformance(FullCapabilitySUT(system_scope=""), load_pack("table7")).limits
+    assert "no regulatory class was declared" in limits
+    assert "not the one the requirement is limited to" in limits
+    assert "never infers that class" in limits
+
+
+@pytest.mark.parametrize("typo", ["hihg-risk", "high risk", "high_risk", "highrisk", "High Risk"])
+def test_a_scope_the_pack_does_not_know_is_refused(typo):
+    """A misspelled class must not read as a system that is simply out of scope.
+
+    Only a violation exits non-zero, so silently accepting `hihg-risk` would turn every
+    class-limited duty in the pack not applicable and end in a clean run. The pack's own
+    classes are the only list that means anything, and the error names both halves.
+    """
+    with pytest.raises(ValueError, match="not a regulatory class") as exc:
+        check_conformance(FullCapabilitySUT(), load_pack("eu_ai_act"), system_scope=typo)
+    assert repr(typo) in str(exc.value)
+    assert "'high-risk'" in str(exc.value)
+
+
+def test_a_scope_declared_against_a_pack_with_no_class_limits_is_refused():
+    """No requirement here is class-limited, so a declared class answers nothing; say so."""
+    with pytest.raises(ValueError, match="no requirement in this pack is limited"):
+        check_conformance(
+            FullCapabilitySUT(system_scope="high-risk"), load_pack("gdpr")
+        )
+
+
+def test_a_scope_that_is_not_a_string_names_the_type():
+    """An enum or a flag would otherwise be read as undeclared, or blow up mid-comparison."""
+    with pytest.raises(TypeError, match="must be a string or None"):
+        check_conformance(FullCapabilitySUT(), load_pack("table7"), system_scope=object())
 

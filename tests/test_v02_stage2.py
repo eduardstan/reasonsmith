@@ -624,6 +624,32 @@ class TestDefinitionOfDoneEndToEnd:
         assert "NOT APPLICABLE" in captured.out
         assert "declared scope: undeclared" in captured.out
 
+    def test_cli_rejects_a_scope_the_pack_does_not_know(
+        self, jsonl_fixture_file: Path, capsys
+    ):
+        """A typo must not pass for an out-of-class run that exits clean.
+
+        Every eu_ai_act duty is limited to high-risk, so `hihg-risk` would otherwise report
+        four not-applicable results and exit 0 — indistinguishable from a correct run against
+        a system that genuinely is not high-risk.
+        """
+        rc = cli_main(
+            [
+                "check",
+                "--system",
+                str(jsonl_fixture_file),
+                "--pack",
+                "eu_ai_act",
+                "--system-scope",
+                "hihg-risk",
+            ]
+        )
+        assert rc == 1
+        captured = capsys.readouterr()
+        assert "CONFORMANCE REPORT" not in captured.out
+        assert "'hihg-risk'" in captured.err
+        assert "'high-risk'" in captured.err
+
     def test_cli_exits_zero_when_findings_are_unattainable(
         self, jsonl_fixture_file: Path, capsys
     ):
