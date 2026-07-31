@@ -96,15 +96,41 @@ class TestJSONLAdapter:
         assert "artifact_logs_reason_explanation" in caps
         assert sut.partially_present_fields == {}
 
-    def test_partial_presence_excluded_from_capabilities(self, tmp_path: Path):
+    def test_partial_presence_is_a_capability_and_a_trace_gap(self, tmp_path: Path):
+        """A field emitted once is a capability; the record it is missing from is a violation.
+
+        Reporting it as a missing capability would say the system cannot emit a signal it
+        demonstrably did emit, and would put a trace gap beyond the reach of any engine.
+        """
         log_file = tmp_path / "partial.jsonl"
         with log_file.open("w", encoding="utf-8") as f:
             f.write(json.dumps({"a": 1, "b": 2}) + "\n")
             f.write(json.dumps({"a": 1}) + "\n")
 
         sut = JSONLAdapter(log_file)
-        assert sut.capabilities() == {"a"}
+        assert sut.capabilities() == {"a", "b"}
         assert sut.partially_present_fields == {"b": (1, 2)}
+
+    def test_partially_present_signal_is_reported_violated_not_unattainable(
+        self, jsonl_violating_fixture_file: Path
+    ):
+        from reasonsmith.report import evaluate_requirement
+
+        sut = JSONLAdapter(jsonl_violating_fixture_file)
+        req = Requirement(
+            id="req_partial",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="record",
+            spec="Record check",
+            requires=("artifact_logs_reason_explanation",),
+        )
+        result = evaluate_requirement(req, sut)
+        assert result.verdict == Verdict.VIOLATED
+        assert result.strength == Strength.OBSERVED
+        assert result.signals_missing == ()
 
     def test_explicit_declared_capabilities_override(self, jsonl_fixture_file: Path):
         sut = JSONLAdapter(
@@ -274,6 +300,39 @@ class TestObservedEngine:
         assert "Not evaluated" in result.evidence_summary
 
 
+class TestTemporalRequirementsMeasureTheirDuty:
+    """A temporal requirement must fail on a trace that breaches the duty it quotes.
+
+    A spec that only checks that the signal names appear would report SATISFIED at
+    `observed` strength for a deadline nothing measured.
+    """
+
+    def test_ecoa_thirty_day_notice_violated_by_a_late_notification(self):
+        req = load_pack("ecoa").get_requirement("ecoa_reg_b_1002_9_a_1_timing_of_notice")
+        sut = BaseSUT(set(req.requires))
+        records = [
+            {"artifact_logs_decision_record": {"id": "dec-1"},
+             "artifact_logs_notification_latency_days": 12},
+            {"artifact_logs_decision_record": {"id": "dec-2"},
+             "artifact_logs_notification_latency_days": 45},
+        ]
+        result = ObservedEngine.evaluate(req, sut, records)
+        assert result.verdict == Verdict.VIOLATED
+
+        on_time = [dict(r, artifact_logs_notification_latency_days=12) for r in records]
+        assert ObservedEngine.evaluate(req, sut, on_time).verdict == Verdict.SATISFIED
+
+    def test_eu_ai_act_traceability_violated_by_an_unlogged_decision(self):
+        req = load_pack("eu_ai_act").get_requirement("eu_ai_act_art12_2_traceability_monitoring")
+        sut = BaseSUT(set(req.requires))
+        records = [
+            {"artifact_logs_event_log": True, "provenance_model_version": "v1.2.0"},
+            {"provenance_model_version": "v1.2.0"},
+        ]
+        result = ObservedEngine.evaluate(req, sut, records)
+        assert result.verdict == Verdict.VIOLATED
+
+
 class TestRegulationPacks:
     """Tests for EU AI Act, GDPR, and ECOA regulation packs."""
 
@@ -332,8 +391,15 @@ class TestDefinitionOfDoneEndToEnd:
         assert report.counts["total"] == len(pack.requirements)
 
     def test_cli_command_end_to_end(self, jsonl_fixture_file: Path, capsys):
-        rc = cli_main(["check", "--system", str(jsonl_fixture_file), "--pack", "gdpr"])
+        rc = cli_main(["check", "--system", str(jsonl_fixture_file), "--pack", "eu_ai_act"])
         assert rc == 0
         captured = capsys.readouterr()
         assert "CONFORMANCE REPORT" in captured.out
+        assert "eu_ai_act" in captured.out
+
+    def test_cli_exits_nonzero_on_findings(self, jsonl_fixture_file: Path, capsys):
+        """gdpr needs a signal this log never carries, so the run is not clean."""
+        rc = cli_main(["check", "--system", str(jsonl_fixture_file), "--pack", "gdpr"])
+        assert rc == 2
+        captured = capsys.readouterr()
         assert "gdpr" in captured.out

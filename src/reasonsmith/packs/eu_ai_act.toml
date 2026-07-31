@@ -31,11 +31,10 @@ verbatim_text = """In order to ensure a level of traceability of the functioning
    (c) monitoring the operation of high-risk AI systems referred to in Article 26(5)."""
 stakeholder = "regulator"
 formalism = "temporal"
-spec = "always((artifact_logs_event_log >= 0.5) -> (provenance_model_version >= 0.5))"
+spec = "always((artifact_logs_event_log >= 0.5) and (provenance_model_version >= 0.5))"
 requires = [
     "artifact_logs_event_log",
     "provenance_model_version",
-    "stability_signals_artifact_drift",
 ]
 
 [[requirement]]

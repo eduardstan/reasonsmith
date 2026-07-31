@@ -2,6 +2,10 @@
 
 Usage:
     reasonsmith check --system <decisions.jsonl> --pack <pack_name> [--system-name <name>]
+
+Exit codes for `check`: 0 when no requirement is violated or unattainable, 2 when at least
+one is, 1 on a usage or input error. A requirement that was not evaluated is not a finding
+against the system, so it does not change the exit code.
 """
 
 from __future__ import annotations
@@ -12,12 +16,16 @@ import sys
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import list_packs, load_pack
+from reasonsmith.verdict import Strength, Verdict
 
 
 def main(args: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="reasonsmith",
-        description="Audit-grade compliance checking against formal regulation packs.",
+        description=(
+            "Audit-grade compliance checking against formal regulation packs. "
+            "check exits 2 when a requirement is violated or unattainable, 0 otherwise."
+        ),
     )
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")
 
@@ -66,7 +74,13 @@ def main(args: list[str] | None = None) -> int:
             print(report.to_json(indent=2))
         else:
             print(report.render_text())
-        return 0
+
+        findings = [
+            r
+            for r in report.results
+            if r.verdict == Verdict.VIOLATED or r.strength == Strength.UNATTAINABLE
+        ]
+        return 2 if findings else 0
 
     parser.print_help()
     return 1

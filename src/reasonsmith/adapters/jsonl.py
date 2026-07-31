@@ -4,9 +4,11 @@ Point JSONLAdapter at a file or stream of decision records and it is a valid Sys
 Works for a system written in any language that emits a JSONL log trace.
 
 Capability derivation:
-Capabilities are derived honestly from record content. A field present and non-blank in EVERY
-record is a declared signal. A field present in only SOME records is NOT a declared signal;
-partially present fields are recorded in `partially_present_fields` for diagnostic inspection.
+Capabilities are derived honestly from record content. A capability is what the system can
+emit, so a field present and non-blank in at least ONE record is a declared signal — a field
+missing from some of the later records is then a trace violation the engines report, not a
+capability the system lacks. Fields present in only some records are also recorded in
+`partially_present_fields` for diagnostic inspection.
 """
 
 from __future__ import annotations
@@ -99,11 +101,10 @@ class JSONLAdapter(BaseSUT):
                 if _is_present(val):
                     counts[key] = counts.get(key, 0) + 1
 
-        full_capabilities = {k for k, count in counts.items() if count == total}
         partially_present = {
             k: (count, total) for k, count in counts.items() if 0 < count < total
         }
-        return full_capabilities, partially_present
+        return set(counts), partially_present
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         return list(self._records)

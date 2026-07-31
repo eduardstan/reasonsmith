@@ -12,13 +12,14 @@ url = "https://www.consumerfinance.gov/rules-policy/regulations/b/9/"
 id = "ecoa_reg_b_1002_9_a_1_timing_of_notice"
 source_document = "ECOA / Regulation B (12 CFR 1002.9)"
 article_clause = "12 CFR 1002.9(a)(1)"
-verbatim_text = "30 days after receiving a completed application concerning the creditor's approval of, counteroffer to, or adverse action on the application;"
+verbatim_text = """A creditor shall notify an applicant of action taken within:
+(i) 30 days after receiving a completed application concerning the creditor's approval of, counteroffer to, or adverse action on the application;"""
 stakeholder = "affected individual"
 formalism = "temporal"
-spec = "always((artifact_logs_decision_record >= 0.5) -> (artifact_logs_event_log >= 0.5))"
+spec = "always((artifact_logs_decision_record >= 0.5) -> (artifact_logs_notification_latency_days <= 30))"
 requires = [
     "artifact_logs_decision_record",
-    "artifact_logs_event_log",
+    "artifact_logs_notification_latency_days",
 ]
 
 [[requirement]]
