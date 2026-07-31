@@ -1,12 +1,5 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-"""The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, and EU AI Act Art. 12.
-=======
-"""The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, and FDA GMLP for SaMD.
->>>>>>> 3b9300b (feat(reasonsmith): add FDA GMLP SaMD demo (Table 7 row 5))
-=======
-"""The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, and NIST AI RMF monitoring.
->>>>>>> 596f159 (Add NIST AI RMF continuous-monitoring demo (Table 7 row 6))
+"""The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, EU AI Act Art. 13,
+EU AI Act Art. 12, FDA GMLP SaMD, and NIST AI RMF 1.0.
 
 What this module is for:
   Executes end-to-end demonstrations comparing Table 7 evidence records against reason-deletion
@@ -400,11 +393,6 @@ def stability_demo() -> str:
             "  reason with another. Exact inference has nothing to reorder — it gives all of them "
             "in every window."]
     return "\n".join(out)
-
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 # --------------------------------------------------- the key finding, as a page ----
 
 #: Styling for `render_key_finding_html`, carried by the section itself so a report that
@@ -660,16 +648,15 @@ def render_key_finding_html() -> str:
     reasons_deleted = cert_d["reasons_deleted"]
 
     return f"""
-    <section class="key-finding-section" aria-label="Key Empirical Finding">
-      <style>
-        {_KEY_FINDING_CSS}
-      </style>
+    <style>
+{_KEY_FINDING_CSS}
+    </style>
+    <section class="key-finding-section">
       <div class="key-finding-banner">
-        <div class="kf-badge">Key Empirical Finding</div>
-        <div class="kf-title">Form Completeness vs. Reason-Deletion Audit</div>
+        <div class="kf-badge">KEY FINDING</div>
+        <h2 class="kf-title">Form Completeness Does Not Imply Reason Fidelity</h2>
         <div class="kf-subtitle">
-          Demonstrating Table 7 Row 1 (EU AI Act Art. 13) on Decision <code>{rec_id_esc}</code>:
-          A system can be 100% compliant in form while dropping 80% of its decision reasons.
+          {sub_title}
         </div>
       </div>
       <div class="key-finding-grid">
@@ -677,7 +664,7 @@ def render_key_finding_html() -> str:
           <div class="kf-card-header">
             <span class="kf-card-title">Evidence Record</span>
             <span class="badge verdict-satisfied">
-              <span aria-hidden="true">✔</span> {rec_status}
+              <span aria-hidden="true">✓</span> {rec_status}
             </span>
           </div>
           <div class="kf-card-body">

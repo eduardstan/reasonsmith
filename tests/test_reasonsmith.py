@@ -394,9 +394,6 @@ def test_certificate_json_roundtrip_preserves_verdict_and_reasons():
     assert loaded["limits"] == certificate.LIMITS
 
 
-<<<<<<< HEAD
-
-<<<<<<< HEAD
 # ------------------------------------ EU AI Act Art. 13 (Table 7 row 1) ----
 
 
