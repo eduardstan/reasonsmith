@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background Frame -->
+  <rect width="900" height="460" rx="12" fill="url(#bgGrad)" stroke="#334155" stroke-width="2"/>
+  
+  <!-- Header Bar -->
+  <rect x="0" y="0" width="900" height="56" rx="12" fill="#0f172a"/>
+  <rect x="0" y="54" width="900" height="2" fill="#3b82f6"/>
+  <text x="24" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="800" fill="#60a5fa" letter-spacing="1.5">REASONSMITH AUDIT ENGINE</text>
+  <text x="260" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="600" fill="#94a3b8">Interactive Conformance Report &amp; Reason Certificates</text>
+  
+  <!-- Main Grid: Left Side (The Visual Finding), Right Side (Lattice & HTML Report) -->
+  
+  <!-- CARD 1: Key Finding: Form Completeness != Reasoning Fidelity -->
+  <g transform="translate(24, 76)" filter="url(#shadow)">
+    <rect width="416" height="360" rx="8" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+    <text x="20" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f8fafc" letter-spacing="0.5">ECOA/Reg B Decision APP-1042 Finding</text>
+
+    <!-- Subcard A: Form Record -->
+    <rect x="16" y="48" width="384" height="120" rx="6" fill="#1e293b" stroke="#059669" stroke-width="1.5"/>
+    <text x="30" y="74" font-family="ui-monospace, SFMono-Regular, monospace" font-size="12" font-weight="700" fill="#10b981">EVIDENCE RECORD [COMPLETE]</text>
+    <rect x="290" y="58" width="94" height="22" rx="4" fill="#065f46"/>
+    <text x="337" y="73" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" font-weight="700" fill="#a7f3d0" text-anchor="middle">✓ PASS 5/5</text>
+    
+    <text x="30" y="98" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11" fill="#cbd5e1">[x] stored_reasons: C01 (Income insufficient)</text>
+    <text x="30" y="116" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11" fill="#cbd5e1">[x] model_version  [x] score_factors  [x] audit_ids</text>
+    <text x="30" y="134" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" fill="#94a3b8" font-style="italic">Form Check Result: Passes every required field check</text>
+
+    <!-- Divider Arrow -->
+    <text x="208" y="196" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="16" font-weight="900" fill="#ef4444" text-anchor="middle">↓ CONTRADICTION ↓</text>
+
+    <!-- Subcard B: Reason Certificate -->
+    <rect x="16" y="210" width="384" height="134" rx="6" fill="#290e15" stroke="#dc2626" stroke-width="1.5"/>
+    <text x="30" y="236" font-family="ui-monospace, SFMono-Regular, monospace" font-size="12" font-weight="700" fill="#f87171">REASON-DELETION CERTIFICATE [FAIL]</text>
+    <rect x="290" y="220" width="94" height="22" rx="4" fill="#991b1b"/>
+    <text x="337" y="235" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" font-weight="700" fill="#fca5a5" text-anchor="middle">✖ FAIL (k=1)</text>
+
+    <text x="30" y="260" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11" fill="#fca5a5">reasons found: 5   used: 1   DELETED: 4</text>
+    <text x="30" y="280" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11" fill="#ef4444">DELETED: C02 (Credit history too short)</text>
+    <text x="30" y="296" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11" fill="#ef4444">DELETED: C03 (Delinquent obligations)</text>
+    <text x="30" y="324" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" fill="#f87171" font-weight="600">Reasoning Integrity Gap: 4 of 5 reasons dropped by model</text>
+  </g>
+
+  <!-- CARD 2: Strength Lattice & HTML Conformance Report -->
+  <g transform="translate(460, 76)" filter="url(#shadow)">
+    <rect width="416" height="360" rx="8" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+    <text x="20" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f8fafc" letter-spacing="0.5">The Formal Evidence Strength Lattice</text>
+
+    <!-- Lattice Track Graphic -->
+    <rect x="16" y="48" width="384" height="74" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    
+    <!-- Step 1: Unattainable -->
+    <rect x="24" y="66" width="82" height="38" rx="4" fill="#451a03" stroke="#d97706" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="65" y="82" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#fef3c7" text-anchor="middle">⊘ unattainable</text>
+    <text x="65" y="96" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" fill="#d97706" text-anchor="middle">Missing Signals</text>
+
+    <text x="114" y="88" font-family="sans-serif" font-size="12" fill="#64748b">→</text>
+
+    <!-- Step 2: Observed -->
+    <rect x="124" y="66" width="76" height="38" rx="4" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="162" y="82" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#bfdbfe" text-anchor="middle">👁 observed</text>
+    <text x="162" y="96" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" fill="#60a5fa" text-anchor="middle">Trace Monitor</text>
+
+    <text x="208" y="88" font-family="sans-serif" font-size="12" fill="#64748b">→</text>
+
+    <!-- Step 3: Probed -->
+    <rect x="218" y="66" width="74" height="38" rx="4" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="255" y="82" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#94a3b8" text-anchor="middle">🔍 probed</text>
+    <text x="255" y="96" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" fill="#64748b" text-anchor="middle">Replay Test</text>
+
+    <text x="300" y="88" font-family="sans-serif" font-size="12" fill="#64748b">→</text>
+
+    <!-- Step 4: Proved -->
+    <rect x="310" y="66" width="74" height="38" rx="4" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="347" y="82" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#94a3b8" text-anchor="middle">🏆 proved</text>
+    <text x="347" y="96" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" fill="#64748b" text-anchor="middle">Solver Proof</text>
+
+    <!-- HTML Conformance Report Callout -->
+    <text x="20" y="152" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f8fafc" letter-spacing="0.5">Self-Contained HTML Conformance Report</text>
+    
+    <rect x="16" y="164" width="384" height="180" rx="6" fill="#0f172a" stroke="#2563eb" stroke-width="1.5"/>
+    <rect x="16" y="164" width="384" height="28" rx="6" fill="#1e293b"/>
+    <circle cx="32" cy="178" r="4" fill="#ef4444"/>
+    <circle cx="44" cy="178" r="4" fill="#eab308"/>
+    <circle cx="56" cy="178" r="4" fill="#22c55e"/>
+    <text x="70" y="182" font-family="ui-monospace, SFMono-Regular, monospace" font-size="10" fill="#94a3b8">report.html (Network-free, Offline, A4 Printable)</text>
+
+    <text x="30" y="214" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" font-weight="700" fill="#60a5fa">Headline Split (Binding vs Interpretive):</text>
+    <text x="30" y="232" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11" fill="#f8fafc">6 requirements · 4 binding: 2 observed, 2 unattainable</text>
+
+    <rect x="30" y="246" width="356" height="42" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="42" y="262" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#92400e">⊘ UNATTAINABLE AS BUILT (Architectural Gap)</text>
+    <text x="42" y="278" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" fill="#b45309">Missing required capability signals in system architecture</text>
+
+    <rect x="30" y="296" width="356" height="38" rx="4" fill="#fef2f2" stroke="#dc2626" stroke-width="1"/>
+    <text x="42" y="312" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#991b1b">✖ VIOLATED IN TRACE (Runtime Counterexample)</text>
+    <text x="42" y="326" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" fill="#b91c1c">Decision log violated formal temporal/record check</text>
+  </g>
+</svg>

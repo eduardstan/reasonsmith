@@ -86,6 +86,13 @@ def main(args: list[str] | None = None) -> int:
         action="store_true",
         help="Output report in JSON format",
     )
+    check_parser.add_argument(
+        "--html",
+        nargs="?",
+        const="-",
+        default=None,
+        help="Output report in HTML format to FILE or stdout if omitted / '-'",
+    )
 
     parsed = parser.parse_args(args)
 
@@ -110,7 +117,16 @@ def main(args: list[str] | None = None) -> int:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
 
-        if parsed.json:
+        if parsed.html:
+            html_content = report.render_html()
+            if parsed.html == "-":
+                print(html_content)
+            else:
+                with open(parsed.html, "w", encoding="utf-8") as f:
+                    f.write(html_content)
+                if not parsed.json:
+                    print(report.render_text())
+        elif parsed.json:
             print(report.to_json(indent=2))
         else:
             print(report.render_text())

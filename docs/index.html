@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reasonsmith Conformance Report - CreditScoringPipeline</title>
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --color-slate-50: #f8fafc;
+      --color-slate-100: #f1f5f9;
+      --color-slate-200: #e2e8f0;
+      --color-slate-300: #cbd5e1;
+      --color-slate-600: #475569;
+      --color-slate-700: #334155;
+      --color-slate-800: #1e293b;
+      --color-slate-900: #0f172a;
+
+      --color-satisfied-bg: #ecfdf5;
+      --color-satisfied-border: #a7f3d0;
+      --color-satisfied-text: #065f46;
+
+      --color-violated-bg: #fef2f2;
+      --color-violated-border: #fca5a5;
+      --color-violated-text: #991b1b;
+      --color-violated-accent: #dc2626;
+
+      --color-unattainable-bg: #fffbeb;
+      --color-unattainable-border: #fde68a;
+      --color-unattainable-text: #92400e;
+      --color-unattainable-accent: #d97706;
+
+      --color-inconclusive-bg: #f1f5f9;
+      --color-inconclusive-border: #cbd5e1;
+      --color-inconclusive-text: #334155;
+
+      --color-not-applicable-bg: #f8fafc;
+      --color-not-applicable-border: #e2e8f0;
+      --color-not-applicable-text: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-slate-50);
+      color: var(--color-slate-900);
+      line-height: 1.5;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid var(--color-slate-200);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      overflow: hidden;
+    }
+
+    .report-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 2rem;
+      border-bottom: 3px solid #3b82f6;
+    }
+    .brand-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #60a5fa;
+      margin-bottom: 0.25rem;
+    }
+    .main-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .meta-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+    }
+    .meta-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #f8fafc;
+      font-family: var(--font-mono);
+    }
+
+    .headline-banner {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem;
+      border-radius: 6px;
+    }
+    .headline-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #1e40af;
+      margin-bottom: 0.25rem;
+    }
+    .headline-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1e3a8a;
+    }
+
+    .dashboard-section {
+      padding: 0 1.5rem 1.5rem 1.5rem;
+    }
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) {
+      .split-grid { grid-template-columns: 1fr; }
+    }
+    .split-card {
+      border: 1px solid var(--color-slate-200);
+      border-radius: 8px;
+      padding: 1.25rem;
+      background: #fafafa;
+    }
+    .split-card-header {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-slate-200);
+      display: flex;
+      justify-content: space-between;
+      color: var(--color-slate-700);
+    }
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .stat-pill {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 1rem 1.5rem 0.5rem 1.5rem;
+      border-top: 1px solid var(--color-slate-200);
+      color: var(--color-slate-800);
+    }
+    .req-list {
+      padding: 1rem 1.5rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .req-card {
+      border: 1px solid var(--color-slate-200);
+      border-radius: 8px;
+      background: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .req-card.verdict-violated {
+      border: 2px solid var(--color-violated-accent);
+      background: #fffafa;
+    }
+    .req-card.verdict-unattainable {
+      border: 2px dashed var(--color-unattainable-accent);
+      background: #fffdf5;
+    }
+    .req-card.verdict-satisfied {
+      border-left: 4px solid #059669;
+    }
+
+    .req-card-header {
+      padding: 1rem 1.25rem;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--color-slate-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .req-title-group { flex: 1; }
+    .req-id {
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--color-slate-900);
+    }
+    .req-clause {
+      font-size: 0.85rem;
+      color: var(--color-slate-600);
+      margin-left: 0.5rem;
+    }
+    .badge-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .badge-binding { background: #e0e7ff; color: #3730a3; }
+    .badge-interpretive { background: #f3e8ff; color: #6b21a8; }
+    .badge-scope { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+    .verdict-satisfied { background: var(--color-satisfied-bg); color: var(--color-satisfied-text); border: 1px solid var(--color-satisfied-border); }
+    .verdict-violated { background: var(--color-violated-bg); color: var(--color-violated-text); border: 1px solid var(--color-violated-border); }
+    .verdict-unattainable { background: var(--color-unattainable-bg); color: var(--color-unattainable-text); border: 1px dashed var(--color-unattainable-border); }
+    .verdict-inconclusive { background: var(--color-inconclusive-bg); color: var(--color-inconclusive-text); border: 1px solid var(--color-inconclusive-border); }
+    .verdict-not-applicable { background: var(--color-not-applicable-bg); color: var(--color-not-applicable-text); border: 1px solid var(--color-not-applicable-border); }
+
+    .lattice-container {
+      padding: 0.6rem 1.25rem;
+      background: #f1f5f9;
+      border-bottom: 1px solid var(--color-slate-200);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .lattice-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-slate-600);
+      white-space: nowrap;
+    }
+    .lattice-track {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+    .lattice-step {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      color: #94a3b8;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+    }
+    .lattice-step.active-proved { background: #059669; color: #ffffff; border-color: #047857; font-weight: 700; }
+    .lattice-step.active-probed { background: #2563eb; color: #ffffff; border-color: #1d4ed8; font-weight: 700; }
+    .lattice-step.active-observed { background: #3b82f6; color: #ffffff; border-color: #2563eb; font-weight: 700; }
+    .lattice-step.active-unattainable { background: #d97706; color: #ffffff; border-color: #b45309; font-weight: 700; border-style: dashed; }
+    .lattice-step.passed { background: #e2e8f0; color: #334155; }
+    .lattice-arrow { color: #cbd5e1; font-size: 0.75rem; }
+
+    .req-card-body { padding: 1.25rem; }
+    .signal-list { margin-bottom: 0.75rem; font-size: 0.85rem; }
+    .signal-tag {
+      font-family: var(--font-mono);
+      background: #f1f5f9;
+      color: #334155;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      border: 1px solid #e2e8f0;
+      font-size: 0.8rem;
+      display: inline-block;
+      margin: 0.1rem;
+    }
+    .signal-tag.missing { background: #fef3c7; color: #92400e; border-color: #fde68a; font-weight: 600; }
+    .signal-tag.absent { background: #fee2e2; color: #991b1b; border-color: #fca5a5; font-weight: 600; }
+
+    .evidence-summary { font-size: 0.9rem; color: var(--color-slate-700); margin-top: 0.5rem; line-height: 1.5; }
+    .callout-box { margin-top: 1rem; padding: 1rem; border-radius: 6px; font-size: 0.85rem; }
+    .callout-unattainable { background: #fffbeb; border: 1px dashed #fde68a; color: #78350f; }
+    .callout-violated { background: #fef2f2; border: 1px solid #fca5a5; color: #7f1d1d; }
+    .callout-note { font-size: 0.75rem; margin-top: 0.5rem; color: #92400e; font-style: italic; }
+
+    .witness-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+    }
+    .witness-table th, .witness-table td {
+      border: 1px solid var(--color-slate-300);
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+    }
+    .witness-table th { background: #f1f5f9; color: #334155; font-weight: 700; }
+    .witness-table tr:nth-child(even) { background: #f8fafc; }
+
+    .limits-card {
+      margin: 1.5rem;
+      padding: 1.25rem;
+      background: #f8fafc;
+      border: 1px solid var(--color-slate-300);
+      border-radius: 8px;
+    }
+    .limits-header {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-slate-700);
+      margin-bottom: 0.5rem;
+    }
+    .limits-text { font-size: 0.8rem; color: var(--color-slate-600); line-height: 1.6; }
+
+    @media print {
+      body { background: #ffffff; padding: 0; color: #000000; }
+      .container { border: none; box-shadow: none; max-width: 100%; }
+      .report-header { background: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .req-card { break-inside: avoid; border: 1px solid #000000 !important; }
+      .req-card.verdict-violated { border: 2px solid #dc2626 !important; }
+      .req-card.verdict-unattainable { border: 2px dashed #d97706 !important; }
+      .witness-table th, .witness-table td { border-color: #000000 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="report-header">
+      <div class="header-top">
+        <div>
+          <div class="brand-title">reasonsmith audit engine</div>
+          <h1 class="main-title">Conformance Report</h1>
+        </div>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span class="meta-label">System under test</span>
+          <span class="meta-value">CreditScoringPipeline</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Declared Scope</span>
+          <span class="meta-value">undeclared</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Regulation Pack</span>
+          <span class="meta-value">table7</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="headline-banner">
+      <div class="headline-title">Executive Headline Summary</div>
+      <div class="headline-text">6 requirements · 4 binding: 2 unattainable, 2 not applicable · 2 interpretive: 2 unattainable</div>
+    </div>
+
+    <section class="dashboard-section">
+      <div class="split-grid">
+        <div class="split-card">
+          <div class="split-card-header">
+            <span>Binding Duties</span>
+            <span>4 total</span>
+          </div>
+          <div class="pill-group">
+            <span class="stat-pill verdict-unattainable"><span aria-hidden="true">⊘</span> 2 unattainable</span><span class="stat-pill verdict-not-applicable"><span aria-hidden="true">⊝</span> 2 not applicable</span>
+          </div>
+        </div>
+        <div class="split-card">
+          <div class="split-card-header">
+            <span>Interpretive Items</span>
+            <span>2 total</span>
+          </div>
+          <div class="pill-group">
+            <span class="stat-pill verdict-unattainable"><span aria-hidden="true">⊘</span> 2 unattainable</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="section-title">Requirement Findings</h2>
+    <main class="req-list">
+
+        <article class="req-card verdict-not-applicable">
+          <header class="req-card-header">
+            <div class="req-title-group">
+              <span class="req-id">eu_ai_act_art13_transparency</span>
+              <span class="req-clause">(EU AI Act Art. 13)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-binding">Binding</span>
+              <span class="badge badge-scope">Scope: high-risk</span>
+              <span class="badge verdict-not-applicable"><span aria-hidden="true">⊝</span> NOT APPLICABLE</span>
+            </div>
+          </header>
+          <div class="lattice-container">
+            <span class="lattice-label">Strength Lattice:</span>
+            <div class="lattice-track"><span class="lattice-step "><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+          </div>
+          <div class="req-card-body">
+            <div class="signal-list">
+              <strong>Requires Signals:</strong> <span class="signal-tag">model_and_data_version_ids</span><span class="signal-tag">extraction_timestamp</span><span class="signal-tag">dataset_snapshot_hash</span><span class="signal-tag">fidelity_coverage_metrics</span><span class="signal-tag">explanation_scope</span><span class="signal-tag">linkage_from_decision_to_artifact</span>
+            </div>
+            <div class="evidence-summary">Not applicable: requirement scope is &#x27;high-risk&#x27;, but system regulatory class is undeclared. reasonsmith never infers a system&#x27;s regulatory class.</div>
+            
+          </div>
+        </article>
+
+        <article class="req-card verdict-not-applicable">
+          <header class="req-card-header">
+            <div class="req-title-group">
+              <span class="req-id">eu_ai_act_art12_record_keeping</span>
+              <span class="req-clause">(EU AI Act Art. 12)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-binding">Binding</span>
+              <span class="badge badge-scope">Scope: high-risk</span>
+              <span class="badge verdict-not-applicable"><span aria-hidden="true">⊝</span> NOT APPLICABLE</span>
+            </div>
+          </header>
+          <div class="lattice-container">
+            <span class="lattice-label">Strength Lattice:</span>
+            <div class="lattice-track"><span class="lattice-step "><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+          </div>
+          <div class="req-card-body">
+            <div class="signal-list">
+              <strong>Requires Signals:</strong> <span class="signal-tag">automatic_event_logs</span><span class="signal-tag">retention_schedule</span><span class="signal-tag">signer</span>
+            </div>
+            <div class="evidence-summary">Not applicable: requirement scope is &#x27;high-risk&#x27;, but system regulatory class is undeclared. reasonsmith never infers a system&#x27;s regulatory class.</div>
+            
+          </div>
+        </article>
+
+        <article class="req-card verdict-unattainable">
+          <header class="req-card-header">
+            <div class="req-title-group">
+              <span class="req-id">gdpr_art22_meaningful_information</span>
+              <span class="req-clause">(GDPR Art. 22 (and Rec. 71))</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-binding">Binding</span>
+              
+              <span class="badge verdict-unattainable"><span aria-hidden="true">⊘</span> UNATTAINABLE</span>
+            </div>
+          </header>
+          <div class="lattice-container">
+            <span class="lattice-label">Strength Lattice:</span>
+            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+          </div>
+          <div class="req-card-body">
+            <div class="signal-list">
+              <strong>Requires Signals:</strong> <span class="signal-tag">per_decision_reason_string</span><span class="signal-tag">feature_to_named_concept_mapping</span><span class="signal-tag">dpia_cross_reference</span>
+            </div>
+            <div class="evidence-summary">Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for dpia_cross_reference, feature_to_named_concept_mapping, per_decision_reason_string, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.</div>
+            <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">dpia_cross_reference</span><span class="signal-tag missing">feature_to_named_concept_mapping</span><span class="signal-tag missing">per_decision_reason_string</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
+          </div>
+        </article>
+
+        <article class="req-card verdict-unattainable">
+          <header class="req-card-header">
+            <div class="req-title-group">
+              <span class="req-id">ecoa_reg_b_adverse_action</span>
+              <span class="req-clause">(ECOA / Reg B 12 CFR 1002.9)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-binding">Binding</span>
+              
+              <span class="badge verdict-unattainable"><span aria-hidden="true">⊘</span> UNATTAINABLE</span>
+            </div>
+          </header>
+          <div class="lattice-container">
+            <span class="lattice-label">Strength Lattice:</span>
+            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+          </div>
+          <div class="req-card-body">
+            <div class="signal-list">
+              <strong>Requires Signals:</strong> <span class="signal-tag">stored_reasons_per_decision</span><span class="signal-tag">model_version</span><span class="signal-tag">score_factors</span><span class="signal-tag">audit_ids</span><span class="signal-tag">retention_for_regulatory_lookback</span>
+            </div>
+            <div class="evidence-summary">Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for audit_ids, model_version, retention_for_regulatory_lookback, score_factors, stored_reasons_per_decision, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.</div>
+            <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">audit_ids</span><span class="signal-tag missing">model_version</span><span class="signal-tag missing">retention_for_regulatory_lookback</span><span class="signal-tag missing">score_factors</span><span class="signal-tag missing">stored_reasons_per_decision</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
+          </div>
+        </article>
+
+        <article class="req-card verdict-unattainable">
+          <header class="req-card-header">
+            <div class="req-title-group">
+              <span class="req-id">fda_gmlp_samd</span>
+              <span class="req-clause">(FDA GMLP agency transparency guidance)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-interpretive">Interpretive</span>
+              
+              <span class="badge verdict-unattainable"><span aria-hidden="true">⊘</span> UNATTAINABLE</span>
+            </div>
+          </header>
+          <div class="lattice-container">
+            <span class="lattice-label">Strength Lattice:</span>
+            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+          </div>
+          <div class="req-card-body">
+            <div class="signal-list">
+              <strong>Requires Signals:</strong> <span class="signal-tag">design_history_links</span><span class="signal-tag">verification_logs</span><span class="signal-tag">change_control</span>
+            </div>
+            <div class="evidence-summary">Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for change_control, design_history_links, verification_logs, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.</div>
+            <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">change_control</span><span class="signal-tag missing">design_history_links</span><span class="signal-tag missing">verification_logs</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
+          </div>
+        </article>
+
+        <article class="req-card verdict-unattainable">
+          <header class="req-card-header">
+            <div class="req-title-group">
+              <span class="req-id">nist_ai_rmf_risk_evidence</span>
+              <span class="req-clause">(NIST AI RMF 1.0)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-interpretive">Interpretive</span>
+              
+              <span class="badge verdict-unattainable"><span aria-hidden="true">⊘</span> UNATTAINABLE</span>
+            </div>
+          </header>
+          <div class="lattice-container">
+            <span class="lattice-label">Strength Lattice:</span>
+            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+          </div>
+          <div class="req-card-body">
+            <div class="signal-list">
+              <strong>Requires Signals:</strong> <span class="signal-tag">continuous_monitoring_logs</span><span class="signal-tag">metric_thresholds_and_alerts</span><span class="signal-tag">reviews_and_sign_offs</span><span class="signal-tag">incident_tickets</span>
+            </div>
+            <div class="evidence-summary">Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for continuous_monitoring_logs, incident_tickets, metric_thresholds_and_alerts, reviews_and_sign_offs, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.</div>
+            <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">continuous_monitoring_logs</span><span class="signal-tag missing">incident_tickets</span><span class="signal-tag missing">metric_thresholds_and_alerts</span><span class="signal-tag missing">reviews_and_sign_offs</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
+          </div>
+        </article>
+    </main>
+
+    <section class="limits-card">
+      <h3 class="limits-header">Limits of this report</h3>
+      <p class="limits-text">This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.</p>
+    </section>
+  </div>
+</body>
+</html>

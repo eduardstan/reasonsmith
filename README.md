@@ -4,6 +4,11 @@
 [![Python >= 3.11](https://img.shields.io/badge/python->=3.11-blue.svg)](https://www.python.org/)
 [![MIT licence](https://img.shields.io/github/license/eduardstan/reasonsmith)](https://github.com/eduardstan/reasonsmith/blob/main/LICENSE)
 
+[![Reasonsmith Conformance & Reason-Deletion Visual Report](docs/report-preview.svg)](https://eduardstan.github.io/reasonsmith/)
+
+> [!TIP]
+> **Live Interactive Report:** View the self-contained HTML conformance report live on GitHub Pages: [**eduardstan.github.io/reasonsmith**](https://eduardstan.github.io/reasonsmith/) *(generated from commit `e6ff65c`)*.
+
 `reasonsmith` turns legal reason-giving duties into machine-checkable evidence records and reason-deletion certificates. Given a decision, the symbolic artifact behind it, and an applicable regulatory duty, it evaluates structural record completeness and attributes dropped reasons by comparing actual engine behavior against ground-truth exact inference.
 
 ## Key Finding: Form Completeness Does Not Imply Reason Fidelity
@@ -126,12 +131,12 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 - **The CLI (`cli.py`):** Four packs ship — Table 7, EU AI Act, GDPR, ECOA/Reg B — and `reasonsmith.cli` runs one against a JSONL decision log:
 
   ```sh
-  python -m reasonsmith.cli check --system decisions.jsonl --pack ecoa [--json]
-  python -m reasonsmith.cli check --system decisions.jsonl --pack eu_ai_act --system-scope high-risk
+  python -m reasonsmith.cli check --system decisions.jsonl --pack ecoa [--json] [--html report.html]
+  python -m reasonsmith.cli check --system decisions.jsonl --pack eu_ai_act --system-scope high-risk --html report.html
   ```
 
-  It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise. Unattainable, not applicable and not evaluated are findings to read in the report, not breaches, so none of them changes the exit code. There is no report renderer beyond text/JSON. The CLI takes no capability declaration: it reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system. To declare them instead, construct `JSONLAdapter(path, declared_capabilities={...})` in Python.
-- **Machine-Readable Output:** Records, certificates, and reports serialize to dicts (`to_dict()`) and JSON (`to_json(indent=None)`). Each carries the same facts as its text rendering, including its missing-field report and its own limits, so a downstream consumer cannot read a partial document as a complete one. Values outside JSON's own types are stringified rather than raising.
+  It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise. Unattainable, not applicable and not evaluated are findings to read in the report, not breaches, so none of them changes the exit code. Reports render to plain text, structured JSON (`--json`), or a self-contained offline HTML report (`--html FILE`). The CLI takes no capability declaration: it reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system. To declare them instead, construct `JSONLAdapter(path, declared_capabilities={...})` in Python.
+- **Machine-Readable & Visual HTML Output:** Records, certificates, and reports serialize to dicts (`to_dict()`), JSON (`to_json(indent=None)`), and self-contained HTML (`render_html()`). Each carries the same facts as its text rendering, including its missing-field report and its own limits, so a downstream consumer cannot read a partial document as a complete one. The HTML report opens from any `file://` path with zero network dependencies, presents the evidence strength lattice, splits binding vs interpretive duties, highlights counterexample trace witnesses for violations, and visually distinguishes unattainable architectural gaps from runtime violations.
 - **Dependencies & PyPI:** `nesyarena` supplies ground-program IR, proof enumeration, and exact WMC (pinned to `nesyarena==0.1.0` on PyPI in `pyproject.toml`); `pip install -e ".[dev]"` in a venv is the single install path. `rtamt`, which supplies STL temporal monitoring, is a declared runtime dependency of `reasonsmith`. `torch`, by contrast, is an optional dependency of `nesyarena` (~1GB) and is deliberately not a declared dependency of `reasonsmith` — it was installed and measured in a separate environment, recorded in [RESULTS.md](RESULTS.md).
 
 ### Summary of Empirical Findings
