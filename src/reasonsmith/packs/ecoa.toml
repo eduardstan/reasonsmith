@@ -23,23 +23,9 @@ requires = [
 ]
 
 [[requirement]]
-id = "ecoa_reg_b_1002_9_a_2_specific_reasons"
+id = "ecoa_reg_b_1002_9_a_2_written_statement"
 source_document = "ECOA / Regulation B (12 CFR 1002.9)"
 article_clause = "12 CFR 1002.9(a)(2)"
-verbatim_text = "The statement of reasons for adverse action required by paragraph (a)(2)(i) of this section must be specific and indicate the principal reason(s) for the adverse action."
-stakeholder = "affected individual"
-formalism = "record"
-spec = "Specific principal reasons provided for adverse decisions."
-requires = [
-    "artifact_logs_reason_explanation",
-    "provenance_model_version",
-    "scope_statements_local_vs_global",
-]
-
-[[requirement]]
-id = "ecoa_reg_b_1002_9_b_2_written_statement"
-source_document = "ECOA / Regulation B (12 CFR 1002.9)"
-article_clause = "12 CFR 1002.9(b)(2)"
 verbatim_text = """A notification given to an applicant when adverse action is taken shall be in writing and shall contain a statement of the action taken; the name and address of the creditor; a statement of the provisions of section 701(a) of the Act; the name and address of the Federal agency that administers compliance with respect to the creditor; and either:
 (i) A statement of specific reasons for the action taken;"""
 stakeholder = "affected individual"
@@ -49,4 +35,18 @@ requires = [
     "artifact_logs_reason_explanation",
     "artifact_logs_decision_record",
     "provenance_model_version",
+]
+
+[[requirement]]
+id = "ecoa_reg_b_1002_9_b_2_specific_reasons"
+source_document = "ECOA / Regulation B (12 CFR 1002.9)"
+article_clause = "12 CFR 1002.9(b)(2)"
+verbatim_text = "The statement of reasons for adverse action required by paragraph (a)(2)(i) of this section must be specific and indicate the principal reason(s) for the adverse action."
+stakeholder = "affected individual"
+formalism = "record"
+spec = "Specific principal reasons provided for adverse decisions."
+requires = [
+    "artifact_logs_reason_explanation",
+    "provenance_model_version",
+    "scope_statements_local_vs_global",
 ]
