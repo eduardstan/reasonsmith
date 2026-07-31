@@ -126,6 +126,8 @@ class TestJSONLAdapter:
             formalism="record",
             spec="Record check",
             requires=("artifact_logs_reason_explanation",),
+            binding=True,
+            scope="",
         )
         result = evaluate_requirement(req, sut)
         assert result.verdict == Verdict.VIOLATED
@@ -147,6 +149,8 @@ class TestJSONLAdapter:
             formalism="record",
             spec="Record check",
             requires=("scope_statements_explanation_scope",),
+            binding=True,
+            scope="",
         )
         result = evaluate_requirement(req, sut)
         assert result.strength == Strength.UNATTAINABLE
@@ -239,6 +243,8 @@ class TestRecordEngine:
             formalism="record",
             spec="Record check",
             requires=("provenance_model_version", "artifact_logs_event_log"),
+            binding=True,
+            scope="",
         )
         records = list(sut.decisions())
         result = RecordEngine.evaluate(req, sut, records)
@@ -259,6 +265,8 @@ class TestRecordEngine:
             formalism="record",
             spec="Record check",
             requires=("provenance_model_version", "artifact_logs_reason_explanation"),
+            binding=True,
+            scope="",
         )
         records = list(sut.decisions())
         result = RecordEngine.evaluate(req, sut, records)
@@ -281,6 +289,8 @@ class TestObservedEngine:
             formalism="temporal",
             spec="always((signal_a >= 0.5) -> (signal_b >= 0.5))",
             requires=("signal_a", "signal_b"),
+            binding=True,
+            scope="",
         )
         records = [
             {"signal_a": True, "signal_b": True},
@@ -301,6 +311,8 @@ class TestObservedEngine:
             formalism="temporal",
             spec="(signal_a >= 0.5) -> (signal_b >= 0.5)",
             requires=("signal_a", "signal_b"),
+            binding=True,
+            scope="",
         )
         records = [
             {"signal_a": True, "signal_b": True, "id": 0},
@@ -330,6 +342,8 @@ class TestObservedEngine:
             formalism="temporal",
             spec="always(signal_a >= 0.5)",
             requires=("signal_a",),
+            binding=True,
+            scope="",
         )
         result = ObservedEngine.evaluate(req, sut, records)
         assert result.verdict == Verdict.INCONCLUSIVE
@@ -350,6 +364,8 @@ class TestObservedEngine:
             formalism="temporal",
             spec="always(signal_a >= 0.5)",
             requires=("signal_a",),
+            binding=True,
+            scope="",
         )
         records = [{"signal_a": True}, {"signal_a": float("nan")}]
         result = ObservedEngine.evaluate(req, sut, records)
@@ -381,6 +397,8 @@ class TestObservedEngine:
             formalism="temporal",
             spec=spec,
             requires=("signal_a", "signal_b"),
+            binding=True,
+            scope="",
         )
         result = ObservedEngine.evaluate(req, sut, [{"signal_b": 0.2}, {"signal_b": 0.3}])
         assert result.verdict == Verdict.INCONCLUSIVE
@@ -398,6 +416,8 @@ class TestObservedEngine:
             formalism="temporal",
             spec="invalid syntax !@#$%",
             requires=("signal_a",),
+            binding=True,
+            scope="",
         )
         records = [{"signal_a": True}, {"signal_a": True}]
         result = ObservedEngine.evaluate(req, sut, records)
@@ -573,15 +593,112 @@ class TestDefinitionOfDoneEndToEnd:
         assert report.counts["total"] == len(pack.requirements)
 
     def test_cli_command_end_to_end(self, jsonl_fixture_file: Path, capsys):
-        rc = cli_main(["check", "--system", str(jsonl_fixture_file), "--pack", "eu_ai_act"])
+        rc = cli_main(
+            [
+                "check",
+                "--system",
+                str(jsonl_fixture_file),
+                "--pack",
+                "eu_ai_act",
+                "--system-scope",
+                "high-risk",
+            ]
+        )
         assert rc == 0
         captured = capsys.readouterr()
         assert "CONFORMANCE REPORT" in captured.out
         assert "eu_ai_act" in captured.out
 
-    def test_cli_exits_nonzero_on_findings(self, jsonl_fixture_file: Path, capsys):
-        """gdpr needs a signal this log never carries, so the run is not clean."""
+    def test_cli_exits_zero_when_every_requirement_is_not_applicable(
+        self, jsonl_fixture_file: Path, capsys
+    ):
+        """Not declaring a regulatory class is not a breach, so it must not fail the build.
+
+        Every eu_ai_act duty is limited to high-risk systems. With no `--system-scope` the
+        tool will not infer the class, so it reports each one not applicable and says so —
+        but nothing was found against the system, so the run exits 0.
+        """
+        rc = cli_main(["check", "--system", str(jsonl_fixture_file), "--pack", "eu_ai_act"])
+        assert rc == 0
+        captured = capsys.readouterr()
+        assert "NOT APPLICABLE" in captured.out
+        assert "declared scope: undeclared" in captured.out
+
+    def test_cli_rejects_a_scope_outside_the_vocabulary(
+        self, jsonl_fixture_file: Path, capsys
+    ):
+        """A typo must not pass for an out-of-class run that exits clean.
+
+        Every eu_ai_act duty is limited to high-risk, so `hihg-risk` would otherwise report
+        four not-applicable results and exit 0 — indistinguishable from a correct run against
+        a system that genuinely is not high-risk.
+        """
+        rc = cli_main(
+            [
+                "check",
+                "--system",
+                str(jsonl_fixture_file),
+                "--pack",
+                "eu_ai_act",
+                "--system-scope",
+                "hihg-risk",
+            ]
+        )
+        assert rc == 1
+        captured = capsys.readouterr()
+        assert "CONFORMANCE REPORT" not in captured.out
+        assert "'hihg-risk'" in captured.err
+        assert "'high-risk'" in captured.err
+
+    def test_cli_accepts_a_known_class_the_pack_does_not_target(
+        self, jsonl_fixture_file: Path, capsys
+    ):
+        """limited-risk is a real class, so the run answers rather than refusing."""
+        rc = cli_main(
+            [
+                "check",
+                "--system",
+                str(jsonl_fixture_file),
+                "--pack",
+                "eu_ai_act",
+                "--system-scope",
+                "limited-risk",
+            ]
+        )
+        assert rc == 0
+        captured = capsys.readouterr()
+        assert "declared scope: limited-risk" in captured.out
+        assert "NOT APPLICABLE" in captured.out
+
+    def test_cli_exits_zero_when_findings_are_unattainable(
+        self, jsonl_fixture_file: Path, capsys
+    ):
+        """gdpr needs a signal this log never carries: a finding to read, not a breach."""
         rc = cli_main(["check", "--system", str(jsonl_fixture_file), "--pack", "gdpr"])
-        assert rc == 2
+        assert rc == 0
         captured = capsys.readouterr()
         assert "gdpr" in captured.out
+        assert "UNATTAINABLE" in captured.out
+
+    def test_cli_exits_nonzero_on_a_violation(self, tmp_path: Path, capsys):
+        """Only a violation fails the run, and it is the violation that is reported."""
+        log_file = tmp_path / "violating_gdpr.jsonl"
+        records = [
+            {
+                "artifact_logs_decision_record": {"id": "dec-1"},
+                "provenance_active_exceptions": ["none"],
+            },
+            {
+                "artifact_logs_decision_record": {"id": "dec-2"},
+                "provenance_active_exceptions": [],  # blank -> absent from this record
+            },
+        ]
+        with log_file.open("w", encoding="utf-8") as f:
+            for r in records:
+                f.write(json.dumps(r) + "\n")
+
+        rc = cli_main(["check", "--system", str(log_file), "--pack", "gdpr"])
+        assert rc == 2
+        captured = capsys.readouterr()
+        assert "violated" in captured.out
+        assert "provenance_active_exceptions" in captured.out

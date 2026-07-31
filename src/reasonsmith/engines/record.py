@@ -37,6 +37,8 @@ class RecordEngine:
                     "Not evaluated: the decision trace is empty, so nothing was observed. "
                     "An empty trace is not evidence that the requirement holds."
                 ),
+                binding=req.binding,
+                scope=req.scope,
             )
 
         absent = sorted(
@@ -64,6 +66,8 @@ class RecordEngine:
                     "signals_absent_from_trace": absent,
                     "records_observed": len(records),
                 },
+                binding=req.binding,
+                scope=req.scope,
             )
 
         return RequirementResult(
@@ -78,4 +82,6 @@ class RecordEngine:
                 "supplied; nothing here extends the claim to decisions not in it."
             ),
             details={"records_observed": len(records)},
+            binding=req.binding,
+            scope=req.scope,
         )

@@ -73,11 +73,18 @@ class Strength(Enum):
 
 
 class Verdict(Enum):
-    """Verdict on whether a requirement is satisfied."""
+    """Verdict on whether a requirement is satisfied.
+
+    NOT_APPLICABLE is a statement about the duty's reach, not about the system: the
+    requirement is limited to a regulatory class the system is not declared to be in, so it
+    was never checked. It is deliberately distinct from INCONCLUSIVE, which says a duty that
+    does reach the system was not resolved.
+    """
 
     SATISFIED = "satisfied"
     VIOLATED = "violated"
     INCONCLUSIVE = "inconclusive"
+    NOT_APPLICABLE = "not_applicable"
 
     def __str__(self) -> str:
         return self.value
@@ -86,7 +93,7 @@ class Verdict(Enum):
     def parse(cls, value: str | Verdict) -> Verdict:
         if isinstance(value, cls):
             return value
-        val_lower = str(value).strip().lower()
+        val_lower = str(value).strip().lower().replace(" ", "_")
         for member in cls:
             if member.value == val_lower:
                 return member
@@ -99,10 +106,15 @@ def combine_verdicts(verdicts: Iterable[Verdict | str]) -> Verdict:
     Rules:
       1. If any verdict is VIOLATED, the combined result is VIOLATED.
       2. Else if any verdict is INCONCLUSIVE, the combined result is INCONCLUSIVE.
-      3. Else if all verdicts are SATISFIED, the combined result is SATISFIED.
-      4. An empty collection returns INCONCLUSIVE.
+      3. Else if every verdict is NOT_APPLICABLE, the combined result is NOT_APPLICABLE.
+      4. Else all remaining verdicts are SATISFIED or NOT_APPLICABLE, and the combined
+         result is SATISFIED.
+      5. An empty collection returns INCONCLUSIVE.
 
-    Rule 4 is deliberately *not* vacuous truth. Logically an empty conjunction is
+    Rule 3 stops one out-of-scope sub-property turning the whole into a claim that nothing
+    applies; rule 4 lets the sub-properties that *were* checked carry the verdict.
+
+    Rule 5 is deliberately *not* vacuous truth. Logically an empty conjunction is
     true, but a conformance verdict is a claim about evidence, and having checked
     nothing is not evidence that a requirement holds. Returning SATISFIED here
     would let a run that evaluated no sub-property report as compliant, which is
@@ -115,6 +127,8 @@ def combine_verdicts(verdicts: Iterable[Verdict | str]) -> Verdict:
         return Verdict.VIOLATED
     if any(v == Verdict.INCONCLUSIVE for v in v_list):
         return Verdict.INCONCLUSIVE
+    if all(v == Verdict.NOT_APPLICABLE for v in v_list):
+        return Verdict.NOT_APPLICABLE
     return Verdict.SATISFIED
 
 

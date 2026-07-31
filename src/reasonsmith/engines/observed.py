@@ -165,6 +165,8 @@ class ObservedEngine:
                 signals_required=tuple(req.requires),
                 evidence_summary=f"Not evaluated: {reason}.",
                 details={"records_observed": len(records)},
+                binding=req.binding,
+                scope=req.scope,
             )
 
         # Extract variable names from formula or req.requires
@@ -223,6 +225,8 @@ class ObservedEngine:
                     "value is not a measurement, so the monitor was not run over this trace."
                 ),
                 details={"signals_unmeasured_in_trace": dict(sorted(unmeasured.items()))},
+                binding=req.binding,
+                scope=req.scope,
             )
 
         # Construct rtamt STL specification
@@ -247,6 +251,8 @@ class ObservedEngine:
                     f"{req.spec!r}: {exc}"
                 ),
                 details={"error": str(exc)},
+                binding=req.binding,
+                scope=req.scope,
             )
 
         # Check evaluations for violations (robustness < 0)
@@ -272,6 +278,8 @@ class ObservedEngine:
                     "violation_step_indices": violation_indices,
                     "evaluation_scores": res,
                 },
+                binding=req.binding,
+                scope=req.scope,
             )
 
         return RequirementResult(
@@ -285,4 +293,6 @@ class ObservedEngine:
                 "satisfied across all time steps."
             ),
             details={"records_observed": len(records), "evaluation_scores": res},
+            binding=req.binding,
+            scope=req.scope,
         )
