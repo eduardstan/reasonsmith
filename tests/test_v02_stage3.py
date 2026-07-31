@@ -11,6 +11,7 @@ import pytest
 import z3
 
 from reasonsmith.adapters.rules import RulesAdapter
+from reasonsmith.engines import proved
 from reasonsmith.engines.proved import ProvedEngine
 from reasonsmith.report import check_conformance, evaluate_requirement
 from reasonsmith.rulelang import UnsupportedConstructError, preprocess_spec
@@ -415,17 +416,68 @@ def test_declared_sorts_never_become_hidden_input_constraints():
     assert divided.decide({"x": 5})["half"] == 2.5
 
 
-def test_encoding_disagreeing_with_the_interpreter_is_not_a_proof():
-    """Z3 and Python disagree on `%` with a negative divisor; the witness check must catch it."""
-    sut = RulesAdapter(
-        rules=["y = x % -3"], variables={"x": "int", "y": "int"}, constraints=["x == 7"]
-    )
+def test_modulo_follows_python_semantics_for_any_divisor():
+    """Z3's `mod` is non-negative; Python's `%` takes the sign of the divisor. Encode Python's."""
+    literal = RulesAdapter(rules=["r = x % -3"], variables={"x": "int", "r": "int"})
+    res = evaluate_requirement(_logical_req(spec="r >= 0", requires=("x", "r")), literal)
+    assert res.verdict == Verdict.VIOLATED
+    assert literal.decide({"x": 1})["r"] == -2
+    assert literal.decide(res.details["counterexample"])["r"] < 0
 
-    res = evaluate_requirement(_logical_req(spec="y == 1", requires=("x", "y")), sut)
+    variable = RulesAdapter(
+        rules=["r = x % y"],
+        variables={"x": "int", "y": "int", "r": "int"},
+        constraints=["y < 0"],
+    )
+    res = evaluate_requirement(_logical_req(spec="r >= 0", requires=("x", "y", "r")), variable)
+    assert res.verdict != Verdict.SATISFIED
+    assert variable.decide({"x": 1, "y": -3})["r"] == -2
+
+    positive = RulesAdapter(
+        rules=["r = x % 3"], variables={"x": "int", "r": "int"}, constraints=["x >= 0"]
+    )
+    res = evaluate_requirement(_logical_req(spec="r >= 0 and r < 3", requires=("x", "r")), positive)
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+
+
+def test_encoding_disagreeing_with_the_interpreter_is_not_a_proof(monkeypatch):
+    """If the two implementations of the language ever part ways, no verdict may be read off."""
+    sut = RulesAdapter(rules=["y = x + 1"], variables={"x": "int", "y": "int"})
+
+    def wrong_interpreter(stmts, env):
+        env["y"] = 999
+
+    monkeypatch.setattr(proved, "execute_statements", wrong_interpreter)
+
+    res = evaluate_requirement(_logical_req(spec="y > x", requires=("x", "y")), sut)
     assert res.verdict == Verdict.INCONCLUSIVE
     assert res.strength is None
     assert "does not agree with the declared logic" in res.evidence_summary
-    assert sut.decide({"x": 7})["y"] == -2
+    assert "encoding_mismatch" in res.details
+
+
+def test_rules_undefined_on_the_witness_are_named_as_such():
+    """A divisor the solver may zero is a missing constraint, not an encoding disagreement."""
+    sut = RulesAdapter(
+        rules=["ratio = a / b"], variables={"a": "real", "b": "real", "ratio": "real"}
+    )
+
+    res = evaluate_requirement(_logical_req(spec="ratio == ratio", requires=("a", "b")), sut)
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+    assert "rules_undefined_on_witness" in res.details
+    assert "does not agree with the declared logic" not in res.evidence_summary
+    assert "`constraints`" in res.evidence_summary
+
+    guarded = RulesAdapter(
+        rules=["ratio = a / b"],
+        variables={"a": "real", "b": "real", "ratio": "real"},
+        constraints=["b >= 1", "a >= 0"],
+    )
+    res = evaluate_requirement(_logical_req(spec="ratio >= 0", requires=("a", "b")), guarded)
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
 
 
 def test_division_is_true_division_on_both_sides():

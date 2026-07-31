@@ -100,6 +100,30 @@ class _Scope:
         self.current = dict(snapshot)
 
 
+def _to_real(expr: Any) -> Any:
+    """Widen a Z3 Int expression to Real, leaving every other sort alone."""
+    if isinstance(expr, z3.ArithRef) and expr.is_int():
+        return z3.ToReal(expr)
+    return expr
+
+
+def _python_mod(left: Any, right: Any) -> Any:
+    """Encode Python's floor-based `%`, which Z3's `mod` matches only for a positive divisor."""
+    both_int = (
+        isinstance(left, z3.ArithRef)
+        and left.is_int()
+        and isinstance(right, z3.ArithRef)
+        and right.is_int()
+    )
+    if both_int and z3.is_int_value(right) and right.as_long() > 0:
+        return left % right
+
+    floor_quotient = z3.ToInt(_to_real(left) / _to_real(right))
+    if both_int:
+        return left - right * floor_quotient
+    return _to_real(left) - _to_real(right) * z3.ToReal(floor_quotient)
+
+
 def _z3_promote(a: Any, b: Any) -> tuple[Any, Any]:
     """Promote Z3 Int to Real if one operand is Real and the other is Int."""
     if isinstance(a, z3.ArithRef) and isinstance(b, z3.ArithRef):
@@ -152,13 +176,9 @@ def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
         if isinstance(node.op, ast.Mult):
             return left * right
         if isinstance(node.op, ast.Div):
-            if isinstance(left, z3.ArithRef) and left.is_int():
-                left = z3.ToReal(left)
-            if isinstance(right, z3.ArithRef) and right.is_int():
-                right = z3.ToReal(right)
-            return left / right
+            return _to_real(left) / _to_real(right)
         if isinstance(node.op, ast.Mod):
-            return left % right
+            return _python_mod(left, right)
         raise UnsupportedConstructError(f"Unsupported binary operator: {type(node.op).__name__}")
 
     if isinstance(node, ast.BoolOp):
@@ -361,18 +381,22 @@ def _values_agree(encoded: Any, computed: Any) -> bool:
     return encoded == computed
 
 
-def _encoding_matches_declared_logic(
+def _check_encoding_against_interpreter(
     rules: list[str], scope: _Scope, model: z3.ModelRef
-) -> tuple[bool, str]:
-    """Check the Z3 encoding against the reference interpreter on one witness the solver chose."""
+) -> Optional[tuple[str, str]]:
+    """Check the Z3 encoding against the reference interpreter on one witness the solver chose.
+
+    Returns `None` when they agree, else the kind of divergence and a message naming the witness.
+    """
     env = _model_inputs(scope, model)
+    witness = dict(env)
     try:
         for r_text in rules:
             execute_statements(ast.parse(r_text, mode="exec").body, env)
     except Exception as exc:
-        return False, (
-            f"the reference interpreter could not execute the declared logic on the solver's own "
-            f"model {env}: {exc}"
+        return "rules_undefined_on_witness", (
+            f"the declared rules are undefined on the inputs {witness}, which the solver is free "
+            f"to choose: {exc}. State the invariant the rules rely on in `constraints`"
         )
 
     for name, const in sorted(scope.current.items()):
@@ -382,11 +406,11 @@ def _encoding_matches_declared_logic(
         if encoded is None:
             continue
         if not _values_agree(encoded, env[name]):
-            return False, (
-                f"on inputs {_model_inputs(scope, model)} the solver's model has "
-                f"{name}={encoded!r} while the declared rules compute {name}={env[name]!r}"
+            return "encoding_mismatch", (
+                f"on inputs {witness} the solver's model has {name}={encoded!r} "
+                f"while the declared rules compute {name}={env[name]!r}"
             )
-    return True, ""
+    return None
 
 
 def _verify_counterexample(
@@ -531,14 +555,22 @@ class ProvedEngine:
                 {"solver": "z3", "reason_unknown": premise_reason},
             )
 
-        faithful, mismatch = _encoding_matches_declared_logic(rules, scope, premise_model)
-        if not faithful:
-            return not_evaluated(
-                "Not evaluated: the solver encoding does not agree with the declared logic — "
-                f"{mismatch}. A property proved about an encoding the system does not implement "
-                "is not evidence about the system.",
-                {"solver": "z3", "encoding_mismatch": mismatch},
-            )
+        divergence = _check_encoding_against_interpreter(rules, scope, premise_model)
+        if divergence is not None:
+            kind, message = divergence
+            if kind == "rules_undefined_on_witness":
+                summary = (
+                    f"Not evaluated: {message}. Until then the solver reasons over inputs the "
+                    "system has no defined behaviour for, and nothing proved that way is "
+                    "evidence about the system."
+                )
+            else:
+                summary = (
+                    "Not evaluated: the solver encoding does not agree with the declared logic — "
+                    f"{message}. A property proved about an encoding the system does not "
+                    "implement is not evidence about the system."
+                )
+            return not_evaluated(summary, {"solver": "z3", kind: message})
 
         try:
             solver.add(z3.Not(spec_z3))
