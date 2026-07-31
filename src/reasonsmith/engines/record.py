@@ -1,12 +1,8 @@
 """Record engine for reasonsmith v0.2.
 
-Moves evidence.py's completeness logic behind the Stage 1 engine interface, reporting at
-`observed` strength.
-
-Behavior preserved:
-- Keys outside requirement's duty row rejected.
-- Empty or blank values treated as absent.
-- Non-Table-7 material isolated in attachments.
+Checks that every signal a requirement names carries a non-blank value in every observed
+decision record. An empty trace is not evaluated; a missing value is an observed violation.
+The engine does not validate or reorganize fields outside the requirement.
 """
 
 from __future__ import annotations

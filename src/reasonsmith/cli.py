@@ -1,7 +1,8 @@
 """Command-line interface for reasonsmith v0.2.
 
 Usage:
-    reasonsmith check --system <decisions.jsonl> --pack <pack_name> [--system-name <name>]
+    python -m reasonsmith.cli check --system <decisions.jsonl> --pack <pack_name>
+        [--system-name <name>]
 
 Exit codes for `check`: 0 when no requirement is violated or unattainable, 2 when at least
 one is, 1 on a usage or input error. A requirement that was not evaluated is not a finding

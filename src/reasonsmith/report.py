@@ -10,8 +10,9 @@ Two properties this module exists to protect, both inherited from v0.1:
   no engine in this build covers the requirement's formalism, or because the decision trace
   was empty. A requirement that was never evaluated is reported as never evaluated; it is
   never quietly counted as satisfied, and it is never dropped from the report.
-* **The unattainable analysis never runs the system.** It is a set difference over declared
-  capabilities, so it is answerable before a single decision is read.
+* **The unattainable analysis never runs the system.** It is a set difference over the
+  capability set supplied by the SUT adapter. Explicit declarations are answerable before a
+  decision is read; a trace-derived adapter labels its weaker basis in the result.
 
 Every emitted report carries explicit limits on its scope and guarantees.
 """
@@ -29,7 +30,7 @@ from reasonsmith.verdict import Strength, Verdict
 
 LIMITS = (
     "This report is not a compliance guarantee and is not legal advice. It assesses system "
-    "capability declarations and trace evidence against formal specifications. Whether these "
+    "capability information and trace evidence against formal specifications. Whether these "
     "findings discharge legal duties remains a determination this tool does not make and cannot "
     "make. A requirement reported without a strength was not evaluated, and no verdict on it "
     "should be read from this report."
@@ -64,9 +65,9 @@ class RequirementResult:
     """The conformance result for a single requirement.
 
     `strength` is `None` when the requirement was not evaluated at all; see the module
-    docstring. `signals_missing` names the required signals the system does not declare,
-    and is therefore populated only on an unattainable result — signals that are declared
-    but absent from a particular trace are a different finding and land in `details`.
+    docstring. `signals_missing` names required signals missing from the adapter's capability
+    set and is therefore populated only on an unattainable result. Signals in that set but
+    absent from a particular trace are a different finding and land in `details`.
     """
 
     requirement_id: str
@@ -254,11 +255,11 @@ class ConformanceReport:
 def analyze_unattainable(req: Requirement, sut: SystemUnderTest) -> tuple[bool, tuple[str, ...]]:
     """Perform the unattainable analysis for a requirement against a SUT.
 
-    COMPUTED WITHOUT EXECUTING THE SYSTEM (sut.decisions is never called): the answer is the
-    set difference between the signals the requirement needs and the signals the system
-    declares it can emit. Capabilities are what the system *declares*, never what a trace
-    happens to contain, so a shortfall is a statement about the system as built rather than
-    about the run you happen to have.
+    COMPUTED WITHOUT EXECUTING THE SYSTEM (`sut.decisions()` is never called here): the answer
+    is the set difference between the signals the requirement needs and the capability set the
+    SUT adapter supplies. Most adapters require an explicit system declaration. A trace-derived
+    adapter is weaker: its result is limited to that supplied trace rather than stated as a
+    property of the system as built.
 
     Returns:
         (is_unattainable, missing_signals) — missing_signals is sorted and never empty when
@@ -327,10 +328,10 @@ def evaluate_requirement(
 ) -> RequirementResult:
     """Evaluate a single requirement against a SUT.
 
-    If declared capabilities do not cover the required signals, returns UNATTAINABLE without
-    executing the SUT. Otherwise `records` is used as the decision trace; when it is None the
-    trace is fetched from the SUT, so callers holding a trace already can avoid re-running the
-    system once per requirement.
+    If the adapter's capability set does not cover the required signals, returns UNATTAINABLE
+    without executing the SUT. Otherwise `records` is used as the decision trace; when it is
+    None the trace is fetched from the SUT, so callers holding a trace already can avoid
+    re-running the system once per requirement.
     """
     is_unattainable, missing = analyze_unattainable(req, sut)
     if is_unattainable:

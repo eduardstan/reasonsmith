@@ -3,8 +3,9 @@
 The SUT protocol is deliberately minimal so that black-box neural models, rule engines,
 and log traces qualify equally.
 
-Capabilities are DECLARED by the system, never inferred. The unattainable analysis
-relies on the system explicitly stating what signals it can emit.
+The protocol exposes a capability set for unattainability analysis. BaseSUT and the callable
+adapter require an explicit declaration; the JSONL adapter can instead derive the set from a
+supplied trace and labels that basis so reports do not present it as a system declaration.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from typing import Any, Optional, Protocol, runtime_checkable
 
 from reasonsmith.spec import load_pack
 
-#: Section 6.3 top-level taxonomy for capability signals declared by a system
+#: Section 6.3 top-level taxonomy for capability signals supplied through the SUT protocol
 #: (Stan, Sciavicco & Napoletano, JAIR 2026, Section 6.3, p. 36:24):
 #:   - provenance: KB version, constraint set, active exceptions at inference time
 #:   - artifact_logs: extracted rules/trees, constraint-satisfaction traces, proof/plan/KG traces
@@ -33,8 +34,8 @@ def _validate_capability_collection(declared: Any, subject: str) -> None:
     """Refuse anything that is not a plain collection of enabled signal names.
 
     Shared by the two places capabilities cross into reasonsmith — BaseSUT.__init__ and the
-    unattainable analysis — because a system whose declaration is misread there is judged
-    against signals it never claimed, in either direction.
+    unattainable analysis — because a malformed capability set would judge a system against
+    signals its adapter never supplied, in either direction.
 
     A bare string is iterable, so set("reasons") would declare seven single-character
     capabilities. A mapping is iterable over its keys, so a capability map would declare the
@@ -62,7 +63,7 @@ class SystemUnderTest(Protocol):
     """Protocol for a system under test in reasonsmith."""
 
     def capabilities(self) -> set[str]:
-        """Return the set of signal names this system declares it can emit."""
+        """Return the signal names this adapter supplies for unattainability analysis."""
         ...
 
     def decisions(self) -> Iterable[dict[str, Any]]:

@@ -9,13 +9,14 @@
 ## Provision 1: EU AI Act — Regulation (EU) 2024/1689
 
 ### Metadata & Citation
-- **Document Title:** Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence and amending Regulations (EC) No 300/2008, (EU) No 167/2013, (EU) No 168/2013, (EU) 2018/858, (EU) 2018/1240 and (EU) 2019/2144 and Directives 2014/90/EU, (EU) 2016/797 and (EU) 2020/1828 (Artificial Intelligence Act)
+- **Document Title:** Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence and amending Regulations (EC) No 300/2008, (EU) No 167/2013, (EU) No 168/2013, (EU) 2018/858, (EU) 2018/1139 and (EU) 2019/2144 and Directives 2014/90/EU, (EU) 2016/797 and (EU) 2020/1828 (Artificial Intelligence Act)
 - **CELEX Identifier:** `32024R1689` (Consolidated CELEX: `02024R1689-20240712`)
 - **Official Source URL:** [EUR-Lex Regulation (EU) 2024/1689](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689)
 - **Direct EU Cellar XHTML Endpoint:** `http://publications.europa.eu/resource/cellar/dc8116a1-3fe6-11ef-865a-01aa75ed71a1.0006.03/DOC_1`
-- **Consolidation / Entry into Force Date:** 12 July 2024 (Published in OJ L, 2024/1689, 12.7.2024)
+- **Publication Date:** 12 July 2024 (OJ L, 2024/1689)
+- **Entry into Force Date:** 1 August 2024 (20 days after publication, under Article 113)
 - **Retrieval Date & Time:** 2026-07-31 09:52:00 UTC+2
-- **Uncertainty / Status Flag:** Verified against official EU Cellar XHTML. Direct EUR-Lex web frontend requests return an WAF HTTP 202 challenge; retrieved directly via official EU Publications Cellar XHTML API endpoint `dc8116a1-3fe6-11ef-865a-01aa75ed71a1.0006.03/DOC_1`.
+- **Uncertainty / Status Flag:** Verified against official EU Cellar XHTML. Direct EUR-Lex web frontend requests return a WAF HTTP 202 challenge; retrieved directly via official EU Publications Cellar XHTML API endpoint `dc8116a1-3fe6-11ef-865a-01aa75ed71a1.0006.03/DOC_1`.
 
 ---
 
@@ -82,7 +83,7 @@
 - **Direct EU Cellar XHTML Endpoint:** `http://publications.europa.eu/resource/cellar/3e485e15-11bd-11e6-ba9a-01aa75ed71a1.0006.03/DOC_1`
 - **Consolidation / Version Date:** 4 May 2016 (Corrigenda published 2016, 2018, 2021)
 - **Retrieval Date & Time:** 2026-07-31 09:52:25 UTC+2
-- **Legal Hierarchy Distinction Note:** 
+- **Legal Hierarchy Distinction Note:**
   > [!IMPORTANT]
   > **Binding Nature vs. Recital Distinction:**
   > Articles of EU Regulations (such as Article 22) are directly applicable, binding legal norms creating enforceable legal obligations and rights across all EU Member States.

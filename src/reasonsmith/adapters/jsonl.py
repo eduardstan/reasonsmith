@@ -5,9 +5,9 @@ Works for a system written in any language that emits a JSONL log trace.
 
 Capability derivation:
 Capabilities are derived honestly from record content. A capability is what the system can
-emit, so a field present and non-blank in at least ONE record is a declared signal — a field
-missing from some of the later records is then a trace violation the engines report, not a
-capability the system lacks. Fields present in only some records are also recorded in
+emit, so a field present and non-blank in at least ONE record enters the adapter's capability
+set — a field missing from some of the later records is then a trace violation the engines
+report, not a capability the system lacks. Fields present in only some records are recorded in
 `partially_present_fields` for diagnostic inspection.
 
 Derived capabilities are read from one supplied trace, never declared by the system, so

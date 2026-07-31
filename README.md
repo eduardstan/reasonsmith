@@ -38,7 +38,7 @@ This single install path is used by CI (`.github/workflows/ci.yml`).
 
 ### Dependencies & PyPI
 - **`nesyarena`**: Supplies the ground-program IR, bounded proof enumeration, exact oracle, and adapter protocol. It is pinned to an immutable git commit in `pyproject.toml` so measurements stay reconstructible.
-- **`rtamt`**: The STL/MTL monitoring library behind the `observed` engine's temporal verdicts. A declared runtime dependency of this package.
+- **`rtamt`**: The discrete-time STL monitoring library behind the `observed` engine's temporal verdicts. A declared runtime dependency of this package.
 - **`torch` is deliberately not a declared dependency of this package** (`pyproject.toml` is unaffected): it is an optional dependency of `nesyarena` (`learning`, ~1GB) and is not needed to run this package's own suite or demo, both of which stay pure-Python. It **has** been installed and measured in a separate environment, and `tests/test_e6_findings.py` and `tests/test_learning_parity.py` — the two `nesyarena` modules that could not even be collected without it — now collect and run there. The gaps that remain in `nesyarena`'s own suite are real and are not torch: they need `ltn`, `deeplog`, `deepproblog` (nesyarena's `backends` extra) and `problog` (its `oracles` extra), neither of which was installed. The exact counts, install commands, and complete pass/fail list are in [RESULTS.md](RESULTS.md#1-nesyarenas-own-suite-with-torch-present) — the one place those numbers live.
 
 ## What is in the box
@@ -54,7 +54,7 @@ Deliberately built as focused modules rather than a generic framework:
 | `src/reasonsmith/demo.py` | End-to-end demonstration (ECOA/Reg B credit and GDPR Art. 22 clinical) |
 | `src/reasonsmith/verdict.py` | v0.2 core: the evidence strength lattice and the verdict vocabulary |
 | `src/reasonsmith/spec.py` | v0.2 core: requirements with verbatim provenance, loaded from `packs/*.toml` |
-| `src/reasonsmith/sut.py` | v0.2 core: the system-under-test protocol — declared capabilities and a decision trace |
+| `src/reasonsmith/sut.py` | v0.2 core: the system-under-test protocol — a capability set and a decision trace |
 | `src/reasonsmith/report.py` | v0.2 core: the unattainable analysis and the conformance report |
 | `src/reasonsmith/adapters/` | v0.2: JSONL decision-log and callable-model adapters onto the SUT protocol |
 | `src/reasonsmith/engines/` | v0.2: the `record` completeness engine and the `observed` rtamt temporal monitor |
@@ -68,8 +68,8 @@ Deliberately built as focused modules rather than a generic framework:
 ### The Reason-Deletion Certificate (`certificate.py`)
 Compares the reasons an engine actually used against exact inference ground truth (enumerated via WMC in `nesyarena`). Using deletion probes, it tests whether disabling isolated facts changes engine output. Two independent checks must pass: the deletion probe (every reason live) and the value check against the exact oracle. Reasons that cannot be probed in isolation are reported as uncertified (`INCONCLUSIVE`).
 
-### The Strength Lattice (`verdict.py`, `report.py`) — v0.2, first slice only
-A verdict carries the strength of the evidence behind it: `unattainable < observed < probed < proved`. Only the first two rungs exist here. `unattainable` is a set difference over the capabilities a system *declares*, so it is answerable before the system runs at all: a system that cannot emit reasons is reported unattainable on the requirements needing them, with the missing signals named and without being executed. `observed` reads a passive decision trace. `probed` and `proved` need engines this build does not have, so a requirement whose formalism no engine covers is reported as not evaluated — no strength and no verdict — rather than judged by a weaker check; combining zero verdicts is `inconclusive`, never vacuously `satisfied`. Two engines exist: `record` (completeness over a decision trace) and `temporal` (rtamt monitors); `logical` requirements have no engine here and are reported as not evaluated. Four packs ship — Table 7, EU AI Act, GDPR, ECOA/Reg B — and `reasonsmith.cli` runs one against a JSONL decision log:
+### The v0.2 Conformance Core (`verdict.py`, `report.py`)
+A verdict carries the strength of the evidence behind it: `unattainable < observed < probed < proved`. This stage produces only the first two strengths. `unattainable` is a set difference over the capabilities supplied by a SUT adapter, so an explicitly declared capability set is answerable before the system runs at all: a system that cannot emit reasons is reported unattainable on the requirements needing them, with the missing signals named and without being executed. `observed` reads a passive decision trace. `probed` and `proved` need engines this build does not have, so a requirement whose formalism no engine covers is reported as not evaluated — no strength and no verdict — rather than judged by a weaker check; combining zero verdicts is `inconclusive`, never vacuously `satisfied`. Two engines exist: `record` (completeness over a decision trace) and `temporal` (rtamt monitors); `logical` requirements have no engine here and are reported as not evaluated. Four packs ship — Table 7, EU AI Act, GDPR, ECOA/Reg B — and `reasonsmith.cli` runs one against a JSONL decision log:
 
 ```sh
 python -m reasonsmith.cli check --system decisions.jsonl --pack ecoa [--json]
@@ -94,4 +94,3 @@ Records and certificates also serialise: `to_dict()` returns plain Python, `to_j
 ## Licence
 
 [MIT](LICENSE)
-

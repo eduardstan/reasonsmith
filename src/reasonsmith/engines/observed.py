@@ -1,6 +1,6 @@
 """Observed engine for reasonsmith v0.2.
 
-Evaluates temporal properties over decision traces using rtamt STL/MTL monitors.
+Evaluates temporal properties over decision traces using an rtamt discrete-time STL monitor.
 Requirements with formalism = "temporal" become discrete-time monitors.
 
 Behavior:
@@ -32,7 +32,6 @@ from reasonsmith.report import RequirementResult, _is_present
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
-
 
 #: The threshold a pack uses to ask whether a signal is present at all. Everything else a
 #: variable is compared against is a quantity, and a quantity has to be measured.
@@ -91,7 +90,7 @@ def _monitor(spec_text: str, name: str, spec_vars: set[str], time_series: dict) 
 def _magnitude_vars(spec: str) -> set[str]:
     """The spec variables compared against something other than the presence threshold."""
     magnitude: set[str] = set()
-    for pattern, var_first in zip(_COMPARISONS, (True, False)):
+    for pattern, var_first in zip(_COMPARISONS, (True, False), strict=True):
         for left, right in pattern.findall(spec):
             var, constant = (left, right) if var_first else (right, left)
             if float(constant) != PRESENCE_THRESHOLD:
