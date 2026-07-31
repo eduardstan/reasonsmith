@@ -12,10 +12,13 @@ What a reader must not break:
 
 from reasonsmith.adapters.callable import CallableAdapter, CallableSUT
 from reasonsmith.adapters.jsonl import JSONLAdapter, JsonlSUT
+from reasonsmith.adapters.rules import RulesAdapter, RulesSUT
 
 __all__ = [
     "JSONLAdapter",
     "JsonlSUT",
     "CallableAdapter",
     "CallableSUT",
+    "RulesAdapter",
+    "RulesSUT",
 ]

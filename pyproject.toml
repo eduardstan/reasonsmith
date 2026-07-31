@@ -30,6 +30,8 @@ dependencies = [
     # also hard-pins antlr4-python3-runtime==4.7, whose `from typing.io import TextIO` needs the
     # shim at the top of engines/observed.py on Python 3.13+.
     "rtamt==0.3.5",
+    # Z3 SMT solver for the proved engine (formal logic verification).
+    "z3-solver>=4.12.0",
 ]
 
 [project.optional-dependencies]

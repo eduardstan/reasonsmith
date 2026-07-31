@@ -11,9 +11,11 @@ What a reader must not break:
 """
 
 from reasonsmith.engines.observed import ObservedEngine
+from reasonsmith.engines.proved import ProvedEngine
 from reasonsmith.engines.record import RecordEngine
 
 __all__ = [
     "RecordEngine",
     "ObservedEngine",
+    "ProvedEngine",
 ]

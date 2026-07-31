@@ -47,11 +47,8 @@ LIMITS = (
     "cleared of the duty: read the declared scope line before reading a not-applicable result."
 )
 
-#: Formalisms this build can actually evaluate. `logical` requirements need the
-#: solver engine, which is part of stage 3; until it lands, such
-#: requirements are reported as not evaluated rather than judged by a weaker check that would
-#: not establish the property.
-SUPPORTED_FORMALISMS = ("record", "temporal")
+#: Formalisms this build can actually evaluate.
+SUPPORTED_FORMALISMS = ("record", "temporal", "logical")
 
 
 def _is_present(value: Any) -> bool:
@@ -594,6 +591,19 @@ class ConformanceReport:
                     '<div class="callout-box callout-violated">'
                     "<strong>VIOLATED IN TRACE — Execution Counterexample Witness:</strong>"
                     f"{witness_table}"
+                    "</div>"
+                )
+
+            counterexample = r.details.get("counterexample")
+            if counterexample:
+                ce_str = ", ".join(
+                    f"{html.escape(str(k))}: {html.escape(str(v))}"
+                    for k, v in counterexample.items()
+                )
+                details_html += (
+                    '<div class="callout-box callout-violated">'
+                    "<strong>VIOLATED — Formal Counterexample Input:</strong><br>"
+                    f"<code>{ce_str}</code>"
                     "</div>"
                 )
 
@@ -1250,15 +1260,18 @@ def evaluate_requirement(
             scope=req.scope,
         )
 
-    if records is None:
+    if req.formalism in ("record", "temporal") and records is None:
         records = _read_trace(sut)
 
     if req.formalism == "record":
         from reasonsmith.engines.record import RecordEngine
-        return RecordEngine.evaluate(req, sut, records)
+        return RecordEngine.evaluate(req, sut, records or [])
     elif req.formalism == "temporal":
         from reasonsmith.engines.observed import ObservedEngine
-        return ObservedEngine.evaluate(req, sut, records)
+        return ObservedEngine.evaluate(req, sut, records or [])
+    elif req.formalism == "logical":
+        from reasonsmith.engines.proved import ProvedEngine
+        return ProvedEngine.evaluate(req, sut, records)
 
     raise NotImplementedError(
         f"{req.formalism!r} is listed in SUPPORTED_FORMALISMS but no engine here evaluates it. "
@@ -1298,7 +1311,7 @@ def check_conformance(
             eval_plan.append((req, True, *analyze_unattainable(req, sut)))
 
     needs_trace = any(
-        applicable and not is_unattainable and req.formalism in SUPPORTED_FORMALISMS
+        applicable and not is_unattainable and req.formalism in ("record", "temporal")
         for req, applicable, is_unattainable, _ in eval_plan
     )
 

@@ -91,6 +91,10 @@ class SystemUnderTest(Protocol):
         """Return an iterable of decision trace records."""
         ...
 
+    def logic(self) -> Any:
+        """Return exposed decision logic for formal verification, if available."""
+        ...
+
 
 class BaseSUT:
     """Convenience base class or reference helper for SUT implementations."""
@@ -109,6 +113,9 @@ class BaseSUT:
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         return []
+
+    def logic(self) -> Any:
+        return None
 
 
 def _table7_signals() -> set[str]:
