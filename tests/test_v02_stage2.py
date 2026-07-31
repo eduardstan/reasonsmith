@@ -132,6 +132,27 @@ class TestJSONLAdapter:
         assert result.strength == Strength.OBSERVED
         assert result.signals_missing == ()
 
+    def test_unattainable_from_a_trace_does_not_speak_for_the_system(
+        self, jsonl_violating_fixture_file: Path
+    ):
+        from reasonsmith.report import evaluate_requirement
+
+        sut = JSONLAdapter(jsonl_violating_fixture_file)
+        req = Requirement(
+            id="req_never_emitted",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="record",
+            spec="Record check",
+            requires=("scope_statements_explanation_scope",),
+        )
+        result = evaluate_requirement(req, sut)
+        assert result.strength == Strength.UNATTAINABLE
+        assert "supplied decision trace" in result.evidence_summary
+        assert "the system declares no capability" not in result.evidence_summary
+
     def test_explicit_declared_capabilities_override(self, jsonl_fixture_file: Path):
         sut = JSONLAdapter(
             jsonl_fixture_file,
@@ -300,8 +321,8 @@ class TestObservedEngine:
         assert "Not evaluated" in result.evidence_summary
 
 
-class TestTemporalRequirementsMeasureTheirDuty:
-    """A temporal requirement must fail on a trace that breaches the duty it quotes.
+class TestRequirementsMeasureTheirDuty:
+    """A requirement must fail on a trace that breaches the duty it quotes.
 
     A spec that only checks that the signal names appear would report SATISFIED at
     `observed` strength for a deadline nothing measured.
@@ -322,14 +343,31 @@ class TestTemporalRequirementsMeasureTheirDuty:
         on_time = [dict(r, artifact_logs_notification_latency_days=12) for r in records]
         assert ObservedEngine.evaluate(req, sut, on_time).verdict == Verdict.SATISFIED
 
+    def test_ecoa_thirty_day_notice_not_evaluated_when_no_latency_was_recorded(self):
+        """A decision nobody recorded a notification for is not a notification in 0 days."""
+        req = load_pack("ecoa").get_requirement("ecoa_reg_b_1002_9_a_1_timing_of_notice")
+        sut = BaseSUT(set(req.requires))
+        records = [
+            {"artifact_logs_decision_record": {"id": "dec-1"},
+             "artifact_logs_notification_latency_days": 12},
+            {"artifact_logs_decision_record": {"id": "dec-2"}},
+        ]
+        result = ObservedEngine.evaluate(req, sut, records)
+        assert result.verdict == Verdict.INCONCLUSIVE
+        assert result.strength is None
+        assert result.details["signals_unmeasured_in_trace"] == {
+            "artifact_logs_notification_latency_days": 1
+        }
+
     def test_eu_ai_act_traceability_violated_by_an_unlogged_decision(self):
         req = load_pack("eu_ai_act").get_requirement("eu_ai_act_art12_2_traceability_monitoring")
+        assert req.formalism == "record"
         sut = BaseSUT(set(req.requires))
         records = [
             {"artifact_logs_event_log": True, "provenance_model_version": "v1.2.0"},
             {"provenance_model_version": "v1.2.0"},
         ]
-        result = ObservedEngine.evaluate(req, sut, records)
+        result = RecordEngine.evaluate(req, sut, records)
         assert result.verdict == Verdict.VIOLATED
 
 

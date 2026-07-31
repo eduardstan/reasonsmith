@@ -287,7 +287,28 @@ def _read_trace(sut: SystemUnderTest) -> list[dict[str, Any]]:
     return records
 
 
-def _unattainable_result(req: Requirement, missing: tuple[str, ...]) -> RequirementResult:
+def _unattainable_result(
+    req: Requirement, missing: tuple[str, ...], sut: SystemUnderTest | None = None
+) -> RequirementResult:
+    """The unattainable result, worded for how the capability set was established.
+
+    A system that declares its capabilities is speaking about itself as built. An adapter
+    that infers them from a supplied trace is not: a longer trace could carry the signal, so
+    the result says what it was read from rather than putting a claim in the system's mouth.
+    """
+    if getattr(sut, "capability_basis", "declared") == "trace":
+        summary = (
+            "Unattainable on the evidence supplied: no record in the supplied decision trace "
+            f"carries a value for {', '.join(missing)}, and the system declared no "
+            "capabilities, so nothing here can discharge this requirement. Read from that "
+            "trace alone; a longer trace could show the system emitting these signals."
+        )
+    else:
+        summary = (
+            "Unattainable as built: the system declares no capability to emit "
+            f"{', '.join(missing)}, so no amount of testing can discharge this requirement. "
+            "Determined from declared capabilities alone; the system was not executed."
+        )
     return RequirementResult(
         requirement_id=req.id,
         source_clause=f"{req.source_document} {req.article_clause}",
@@ -295,11 +316,7 @@ def _unattainable_result(req: Requirement, missing: tuple[str, ...]) -> Requirem
         strength=Strength.UNATTAINABLE,
         signals_required=tuple(req.requires),
         signals_missing=missing,
-        evidence_summary=(
-            "Unattainable as built: the system declares no capability to emit "
-            f"{', '.join(missing)}, so no amount of testing can discharge this requirement. "
-            "Determined from declared capabilities alone; the system was not executed."
-        ),
+        evidence_summary=summary,
     )
 
 
@@ -317,7 +334,7 @@ def evaluate_requirement(
     """
     is_unattainable, missing = analyze_unattainable(req, sut)
     if is_unattainable:
-        return _unattainable_result(req, missing)
+        return _unattainable_result(req, missing, sut)
 
     clause = f"{req.source_document} {req.article_clause}"
 

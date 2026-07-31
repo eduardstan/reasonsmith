@@ -9,6 +9,9 @@ emit, so a field present and non-blank in at least ONE record is a declared sign
 missing from some of the later records is then a trace violation the engines report, not a
 capability the system lacks. Fields present in only some records are also recorded in
 `partially_present_fields` for diagnostic inspection.
+
+Derived capabilities are read from one supplied trace, never declared by the system, so
+`capability_basis` records which of the two a result rests on and the report says so.
 """
 
 from __future__ import annotations
@@ -37,10 +40,12 @@ class JSONLAdapter(BaseSUT):
         if declared_capabilities is not None:
             super().__init__(declared_capabilities)
             self._partially_present: dict[str, tuple[int, int]] = {}
+            self.capability_basis = "declared"
         else:
             capabilities, partially_present = self._derive_capabilities(self._records)
             super().__init__(capabilities)
             self._partially_present = partially_present
+            self.capability_basis = "trace"
 
     @property
     def partially_present_fields(self) -> dict[str, tuple[int, int]]:

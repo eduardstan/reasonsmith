@@ -8,6 +8,11 @@ Behavior:
 - A violation returns the offending trace segment in details and summary.
 - If rtamt cannot express a formula, the requirement is reported as NOT EVALUATED
   with the reason (verdict=INCONCLUSIVE, strength=None) — never as satisfied.
+- A signal the trace measures numerically is a magnitude, not a flag: a record that carries
+  no value for it has no measurement, and encoding that absence as the numeral 0.0 would let
+  a decision nobody was notified about pass a `<= 30` deadline. Such a gap is reported as NOT
+  EVALUATED. A signal only ever checked for presence keeps the 1.0/0.0 encoding, so an absent
+  one still fails the check that asks for it.
 """
 
 from __future__ import annotations
@@ -54,22 +59,51 @@ class ObservedEngine:
             "always", "eventually", "until", "then", "implies", "and", "or", "not",
             "true", "false", "historically", "once", "since", "rise", "fall", "prev"
         }
-        spec_vars = (found_vars - keywords) | var_names
+        formula_vars = found_vars - keywords
+        spec_vars = formula_vars | var_names
 
         # Build dataset for rtamt
         time_series: dict[str, list[float]] = {"time": list(range(len(records)))}
+        unmeasured: dict[str, int] = {}
         for var in spec_vars:
             values: list[float] = []
+            measured_numerically = False
+            absent = 0
             for rec in records:
                 val = rec.get(var)
-                if isinstance(val, (int, float)) and not isinstance(val, bool):
-                    values.append(float(val))
-                elif isinstance(val, bool):
+                if isinstance(val, bool):
                     values.append(1.0 if val else 0.0)
+                elif isinstance(val, (int, float)):
+                    measured_numerically = True
+                    values.append(float(val))
+                elif _is_present(val):
+                    # Categorical: carries something, so it counts as present
+                    values.append(1.0)
                 else:
-                    # Categorical or presence check
-                    values.append(1.0 if _is_present(val) else 0.0)
+                    absent += 1
+                    values.append(0.0)
+            if measured_numerically and absent and var in formula_vars:
+                unmeasured[var] = absent
             time_series[var] = values
+
+        if unmeasured:
+            gaps = ", ".join(
+                f"{var} in {count} of {len(records)} decision(s)"
+                for var, count in sorted(unmeasured.items())
+            )
+            return RequirementResult(
+                requirement_id=req.id,
+                source_clause=clause,
+                verdict=Verdict.INCONCLUSIVE,
+                strength=None,
+                signals_required=tuple(req.requires),
+                evidence_summary=(
+                    "Not evaluated: the trace carries no measurement for "
+                    f"{gaps}, and an absent measurement is not a measurement of zero. "
+                    f"The monitor for {req.spec!r} was not run over this trace."
+                ),
+                details={"signals_unmeasured_in_trace": dict(sorted(unmeasured.items()))},
+            )
 
         # Construct rtamt STL specification
         try:
