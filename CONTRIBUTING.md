@@ -55,12 +55,13 @@ Building an end-to-end demo script or extending an engine for one of these dutie
 2. **No Satisfied Verdicts on Absent Evidence:**
    Nothing in `reasonsmith` may report `satisfied` or `COMPLETE` on missing or incomplete evidence. Default values or fallbacks must never be substituted for missing fields.
 
-3. **Two Distinct Non-Pass Concepts:**
-   Both read as `inconclusive` in the verdict vocabulary (`verdict.py` defines `satisfied`, `violated` and `inconclusive`, and nothing else), and they are told apart by strength. Do not confuse or combine them:
+3. **Three Distinct Non-Pass Concepts:**
+   `verdict.py` defines `satisfied`, `violated`, `inconclusive` and `not_applicable`. The first two non-pass concepts below both read as `inconclusive` and are told apart by strength; the third is a separate verdict. Do not confuse or combine them:
    - **`unattainable`**: The system's capability set lacks a required signal name, so no amount of trace testing can discharge the requirement. This is the lowest rung of the strength lattice, and `RequirementResult` refuses to report it as anything but `inconclusive`.
    - **`not_evaluated`**: No engine exists for the requirement's formalism (`report.py:SUPPORTED_FORMALISMS`), or the trace was empty/too short. `strength=None` is recorded — deliberately not a rung on the lattice — and combining zero verdicts produces `inconclusive`, never `satisfied`.
+   - **`not_applicable`**: The requirement carries a `scope` (`spec.py`) naming a regulatory class the system is not declared to be in, so `evaluate_requirement` never checks it. This is a statement about the duty's reach, not about the system: `reasonsmith` never infers a system's class, so an undeclared system is neither placed in scope nor cleared of the duty. The class is declared by the caller via `--system-scope` (`cli.py`), and the report prints a `declared scope:` line so a not-applicable result is always read next to it.
 
-   There is no `not_applicable` status and no notion of a declared regulatory scope. `reasonsmith` never infers whether a duty binds a given system, so a requirement in a loaded pack is always evaluated; adding a scope concept means adding it to `spec.py`, `verdict.py` and `report.py` together, not writing the word into a report.
+   A related distinction lives on the requirement itself: `binding = false` marks a recital or guidance item that informs interpretation but creates no duty of its own. Interpretive requirements are evaluated and reported with an `[INTERPRETIVE]` tag, and are counted separately from the binding headline counts. None of the three non-pass concepts, and no interpretive finding, changes the CLI exit code — only `violated` does.
 
 4. **What Makes a Good Change:**
    - Minimal, focused diffs addressing a specific requirement or issue.

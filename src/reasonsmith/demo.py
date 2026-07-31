@@ -7,10 +7,13 @@ What this module is for:
   Run: `python -m reasonsmith.demo`
 
 What a reader must not break:
-  - Synthetic programs are frozen and deterministic without randomness; demo output must remain
-    reproducible byte-for-byte.
+  - The programs are frozen synthetic ones in nesyarena's style: realistic structure, no real
+    personal data, no ethics approval needed, no randomness. Every probability is a fixed function
+    of the case index.
     Why this matters: Guarantees every measured figure and transcript line in the paper and repo
-    can be verified and diffed byte-for-byte.
+    can be verified and diffed byte-for-byte. Those probabilities stand in for a neural component's
+    confidence in each piece of evidence; whether real systems produce confidences shaped like
+    these is a separate question this does not answer.
   - Credit comes first on purpose: ECOA requires specific principal reasons, making proof
     truncation a legal compliance issue.
     Why this matters: Under credit law, a dropped reason is a reason legally owed to an applicant

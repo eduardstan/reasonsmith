@@ -52,8 +52,9 @@ python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa
 ```text
 CONFORMANCE REPORT
 system: CreditScoringPipeline
+declared scope: undeclared
 pack: ecoa
-headline: 3 requirements · 3 observed
+headline: 3 requirements · 3 binding: 3 observed
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
@@ -67,10 +68,10 @@ REQUIREMENT FINDINGS:
     summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated, and no verdict on it should be read from this report.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
 ```
 
-`observed` is the weakest rung of the strength lattice that can still say a property held: it is read off the trace supplied and claims nothing about decisions outside it. The same log checked against the Table 7 pack discharges nothing and exits 2 — see [`docs/example-output.md`](docs/example-output.md) for that run and for the full 561-line demo transcript, both stdout pasted unedited.
+`observed` is the weakest rung of the strength lattice that can still say a property held: it is read off the trace supplied and claims nothing about decisions outside it. The same log checked against the Table 7 pack discharges nothing and still exits 0, because nothing there is a breach: the requirements whose duty reaches this system come back unattainable, and the two EU AI Act rows come back not applicable against an undeclared regulatory scope — see [`docs/example-output.md`](docs/example-output.md) for that run and for the full 561-line demo transcript, both stdout pasted unedited.
 
 ## Quick Start
 
@@ -131,7 +132,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 
   It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise. Unattainable, not applicable and not evaluated are findings to read in the report, not breaches, so none of them changes the exit code. There is no report renderer beyond text/JSON. The CLI takes no capability declaration: it reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system. To declare them instead, construct `JSONLAdapter(path, declared_capabilities={...})` in Python.
 - **Machine-Readable Output:** Records, certificates, and reports serialize to dicts (`to_dict()`) and JSON (`to_json(indent=None)`). Each carries the same facts as its text rendering, including its missing-field report and its own limits, so a downstream consumer cannot read a partial document as a complete one. Values outside JSON's own types are stringified rather than raising.
-- **Dependencies:** `nesyarena` supplies ground-program IR, proof enumeration, and exact WMC (pinned to an immutable commit in `pyproject.toml`). `rtamt` supplies STL temporal monitoring. `torch` is an optional dependency of `nesyarena` (~1GB) and is deliberately not a declared dependency of `reasonsmith`.
+- **Dependencies & PyPI:** `nesyarena` supplies ground-program IR, proof enumeration, and exact WMC (pinned to an immutable commit in `pyproject.toml`); it is not on PyPI, which is why `pip install -e ".[dev]"` is the single install path. `rtamt`, which supplies STL temporal monitoring, is a declared runtime dependency of `reasonsmith`. `torch`, by contrast, is an optional dependency of `nesyarena` (~1GB) and is deliberately not a declared dependency of `reasonsmith` — it was installed and measured in a separate environment, recorded in [RESULTS.md](RESULTS.md).
 
 ### Summary of Empirical Findings
 

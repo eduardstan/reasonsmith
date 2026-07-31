@@ -3,7 +3,7 @@
 Every block below is stdout pasted unedited from a real run, not a hand-written illustration of
 what the tool would print. Regenerate any block by running the command shown above it.
 
-- **Captured at:** commit `3528e2a259966d727dc6a6ec7718d026ecce5483` (branch `fm/rs-readable-repo`)
+- **Captured at:** commit `ea4bf3711abbd6922dcf4f1448cb177807bbe3d6` (branch `fm/rs-readable-repo`)
 - **Environment:** Python 3.12.9, Linux, `nesyarena` at the commit `pyproject.toml` pins
 - **Demo transcript:** 561 lines, `md5sum` `c5976971e24a86886f1e0ad54f0b9ce9` — the same length and
   hash [RESULTS.md](../RESULTS.md) reports, which is what lets the two files be checked against
@@ -601,8 +601,9 @@ python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa
 ```text
 CONFORMANCE REPORT
 system: CreditScoringPipeline
+declared scope: undeclared
 pack: ecoa
-headline: 3 requirements · 3 observed
+headline: 3 requirements · 3 binding: 3 observed
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
@@ -616,14 +617,17 @@ REQUIREMENT FINDINGS:
     summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated, and no verdict on it should be read from this report.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
 ```
 
-### 2.2 Table 7 pack — every requirement unattainable on this trace (exit code 2)
+### 2.2 Table 7 pack — nothing discharged on this trace (exit code 0)
 
-The same log checked against the Table 7 pack discharges nothing: that pack names Table 7's own
-evidence-field keys, and this trace carries none of them. The report names every missing signal
-rather than reporting the requirements as violated, and the CLI exits 2.
+The same log checked against the Table 7 pack discharges nothing. That pack names Table 7's own
+evidence-field keys, and this trace carries none of them, so every requirement whose duty reaches
+this system is reported unattainable with its missing signals named rather than violated. The two
+EU AI Act rows are limited to the high-risk class and no scope was declared on the command line, so
+they are reported not applicable — `reasonsmith` never infers that class. Nothing here is a breach,
+so the CLI exits 0.
 
 ```sh
 python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline
@@ -632,18 +636,19 @@ python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack tabl
 ```text
 CONFORMANCE REPORT
 system: CreditScoringPipeline
+declared scope: undeclared
 pack: table7
-headline: 6 requirements · 6 unattainable
+headline: 6 requirements · 4 binding: 2 unattainable, 2 not applicable · 2 interpretive: 2 unattainable
 
 REQUIREMENT FINDINGS:
-  [UNATTAINABLE] eu_ai_act_art13_transparency (EU AI Act Art. 13): inconclusive
+  [NOT APPLICABLE] eu_ai_act_art13_transparency (EU AI Act Art. 13): not_applicable
     requires: model_and_data_version_ids, extraction_timestamp, dataset_snapshot_hash, fidelity_coverage_metrics, explanation_scope, linkage_from_decision_to_artifact
-    MISSING SIGNALS: dataset_snapshot_hash, explanation_scope, extraction_timestamp, fidelity_coverage_metrics, linkage_from_decision_to_artifact, model_and_data_version_ids
-    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for dataset_snapshot_hash, explanation_scope, extraction_timestamp, fidelity_coverage_metrics, linkage_from_decision_to_artifact, model_and_data_version_ids, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
-  [UNATTAINABLE] eu_ai_act_art12_record_keeping (EU AI Act Art. 12): inconclusive
+    scope limit: high-risk
+    summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art12_record_keeping (EU AI Act Art. 12): not_applicable
     requires: automatic_event_logs, retention_schedule, signer
-    MISSING SIGNALS: automatic_event_logs, retention_schedule, signer
-    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for automatic_event_logs, retention_schedule, signer, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
+    scope limit: high-risk
+    summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
   [UNATTAINABLE] gdpr_art22_meaningful_information (GDPR Art. 22 (and Rec. 71)): inconclusive
     requires: per_decision_reason_string, feature_to_named_concept_mapping, dpia_cross_reference
     MISSING SIGNALS: dpia_cross_reference, feature_to_named_concept_mapping, per_decision_reason_string
@@ -652,15 +657,15 @@ REQUIREMENT FINDINGS:
     requires: stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback
     MISSING SIGNALS: audit_ids, model_version, retention_for_regulatory_lookback, score_factors, stored_reasons_per_decision
     summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for audit_ids, model_version, retention_for_regulatory_lookback, score_factors, stored_reasons_per_decision, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
-  [UNATTAINABLE] fda_gmlp_samd (FDA GMLP agency transparency guidance): inconclusive
+  [UNATTAINABLE] [INTERPRETIVE] fda_gmlp_samd (FDA GMLP agency transparency guidance): inconclusive
     requires: design_history_links, verification_logs, change_control
     MISSING SIGNALS: change_control, design_history_links, verification_logs
     summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for change_control, design_history_links, verification_logs, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
-  [UNATTAINABLE] nist_ai_rmf_risk_evidence (NIST AI RMF 1.0): inconclusive
+  [UNATTAINABLE] [INTERPRETIVE] nist_ai_rmf_risk_evidence (NIST AI RMF 1.0): inconclusive
     requires: continuous_monitoring_logs, metric_thresholds_and_alerts, reviews_and_sign_offs, incident_tickets
     MISSING SIGNALS: continuous_monitoring_logs, incident_tickets, metric_thresholds_and_alerts, reviews_and_sign_offs
     summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for continuous_monitoring_logs, incident_tickets, metric_thresholds_and_alerts, reviews_and_sign_offs, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated, and no verdict on it should be read from this report.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
 ```
