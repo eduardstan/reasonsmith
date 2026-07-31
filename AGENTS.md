@@ -56,6 +56,9 @@ the only thing keeping the pack attached to the paper.
 block in it and compares stdout byte-for-byte, and cross-checks the header's line count and
 `md5sum` against RESULTS.md. So anything that changes what the demo or the CLI prints — a wording
 tweak included — means regenerating the transcripts and updating both files' headers together.
+`docs/index.html` is derived the same way: `test_docs_index_html_matches_the_renderer` compares it
+byte-for-byte against `render_html()`, so touching the renderer means regenerating that page with
+the command in the test's docstring.
 
 ## Maintaining this file
 

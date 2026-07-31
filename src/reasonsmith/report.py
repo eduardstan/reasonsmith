@@ -22,8 +22,10 @@ What a reader must not break:
 from __future__ import annotations
 
 import json
+import subprocess
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from reasonsmith.spec import Pack, Requirement, normalize_scope
@@ -206,6 +208,76 @@ _CATEGORY_LABELS = (
 )
 
 
+#: How each category of `_CATEGORY_LABELS` is drawn in the HTML report: (style class, icon).
+#: Keyed by the same keys, so a category added there and forgotten here raises rather than
+#: silently rendering no pill.
+_CATEGORY_PILL_STYLE = {
+    "proved": ("satisfied", "🏆"),
+    "probed": ("satisfied", "🔍"),
+    "observed": ("satisfied", "👁"),
+    "violated": ("violated", "✖"),
+    "inconclusive": ("inconclusive", "?"),
+    "not_evaluated": ("inconclusive", "−"),
+    "unattainable": ("unattainable", "⊘"),
+    "not_applicable": ("not-applicable", "⊝"),
+}
+
+#: Icon per lattice rung. The rungs and their order come from `Strength` itself, so the drawn
+#: lattice cannot disagree with the lattice the verdicts are computed on.
+_STRENGTH_ICONS = {
+    Strength.UNATTAINABLE: "⊘",
+    Strength.OBSERVED: "👁",
+    Strength.PROBED: "🔍",
+    Strength.PROVED: "🏆",
+}
+
+
+def _source_checkout() -> tuple[str, str]:
+    """Identify the git checkout this package was imported from.
+
+    Returns `(commit, state)`, where state is `"clean"`, `"modified"` or `"unknown"`. The
+    commit is non-empty only for a clean checkout: naming a commit in a report claims the
+    reader can check that commit out and reproduce the run, and neither a tree with
+    uncommitted changes nor a checkout git cannot describe can honour that claim.
+
+    The checkout inspected is the one holding this module, not the caller's working
+    directory: what a report can attest to is the code that produced it. Git answers about
+    whatever repository encloses a directory, which is not the same question — this package
+    installed into a `.venv/` of an unrelated project sits inside that project's checkout,
+    and an ignored path is absent from `status --porcelain`, so the host tree would read as
+    clean and hand back a commit containing none of this code. So the first thing asked is
+    whether that repository tracks this very file; if it does not, it cannot describe this
+    build at all, in either direction.
+    """
+    source = Path(__file__).resolve()
+    repo = str(source.parent)
+
+    def git(*argv: str) -> subprocess.CompletedProcess[str] | None:
+        try:
+            return subprocess.run(
+                ["git", "-C", repo, *argv],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+
+    tracked = git("ls-files", "--error-unmatch", "--", str(source))
+    if tracked is None or tracked.returncode != 0:
+        return "", "unknown"
+
+    status = git("status", "--porcelain")
+    if status is None or status.returncode != 0:
+        return "", "unknown"
+    if status.stdout.strip():
+        return "", "modified"
+    head = git("rev-parse", "HEAD")
+    if head is None or head.returncode != 0 or not head.stdout.strip():
+        return "", "unknown"
+    return head.stdout.strip(), "clean"
+
+
 def _category_counts(
     results: list[RequirementResult], prefix: str = ""
 ) -> dict[str, int]:
@@ -334,6 +406,692 @@ class ConformanceReport:
                 lines.append(f"    summary: {r.evidence_summary}")
         lines.extend(["", "LIMITS OF THIS REPORT", f"  {self.limits}"])
         return "\n".join(lines)
+
+    def render_html(
+        self,
+        commit_hash: str | None = None,
+        command: str | None = None,
+    ) -> str:
+        """Self-contained HTML conformance report rendering.
+
+        Zero external dependencies, network-free, printable on A4. Presents the
+        evidence strength lattice, counts split by binding vs interpretive,
+        and visually distinguishes unattainable architectural gaps from violated trace failures.
+
+        The provenance bar states what can be established and nothing more. `commit_hash`
+        left `None` means "work it out": the commit is named only when the checkout this
+        package was imported from is clean (see `_source_checkout`), and a modified or
+        unidentifiable checkout is reported as such rather than given a hash it would not
+        reproduce. Passing an empty `commit_hash` asserts no commit identifies this report,
+        which is what a report committed into the tree it describes must say. `command` is
+        never guessed: an unsupplied command is left out, because a command line the report
+        invented is not provenance.
+        """
+        import html
+
+        if commit_hash is None:
+            commit_hash, tree_state = _source_checkout()
+        else:
+            tree_state = "clean" if commit_hash else "unknown"
+
+        counts = self.counts
+        sys_name = html.escape(self.system_name)
+        pack_name = html.escape(self.pack_id)
+        sys_scope = html.escape(self.system_scope or "undeclared")
+        headline_esc = html.escape(self.headline)
+        limits_esc = html.escape(self.limits)
+        c_short_esc = html.escape(commit_hash[:7]) if commit_hash else ""
+
+        if c_short_esc:
+            origin = f"from commit <code>{c_short_esc}</code>"
+        elif tree_state == "modified":
+            origin = "from a modified working tree, which no commit identifies"
+        else:
+            origin = "without an identified source commit"
+        cmd_part = f" Command: <code>{html.escape(command)}</code>" if command else ""
+        provenance_html = (
+            '<div class="provenance-bar">'
+            f'<strong>Report Provenance:</strong> Generated {origin}.{cmd_part}'
+            '</div>'
+        )
+
+        def render_pill_group(prefix: str) -> str:
+            pills = []
+            for key, label in _CATEGORY_LABELS:
+                style_key, icon = _CATEGORY_PILL_STYLE[key]
+                val = counts.get(f"{prefix}{key}", 0)
+                if val > 0:
+                    pills.append(
+                        f'<span class="stat-pill verdict-{style_key}">'
+                        f'<span aria-hidden="true">{icon}</span> {val} {html.escape(label)}</span>'
+                    )
+            return "".join(pills) if pills else '<span class="text-muted">None</span>'
+
+        binding_pills = render_pill_group("")
+        interp_pills = render_pill_group("interpretive_")
+
+        req_html_blocks = []
+        for r in self.results:
+            req_id = html.escape(r.requirement_id)
+            source = html.escape(r.source_clause)
+            summary = html.escape(r.evidence_summary)
+            sc_esc = html.escape(r.scope)
+            scope_tag = f'<span class="badge badge-scope">Scope: {sc_esc}</span>' if r.scope else ""
+            binding_tag = (
+                '<span class="badge badge-binding">Binding</span>'
+                if r.binding
+                else '<span class="badge badge-interpretive">Interpretive</span>'
+            )
+
+            # Verdict badge & card styling
+            is_unattainable = r.strength == Strength.UNATTAINABLE
+            if is_unattainable:
+                v_class = "verdict-unattainable"
+                v_badge = (
+                    '<span class="badge verdict-unattainable">'
+                    '<span aria-hidden="true">⊘</span> UNATTAINABLE</span>'
+                )
+            elif r.verdict == Verdict.SATISFIED:
+                v_class = "verdict-satisfied"
+                v_badge = (
+                    '<span class="badge verdict-satisfied">'
+                    '<span aria-hidden="true">✓</span> SATISFIED</span>'
+                )
+            elif r.verdict == Verdict.VIOLATED:
+                v_class = "verdict-violated"
+                v_badge = (
+                    '<span class="badge verdict-violated">'
+                    '<span aria-hidden="true">✖</span> VIOLATED</span>'
+                )
+            elif r.verdict == Verdict.NOT_APPLICABLE:
+                v_class = "verdict-not-applicable"
+                v_badge = (
+                    '<span class="badge verdict-not-applicable">'
+                    '<span aria-hidden="true">⊝</span> NOT APPLICABLE</span>'
+                )
+            else:
+                v_class = "verdict-inconclusive"
+                v_badge = (
+                    '<span class="badge verdict-inconclusive">'
+                    '<span aria-hidden="true">?</span> INCONCLUSIVE</span>'
+                )
+
+            # Strength Lattice render
+            cur_rank = r.strength.rank if r.strength is not None else None
+            lattice_spans = []
+            for step in sorted(Strength, key=lambda s: s.rank):
+                if r.strength is step:
+                    active_cls = f"active-{step.value}"
+                elif (
+                    cur_rank is not None
+                    and cur_rank > step.rank
+                    and step is not Strength.UNATTAINABLE
+                ):
+                    active_cls = "passed"
+                else:
+                    active_cls = ""
+
+                lattice_spans.append(
+                    f'<span class="lattice-step {active_cls}">'
+                    f'<span aria-hidden="true">{_STRENGTH_ICONS[step]}</span> {step.value}</span>'
+                )
+
+            lattice_html = (
+                '<div class="lattice-track">'
+                + '<span class="lattice-arrow">&rarr;</span>'.join(lattice_spans)
+                + "</div>"
+            )
+
+            # Signal tags
+            req_signals = "".join(
+                f'<span class="signal-tag">{html.escape(s)}</span>' for s in r.signals_required
+            )
+
+            details_html = ""
+            if r.signals_missing:
+                missing_tags = "".join(
+                    f'<span class="signal-tag missing">{html.escape(s)}</span>'
+                    for s in r.signals_missing
+                )
+                details_html += (
+                    '<div class="callout-box callout-unattainable">'
+                    "<strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br>"
+                    f"{missing_tags}"
+                    '<div class="callout-note">The system declares no capability to emit these '
+                    "signals. No testing trace can satisfy this requirement.</div>"
+                    "</div>"
+                )
+
+            absent_signals = r.details.get("signals_absent_from_trace")
+            if absent_signals:
+                absent_tags = "".join(
+                    f'<span class="signal-tag absent">{html.escape(s)}</span>'
+                    for s in absent_signals
+                )
+                details_html += (
+                    '<div class="callout-box callout-violated">'
+                    "<strong>VIOLATED IN TRACE — Required Signals Absent from Decision Log:"
+                    f"</strong><br>{absent_tags}"
+                    "</div>"
+                )
+
+            # Counterexample / witness rendering for ObservedEngine violations
+            offending_segment = r.details.get("offending_trace_segment")
+            violation_indices = r.details.get("violation_step_indices")
+            if offending_segment and violation_indices:
+                rows = []
+                for idx, record in zip(violation_indices, offending_segment, strict=False):
+                    rec_str = ", ".join(
+                        f"{html.escape(str(k))}: {html.escape(str(v))}" for k, v in record.items()
+                    )
+                    rows.append(f"<tr><td>Step {idx}</td><td><code>{rec_str}</code></td></tr>")
+                witness_table = (
+                    '<table class="witness-table">'
+                    "<thead><tr><th>Trace Step</th><th>Decision Record Witness</th>"
+                    f'</tr></thead><tbody>{"".join(rows)}</tbody></table>'
+                )
+                details_html += (
+                    '<div class="callout-box callout-violated">'
+                    "<strong>VIOLATED IN TRACE — Execution Counterexample Witness:</strong>"
+                    f"{witness_table}"
+                    "</div>"
+                )
+
+            req_html_blocks.append(f"""
+        <article class="req-card {v_class}">
+          <header class="req-card-header">
+            <div class="req-title-group">
+              <span class="req-id">{req_id}</span>
+              <span class="req-clause">({source})</span>
+            </div>
+            <div class="badge-group">
+              {binding_tag}
+              {scope_tag}
+              {v_badge}
+            </div>
+          </header>
+          <div class="lattice-container">
+            <span class="lattice-label">Strength Lattice:</span>
+            {lattice_html}
+          </div>
+          <div class="req-card-body">
+            <div class="signal-list">
+              <strong>Requires Signals:</strong> {req_signals}
+            </div>
+            <div class="evidence-summary">{summary}</div>
+            {details_html}
+          </div>
+        </article>""")
+
+        req_section_html = "\n".join(req_html_blocks)
+
+        return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reasonsmith Conformance Report - {sys_name}</title>
+  <style>
+    :root {{
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --color-slate-50: #f8fafc;
+      --color-slate-100: #f1f5f9;
+      --color-slate-200: #e2e8f0;
+      --color-slate-300: #cbd5e1;
+      --color-slate-600: #475569;
+      --color-slate-700: #334155;
+      --color-slate-800: #1e293b;
+      --color-slate-900: #0f172a;
+
+      --color-satisfied-bg: #ecfdf5;
+      --color-satisfied-border: #a7f3d0;
+      --color-satisfied-text: #065f46;
+
+      --color-violated-bg: #fef2f2;
+      --color-violated-border: #fca5a5;
+      --color-violated-text: #991b1b;
+      --color-violated-accent: #dc2626;
+
+      --color-unattainable-bg: #fffbeb;
+      --color-unattainable-border: #fde68a;
+      --color-unattainable-text: #92400e;
+      --color-unattainable-accent: #d97706;
+
+      --color-inconclusive-bg: #f1f5f9;
+      --color-inconclusive-border: #cbd5e1;
+      --color-inconclusive-text: #334155;
+
+      --color-not-applicable-bg: #f8fafc;
+      --color-not-applicable-border: #e2e8f0;
+      --color-not-applicable-text: #64748b;
+    }}
+
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{
+      font-family: var(--font-sans);
+      background-color: var(--color-slate-50);
+      color: var(--color-slate-900);
+      line-height: 1.5;
+      padding: 2rem 1rem;
+    }}
+
+    .container {{
+      max-width: 1000px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid var(--color-slate-200);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      overflow: hidden;
+    }}
+
+    .report-header {{
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 2rem;
+      border-bottom: 3px solid #3b82f6;
+    }}
+    .brand-title {{
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #60a5fa;
+      margin-bottom: 0.25rem;
+    }}
+    .main-title {{
+      font-size: 1.75rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }}
+    .meta-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }}
+    .meta-label {{
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+    }}
+    .meta-value {{
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #f8fafc;
+      font-family: var(--font-mono);
+    }}
+
+    .headline-banner {{
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem;
+      border-radius: 6px;
+    }}
+    .headline-title {{
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #1e40af;
+      margin-bottom: 0.25rem;
+    }}
+    .headline-text {{
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1e3a8a;
+    }}
+    .provenance-bar {{
+      font-size: 0.8rem;
+      color: #1e40af;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid #bfdbfe;
+      font-family: var(--font-mono);
+    }}
+
+    .dashboard-section {{
+      padding: 0 1.5rem 1.5rem 1.5rem;
+    }}
+    .split-grid {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }}
+    @media (max-width: 768px) {{
+      .split-grid {{ grid-template-columns: 1fr; }}
+    }}
+    .split-card {{
+      border: 1px solid var(--color-slate-200);
+      border-radius: 8px;
+      padding: 1.25rem;
+      background: #fafafa;
+    }}
+    .split-card-header {{
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-slate-200);
+      display: flex;
+      justify-content: space-between;
+      color: var(--color-slate-700);
+    }}
+    .pill-group {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }}
+    .stat-pill {{
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }}
+
+    .section-title {{
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 1rem 1.5rem 0.5rem 1.5rem;
+      border-top: 1px solid var(--color-slate-200);
+      color: var(--color-slate-800);
+    }}
+    .req-list {{
+      padding: 1rem 1.5rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }}
+
+    .req-card {{
+      border: 1px solid var(--color-slate-200);
+      border-radius: 8px;
+      background: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }}
+    .req-card.verdict-violated {{
+      border: 2px solid var(--color-violated-accent);
+      background: #fffafa;
+    }}
+    .req-card.verdict-unattainable {{
+      border: 2px dashed var(--color-unattainable-accent);
+      background: #fffdf5;
+    }}
+    .req-card.verdict-satisfied {{
+      border-left: 4px solid #059669;
+    }}
+
+    .req-card-header {{
+      padding: 1rem 1.25rem;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--color-slate-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }}
+    .req-title-group {{ flex: 1; }}
+    .req-id {{
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--color-slate-900);
+    }}
+    .req-clause {{
+      font-size: 0.85rem;
+      color: var(--color-slate-600);
+      margin-left: 0.5rem;
+    }}
+    .badge-group {{
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }}
+
+    .badge {{
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }}
+    .badge-binding {{ background: #e0e7ff; color: #3730a3; }}
+    .badge-interpretive {{ background: #f3e8ff; color: #6b21a8; }}
+    .badge-scope {{ background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }}
+
+    .verdict-satisfied {{
+      background: var(--color-satisfied-bg);
+      color: var(--color-satisfied-text);
+      border: 1px solid var(--color-satisfied-border);
+    }}
+    .verdict-violated {{
+      background: var(--color-violated-bg);
+      color: var(--color-violated-text);
+      border: 1px solid var(--color-violated-border);
+    }}
+    .verdict-unattainable {{
+      background: var(--color-unattainable-bg);
+      color: var(--color-unattainable-text);
+      border: 1px dashed var(--color-unattainable-border);
+    }}
+    .verdict-inconclusive {{
+      background: var(--color-inconclusive-bg);
+      color: var(--color-inconclusive-text);
+      border: 1px solid var(--color-inconclusive-border);
+    }}
+    .verdict-not-applicable {{
+      background: var(--color-not-applicable-bg);
+      color: var(--color-not-applicable-text);
+      border: 1px solid var(--color-not-applicable-border);
+    }}
+
+    .lattice-container {{
+      padding: 0.6rem 1.25rem;
+      background: #f1f5f9;
+      border-bottom: 1px solid var(--color-slate-200);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }}
+    .lattice-label {{
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-slate-600);
+      white-space: nowrap;
+    }}
+    .lattice-track {{
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }}
+    .lattice-step {{
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      color: #94a3b8;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+    }}
+    .lattice-step.active-proved {{
+      background: #059669; color: #ffffff; border-color: #047857; font-weight: 700;
+    }}
+    .lattice-step.active-probed {{
+      background: #2563eb; color: #ffffff; border-color: #1d4ed8; font-weight: 700;
+    }}
+    .lattice-step.active-observed {{
+      background: #3b82f6; color: #ffffff; border-color: #2563eb; font-weight: 700;
+    }}
+    .lattice-step.active-unattainable {{
+      background: #d97706; color: #ffffff; border-color: #b45309;
+      font-weight: 700; border-style: dashed;
+    }}
+    .lattice-step.passed {{ background: #e2e8f0; color: #334155; }}
+    .lattice-arrow {{ color: #cbd5e1; font-size: 0.75rem; }}
+
+    .req-card-body {{ padding: 1.25rem; }}
+    .signal-list {{ margin-bottom: 0.75rem; font-size: 0.85rem; }}
+    .signal-tag {{
+      font-family: var(--font-mono);
+      background: #f1f5f9;
+      color: #334155;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      border: 1px solid #e2e8f0;
+      font-size: 0.8rem;
+      display: inline-block;
+      margin: 0.1rem;
+    }}
+    .signal-tag.missing {{
+      background: #fef3c7; color: #92400e; border-color: #fde68a; font-weight: 600;
+    }}
+    .signal-tag.absent {{
+      background: #fee2e2; color: #991b1b; border-color: #fca5a5; font-weight: 600;
+    }}
+
+    .evidence-summary {{
+      font-size: 0.9rem; color: var(--color-slate-700); margin-top: 0.5rem; line-height: 1.5;
+    }}
+    .callout-box {{ margin-top: 1rem; padding: 1rem; border-radius: 6px; font-size: 0.85rem; }}
+    .callout-unattainable {{ background: #fffbeb; border: 1px dashed #fde68a; color: #78350f; }}
+    .callout-violated {{ background: #fef2f2; border: 1px solid #fca5a5; color: #7f1d1d; }}
+    .callout-note {{ font-size: 0.75rem; margin-top: 0.5rem; color: #92400e; font-style: italic; }}
+
+    .witness-table {{
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+    }}
+    .witness-table th, .witness-table td {{
+      border: 1px solid var(--color-slate-300);
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+    }}
+    .witness-table th {{ background: #f1f5f9; color: #334155; font-weight: 700; }}
+    .witness-table tr:nth-child(even) {{ background: #f8fafc; }}
+
+    .limits-card {{
+      margin: 1.5rem;
+      padding: 1.25rem;
+      background: #f8fafc;
+      border: 1px solid var(--color-slate-300);
+      border-radius: 8px;
+    }}
+    .limits-header {{
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-slate-700);
+      margin-bottom: 0.5rem;
+    }}
+    .limits-text {{ font-size: 0.8rem; color: var(--color-slate-600); line-height: 1.6; }}
+
+    @media print {{
+      body {{ background: #ffffff; padding: 0; color: #000000; }}
+      .container {{ border: none; box-shadow: none; max-width: 100%; }}
+      .report-header {{
+        background: #1e293b !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }}
+      .req-card {{ break-inside: avoid; border: 1px solid #000000 !important; }}
+      .req-card.verdict-violated {{ border: 2px solid #dc2626 !important; }}
+      .req-card.verdict-unattainable {{ border: 2px dashed #d97706 !important; }}
+      .witness-table th, .witness-table td {{ border-color: #000000 !important; }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="report-header">
+      <div class="header-top">
+        <div>
+          <div class="brand-title">reasonsmith audit engine</div>
+          <h1 class="main-title">Conformance Report</h1>
+        </div>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span class="meta-label">System under test</span>
+          <span class="meta-value">{sys_name}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Declared Scope</span>
+          <span class="meta-value">{sys_scope}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Regulation Pack</span>
+          <span class="meta-value">{pack_name}</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="headline-banner">
+      <div class="headline-title">Executive Headline Summary</div>
+      <div class="headline-text">{headline_esc}</div>
+      {provenance_html}
+    </div>
+
+    <section class="dashboard-section">
+      <div class="split-grid">
+        <div class="split-card">
+          <div class="split-card-header">
+            <span>Binding Duties</span>
+            <span>{counts['binding_total']} total</span>
+          </div>
+          <div class="pill-group">
+            {binding_pills}
+          </div>
+        </div>
+        <div class="split-card">
+          <div class="split-card-header">
+            <span>Interpretive Items</span>
+            <span>{counts['interpretive_total']} total</span>
+          </div>
+          <div class="pill-group">
+            {interp_pills}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="section-title">Requirement Findings</h2>
+    <main class="req-list">
+{req_section_html}
+    </main>
+
+    <section class="limits-card">
+      <h3 class="limits-header">Limits of this report</h3>
+      <p class="limits-text">{limits_esc}</p>
+    </section>
+  </div>
+</body>
+</html>
+"""
+
 
     def to_dict(self) -> dict:
         return {

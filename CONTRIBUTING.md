@@ -33,9 +33,9 @@ All three must pass cleanly with zero errors or warnings. Continuous integration
 
 | Category | Status | Details |
 |---|---|---|
-| **What is built** | Complete (v0.2 Core) | Evidence record emitter (`evidence.py`), reason-deletion certificates (`certificate.py`), Table 19 conformance suite (`conformance.py`), SUT capability protocol (`sut.py`), JSONL & callable adapters (`adapters/`), `record` & `observed` temporal engines (`engines/`), formal regulation packs (`packs/`), and CLI checker (`cli.py`). Demonstrations for ECOA credit (Table 7 row 4) and GDPR clinical (Table 7 row 3). |
-| **What is next** | Active / Open Work | Demonstrations and engine integration for remaining Table 7 duties (**Issue 6**), rendering formatters for compliance reports, and expanded temporal monitor rule sets. |
-| **Deliberately NOT done** | Out of Scope | Web/GUI dashboards, reimplementing `nesyarena` IR or oracle engines, generating automated legal opinions, or making un-hedged legal compliance guarantees. |
+| **What is built** | Complete (v0.2 Core) | Evidence record emitter (`evidence.py`), reason-deletion certificates (`certificate.py`), Table 19 conformance suite (`conformance.py`), SUT capability protocol (`sut.py`), JSONL & callable adapters (`adapters/`), `record` & `observed` temporal engines (`engines/`), formal regulation packs (`packs/`), and CLI checker (`cli.py`). Text, JSON and self-contained HTML report renderers (`report.py`, `cli.py --html`), the latter published to GitHub Pages by `.github/workflows/pages.yml`. Demonstrations for ECOA credit (Table 7 row 4) and GDPR clinical (Table 7 row 3). |
+| **What is next** | Active / Open Work | Demonstrations and engine integration for remaining Table 7 duties (**Issue 6**) and expanded temporal monitor rule sets. |
+| **Deliberately NOT done** | Out of Scope | Web/GUI dashboards — the `--html` report is one static offline file, not a served application — reimplementing `nesyarena` IR or oracle engines, generating automated legal opinions, or making un-hedged legal compliance guarantees. |
 
 ### Concrete Open Work for Contributors
 
