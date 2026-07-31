@@ -56,9 +56,12 @@ the only thing keeping the pack attached to the paper.
 block in it and compares stdout byte-for-byte, and cross-checks the header's line count and
 `md5sum` against RESULTS.md. So anything that changes what the demo or the CLI prints — a wording
 tweak included — means regenerating the transcripts and updating both files' headers together.
-`docs/index.html` is derived the same way: `test_docs_index_html_matches_the_renderer` compares it
-byte-for-byte against `render_html()`, so touching the renderer means regenerating that page with
-the command in the test's docstring.
+`docs/index.html` is generated as well, but not by the CLI: `docs/build_example.py` composes it — the
+Table 7 run declared into the high-risk class, beside the demonstration's key finding, which no
+report the CLI writes may carry — and `test_docs_index_html_matches_the_renderer` holds the
+committed page byte-for-byte to that script. Touching the renderer means regenerating the page with
+`python docs/build_example.py`, the command the page names as its own provenance;
+`.github/workflows/pages.yml` publishes that committed file rather than rendering its own.
 
 ## Maintaining this file
 
