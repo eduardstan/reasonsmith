@@ -124,10 +124,11 @@ def _record_from(capabilities: set[str]) -> dict[str, Any]:
 class FullCapabilitySUT(BaseSUT):
     """Reference SUT declaring every signal the Table 7 pack requires."""
 
-    def __init__(self, extra_capabilities: Optional[set[str]] = None):
+    def __init__(self, extra_capabilities: Optional[set[str]] = None, system_scope: str = "high-risk"):
         declared = _table7_signals() | {"decision", "timestamp"} | (extra_capabilities or set())
         super().__init__(declared)
         self.execution_count = 0
+        self.system_scope = system_scope
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         self.execution_count += 1
@@ -146,9 +147,10 @@ class NoReasonsSUT(BaseSUT):
     unattainable analysis answered without running the system.
     """
 
-    def __init__(self):
+    def __init__(self, system_scope: str = "high-risk"):
         super().__init__((_table7_signals() | {"decision", "timestamp"}) - REASON_SIGNALS)
         self.was_executed = False
+        self.system_scope = system_scope
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         self.was_executed = True

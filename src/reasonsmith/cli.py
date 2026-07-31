@@ -49,6 +49,12 @@ def main(args: list[str] | None = None) -> int:
         help="Name of system under test for the report",
     )
     check_parser.add_argument(
+        "--system-scope",
+        "--scope",
+        default=None,
+        help="Declared regulatory classification/scope of the system (e.g. high-risk)",
+    )
+    check_parser.add_argument(
         "--json",
         action="store_true",
         help="Output report in JSON format",
@@ -69,7 +75,9 @@ def main(args: list[str] | None = None) -> int:
             print(f"Error loading system log {parsed.system!r}: {exc}", file=sys.stderr)
             return 1
 
-        report = check_conformance(sut, pack, system_name=parsed.system_name)
+        report = check_conformance(
+            sut, pack, system_name=parsed.system_name, system_scope=parsed.system_scope
+        )
 
         if parsed.json:
             print(report.to_json(indent=2))

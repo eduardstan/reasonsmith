@@ -20,6 +20,8 @@ requires = [
     "artifact_logs_decision_record",
     "provenance_active_exceptions",
 ]
+binding = true
+scope = ""
 
 [[requirement]]
 id = "gdpr_art22_3_safeguards_human_intervention"
@@ -33,6 +35,8 @@ requires = [
     "artifact_logs_decision_record",
     "scope_statements_local_vs_global",
 ]
+binding = true
+scope = ""
 
 [[requirement]]
 id = "gdpr_recital71_meaningful_explanation"
@@ -47,3 +51,5 @@ requires = [
     "scope_statements_explanation_scope",
     "provenance_model_version",
 ]
+binding = false
+scope = ""

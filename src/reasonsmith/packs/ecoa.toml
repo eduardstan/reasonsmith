@@ -25,6 +25,8 @@ requires = [
     "artifact_logs_notification_latency_days",
     "artifact_logs_counteroffer_not_accepted",
 ]
+binding = true
+scope = ""
 
 [[requirement]]
 id = "ecoa_reg_b_1002_9_a_2_written_statement"
@@ -40,6 +42,8 @@ requires = [
     "artifact_logs_decision_record",
     "provenance_model_version",
 ]
+binding = true
+scope = ""
 
 [[requirement]]
 id = "ecoa_reg_b_1002_9_b_2_specific_reasons"
@@ -54,3 +58,5 @@ requires = [
     "provenance_model_version",
     "scope_statements_local_vs_global",
 ]
+binding = true
+scope = ""

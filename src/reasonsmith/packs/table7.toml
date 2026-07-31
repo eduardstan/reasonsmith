@@ -51,6 +51,8 @@ requires = [
     "explanation_scope",
     "linkage_from_decision_to_artifact",
 ]
+binding = true
+scope = "high-risk"
 
 [[requirement]]
 id = "eu_ai_act_art12_record_keeping"
@@ -65,6 +67,8 @@ requires = [
     "retention_schedule",
     "signer",
 ]
+binding = true
+scope = "high-risk"
 
 [[requirement]]
 id = "gdpr_art22_meaningful_information"
@@ -79,6 +83,8 @@ requires = [
     "feature_to_named_concept_mapping",
     "dpia_cross_reference",
 ]
+binding = false
+scope = ""
 
 [[requirement]]
 id = "ecoa_reg_b_adverse_action"
@@ -95,6 +101,8 @@ requires = [
     "audit_ids",
     "retention_for_regulatory_lookback",
 ]
+binding = true
+scope = ""
 
 [[requirement]]
 id = "fda_gmlp_samd"
@@ -109,6 +117,8 @@ requires = [
     "verification_logs",
     "change_control",
 ]
+binding = false
+scope = ""
 
 [[requirement]]
 id = "nist_ai_rmf_risk_evidence"
@@ -124,3 +134,5 @@ requires = [
     "reviews_and_sign_offs",
     "incident_tickets",
 ]
+binding = false
+scope = ""

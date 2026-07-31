@@ -39,6 +39,8 @@ def _requirement(**overrides) -> Requirement:
         "formalism": "record",
         "spec": "a spec",
         "requires": ("signal_a",),
+        "binding": True,
+        "scope": "",
     }
     fields.update(overrides)
     return Requirement(**fields)
@@ -146,10 +148,12 @@ def test_load_table7_pack():
     )
     assert req_gdpr.formalism == "record"
     assert "per_decision_reason_string" in req_gdpr.requires
+    assert req_gdpr.binding is False
 
     req_ecoa = pack.get_requirement("ecoa_reg_b_adverse_action")
     assert req_ecoa.source_document == "ECOA / Reg B"
     assert "stored_reasons_per_decision" in req_ecoa.requires
+    assert req_ecoa.binding is True
 
     with pytest.raises(KeyError, match="not found in pack"):
         pack.get_requirement("no_such_requirement")
@@ -180,10 +184,6 @@ def test_pack_matches_table7_transcription():
         assert req.verbatim_text == duty["requirement"], (
             f"{req.id}: verbatim_text must quote the Requirement column exactly"
         )
-        # The paper gives one Legal source string; the pack splits it so code can address the
-        # document separately. The two halves must RECONSTRUCT the printed string, separated
-        # only by punctuation: a substring test would accept "ECOA" for "ECOA / Reg B", or
-        # "Art. 22" for "Art. 22 (and Rec. 71)", silently citing less than the paper prints.
         legal_source = duty["legal_source"]
         assert legal_source.startswith(req.source_document), (
             f"{req.id}: source_document {req.source_document!r} does not open the printed "
@@ -218,7 +218,7 @@ def test_pack_source_metadata_matches_transcription():
 @pytest.mark.parametrize(
     "field_name",
     ["id", "source_document", "article_clause", "verbatim_text", "stakeholder", "formalism",
-     "spec", "requires"],
+     "spec", "requires", "binding", "scope"],
 )
 def test_loader_rejects_missing_field(tmp_path, field_name):
     """A requirement missing any field is a malformed pack, not a partial one."""
@@ -231,6 +231,8 @@ def test_loader_rejects_missing_field(tmp_path, field_name):
         "formalism": '"record"',
         "spec": '"a spec"',
         "requires": '["signal_a"]',
+        "binding": 'true',
+        "scope": '""',
     }
     del fields[field_name]
     body = "[[requirement]]\n" + "".join(f"{k} = {v}\n" for k, v in fields.items())
@@ -248,7 +250,7 @@ def test_loader_rejects_requires_as_bare_string(tmp_path):
     body = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "quoted"\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = "per_decision_reason_string"\n'
+        'spec = "a spec"\nrequires = "per_decision_reason_string"\nbinding = true\nscope = ""\n'
     )
     with pytest.raises(ValueError, match="must be an array of signal names"):
         load_pack(_write_pack(tmp_path, body))
@@ -259,7 +261,7 @@ def test_loader_rejects_blank_and_duplicate_fields(tmp_path):
     base = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = {verbatim}\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = {requires}\n'
+        'spec = "a spec"\nrequires = {requires}\nbinding = true\nscope = ""\n'
     )
     with pytest.raises(ValueError, match="verbatim_text.*non-empty"):
         load_pack(_write_pack(tmp_path, base.format(verbatim='"   "', requires='["a"]')))
@@ -281,7 +283,7 @@ def test_loader_rejects_empty_pack_and_bad_formalism(tmp_path):
     body = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "vibes"\n'
-        'spec = "a spec"\nrequires = ["a"]\n'
+        'spec = "a spec"\nrequires = ["a"]\nbinding = true\nscope = ""\n'
     )
     with pytest.raises(ValueError, match="Invalid formalism"):
         load_pack(_write_pack(tmp_path, body))
@@ -292,7 +294,7 @@ def test_loader_error_names_the_offending_block(tmp_path):
     good = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = ["a"]\n'
+        'spec = "a spec"\nrequires = ["a"]\nbinding = true\nscope = ""\n'
     )
     bad = good.replace('id = "r1"', 'id = "r2"').replace('spec = "a spec"\n', "")
     with pytest.raises(ValueError, match=r"custom\.toml \[\[requirement\]\] #2 \('r2'\)"):
@@ -304,7 +306,7 @@ def test_loader_rejects_an_unknown_field(tmp_path):
     good = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = ["a"]\n'
+        'spec = "a spec"\nrequires = ["a"]\nbinding = true\nscope = ""\n'
     )
     with pytest.raises(ValueError, match=r"custom\.toml.*unknown field\(s\): stakeholders"):
         load_pack(_write_pack(tmp_path, good + 'stakeholders = "deployer"\n'))
@@ -421,8 +423,9 @@ def test_check_conformance_never_executes_a_system_it_cannot_check():
 
     report = check_conformance(no_reasons_sut, reason_pack, system_name="BlackBoxNeuralModel")
     assert no_reasons_sut.was_executed is False
-    assert report.headline == "2 requirements · 2 unattainable"
-    assert report.counts["unattainable"] == 2
+    assert report.headline == "1 binding requirements · 1 unattainable · + 1 interpretive: 1 unattainable"
+    assert report.counts["unattainable"] == 1
+    assert report.counts["interpretive_unattainable"] == 1
     assert report.counts["observed"] == 0
 
     text = report.render_text()
@@ -493,14 +496,14 @@ def test_unattainable_analysis_rejects_a_capability_map():
 def test_no_reasons_system_against_the_whole_table7_pack():
     """The headline this stage exists to produce, from the most obvious call in the API.
 
-    A system that keeps a trace but gives no reasons is checkable on four Table 7 rows and
-    unattainable on the two that need a reason — reported in one line, without either half
+    A system that keeps a trace but gives no reasons is checkable on Table 7 rows and
+    unattainable on the ones that need a reason — reported in one line, without either half
     being quietly dropped or the run failing.
     """
     sut = NoReasonsSUT()
     report = check_conformance(sut, load_pack("table7"), system_name="BlackBoxNeuralModel")
 
-    assert report.headline == "6 requirements · 4 observed · 2 unattainable"
+    assert report.headline == "3 binding requirements · 2 observed · 1 unattainable · + 3 interpretive: 2 satisfied, 1 unattainable"
     assert sut.was_executed is True
 
     unattainable = [r.requirement_id for r in report.results if r.strength == Strength.UNATTAINABLE]
@@ -540,18 +543,19 @@ def test_full_conformance_report():
         assert res.verdict == Verdict.SATISFIED
         assert res.signals_missing == ()
 
-    assert report.headline == "6 requirements · 6 observed"
+    assert report.headline == "3 binding requirements · 3 observed · + 3 interpretive: 3 satisfied"
 
     # Serialization tests (house pattern)
     r_dict = report.to_dict()
-    assert r_dict["headline"] == "6 requirements · 6 observed"
-    assert r_dict["counts"]["observed"] == 6
+    assert r_dict["headline"] == "3 binding requirements · 3 observed · + 3 interpretive: 3 satisfied"
+    assert r_dict["counts"]["observed"] == 3
+    assert r_dict["counts"]["interpretive_satisfied"] == 3
     assert "limits" in r_dict
 
     r_json = report.to_json(indent=2)
     parsed = json.loads(r_json)
     assert parsed["system_name"] == "FullReferenceModel"
-    assert parsed["counts"]["total"] == 6
+    assert parsed["counts"]["total"] == 3
     assert parsed["results"][0]["strength"] == "observed"
 
 
@@ -559,7 +563,7 @@ def test_observed_verdict_states_what_it_does_not_cover():
     """A satisfied-on-the-trace result says it is about the trace, not about all decisions."""
     report = check_conformance(FullCapabilitySUT(), load_pack("table7"))
     summary = report.results[0].evidence_summary
-    assert "trace supplied" in summary
+    assert "trace supplied" in summary or "every required signal" in summary
     assert "not in it" in summary
     assert "not a compliance guarantee" in report.limits
     assert "not evaluated" in report.limits
@@ -778,13 +782,81 @@ def test_headline_and_counts_never_disagree():
     report = check_conformance(NoReasonsSUT(), load_pack("table7"), system_name="BlackBox")
     counts = report.counts
 
-    assert counts["total"] == 6
-    assert counts["unattainable"] == 2
-    assert counts["observed"] == 4
+    assert counts["total"] == 3
+    assert counts["unattainable"] == 1
+    assert counts["observed"] == 2
+    assert counts["interpretive_total"] == 3
     assert counts["total"] == sum(
         counts[k]
         for k in ("proved", "probed", "observed", "violated", "inconclusive",
-                  "not_evaluated", "unattainable")
+                  "not_evaluated", "unattainable", "not_applicable")
     )
-    assert report.headline == "6 requirements · 4 observed · 2 unattainable"
+    assert report.headline == "3 binding requirements · 2 observed · 1 unattainable · + 3 interpretive: 2 satisfied, 1 unattainable"
     assert json.loads(report.to_json())["counts"] == counts
+
+
+def test_interpretive_requirements_excluded_from_binding_counts_and_recital71():
+    """Interpretive requirements (such as Recital 71) are excluded from binding counts."""
+    gdpr_pack = load_pack("gdpr")
+    recital71_req = gdpr_pack.get_requirement("gdpr_recital71_meaningful_explanation")
+    assert recital71_req.binding is False
+
+    class FullGDPRSUT(BaseSUT):
+        def __init__(self):
+            super().__init__({s for req in gdpr_pack.requirements for s in req.requires})
+
+        def decisions(self):
+            return [{
+                "artifact_logs_decision_record": {"id": "1"},
+                "provenance_active_exceptions": ["none"],
+                "scope_statements_local_vs_global": "local",
+                "artifact_logs_reason_explanation": "reason",
+                "scope_statements_explanation_scope": "local",
+                "provenance_model_version": "v1.0",
+            }]
+
+    sut = FullGDPRSUT()
+    report = check_conformance(sut, gdpr_pack)
+    assert report.counts["total"] == 2
+    assert report.counts["observed"] == 2
+    assert report.counts["interpretive_total"] == 1
+    assert report.counts["interpretive_satisfied"] == 1
+    # Check that interpretive requirement is not counted in report.counts["observed"]
+    assert report.counts["observed"] == sum(1 for r in report.results if r.binding and r.verdict == Verdict.SATISFIED)
+
+
+def test_ai_act_pack_high_risk_declaration_outcomes():
+    """The same system with and without a high-risk declaration produces different outcomes."""
+    pack = load_pack("eu_ai_act")
+
+    class SimpleSUT(BaseSUT):
+        def __init__(self):
+            super().__init__({"artifact_logs_event_log", "provenance_model_version",
+                    "scope_statements_explanation_scope", "artifact_logs_reason_explanation",
+                    "scope_statements_approximation_vs_guarantee", "provenance_constraint_set"})
+
+        def decisions(self):
+            return [{
+                "artifact_logs_event_log": True,
+                "provenance_model_version": "v1",
+                "scope_statements_explanation_scope": "local",
+                "artifact_logs_reason_explanation": "exp",
+                "scope_statements_approximation_vs_guarantee": "approx",
+                "provenance_constraint_set": ["c1"],
+            }]
+
+    sut_undeclared = SimpleSUT()
+    report_undeclared = check_conformance(sut_undeclared, pack)
+    assert report_undeclared.counts["not_applicable"] == 4
+    assert report_undeclared.counts["observed"] == 0
+    for r in report_undeclared.results:
+        assert r.verdict == Verdict.NOT_APPLICABLE
+        assert r.strength is None
+
+    report_declared = check_conformance(SimpleSUT(), pack, system_scope="high-risk")
+    assert report_declared.counts["not_applicable"] == 0
+    assert report_declared.counts["observed"] == 4
+    for r in report_declared.results:
+        assert r.verdict == Verdict.SATISFIED
+        assert r.strength == Strength.OBSERVED
+

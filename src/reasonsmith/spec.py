@@ -30,6 +30,8 @@ REQUIREMENT_FIELDS = (
     "formalism",
     "spec",
     "requires",
+    "binding",
+    "scope",
 )
 
 
@@ -39,6 +41,9 @@ class Requirement:
 
     `requires` names the signals a system must be capable of emitting for this
     requirement to be checkable at all.
+    `binding` indicates if this duty is a legally binding obligation (true) or
+    an interpretive recital/guidance item (false).
+    `scope` records any regulatory class limit (e.g. 'high-risk').
     """
 
     id: str
@@ -49,8 +54,14 @@ class Requirement:
     formalism: Literal["record", "temporal", "logical"]
     spec: str
     requires: tuple[str, ...]
+    binding: bool = True
+    scope: str = ""
 
     def __post_init__(self) -> None:
+        if not isinstance(self.binding, bool):
+            raise ValueError(f"Requirement {self.id!r}: field 'binding' must be a boolean")
+        if not isinstance(self.scope, str):
+            raise ValueError(f"Requirement {self.id!r}: field 'scope' must be a string")
         if self.formalism not in VALID_FORMALISMS:
             raise ValueError(
                 f"Invalid formalism {self.formalism!r}; must be one of {VALID_FORMALISMS}"
@@ -89,6 +100,8 @@ class Requirement:
             "formalism": self.formalism,
             "spec": self.spec,
             "requires": list(self.requires),
+            "binding": self.binding,
+            "scope": self.scope,
         }
 
 
@@ -171,6 +184,14 @@ def load_pack(name_or_path: str | Path) -> Pack:
                 f"{where}: unknown field(s): {', '.join(unknown)}. A requirement block carries "
                 f"exactly these fields: {', '.join(REQUIREMENT_FIELDS)}"
             )
+        if not isinstance(rdata["binding"], bool):
+            raise ValueError(
+                f"{where}: 'binding' must be a boolean, got {type(rdata['binding']).__name__}"
+            )
+        if not isinstance(rdata["scope"], str):
+            raise ValueError(
+                f"{where}: 'scope' must be a string, got {type(rdata['scope']).__name__}"
+            )
         # A bare string is iterable, so tuple("reasons") would silently become five
         # single-character signal names. Reject anything that is not a TOML array.
         if not isinstance(rdata["requires"], list):
@@ -188,6 +209,8 @@ def load_pack(name_or_path: str | Path) -> Pack:
                 formalism=rdata["formalism"],
                 spec=rdata["spec"],
                 requires=tuple(rdata["requires"]),
+                binding=rdata["binding"],
+                scope=rdata["scope"],
             )
         except ValueError as exc:
             raise ValueError(f"{where}: {exc}") from exc

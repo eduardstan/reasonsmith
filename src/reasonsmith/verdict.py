@@ -78,6 +78,7 @@ class Verdict(Enum):
     SATISFIED = "satisfied"
     VIOLATED = "violated"
     INCONCLUSIVE = "inconclusive"
+    NOT_APPLICABLE = "not_applicable"
 
     def __str__(self) -> str:
         return self.value
@@ -86,7 +87,7 @@ class Verdict(Enum):
     def parse(cls, value: str | Verdict) -> Verdict:
         if isinstance(value, cls):
             return value
-        val_lower = str(value).strip().lower()
+        val_lower = str(value).strip().lower().replace(" ", "_")
         for member in cls:
             if member.value == val_lower:
                 return member
@@ -99,14 +100,9 @@ def combine_verdicts(verdicts: Iterable[Verdict | str]) -> Verdict:
     Rules:
       1. If any verdict is VIOLATED, the combined result is VIOLATED.
       2. Else if any verdict is INCONCLUSIVE, the combined result is INCONCLUSIVE.
-      3. Else if all verdicts are SATISFIED, the combined result is SATISFIED.
-      4. An empty collection returns INCONCLUSIVE.
-
-    Rule 4 is deliberately *not* vacuous truth. Logically an empty conjunction is
-    true, but a conformance verdict is a claim about evidence, and having checked
-    nothing is not evidence that a requirement holds. Returning SATISFIED here
-    would let a run that evaluated no sub-property report as compliant, which is
-    the one failure mode this tool must never have.
+      3. Else if all verdicts are NOT_APPLICABLE, the combined result is NOT_APPLICABLE.
+      4. Else if all non-NOT_APPLICABLE verdicts are SATISFIED, the combined result is SATISFIED.
+      5. An empty collection returns INCONCLUSIVE.
     """
     v_list = [Verdict.parse(v) for v in verdicts]
     if not v_list:
@@ -115,6 +111,8 @@ def combine_verdicts(verdicts: Iterable[Verdict | str]) -> Verdict:
         return Verdict.VIOLATED
     if any(v == Verdict.INCONCLUSIVE for v in v_list):
         return Verdict.INCONCLUSIVE
+    if all(v == Verdict.NOT_APPLICABLE for v in v_list):
+        return Verdict.NOT_APPLICABLE
     return Verdict.SATISFIED
 
 

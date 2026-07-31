@@ -20,6 +20,8 @@ requires = [
     "artifact_logs_event_log",
     "provenance_model_version",
 ]
+binding = true
+scope = "high-risk"
 
 [[requirement]]
 id = "eu_ai_act_art12_2_traceability_monitoring"
@@ -36,6 +38,8 @@ requires = [
     "artifact_logs_event_log",
     "provenance_model_version",
 ]
+binding = true
+scope = "high-risk"
 
 [[requirement]]
 id = "eu_ai_act_art13_1_transparency_deployers"
@@ -50,6 +54,8 @@ requires = [
     "artifact_logs_reason_explanation",
     "provenance_model_version",
 ]
+binding = true
+scope = "high-risk"
 
 [[requirement]]
 id = "eu_ai_act_art13_2_instructions_for_use"
@@ -63,3 +69,5 @@ requires = [
     "scope_statements_approximation_vs_guarantee",
     "provenance_constraint_set",
 ]
+binding = true
+scope = "high-risk"
