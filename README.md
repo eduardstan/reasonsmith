@@ -75,7 +75,7 @@ A verdict carries the strength of the evidence behind it: `unattainable < observ
 python -m reasonsmith.cli check --system decisions.jsonl --pack ecoa [--json]
 ```
 
-It exits 2 when a requirement is violated or unattainable, 0 otherwise. There is no report renderer beyond text/JSON. The CLI takes no capability declaration: it reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system. To declare them instead, construct `JSONLAdapter(path, declared_capabilities={...})` in Python.
+It exits 2 when a requirement is violated or unattainable, 1 on a usage or input error, and 0 otherwise. There is no report renderer beyond text/JSON. The CLI takes no capability declaration: it reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system. To declare them instead, construct `JSONLAdapter(path, declared_capabilities={...})` in Python.
 
 ### Machine-Readable Output
 Records and certificates also serialise: `to_dict()` returns plain Python, `to_json(indent=None)` returns a JSON string. Each carries the same facts as its text rendering, including its missing-field report and its own limits, so a downstream consumer cannot read a partial document as a complete one. Values outside JSON's own types are stringified rather than raising.

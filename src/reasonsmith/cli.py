@@ -2,7 +2,7 @@
 
 Usage:
     python -m reasonsmith.cli check --system <decisions.jsonl> --pack <pack_name>
-        [--system-name <name>]
+        [--system-name <name>] [--json]
 
 Exit codes for `check`: 0 when no requirement is violated or unattainable, 2 when at least
 one is, 1 on a usage or input error. A requirement that was not evaluated is not a finding
