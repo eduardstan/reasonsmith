@@ -4,7 +4,10 @@ This is the evidence artifact for reasonsmith's own claims: an environment was a
 `torch` and `nesyarena[learning]` were actually installed, both suites were actually run, and the
 demo was actually executed twice and diffed. Every number in this file is copied from a command's
 real output; the exact commands are given so a stranger can reproduce every one of them from
-reasonsmith commit `56858ae27ad390a172198af362ea99b0b61b7579` (branch `fm/rs-prove-it`).
+reasonsmith commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` (branch `fm/rs-prove-it`), the commit
+every measurement below was taken at. Later commits on this branch that touch only `README.md` and
+this file leave all of it standing: nothing under `src/` or `tests/` changes, so the suites and the
+demo output do not either.
 
 ## Environment
 
@@ -18,7 +21,7 @@ reasonsmith commit `56858ae27ad390a172198af362ea99b0b61b7579` (branch `fm/rs-pro
 | torchvision | 0.28.0+cu130 |
 | pytest | 9.1.1 |
 | ruff | 0.16.1 |
-| reasonsmith | 0.1.0 (this repo, editable install) |
+| reasonsmith | 0.1.0 (this repo, editable install), commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` |
 | nesyarena | 0.1.0.dev0, pinned commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` |
 
 ### Commands run to build it
@@ -54,7 +57,18 @@ package, only of the separate nesyarena checkout used to measure nesyarena's own
 cd /path/to/nesyarena-src && python -m pytest -q -rA
 ```
 
-**110 collected, 100 passed, 5 skipped, 4 errors, 1 failed.**
+nesyarena's `pyproject.toml` sets `addopts = "-q"`, which suppresses pytest's collection header and
+its final summary line. Both are quoted verbatim below from the same suite run with that option
+neutralised (`python -m pytest -o addopts=""`), so the counts here are pytest's own, not derived:
+
+```
+collected 107 items / 3 skipped
+============= 1 failed, 100 passed, 5 skipped, 4 errors in 23.04s ==============
+```
+
+The 3 in `107 items / 3 skipped` are whole modules skipped at collection time, which pytest counts
+separately from the 107 collected items; the 5 in the summary line is those 3 plus the 2 tests
+skipped while running. `python -m pytest --collect-only -q` ends with `107 tests collected`.
 
 Both modules the README used to say could not even be collected — `tests/test_e6_findings.py` and
 `tests/test_learning_parity.py` — collect and run now. `test_learning_parity.py` runs 5 tests to a
@@ -67,8 +81,10 @@ pass; `test_e6_findings.py` is the one module that still cannot complete, and no
   `BatchStructure.ltn_prod`, which lazy-imports `ltn.fuzzy_ops`. Same missing dependency as above.
 - **`test_oracle.py::test_wmc_against_problog_battery`**: 1 failed, `ModuleNotFoundError: No
   module named 'problog'` — needs the `oracles` extra.
-- 3 more skips (`test_deeplog_adapter.py`, `test_deepproblog_standalone.py`,
-  `test_problog_kbest.py`) for the same reason: `backends`/`oracles` extras not installed.
+- 3 whole modules skipped at collection time — `test_deeplog_adapter.py` (`deeplog`) and
+  `test_deepproblog_standalone.py` (`deepproblog`), both in the `backends` extra, and
+  `test_problog_kbest.py` (`problog`), in the `oracles` extra. These are the `/ 3 skipped` in
+  pytest's collection header, not part of the 107 collected items.
 
 Full pass/fail list (`pytest -q -rA`, one line per test):
 
@@ -182,11 +198,15 @@ SKIPPED [1] tests/test_problog_kbest.py:7: could not import 'problog': No module
 SKIPPED [1] tests/test_learning_parity.py:101: could not import 'ltn': No module named 'ltn'
 SKIPPED [1] tests/test_learning_parity.py:123: could not import 'ltn': No module named 'ltn'
 ERROR tests/test_e6_findings.py::test_exact_transfers_near_zero_on_treatment
-ERROR tests/test_e6_findings.py::test_addmult_harmed_on_treatment - ModuleNotFoundError: No module named 'ltn'
+ERROR tests/test_e6_findings.py::test_addmult_harmed_on_treatment - ModuleNot...
 ERROR tests/test_e6_findings.py::test_exact_equals_addmult_exactly_on_control
-ERROR tests/test_e6_findings.py::test_top1_harmed_on_control - ModuleNotFoundError: No module named 'ltn'
-FAILED tests/test_oracle.py::test_wmc_against_problog_battery - ModuleNotFoundError: No module named 'problog'
+ERROR tests/test_e6_findings.py::test_top1_harmed_on_control - ModuleNotFound...
+FAILED tests/test_oracle.py::test_wmc_against_problog_battery - ModuleNotFoun...
 ```
+
+(Pasted verbatim from an 80-column terminal, which is where pytest truncates the last four lines
+with `...`; the untruncated messages are `ModuleNotFoundError: No module named 'ltn'` and
+`ModuleNotFoundError: No module named 'problog'`, as the `ERRORS` section of the same run shows.)
 
 ## 2. reasonsmith's own suite
 
@@ -196,15 +216,52 @@ cd reasonsmith && ruff check . && python -m pytest -q -rA
 
 `ruff check .`: **All checks passed!**
 
-`pytest`: **35 passed, 0 failed, 0 skipped.**
+`pytest`: **35 passed, 0 failed, 0 skipped** — the complete output of that command, verbatim:
 
 ```
 ...................................                                      [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_reasonsmith.py::test_schema_is_the_six_rows_of_table_7
+PASSED tests/test_reasonsmith.py::test_every_schema_entry_traces_to_the_table
+PASSED tests/test_reasonsmith.py::test_complete_record_is_complete
+PASSED tests/test_reasonsmith.py::test_withheld_field_is_reported_incomplete_and_named
+PASSED tests/test_reasonsmith.py::test_blank_and_none_are_missing_not_present
+PASSED tests/test_reasonsmith.py::test_field_outside_the_row_is_rejected
+PASSED tests/test_reasonsmith.py::test_attachments_do_not_fill_a_gap
+PASSED tests/test_reasonsmith.py::test_every_record_carries_its_limits
+PASSED tests/test_reasonsmith.py::test_unknown_duty_is_refused
+PASSED tests/test_reasonsmith.py::test_exact_inference_certifies_clean
+PASSED tests/test_reasonsmith.py::test_top_k_deletes_reasons_and_the_certificate_names_them
+PASSED tests/test_reasonsmith.py::test_exact_inference_recovers_what_top_k_dropped
+PASSED tests/test_reasonsmith.py::test_both_domains_lose_reasons_under_top_k
+PASSED tests/test_reasonsmith.py::test_a_perturbed_engine_that_drops_a_reason_fails
+PASSED tests/test_reasonsmith.py::test_a_perturbed_engine_that_keeps_every_reason_still_fails_on_value
+PASSED tests/test_reasonsmith.py::test_certificate_carries_its_limits
+PASSED tests/test_reasonsmith.py::test_a_reason_with_no_private_fact_is_not_certified_either_way
+PASSED tests/test_reasonsmith.py::test_a_query_with_no_reason_is_never_a_pass
+PASSED tests/test_reasonsmith.py::test_an_engine_answer_with_no_enumerated_reason_is_attributed_to_the_gap
+PASSED tests/test_reasonsmith.py::test_no_check_scores_a_certificate_that_measured_nothing
+PASSED tests/test_reasonsmith.py::test_an_unmeasured_group_never_wins_the_per_group_comparison
+PASSED tests/test_reasonsmith.py::test_a_gap_needs_two_groups_that_produced_the_metric
+PASSED tests/test_reasonsmith.py::test_an_all_empty_cohort_reports_nothing_to_measure
+PASSED tests/test_reasonsmith.py::test_a_probe_with_no_signal_is_not_counted_as_live
+PASSED tests/test_reasonsmith.py::test_registered_hypothesis_confidence_form_is_not_supported
+PASSED tests/test_reasonsmith.py::test_registered_hypothesis_multiplicity_form_is_supported
+PASSED tests/test_reasonsmith.py::test_coverage_and_fidelity_agree_with_the_certificate
+PASSED tests/test_reasonsmith.py::test_drift_moves_the_stated_reason_and_stability_reports_it
+PASSED tests/test_reasonsmith.py::test_score_factors_are_the_measured_scores_or_absent
+PASSED tests/test_reasonsmith.py::test_the_whole_report_runs
+PASSED tests/test_reasonsmith.py::test_record_json_roundtrip_preserves_incomplete_status_and_missing_fields
+PASSED tests/test_reasonsmith.py::test_record_json_cites_the_table_7_row_the_human_output_cites
+PASSED tests/test_reasonsmith.py::test_record_json_stringifies_values_json_has_no_type_for
+PASSED tests/test_reasonsmith.py::test_record_dict_does_not_hand_out_the_module_schema_to_mutate
+PASSED tests/test_reasonsmith.py::test_certificate_json_roundtrip_preserves_verdict_and_reasons
 ```
 
-(`-rA` was used but pytest's own summary block prints nothing beyond the short header when every
-test passes and there is nothing to list — 35 `PASSED` lines followed the dots, one per test in
-`tests/test_reasonsmith.py`, listing every test named on that line.)
+This repo's `pyproject.toml` also sets `addopts = "-q"`, so pytest prints no `collected ...` header
+and no closing `N passed` line here either; the 35 above is the number of `PASSED` lines pytest
+itself printed, and nothing is skipped, failed or errored because pytest listed nothing else.
 
 ## 3. `python -m reasonsmith.demo`, twice, diffed
 
@@ -212,11 +269,11 @@ test passes and there is nothing to list — 35 `PASSED` lines followed the dots
 python -m reasonsmith.demo > run1.txt
 python -m reasonsmith.demo > run2.txt
 diff run1.txt run2.txt          # empty
-md5sum run1.txt run2.txt        # 64555aa97181b22b3078c02e393d8d60 for both
+md5sum run1.txt run2.txt        # c5976971e24a86886f1e0ad54f0b9ce9 for both
 ```
 
 **The two runs are byte-identical: `diff` produces no output, both files hash to
-`64555aa97181b22b3078c02e393d8d60`.** The module docstring's "reproducible byte for byte" claim
+`c5976971e24a86886f1e0ad54f0b9ce9`.** The module docstring's "reproducible byte for byte" claim
 holds, measured, not assumed.
 
 ### The figures the README's Key Finding cites
@@ -271,7 +328,7 @@ windows: 0.3333** (1.0 would mean the same reason every window).
 ### Full transcript
 
 The complete, unedited output of both demo runs (identical to each other) is 561 lines. Regenerate
-it with `python -m reasonsmith.demo` from this commit — the figures above are direct quotes from
+it with `python -m reasonsmith.demo` from commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` — the figures above are direct quotes from
 that output, not paraphrases, and the run is deterministic (see previous section), so a fresh run
 reproduces every line, including the parts not quoted here (the full Table 7 traceability dump in
 section 0, the two perturbed-engine certificates in section 3 that both correctly `FAIL` a
@@ -284,7 +341,8 @@ the second).
 The README used to say `torch` was never installed and that, without it, "98 tests pass while
 `tests/test_e6_findings.py` and `tests/test_learning_parity.py` fail to collect". That caveat is
 now replaced by the measured numbers above, not deleted: torch is installed in the environment
-used to produce this file, both named modules collect and run, and the suite total is 110, not 98.
+used to produce this file, both named modules collect and run, and pytest collects 107 items
+(plus 3 modules skipped at collection time), not 98.
 Two nesyarena tests still cannot pass here — not for lack of torch, but for lack of `ltn`
 (LTNtorch) and `problog`, which live behind nesyarena's separate `backends` and `oracles` extras
 and were out of scope for this task. `torch` remains outside reasonsmith's own declared
