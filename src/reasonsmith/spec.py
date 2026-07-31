@@ -17,9 +17,10 @@ from typing import Literal
 VALID_FORMALISMS = ("record", "temporal", "logical")
 PACKS_DIR = Path(__file__).parent / "packs"
 
-#: Every field a [[requirement]] block must carry. A pack that omits one is
+#: Exactly the fields a [[requirement]] block carries. A pack that omits one is
 #: rejected at load time rather than producing a requirement that cannot be
-#: traced back to its source.
+#: traced back to its source, and one that adds a field the loader does not read
+#: is rejected too rather than looking like it carries data nothing acts on.
 REQUIREMENT_FIELDS = (
     "id",
     "source_document",
