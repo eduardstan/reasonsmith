@@ -1,0 +1,50 @@
+[pack]
+id = "ecoa"
+title = "ECOA / Regulation B (12 CFR 1002.9): Adverse Action Notices"
+description = "Requirements for adverse credit decision notifications, specific principal reasons, and record retention."
+
+[source]
+document = "CFPB Regulation B / Equal Credit Opportunity Act (12 CFR § 1002.9)"
+publication = "Code of Federal Regulations, Title 12, Chapter X, Part 1002"
+url = "https://www.consumerfinance.gov/rules-policy/regulations/b/9/"
+
+[[requirement]]
+id = "ecoa_reg_b_1002_9_a_1_timing_of_notice"
+source_document = "ECOA / Regulation B (12 CFR 1002.9)"
+article_clause = "12 CFR 1002.9(a)(1)"
+verbatim_text = "Within 30 days after receiving a completed application, a creditor shall notify an applicant of action taken."
+stakeholder = "affected individual"
+formalism = "temporal"
+spec = "always((artifact_logs_decision_record >= 0.5) -> (artifact_logs_event_log >= 0.5))"
+requires = [
+    "artifact_logs_decision_record",
+    "artifact_logs_event_log",
+]
+
+[[requirement]]
+id = "ecoa_reg_b_1002_9_a_2_specific_reasons"
+source_document = "ECOA / Regulation B (12 CFR 1002.9)"
+article_clause = "12 CFR 1002.9(a)(2)"
+verbatim_text = "The statement of reasons for adverse action required by paragraph (a)(1) of this section must be specific and indicate the principal reasons for the adverse action."
+stakeholder = "affected individual"
+formalism = "record"
+spec = "Specific principal reasons provided for adverse decisions."
+requires = [
+    "artifact_logs_reason_explanation",
+    "provenance_model_version",
+    "scope_statements_local_vs_global",
+]
+
+[[requirement]]
+id = "ecoa_reg_b_1002_9_b_2_written_statement"
+source_document = "ECOA / Regulation B (12 CFR 1002.9)"
+article_clause = "12 CFR 1002.9(b)(2)"
+verbatim_text = "A statement of reasons for adverse action which satisfies the requirements of section 701(d) of the Act satisfies the requirements of paragraph (a)(2) of this section if it is delivered in writing and contains the specific reasons for the adverse action."
+stakeholder = "affected individual"
+formalism = "record"
+spec = "Written statement of reasons retaining decision record and model provenance."
+requires = [
+    "artifact_logs_reason_explanation",
+    "artifact_logs_decision_record",
+    "provenance_model_version",
+]

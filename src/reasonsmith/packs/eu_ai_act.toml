@@ -1,0 +1,63 @@
+[pack]
+id = "eu_ai_act"
+title = "EU AI Act (Regulation (EU) 2024/1689): Articles 12 & 13"
+description = "Requirements for high-risk AI system record-keeping (Art. 12) and transparency to deployers (Art. 13)."
+
+[source]
+document = "Regulation (EU) 2024/1689 of the European Parliament and of the Council"
+publication = "Official Journal of the European Union, OJ L, 2024/1689, 12.7.2024"
+url = "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689"
+
+[[requirement]]
+id = "eu_ai_act_art12_1_automatic_logging"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 12(1)"
+verbatim_text = "High-risk AI systems shall technically allow for the automatic recording of events ('logs') over the lifetime of the system."
+stakeholder = "regulator"
+formalism = "record"
+spec = "Automatic lifetime event logs retaining decision events."
+requires = [
+    "artifact_logs_event_log",
+    "provenance_model_version",
+]
+
+[[requirement]]
+id = "eu_ai_act_art12_2_traceability_monitoring"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 12(2)"
+verbatim_text = "In order to ensure a level of traceability of the AI system's functioning which is appropriate to the intended purpose of the system, logging capabilities shall enable the recording of events relevant for: (a) identifying situations that may result in the AI system presenting a risk within the meaning of Article 79(1) or in a substantial modification; (b) facilitating the post-market monitoring referred to in Article 72; and (c) monitoring the operation of high-risk AI systems referred to in Article 26(5)."
+stakeholder = "regulator"
+formalism = "temporal"
+spec = "always((artifact_logs_event_log >= 0.5) -> (provenance_model_version >= 0.5))"
+requires = [
+    "artifact_logs_event_log",
+    "provenance_model_version",
+    "stability_signals_artifact_drift",
+]
+
+[[requirement]]
+id = "eu_ai_act_art13_1_transparency_deployers"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 13(1)"
+verbatim_text = "High-risk AI systems shall be designed and developed in such a way as to ensure that their operation is sufficiently transparent to enable deployers to interpret a system's output and use it appropriately."
+stakeholder = "deployer"
+formalism = "record"
+spec = "Decision output accompanied by explanation scope and model provenance for deployers."
+requires = [
+    "scope_statements_explanation_scope",
+    "artifact_logs_reason_explanation",
+    "provenance_model_version",
+]
+
+[[requirement]]
+id = "eu_ai_act_art13_2_instructions_for_use"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 13(2)"
+verbatim_text = "High-risk AI systems shall be accompanied by instructions for use in an appropriate digital format or otherwise that include concise, complete, correct and clear information that is relevant, accessible and comprehensible to deployers."
+stakeholder = "deployer"
+formalism = "record"
+spec = "Instructions for use and performance bounds accessible to deployers."
+requires = [
+    "scope_statements_approximation_vs_guarantee",
+    "provenance_constraint_set",
+]

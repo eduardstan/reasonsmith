@@ -11,6 +11,13 @@ Strengths form a strict total order (the strength lattice):
   probed       — The property holds under active perturbation/replay.
   proved       — The property holds for all inputs via formal reasoning / solver proof.
 
+Lineage & Section 6.3 Scope Statements:
+  The strength lattice is the operational form of Section 6.3's scope statement ("Governance,
+  Monitoring, and What to Record", Stan, Sciavicco & Napoletano, JAIR 2026, p. 36:24).
+  Section 6.3 asks whether an explanation "approximates or guarantees" behavior — which is
+  precisely the observed / proved distinction, with probed between them and unattainable as
+  the case the paper does not name: a system that cannot produce the required record at all.
+
 Verdicts record whether a property is met:
   satisfied    — Evidence proves or demonstrates the requirement holds.
   violated     — Evidence demonstrates a counterexample or breach.

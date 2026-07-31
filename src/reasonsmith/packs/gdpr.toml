@@ -1,0 +1,49 @@
+[pack]
+id = "gdpr"
+title = "GDPR (Regulation (EU) 2016/679): Article 22 & Recital 71"
+description = "Requirements for automated individual decision-making, profiling safeguards, and explanations."
+
+[source]
+document = "Regulation (EU) 2016/679 of the European Parliament and of the Council (GDPR)"
+publication = "Official Journal of the European Union, OJ L 119, 4.5.2016, p. 1–88"
+url = "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679"
+
+[[requirement]]
+id = "gdpr_art22_1_automated_decision_prohibition"
+source_document = "GDPR (Regulation (EU) 2016/679)"
+article_clause = "Article 22(1)"
+verbatim_text = "The data subject shall have the right not to be subject to a decision based solely on automated processing, including profiling, which produces legal effects concerning him or her or similarly significantly affects him or her."
+stakeholder = "affected individual"
+formalism = "record"
+spec = "Decisions producing legal/significant effects record decision logic and provenance."
+requires = [
+    "artifact_logs_decision_record",
+    "provenance_active_exceptions",
+]
+
+[[requirement]]
+id = "gdpr_art22_3_safeguards_human_intervention"
+source_document = "GDPR (Regulation (EU) 2016/679)"
+article_clause = "Article 22(3)"
+verbatim_text = "In the cases referred to in points (a) and (c) of paragraph 2, the data controller shall implement suitable measures to safeguard the data subject's rights and freedoms and legitimate interests, at least the right to obtain human intervention on the part of the controller, to express his or her point of view and to contest the decision."
+stakeholder = "affected individual"
+formalism = "record"
+spec = "Safeguards providing contestation endpoints and human review pathways."
+requires = [
+    "artifact_logs_decision_record",
+    "scope_statements_local_vs_global",
+]
+
+[[requirement]]
+id = "gdpr_recital71_meaningful_explanation"
+source_document = "GDPR (Regulation (EU) 2016/679)"
+article_clause = "Recital 71"
+verbatim_text = "In any case, such processing should be subject to suitable safeguards, which should include specific information to the data subject and the right to obtain human intervention, to express his or her point of view, to obtain an explanation of the decision reached after such assessment and to challenge the decision."
+stakeholder = "affected individual"
+formalism = "record"
+spec = "Per-decision explanation and logic scope for data subjects."
+requires = [
+    "artifact_logs_reason_explanation",
+    "scope_statements_explanation_scope",
+    "provenance_model_version",
+]

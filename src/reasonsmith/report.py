@@ -35,11 +35,11 @@ LIMITS = (
     "should be read from this report."
 )
 
-#: Formalisms this build can actually evaluate. `temporal` and `logical` requirements need the
-#: monitor and solver engines, which are not part of this stage; until they land, such
+#: Formalisms this build can actually evaluate. `logical` requirements need the
+#: solver engine, which is part of stage 3; until it lands, such
 #: requirements are reported as not evaluated rather than judged by a weaker check that would
 #: not establish the property.
-SUPPORTED_FORMALISMS = ("record",)
+SUPPORTED_FORMALISMS = ("record", "temporal")
 
 
 def _is_present(value: Any) -> bool:
@@ -340,57 +340,22 @@ def evaluate_requirement(
     if records is None:
         records = _read_trace(sut)
 
-    if not records:
-        return RequirementResult(
-            requirement_id=req.id,
-            source_clause=clause,
-            verdict=Verdict.INCONCLUSIVE,
-            strength=None,
-            signals_required=tuple(req.requires),
-            evidence_summary=(
-                "Not evaluated: the decision trace is empty, so nothing was observed. "
-                "An empty trace is not evidence that the requirement holds."
-            ),
-        )
-
-    absent = sorted(
-        {
-            signal
-            for rec in records
-            for signal in req.requires
-            if not _is_present(rec.get(signal))
-        }
-    )
-
-    if absent:
-        return RequirementResult(
-            requirement_id=req.id,
-            source_clause=clause,
-            verdict=Verdict.VIOLATED,
-            strength=Strength.OBSERVED,
-            signals_required=tuple(req.requires),
-            evidence_summary=(
-                f"Violated over {len(records)} observed decision(s): the system declares it can "
-                f"emit these signals, but records carry no value for {', '.join(absent)}."
-            ),
-            details={
-                "signals_absent_from_trace": absent,
-                "records_observed": len(records),
-            },
-        )
+    if req.formalism == "record":
+        from reasonsmith.engines.record import RecordEngine
+        return RecordEngine.evaluate(req, sut, records)
+    elif req.formalism == "temporal":
+        from reasonsmith.engines.observed import ObservedEngine
+        return ObservedEngine.evaluate(req, sut, records)
 
     return RequirementResult(
         requirement_id=req.id,
         source_clause=clause,
-        verdict=Verdict.SATISFIED,
-        strength=Strength.OBSERVED,
+        verdict=Verdict.INCONCLUSIVE,
+        strength=None,
         signals_required=tuple(req.requires),
         evidence_summary=(
-            f"Observed over {len(records)} decision(s): every required signal "
-            f"({', '.join(req.requires)}) carries a value in every record. Holds on the trace "
-            "supplied; nothing here extends the claim to decisions not in it."
+            f"Not evaluated: no engine in this build checks a {req.formalism!r} requirement."
         ),
-        details={"records_observed": len(records)},
     )
 
 

@@ -27,6 +27,7 @@ dependencies = [
     # CI, and the certificate numbers stay reconstructible. Bump the SHA deliberately, never to a
     # branch name.
     "nesyarena @ git+https://github.com/eduardstan/nesyarena@57720fa212834689692e171882272140f1d1fed7",
+    "rtamt>=0.3.0",
 ]
 
 [project.optional-dependencies]

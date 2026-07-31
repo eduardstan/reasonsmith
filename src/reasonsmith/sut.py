@@ -14,6 +14,20 @@ from typing import Any, Optional, Protocol, runtime_checkable
 
 from reasonsmith.spec import load_pack
 
+#: Section 6.3 top-level taxonomy for capability signals declared by a system
+#: (Stan, Sciavicco & Napoletano, JAIR 2026, Section 6.3, p. 36:24):
+#:   - provenance: KB version, constraint set, active exceptions at inference time
+#:   - artifact_logs: extracted rules/trees, constraint-satisfaction traces, proof/plan/KG traces
+#:   - stability_signals: artifact drift over time, perturbation sensitivity, change
+#:     after model updates
+#:   - scope_statements: local vs global scope, approximation vs guarantee statements
+CAPABILITY_TAXONOMY = (
+    "provenance",
+    "artifact_logs",
+    "stability_signals",
+    "scope_statements",
+)
+
 
 def _validate_capability_collection(declared: Any, subject: str) -> None:
     """Refuse anything that is not a plain collection of enabled signal names.
