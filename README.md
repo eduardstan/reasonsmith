@@ -4,10 +4,10 @@
 [![Python >= 3.11](https://img.shields.io/badge/python->=3.11-blue.svg)](https://www.python.org/)
 [![MIT licence](https://img.shields.io/github/license/eduardstan/reasonsmith)](https://github.com/eduardstan/reasonsmith/blob/main/LICENSE)
 
-[![Reasonsmith Conformance & Reason-Deletion Visual Report](docs/report-preview.svg)](https://eduardstan.github.io/reasonsmith/)
+[![Reasonsmith Conformance & Reason-Deletion Visual Report Screenshot](docs/report-preview.png)](https://eduardstan.github.io/reasonsmith/)
 
 > [!TIP]
-> **Live Interactive Report:** View the self-contained HTML conformance report live on GitHub Pages: [**eduardstan.github.io/reasonsmith**](https://eduardstan.github.io/reasonsmith/) *(generated from commit `e6ff65c`)*.
+> **Live Interactive Report:** View the self-contained HTML conformance report live on GitHub Pages: [**eduardstan.github.io/reasonsmith**](https://eduardstan.github.io/reasonsmith/).
 
 `reasonsmith` turns legal reason-giving duties into machine-checkable evidence records and reason-deletion certificates. Given a decision, the symbolic artifact behind it, and an applicable regulatory duty, it evaluates structural record completeness and attributes dropped reasons by comparing actual engine behavior against ground-truth exact inference.
 

@@ -6,8 +6,8 @@
   <title>Reasonsmith Conformance Report - CreditScoringPipeline</title>
   <style>
     :root {
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       --color-slate-50: #f8fafc;
       --color-slate-100: #f1f5f9;
       --color-slate-200: #e2e8f0;
@@ -118,6 +118,14 @@
       font-size: 1.1rem;
       font-weight: 700;
       color: #1e3a8a;
+    }
+    .provenance-bar {
+      font-size: 0.8rem;
+      color: #1e40af;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid #bfdbfe;
+      font-family: var(--font-mono);
     }
 
     .dashboard-section {
@@ -241,11 +249,31 @@
     .badge-interpretive { background: #f3e8ff; color: #6b21a8; }
     .badge-scope { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
 
-    .verdict-satisfied { background: var(--color-satisfied-bg); color: var(--color-satisfied-text); border: 1px solid var(--color-satisfied-border); }
-    .verdict-violated { background: var(--color-violated-bg); color: var(--color-violated-text); border: 1px solid var(--color-violated-border); }
-    .verdict-unattainable { background: var(--color-unattainable-bg); color: var(--color-unattainable-text); border: 1px dashed var(--color-unattainable-border); }
-    .verdict-inconclusive { background: var(--color-inconclusive-bg); color: var(--color-inconclusive-text); border: 1px solid var(--color-inconclusive-border); }
-    .verdict-not-applicable { background: var(--color-not-applicable-bg); color: var(--color-not-applicable-text); border: 1px solid var(--color-not-applicable-border); }
+    .verdict-satisfied {
+      background: var(--color-satisfied-bg);
+      color: var(--color-satisfied-text);
+      border: 1px solid var(--color-satisfied-border);
+    }
+    .verdict-violated {
+      background: var(--color-violated-bg);
+      color: var(--color-violated-text);
+      border: 1px solid var(--color-violated-border);
+    }
+    .verdict-unattainable {
+      background: var(--color-unattainable-bg);
+      color: var(--color-unattainable-text);
+      border: 1px dashed var(--color-unattainable-border);
+    }
+    .verdict-inconclusive {
+      background: var(--color-inconclusive-bg);
+      color: var(--color-inconclusive-text);
+      border: 1px solid var(--color-inconclusive-border);
+    }
+    .verdict-not-applicable {
+      background: var(--color-not-applicable-bg);
+      color: var(--color-not-applicable-text);
+      border: 1px solid var(--color-not-applicable-border);
+    }
 
     .lattice-container {
       padding: 0.6rem 1.25rem;
@@ -278,10 +306,19 @@
       background: #ffffff;
       border: 1px solid #e2e8f0;
     }
-    .lattice-step.active-proved { background: #059669; color: #ffffff; border-color: #047857; font-weight: 700; }
-    .lattice-step.active-probed { background: #2563eb; color: #ffffff; border-color: #1d4ed8; font-weight: 700; }
-    .lattice-step.active-observed { background: #3b82f6; color: #ffffff; border-color: #2563eb; font-weight: 700; }
-    .lattice-step.active-unattainable { background: #d97706; color: #ffffff; border-color: #b45309; font-weight: 700; border-style: dashed; }
+    .lattice-step.active-proved {
+      background: #059669; color: #ffffff; border-color: #047857; font-weight: 700;
+    }
+    .lattice-step.active-probed {
+      background: #2563eb; color: #ffffff; border-color: #1d4ed8; font-weight: 700;
+    }
+    .lattice-step.active-observed {
+      background: #3b82f6; color: #ffffff; border-color: #2563eb; font-weight: 700;
+    }
+    .lattice-step.active-unattainable {
+      background: #d97706; color: #ffffff; border-color: #b45309;
+      font-weight: 700; border-style: dashed;
+    }
     .lattice-step.passed { background: #e2e8f0; color: #334155; }
     .lattice-arrow { color: #cbd5e1; font-size: 0.75rem; }
 
@@ -298,10 +335,16 @@
       display: inline-block;
       margin: 0.1rem;
     }
-    .signal-tag.missing { background: #fef3c7; color: #92400e; border-color: #fde68a; font-weight: 600; }
-    .signal-tag.absent { background: #fee2e2; color: #991b1b; border-color: #fca5a5; font-weight: 600; }
+    .signal-tag.missing {
+      background: #fef3c7; color: #92400e; border-color: #fde68a; font-weight: 600;
+    }
+    .signal-tag.absent {
+      background: #fee2e2; color: #991b1b; border-color: #fca5a5; font-weight: 600;
+    }
 
-    .evidence-summary { font-size: 0.9rem; color: var(--color-slate-700); margin-top: 0.5rem; line-height: 1.5; }
+    .evidence-summary {
+      font-size: 0.9rem; color: var(--color-slate-700); margin-top: 0.5rem; line-height: 1.5;
+    }
     .callout-box { margin-top: 1rem; padding: 1rem; border-radius: 6px; font-size: 0.85rem; }
     .callout-unattainable { background: #fffbeb; border: 1px dashed #fde68a; color: #78350f; }
     .callout-violated { background: #fef2f2; border: 1px solid #fca5a5; color: #7f1d1d; }
@@ -342,7 +385,11 @@
     @media print {
       body { background: #ffffff; padding: 0; color: #000000; }
       .container { border: none; box-shadow: none; max-width: 100%; }
-      .report-header { background: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .report-header {
+        background: #1e293b !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
       .req-card { break-inside: avoid; border: 1px solid #000000 !important; }
       .req-card.verdict-violated { border: 2px solid #dc2626 !important; }
       .req-card.verdict-unattainable { border: 2px dashed #d97706 !important; }
@@ -378,6 +425,7 @@
     <div class="headline-banner">
       <div class="headline-title">Executive Headline Summary</div>
       <div class="headline-text">6 requirements · 4 binding: 2 unattainable, 2 not applicable · 2 interpretive: 2 unattainable</div>
+      <div class="provenance-bar"><strong>Report Provenance:</strong> Generated from commit <code>924fbb8</code> via <code>python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline --html docs/index.html</code></div>
     </div>
 
     <section class="dashboard-section">

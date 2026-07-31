@@ -118,7 +118,9 @@ def main(args: list[str] | None = None) -> int:
             return 1
 
         if parsed.html:
-            html_content = report.render_html()
+            cmd_args = args if args is not None else sys.argv[1:]
+            cmd_str = f"python -m reasonsmith.cli {' '.join(cmd_args)}"
+            html_content = report.render_html(command=cmd_str)
             if parsed.html == "-":
                 print(html_content)
             else:

@@ -112,3 +112,4 @@ def test_cli_html_export():
         assert "CLITestSystem" in content
         assert "ecoa" in content
         assert "Strength Lattice" in content
+        assert "Report Provenance:" in content

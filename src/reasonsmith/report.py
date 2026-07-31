@@ -335,14 +335,38 @@ class ConformanceReport:
         lines.extend(["", "LIMITS OF THIS REPORT", f"  {self.limits}"])
         return "\n".join(lines)
 
-    def render_html(self, commit_hash: str | None = None) -> str:
+    def render_html(
+        self,
+        commit_hash: str | None = None,
+        command: str | None = None,
+    ) -> str:
         """Self-contained HTML conformance report rendering.
 
         Zero external dependencies, network-free, printable on A4. Presents the
         evidence strength lattice, counts split by binding vs interpretive,
         and visually distinguishes unattainable architectural gaps from violated trace failures.
+        Carries explicit provenance naming the commit and command that produced it.
         """
         import html
+        import subprocess
+        import sys
+
+        if commit_hash is None:
+            try:
+                commit_hash = subprocess.check_output(
+                    ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+                ).strip()
+            except Exception:
+                commit_hash = ""
+
+        if command is None:
+            try:
+                if sys.argv and ("reasonsmith" in sys.argv[0] or "pytest" in sys.argv[0]):
+                    command = f"python -m reasonsmith.cli {' '.join(sys.argv[1:])}"
+                else:
+                    command = "reasonsmith check"
+            except Exception:
+                command = "reasonsmith check"
 
         counts = self.counts
         sys_name = html.escape(self.system_name)
@@ -351,7 +375,18 @@ class ConformanceReport:
         headline_esc = html.escape(self.headline)
         limits_esc = html.escape(self.limits)
         c_short = commit_hash[:7] if commit_hash else ""
-        commit_info = f" · commit <code>{html.escape(c_short)}</code>" if commit_hash else ""
+        c_short_esc = html.escape(c_short)
+        cmd_esc = html.escape(command)
+
+        provenance_html = ""
+        if c_short or command:
+            c_part = f"from commit <code>{c_short_esc}</code>" if c_short else ""
+            cmd_part = f"via <code>{cmd_esc}</code>" if command else ""
+            provenance_html = (
+                '<div class="provenance-bar">'
+                f'<strong>Report Provenance:</strong> Generated {c_part} {cmd_part}'
+                '</div>'
+            )
 
         def render_pill_group(prefix: str) -> str:
             cats = [
@@ -656,6 +691,14 @@ class ConformanceReport:
       font-weight: 700;
       color: #1e3a8a;
     }}
+    .provenance-bar {{
+      font-size: 0.8rem;
+      color: #1e40af;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid #bfdbfe;
+      font-family: var(--font-mono);
+    }}
 
     .dashboard-section {{
       padding: 0 1.5rem 1.5rem 1.5rem;
@@ -953,7 +996,8 @@ class ConformanceReport:
 
     <div class="headline-banner">
       <div class="headline-title">Executive Headline Summary</div>
-      <div class="headline-text">{headline_esc}{commit_info}</div>
+      <div class="headline-text">{headline_esc}</div>
+      {provenance_html}
     </div>
 
     <section class="dashboard-section">
