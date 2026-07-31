@@ -79,5 +79,5 @@ If you encounter a bug or have a question:
 1. Create a focused topic branch (`git checkout -b my-feature-branch`).
 2. Implement your change with tests.
 3. Verify that `ruff check .`, `pytest`, and `python -m reasonsmith.demo` pass.
-4. Open a Pull Request targeting `main` describing your changes and referencing any open issue (e.g., `Fixes #6`).
+4. Open a Pull Request targeting `main` describing your changes and referencing any open issue it addresses (e.g., `Fixes #123`).
 5. **No AI co-author trailers:** Do not include automated co-author trailers in commit messages.
