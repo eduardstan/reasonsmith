@@ -6,7 +6,7 @@ This is the evidence artifact for `reasonsmith`'s own claims: an environment was
 
 | Category | Target / Metric | Measured Result | Details / Status |
 |---|---|---|---|
-| **`reasonsmith` Suite** | `pytest` | **35 passed**, 0 failed, 0 skipped | Pure-Python core test suite |
+| **`reasonsmith` Suite** | `pytest` | **35 passed**, 0 failed, 0 skipped | Counts the v0.1 suite as it stood at the measured commit — **stale by construction**, see the note under this table |
 | | `ruff check .` | **0 findings** | All linter checks passed cleanly |
 | **`nesyarena` Suite** | Pytest Header | **107 collected items** / 3 skipped modules | Measured with `torch` & `torchvision` installed |
 | *(with torch present)* | Pytest Summary | **1 failed, 100 passed, 5 skipped, 4 errors** | Execution time: 23.04s |
@@ -20,6 +20,8 @@ This is the evidence artifact for `reasonsmith`'s own claims: an environment was
 | **Table 19 Conformance** | Design A (Confidence Varies) | Coverage gap: **0.0000**<br>Fidelity gap: **+0.0535**<br>Retained share gap: **+0.2802** | Typical: cov 0.3333, fid 0.7807, ret 0.7731<br>Atypical: cov 0.3333, fid 0.7272, ret 0.4929 |
 | | Design B (Multiplicity Varies) | Coverage gap: **+0.3000**<br>Fidelity gap: **+0.1472**<br>Retained share gap: **+0.1129** | Typical: cov 0.5000, fid 0.7831, ret 0.7292<br>Atypical: cov 0.2000, fid 0.6360, ret 0.6163 |
 | | Signal Stability | **0.3333** across 4 windows | Delinquency signal drift swaps stated reason from C01 to C03 |
+
+**What the `35 passed` figure does and does not count.** Every number in this file is a measurement taken at `reasonsmith` commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`, and none of them is re-measured by later work — that is what makes them reconstructible, and it is also what makes this one stale. Section 2's `35 passed` counts the suite as it stood then, and the v0.2 work added since (`verdict.py`, `spec.py`, `sut.py`, `report.py`, `adapters/`, `engines/`, `cli.py`, the `packs/` requirement packs, and `tests/test_v02_core.py` plus `tests/test_v02_stage2.py`) adds tests to that number. Read `35` as the v0.1 suite's count at that commit, never as the current suite's: for the current count, run `pytest` yourself. Those v0.2 files are new alongside v0.1 rather than changes to it — `evidence.py`, `certificate.py`, `conformance.py` and `demo.py` are untouched — so section 1 (nesyarena's suite) and section 3 (the demo output) still describe the code as it is today.
 
 ---
 
@@ -222,7 +224,7 @@ cd reasonsmith && ruff check . && python -m pytest -q -rA
 
 `ruff check .`: **All checks passed!**
 
-`pytest`: **35 passed, 0 failed, 0 skipped** — the progress line and the `-rA` report that command printed, verbatim:
+`pytest`: **35 passed, 0 failed, 0 skipped** — the progress line and the `-rA` report that command printed, verbatim. This is the v0.1 suite at the measured commit and is not the current count; see "What the `35 passed` figure does and does not count" above.
 
 ```text
 ...................................                                      [100%]

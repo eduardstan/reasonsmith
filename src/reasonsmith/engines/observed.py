@@ -9,11 +9,18 @@ What a reader must not break:
     `NOT EVALUATED` (`verdict=INCONCLUSIVE`, `strength=None`), NEVER `satisfied`.
     Why this matters: STL monitors require sufficient trace points to establish time bounds; an
     unsupported formula or insufficient trace length cannot prove a temporal property.
-  - Signal types (flag vs. magnitude) must be read from the formula itself, not trace contents.
-    `var >= 0.5` indicates a presence flag; numeric magnitude comparisons must receive finite
-    numbers and never coerce missing/non-finite values to 0.0 or 1.0.
-    Why this matters: Coercing absent or non-finite values to numbers would let invalid or un-sent
-    notices pass strict deadline comparisons (e.g. `<= 30` days).
+  - Signal types (flag vs. magnitude) must be read from the formula itself, never from what the
+    trace happened to contain. Asking `var >= 0.5` (or `0.5 <= var`) is the one way a pack asks
+    whether a signal is present at all: that variable is a flag and keeps the 1.0/0.0 encoding, so
+    an absent one still fails the check that asks for it. Every other comparison — against any
+    other constant, against 0.5 under any other operator, or against another variable — is a
+    magnitude on both sides: every record must carry a real number for it, and a record that
+    carries none — absent, blank, a bool, the string "45", or a non-finite float — is reported as
+    NOT EVALUATED rather than scored.
+    Why this matters: Coercing those to 0.0 or 1.0 would let a 45-day notice, or a notice nobody
+    ever sent, pass a `<= 30` deadline; NaN would too, since every robustness comparison against it
+    is False. `json.loads` reads bare `NaN`/`Infinity` by default, so a producer that serialises a
+    missing measurement that way reaches here as a float, and a flag valued NaN counts as absent.
 """
 
 from __future__ import annotations

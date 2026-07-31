@@ -2,7 +2,7 @@
 
 What this module is for:
   Defines the formal evidence strength lattice (`unattainable < observed < probed < proved`) and
-  the verdict vocabulary (`satisfied`, `violated`, `inconclusive`, `not_applicable`) for compliance
+  the verdict vocabulary (`satisfied`, `violated`, `inconclusive`) for compliance
   checking. Compliance claims carry both a verdict (whether a property holds) and a strength
   (how deeply the system exposed itself for verification).
 

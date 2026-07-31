@@ -41,32 +41,36 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not certifiable
 ```
 
-### Automated Conformance Checking Excerpt
+### Automated Conformance Checking
 
-`reasonsmith` also checks decision logs against formal regulation packs (`python -m reasonsmith.cli check`), producing structured reports with clear verdict strengths:
+`reasonsmith` also checks decision logs against formal regulation packs, producing reports whose verdicts carry the strength of the evidence behind them. Run against the committed sample log:
+
+```sh
+python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline
+```
 
 ```text
 CONFORMANCE REPORT
 system: CreditScoringPipeline
-declared scope: undeclared
-pack: table7
-headline: 3 binding requirements · 1 observed · 2 not applicable · + 3 interpretive: 3 unattainable
+pack: ecoa
+headline: 3 requirements · 3 observed
 
 REQUIREMENT FINDINGS:
-  [NOT APPLICABLE] eu_ai_act_art13_transparency (EU AI Act Art. 13): not_applicable
-    requires: model_and_data_version_ids, extraction_timestamp, dataset_snapshot_hash, fidelity_coverage_metrics, explanation_scope, linkage_from_decision_to_artifact
-    scope limit: high-risk
-    summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
-  [UNATTAINABLE] [INTERPRETIVE] gdpr_art22_meaningful_information (GDPR Art. 22 (and Rec. 71)): inconclusive
-    requires: per_decision_reason_string, feature_to_named_concept_mapping, dpia_cross_reference
-    MISSING SIGNALS: dpia_cross_reference, feature_to_named_concept_mapping, per_decision_reason_string
-    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for dpia_cross_reference, feature_to_named_concept_mapping, per_decision_reason_string, and the system declared no capabilities, so nothing here can discharge this requirement.
-  [OBSERVED] ecoa_reg_b_adverse_action (ECOA / Reg B 12 CFR 1002.9): satisfied
-    requires: stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback
-    summary: Observed over 1 decision(s): every required signal (stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+  [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
+    requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
+    summary: Observed over 3 decision(s): temporal monitor for 'always((artifact_logs_decision_record >= 0.5) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))' satisfied across all time steps.
+  [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
+    requires: artifact_logs_reason_explanation, artifact_logs_decision_record, provenance_model_version
+    summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, artifact_logs_decision_record, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+    requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
+    summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+
+LIMITS OF THIS REPORT
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated, and no verdict on it should be read from this report.
 ```
 
-*(See [`docs/example-output.md`](docs/example-output.md) for the full 561-line demo transcript and complete CLI reports.)*
+`observed` is the weakest rung of the strength lattice that can still say a property held: it is read off the trace supplied and claims nothing about decisions outside it. The same log checked against the Table 7 pack discharges nothing and exits 2 — see [`docs/example-output.md`](docs/example-output.md) for that run and for the full 561-line demo transcript, both stdout pasted unedited.
 
 ## Quick Start
 
@@ -78,8 +82,10 @@ pip install -e ".[dev]"
 ruff check .
 pytest
 python -m reasonsmith.demo
-python -m reasonsmith.cli check --system tests/fixtures/sample_decisions.jsonl --pack ecoa
+python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa
 ```
+
+Every command runs from a fresh clone in that order; `docs/sample_decisions.jsonl` is a committed three-record decision trace, so the last line needs no data of your own. `check` exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise — the `ecoa` run above exits 0.
 
 *Note:* This single installation path is used by CI (`.github/workflows/ci.yml`). Full empirical environment measurements and torch test counts are documented in **[RESULTS.md](RESULTS.md)**.
 
@@ -134,6 +140,10 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 | **Stratified Checks (Design A: Confidence Varies)** | Coverage gap: 0.0000<br>Fidelity gap: +0.0535<br>Retained share gap: +0.2802 | Top-k proof truncation keeps fixed proof count regardless of confidence scaling. Coverage remains identical across groups; retained share catches the atypical group's loss of value. |
 | **Stratified Checks (Design B: Reason Multiplicity Varies)** | Coverage gap: +0.3000<br>Fidelity gap: +0.1472<br>Retained share gap: +0.1129 | Cases with more reasons suffer lower coverage under fixed k=1 truncation (a case with 5 reasons retains 1/5th; a case with 2 retains 1/2). |
 | **Signal Stability (Drift across windows)** | Stability score: 0.3333 | Under top-1 settings, drift in a single signal silently swaps the stated reason across windows on an unchanged applicant file. |
+
+The stratified rows are measured on frozen synthetic cohorts, built to separate the two mechanisms from each other. Whether real atypical cases trip more reasons than typical ones is an empirical question about data this table does not have, and the table does not answer it. Every figure in it is reproduced in **[RESULTS.md](RESULTS.md)**, along with the exact environment and versions, both suites' pass/fail/skip counts with `torch` installed, and a byte-for-byte diff of two demo runs.
+
+Figures this README takes from the paper rather than from running code — the 273 primary studies, the six Table 7 duties — and the rough `~1GB` size of the `torch` download are not measurements and are not reproduced there.
 
 ## Limits
 

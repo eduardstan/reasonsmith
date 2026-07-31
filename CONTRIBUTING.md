@@ -55,16 +55,24 @@ Building an end-to-end demo script or extending an engine for one of these dutie
 2. **No Satisfied Verdicts on Absent Evidence:**
    Nothing in `reasonsmith` may report `satisfied` or `COMPLETE` on missing or incomplete evidence. Default values or fallbacks must never be substituted for missing fields.
 
-3. **Three Distinct Non-Pass Concepts:**
-   Do not confuse or combine these three distinct statuses:
-   - **`not_applicable`**: The system's declared regulatory scope (e.g. non-high-risk) does not trigger the requirement.
-   - **`unattainable`**: The system's capability set lacks a required signal name, so no amount of trace testing can discharge the requirement.
-   - **`not_evaluated`**: No engine exists for the requirement's formalism, or the trace was empty/too short. `strength=None` is recorded and combining zero verdicts produces `inconclusive`, never `satisfied`.
+3. **Two Distinct Non-Pass Concepts:**
+   Both read as `inconclusive` in the verdict vocabulary (`verdict.py` defines `satisfied`, `violated` and `inconclusive`, and nothing else), and they are told apart by strength. Do not confuse or combine them:
+   - **`unattainable`**: The system's capability set lacks a required signal name, so no amount of trace testing can discharge the requirement. This is the lowest rung of the strength lattice, and `RequirementResult` refuses to report it as anything but `inconclusive`.
+   - **`not_evaluated`**: No engine exists for the requirement's formalism (`report.py:SUPPORTED_FORMALISMS`), or the trace was empty/too short. `strength=None` is recorded — deliberately not a rung on the lattice — and combining zero verdicts produces `inconclusive`, never `satisfied`.
+
+   There is no `not_applicable` status and no notion of a declared regulatory scope. `reasonsmith` never infers whether a duty binds a given system, so a requirement in a loaded pack is always evaluated; adding a scope concept means adding it to `spec.py`, `verdict.py` and `report.py` together, not writing the word into a report.
 
 4. **What Makes a Good Change:**
    - Minimal, focused diffs addressing a specific requirement or issue.
    - Accompanying unit tests in `tests/`.
    - Complete adherence to existing module docstring shapes and safety boundaries.
+
+## Reporting Issues
+
+If you encounter a bug or have a question:
+1. Check existing issues to see if it has already been discussed.
+2. Note that **GitHub Discussions is disabled** for this repository. All questions, bug reports, and feature requests should be submitted as [GitHub Issues](https://github.com/eduardstan/reasonsmith/issues) — there is no second channel.
+3. Provide clear reproduction steps, expected vs. actual behaviour, and details about your environment.
 
 ## Submitting Pull Requests
 

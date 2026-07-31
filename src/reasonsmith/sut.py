@@ -10,9 +10,18 @@ What a reader must not break:
     declarations from trace-derived ones.
     Why this matters: Trace-derived capabilities come from observing sample traces, whereas
     explicit declarations represent an authoritative system claim.
-  - Capabilities must be verified against `CAPABILITY_TAXONOMY` to prevent invalid signal
-    registration.
-    Why this matters: Guarantees capability signal names align with Section 6.3 taxonomy categories.
+  - A capability set is the enabled signal names and nothing else: `_validate_capability_collection`
+    rejects a bare string, a mapping, a non-iterable, and any blank or non-string name, at both
+    sites capabilities cross into reasonsmith.
+    Why this matters: `set("reasons")` would declare seven single-character capabilities, and a
+    capability map would declare the signals it marks False as available — the overclaim this tool
+    exists to prevent.
+  - `CAPABILITY_TAXONOMY` documents the four Section 6.3 categories that signal names are
+    conventionally prefixed with (`provenance_`, `artifact_logs_`, ...). It is a reference for pack
+    and adapter authors, not a validator: nothing here checks a name against it, and a pack is free
+    to name a signal outside it.
+    Why this matters: Reading it as enforced would hide that an out-of-taxonomy signal name passes
+    unremarked and simply reports the requirement unattainable when no adapter supplies it.
 """
 
 from __future__ import annotations
