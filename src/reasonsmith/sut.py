@@ -1,7 +1,7 @@
 """System Under Test (SUT) protocol and reference implementations for reasonsmith v0.2.
 
 What this module is for:
-  Defines the `SystemUnderTest` protocol interface (`capabilities()`, `decisions()`) and
+  Defines the `SystemUnderTest` protocol interface (`capabilities()`, `decisions()`, `logic()`) and
   `CAPABILITY_TAXONOMY` categories for black-box models, rule engines, and log traces.
 
 What a reader must not break:

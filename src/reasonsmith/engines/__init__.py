@@ -1,7 +1,7 @@
 """Verification engines for reasonsmith v0.2.
 
 What this module is for:
-  Exports verification engines (`RecordEngine`, `ObservedEngine`).
+  Exports verification engines (`RecordEngine`, `ObservedEngine`, `ProvedEngine`).
 
 What a reader must not break:
   - `SUPPORTED_FORMALISMS` in `report.py` maps to engines exported here; widen

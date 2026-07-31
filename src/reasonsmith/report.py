@@ -1243,8 +1243,8 @@ def evaluate_requirement(
     clause = f"{req.source_document} {req.article_clause}"
 
     if req.formalism not in SUPPORTED_FORMALISMS:
-        # Declaring the signals is not evidence that a temporal or logical property holds,
-        # and there is no monitor or solver in this build to establish one. Say so.
+        # Declaring the signals is not evidence that the property holds, and this build has no
+        # engine for this formalism to establish one. Say so.
         return RequirementResult(
             requirement_id=req.id,
             source_clause=clause,
