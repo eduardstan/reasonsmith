@@ -635,7 +635,8 @@ declared no capabilities. Nothing here is a breach, so the CLI exits 0.
 
 Declaring the class with `--system-scope high-risk` is what brings the two EU AI Act rows into
 scope and has them evaluated rather than set aside; that is the run behind the HTML page in
-[`index.html`](index.html), whose regeneration command is in `test_docs_index_html_matches_the_renderer`.
+[`index.html`](index.html), which is built by `python docs/build_example.py` rather than by the CLI,
+because it also carries the demonstration's key finding.
 
 ```sh
 python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline

@@ -9,6 +9,7 @@ What this module is for:
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import tempfile
@@ -25,11 +26,22 @@ ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_LOG = ROOT / "docs" / "sample_decisions.jsonl"
 DOCS_INDEX = ROOT / "docs" / "index.html"
 
-#: The command the committed demo page reports, and the one that regenerates it.
-DOCS_COMMAND = (
-    "python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 "
-    "--system-name CreditScoringPipeline --system-scope high-risk --html docs/index.html"
-)
+
+def _load_build_example():
+    """The committed page's build script, loaded as written: `docs/` is not an import package.
+
+    Loading it is what keeps this test honest. Re-implementing the composition here would let the
+    committed page, the provenance command it prints and this test drift apart in three places.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "build_example", ROOT / "docs" / "build_example.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+build_example = _load_build_example()
 
 
 def _fake_git(
@@ -336,33 +348,38 @@ def test_clean_checkout_names_its_commit(monkeypatch):
 
 
 def test_docs_index_html_matches_the_renderer():
-    """The committed demo page is generated, not hand-maintained: it must match the renderer.
+    """The committed demo page is generated, not hand-maintained: it must match its build script.
 
-    It is rendered with an empty `commit_hash` because a page committed into the tree it
-    describes cannot name the commit that contains it. Regenerate it with:
-
-        PYTHONPATH=src:tests python -c \
-"from test_html_report import regenerate_docs_index; regenerate_docs_index()"
+    Regenerate it with `python docs/build_example.py`, the command the page itself names.
     """
-    assert DOCS_INDEX.read_text(encoding="utf-8") == _render_docs_index()
+    assert DOCS_INDEX.read_text(encoding="utf-8") == build_example.render()
+
+
+def test_the_page_names_a_provenance_command_that_reproduces_it():
+    """A command line the report cannot be reproduced from is not provenance, it is decoration.
+
+    The page carries the key finding, which the CLI never renders, so the CLI command that once
+    stood in this line wrote a byte-different file. The claim and the producer must be the same
+    thing.
+    """
+    page = DOCS_INDEX.read_text(encoding="utf-8")
+
+    assert f"Command: <code>{build_example.BUILD_COMMAND}</code>" in page
+    assert "python -m reasonsmith.cli" not in page
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_file = Path(tmpdir) / "index.html"
+        ret = cli_main([
+            "check",
+            "--system", str(SAMPLE_LOG),
+            "--pack", "table7",
+            "--system-name", "CreditScoringPipeline",
+            "--system-scope", "high-risk",
+            "--html", str(out_file),
+        ])
+        assert ret in (0, 2)
+        assert out_file.read_text(encoding="utf-8") != page
 
 
 def _docs_report() -> ConformanceReport:
-    return check_conformance(
-        JSONLAdapter(str(SAMPLE_LOG)),
-        load_pack("table7"),
-        system_name="CreditScoringPipeline",
-        system_scope="high-risk",
-    )
-
-
-def _render_docs_index() -> str:
-    return _docs_report().render_html(
-        commit_hash="",
-        command=DOCS_COMMAND,
-        extra_section_html=render_key_finding_html(),
-    )
-
-
-def regenerate_docs_index() -> None:
-    DOCS_INDEX.write_text(_render_docs_index(), encoding="utf-8")
+    return build_example.example_report()
