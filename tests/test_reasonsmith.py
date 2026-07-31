@@ -14,15 +14,26 @@ from nesyarena.suts import ExactWMC, TopK, proof_score
 from reasonsmith import certificate, conformance, evidence
 from reasonsmith.certificate import certify
 from reasonsmith.demo import (
+    CLINICAL_QUERY,
+    CLINICAL_REASONS,
     CREDIT_QUERY,
     CREDIT_REASONS,
+    DRIFT_SIGNALS,
+    NIST_THRESHOLDS,
     MiscalibratedAdapter,
     SilentDropAdapter,
+    art12_event_log,
+    art12_evidence_fields,
+    art13_evidence_fields,
     build_case,
     certify_case,
     design_a,
     design_b,
+    drift_windows,
+    fda_evidence_fields,
     main,
+    nist_evidence_fields,
+    threshold_alerts,
 )
 
 # ------------------------------------------------------------------ schema ----
@@ -403,8 +414,6 @@ def art13_case_and_cert(adapter):
 
 
 def test_art13_metrics_field_is_measured_not_claimed():
-    from reasonsmith.demo import art13_evidence_fields
-
     case, cert = art13_case_and_cert(ReferenceAdapter(TopK(1)))
     metrics = art13_evidence_fields(case, cert)["fidelity_coverage_metrics"]
     assert f"{conformance.fidelity(cert):.4f}" in metrics
@@ -414,8 +423,6 @@ def test_art13_metrics_field_is_measured_not_claimed():
 def test_art13_record_is_complete_and_discloses_the_topk_gap():
     """Form and content part ways: every row-1 field is produced, and the produced numbers
     themselves report that the deployed engine states one reason of five."""
-    from reasonsmith.demo import art13_evidence_fields
-
     case, cert = art13_case_and_cert(ReferenceAdapter(TopK(1)))
     record = evidence.emit("eu_ai_act_art13_transparency", case.case_id,
                            art13_evidence_fields(case, cert))
@@ -424,8 +431,6 @@ def test_art13_record_is_complete_and_discloses_the_topk_gap():
 
 
 def test_art13_exact_inference_reports_full_coverage():
-    from reasonsmith.demo import art13_evidence_fields
-
     case, cert = art13_case_and_cert(ReferenceAdapter(ExactWMC()))
     assert conformance.coverage(cert) == 1.0
     assert conformance.fidelity(cert) == 1.0
@@ -443,8 +448,6 @@ def art12_case_and_cert(adapter):
 def test_art12_log_records_the_chosen_branch_and_the_full_active_set():
     """The entry names the branch the engine chose and every constraint exact inference found
     active — the active-but-unused set is the part an answer-only log would lose."""
-    from reasonsmith.demo import art12_event_log
-
     case, cert = art12_case_and_cert(ReferenceAdapter(TopK(1)))
     log = art12_event_log(case, cert)
     assert "chosen branch/module: C01" in log
@@ -457,8 +460,6 @@ def test_art12_hashes_are_deterministic_across_runs():
     """Two independently built runs of the same frozen decision produce byte-identical log
     entries, and the digests match the values recorded when the demo was written — a changed
     hash or a leaked timestamp breaks this test."""
-    from reasonsmith.demo import art12_event_log
-
     case_a, cert_a = art12_case_and_cert(ReferenceAdapter(TopK(1)))
     case_b, cert_b = art12_case_and_cert(ReferenceAdapter(TopK(1)))
     log_a, log_b = art12_event_log(case_a, cert_a), art12_event_log(case_b, cert_b)
@@ -468,8 +469,6 @@ def test_art12_hashes_are_deterministic_across_runs():
 
 
 def test_art12_record_is_complete_with_log_from_certificate():
-    from reasonsmith.demo import art12_evidence_fields
-
     case, cert = art12_case_and_cert(ReferenceAdapter(TopK(1)))
     record = evidence.emit("eu_ai_act_art12_record_keeping", case.case_id,
                            art12_evidence_fields(case, cert))
@@ -480,8 +479,6 @@ def test_art12_record_is_complete_with_log_from_certificate():
 
 
 def fda_case_and_certs():
-    from reasonsmith.demo import CLINICAL_QUERY, CLINICAL_REASONS
-
     case = build_case("PT-0731", "typical", CLINICAL_QUERY, CLINICAL_REASONS, 0.86)
     return (case,
             certify_case(case, ReferenceAdapter(TopK(1))),
@@ -489,8 +486,6 @@ def fda_case_and_certs():
 
 
 def test_fda_design_history_chain_links_requirement_test_and_artifact():
-    from reasonsmith.demo import fda_evidence_fields
-
     case, cert_deployed, cert_exact = fda_case_and_certs()
     links = fda_evidence_fields(case, cert_deployed, cert_exact)["design_history_links"]
     assert "REQ-TRIAGE-07" in links
@@ -500,8 +495,6 @@ def test_fda_design_history_chain_links_requirement_test_and_artifact():
 
 
 def test_fda_verification_log_carries_both_measured_verdicts():
-    from reasonsmith.demo import fda_evidence_fields
-
     case, cert_deployed, cert_exact = fda_case_and_certs()
     log = fda_evidence_fields(case, cert_deployed, cert_exact)["verification_logs"]
     assert cert_deployed.verdict == "FAIL"
@@ -510,8 +503,6 @@ def test_fda_verification_log_carries_both_measured_verdicts():
 
 
 def test_fda_record_is_complete_with_verdicts_from_certificates():
-    from reasonsmith.demo import fda_evidence_fields
-
     case, cert_deployed, cert_exact = fda_case_and_certs()
     record = evidence.emit("fda_gmlp_samd", case.case_id,
                            fda_evidence_fields(case, cert_deployed, cert_exact))
@@ -522,15 +513,11 @@ def test_fda_record_is_complete_with_verdicts_from_certificates():
 
 
 def nist_windows(adapter):
-    from reasonsmith.demo import DRIFT_SIGNALS, drift_windows
-
     return drift_windows("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88,
                          DRIFT_SIGNALS, 6, adapter)
 
 
 def test_stability_alert_fires_when_drift_replaces_the_stated_reason():
-    from reasonsmith.demo import NIST_THRESHOLDS, threshold_alerts
-
     certs = nist_windows(ReferenceAdapter(TopK(1)))
     stated = {tuple(v.label for v in c.live) for c in certs}
     assert len(stated) > 1                                   # the stated reason really changed
@@ -543,8 +530,6 @@ def test_stability_alert_fires_when_drift_replaces_the_stated_reason():
 
 
 def test_an_engine_within_the_floors_raises_no_alert():
-    from reasonsmith.demo import NIST_THRESHOLDS, threshold_alerts
-
     certs = nist_windows(ReferenceAdapter(ExactWMC()))
     assert all(conformance.coverage(c) == 1.0 for c in certs)
     assert conformance.stability(certs) == 1.0
@@ -554,8 +539,6 @@ def test_an_engine_within_the_floors_raises_no_alert():
 def test_nist_record_is_incomplete_on_the_sign_off_it_cannot_produce():
     """A frozen synthetic run has no reviewer: reviews_and_sign_offs is reported NOT PRODUCED,
     never filled with a simulated signature."""
-    from reasonsmith.demo import NIST_THRESHOLDS, nist_evidence_fields, threshold_alerts
-
     certs = nist_windows(ReferenceAdapter(TopK(1)))
     fields = nist_evidence_fields(certs, threshold_alerts(certs, NIST_THRESHOLDS), NIST_THRESHOLDS)
     rec = evidence.emit("nist_ai_rmf_risk_evidence", "APP-1042", fields)

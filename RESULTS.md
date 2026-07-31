@@ -14,20 +14,20 @@ This is the evidence artifact for `reasonsmith`'s own claims: an environment was
 | | `test_e6_findings.py` | 4 errors | Error fixture requires `ltn.fuzzy_ops` |
 | | `test_oracle.py` | 1 failed | Failed test requires `problog` (`oracles` extra) |
 | | Uncollected modules | 3 skipped | `deeplog`, `deepproblog`, `problog_kbest` |
-| **Demo Execution** | Determinism (2 runs) | **Byte-identical** (0 diff lines) | `md5sum`: `954ba56adb96646647b63aae147b0c2b` (905 lines) |
+| **Demo Execution** | Determinism (2 runs) | **Byte-identical** (0 diff lines) | `md5sum`: `c5976971e24a86886f1e0ad54f0b9ce9` (561 lines) — the transcript as it stood at the measured commit; the demo has since grown four sections, see the Contributor Demos Note |
 | | ECOA Credit (`APP-1042`) | Record: **`COMPLETE`** (5/5 fields)<br>Certificate: **`FAIL`** (gap -0.225799) | 5 reasons found by exact WMC, 1 used by top-1 engine, 4 deleted by truncation |
 | | GDPR Clinical (`PT-0731`) | Record: **`COMPLETE`** (3/3 fields)<br>Certificate: **`FAIL`** (gap -0.260424) | 5 reasons found by exact WMC, 1 used by top-1 engine, 4 deleted by truncation |
 | **Table 19 Conformance** | Design A (Confidence Varies) | Coverage gap: **0.0000**<br>Fidelity gap: **+0.0535**<br>Retained share gap: **+0.2802** | Typical: cov 0.3333, fid 0.7807, ret 0.7731<br>Atypical: cov 0.3333, fid 0.7272, ret 0.4929 |
 | | Design B (Multiplicity Varies) | Coverage gap: **+0.3000**<br>Fidelity gap: **+0.1472**<br>Retained share gap: **+0.1129** | Typical: cov 0.5000, fid 0.7831, ret 0.7292<br>Atypical: cov 0.2000, fid 0.6360, ret 0.6163 |
 | | Signal Stability | **0.3333** across 4 windows | Delinquency signal drift swaps stated reason from C01 to C03 |
 
-**What the `35 passed` figure does and does not count.** Every number in this file is a measurement taken at `reasonsmith` commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`, and none of them is re-measured by later work — that is what makes them reconstructible, and it is also what makes this one stale. Section 2's `35 passed` counts the suite as it stood then, and the v0.2 work added since (`verdict.py`, `spec.py`, `sut.py`, `report.py`, `rulelang.py`, `adapters/`, `engines/`, `cli.py`, the `packs/` requirement packs, and `tests/test_v02_core.py`, `tests/test_v02_stage2.py` plus `tests/test_v02_stage3.py`) adds tests to that number. Read `35` as the v0.1 suite's count at that commit, never as the current suite's: for the current count, run `pytest` yourself. Those v0.2 files are new alongside v0.1 rather than changes to it — `evidence.py`, `certificate.py`, `conformance.py` and `demo.py` are untouched — so section 3 (the demo output) still describes the code as it is today. Section 1 (nesyarena's suite) was measured under `nesyarena` commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` and was **not** re-measured under the PyPI release now pinned; it is expected to hold because that release's `tests/` and `experiments/` are byte-identical to the measured commit's — see the PyPI Release Note for what was checked and what was not.
+**What the `35 passed` figure does and does not count.** Every number in this file is a measurement taken at `reasonsmith` commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`, and none of them is re-measured by later work except where a later dated note says so and names its own commit — that is what makes them reconstructible, and it is also what makes this one stale. Section 2's `35 passed` counts the suite as it stood then, and the v0.2 work added since (`verdict.py`, `spec.py`, `sut.py`, `report.py`, `rulelang.py`, `adapters/`, `engines/`, `cli.py`, the `packs/` requirement packs, and `tests/test_v02_core.py`, `tests/test_v02_stage2.py` plus `tests/test_v02_stage3.py`) adds tests to that number. Read `35` as the v0.1 suite's count at that commit, never as the current suite's: for the current count, run `pytest` yourself. Those v0.2 files are new alongside v0.1 rather than changes to it, and `evidence.py`, `certificate.py` and `conformance.py` are untouched. `demo.py` is the one exception: it now carries four additional Table 7 demos contributed by Alessandro Boni (rows 1, 2, 5 and 6), which append sections 6–9 to the transcript and leave sections 1–5 byte-identical. So section 3's per-case figures still describe the code as it is today; its transcript length and hash do not, and the re-measured ones are in the Contributor Demos Note. Section 1 (nesyarena's suite) was measured under `nesyarena` commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` and was **not** re-measured under the PyPI release now pinned; it is expected to hold because that release's `tests/` and `experiments/` are byte-identical to the measured commit's — see the PyPI Release Note for what was checked and what was not.
 
 ---
 
 ## Environment & Provenance
 
-Every number in this file is copied from a command's real output. The exact commands are given so a stranger can reproduce every one of them from `reasonsmith` commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` (branch `fm/rs-prove-it`), the commit every measurement below was taken at. Every number here is that commit's and is not re-measured by later work.
+Every number in this file is copied from a command's real output. The exact commands are given so a stranger can reproduce every one of them from `reasonsmith` commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` (branch `fm/rs-prove-it`), the commit every measurement below was taken at. Every number here is that commit's and is not re-measured by later work, with one exception: the figures in the Contributor Demos Note (2026-08-01), which are labelled with the later commit they were measured at because the demo transcript itself changed there.
 
 | Component / Tool | Version / Hash Details |
 |---|---|
@@ -48,7 +48,7 @@ The measurements below were taken against `nesyarena` commit `fdf0d5eb54c7af181e
 
 (The old commit currently survives on the temporary rollback ref `refs/heads/backup/pre-coauthor-strip`, which is expected to be deleted; nothing here relies on it — reconstructibility stands on `main` alone.)
 
-The hash changed, the content did not: both commits' `git cat-file -p <sha> | grep tree` report the identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, verified directly against both commits before this note was written. The figures below are still the original run's, quoted unedited. What was re-run against the new pin is exactly this and nothing more: `reasonsmith`'s own `pytest` suite (35 passed), `ruff check .` (no findings), and `python -m reasonsmith.demo` (905 lines, two runs, identical) — see "Full Transcript Provenance"; none of those moved. Section 1's figures are `nesyarena`'s *own* suite (`collected 107 items / 3 skipped`, `1 failed, 100 passed, 5 skipped, 4 errors`), measured under the old pin `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against `57720fa212834689692e171882272140f1d1fed7`. They are expected to be unchanged because the two commits share the tree `d050c86ef83b01bac972a0af3afa6f629a4a9972` and so install identical content — but that is an expectation from tree identity, not a measurement. The old pin is kept in the table above for the historical record of what was actually run.
+The hash changed, the content did not: both commits' `git cat-file -p <sha> | grep tree` report the identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, verified directly against both commits before this note was written. The figures below are still the original run's, quoted unedited. What was re-run against the new pin is exactly this and nothing more: `reasonsmith`'s own `pytest` suite (35 passed), `ruff check .` (no findings), and `python -m reasonsmith.demo` (561 lines, two runs, identical) — see "Full Transcript Provenance"; none of those moved. Section 1's figures are `nesyarena`'s *own* suite (`collected 107 items / 3 skipped`, `1 failed, 100 passed, 5 skipped, 4 errors`), measured under the old pin `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against `57720fa212834689692e171882272140f1d1fed7`. They are expected to be unchanged because the two commits share the tree `d050c86ef83b01bac972a0af3afa6f629a4a9972` and so install identical content — but that is an expectation from tree identity, not a measurement. The old pin is kept in the table above for the historical record of what was actually run.
 
 ### PyPI Release Note (2026-07-31)
 
@@ -63,7 +63,7 @@ That commit is identified, not assumed, and both published artifacts were checke
 
 What the release commit changes relative to `57720fa212834689692e171882272140f1d1fed7` is two installed files — `src/nesyarena/__init__.py` (`__version__` `0.1.0.dev0` → `0.1.0`, the whole diff) and `pyproject.toml` — plus repository metadata that is not installed (`README.md`, `.gitignore`, `.github/workflows/ci.yml`, `AGENTS.md`, `CLAUDE.md`, `docs/PUBLISHING.md`). The rest of `src/`, and all 45 files under `tests/` and `experiments/`, are byte-identical blobs across the two commits.
 
-`reasonsmith`'s own test suite (`189 passed` on current suite, `35 passed` on v0.1 suite), `ruff check .` (0 findings), and `python -m reasonsmith.demo` (905 lines, two runs byte-identical, `md5sum` `954ba56adb96646647b63aae147b0c2b`) were re-run against PyPI `nesyarena==0.1.0` and confirmed fully passing and unchanged. Section 1's figures are `nesyarena`'s *own* suite, measured under `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against the PyPI release. They are expected to be unchanged because `tests/` and `experiments/` are byte-identical across `fdf0d5eb…` → `57720fa…` (identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, see the Repin Note) → `22b539ba…`, and the installed source differs only in the `__version__` string — but that is an expectation from blob identity, not a measurement.
+`reasonsmith`'s own test suite (`189 passed` on the suite as it stood on 2026-07-31, `35 passed` on v0.1 suite), `ruff check .` (0 findings), and `python -m reasonsmith.demo` (561 lines, two runs byte-identical, `md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`) were re-run against PyPI `nesyarena==0.1.0` and confirmed fully passing and unchanged. Section 1's figures are `nesyarena`'s *own* suite, measured under `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against the PyPI release. They are expected to be unchanged because `tests/` and `experiments/` are byte-identical across `fdf0d5eb…` → `57720fa…` (identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, see the Repin Note) → `22b539ba…`, and the installed source differs only in the `__version__` string — but that is an expectation from blob identity, not a measurement.
 
 ### Build and Reproduction Commands
 
@@ -291,10 +291,10 @@ PASSED tests/test_reasonsmith.py::test_certificate_json_roundtrip_preserves_verd
 python -m reasonsmith.demo > run1.txt
 python -m reasonsmith.demo > run2.txt
 diff run1.txt run2.txt          # empty
-md5sum run1.txt run2.txt        # 954ba56adb96646647b63aae147b0c2b for both
+md5sum run1.txt run2.txt        # c5976971e24a86886f1e0ad54f0b9ce9 for both
 ```
 
-**The two runs are byte-identical: `diff` produces no output, both files hash to `954ba56adb96646647b63aae147b0c2b`.** `demo.py`'s docstring claim that every figure and transcript line "can be verified and diffed byte-for-byte" holds, measured, not assumed.
+**The two runs are byte-identical: `diff` produces no output, both files hash to `c5976971e24a86886f1e0ad54f0b9ce9`.** `demo.py`'s docstring claim that every figure and transcript line "can be verified and diffed byte-for-byte" holds, measured, not assumed. That hash is this commit's demo; for the hash the same two commands produce once the contributed sections 6–9 are present, see the Contributor Demos Note.
 
 ### Empirical Details of Key Finding Figures
 
@@ -345,9 +345,20 @@ One unchanged applicant file, four windows, a strengthening delinquency signal: 
 
 ### Full Transcript Provenance
 
-The complete, unedited output of both demo runs (identical to each other) is 905 lines, available in [`docs/example-output.md`](docs/example-output.md). Regenerate it with `python -m reasonsmith.demo` from commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`.
+The complete, unedited output of both demo runs (identical to each other) was 561 lines at the measured commit. Regenerate that transcript with `python -m reasonsmith.demo` from commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`. The transcript committed in [`docs/example-output.md`](docs/example-output.md) is no longer that one — it is the longer run recorded in the Contributor Demos Note below.
 
-**Re-checked after repin to nesyarena `57720fa212834689692e171882272140f1d1fed7` and update to PyPI release `nesyarena==0.1.0` (2026-07-31):** `python -m reasonsmith.demo`, run twice against PyPI `nesyarena==0.1.0`, still produces the same 905 identical lines (`md5sum` `954ba56adb96646647b63aae147b0c2b`), `pytest` reports 189 passed (35 passed on v0.1 suite), and `ruff check .` reports no findings.
+**Re-checked after repin to nesyarena `57720fa212834689692e171882272140f1d1fed7` and update to PyPI release `nesyarena==0.1.0` (2026-07-31):** `python -m reasonsmith.demo`, run twice against PyPI `nesyarena==0.1.0`, still produces the same 561 identical lines (`md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`), `pytest` reports 189 passed (35 passed on v0.1 suite), and `ruff check .` reports no findings.
+
+### Contributor Demos Note (2026-08-01)
+
+Four Table 7 demos contributed by Alessandro Boni — EU AI Act Art. 13 (row 1), EU AI Act Art. 12 (row 2), FDA GMLP for SaMD (row 5), and NIST AI RMF continuous monitoring (row 6) — landed on branch `fm/rs-land-contributor-demos`, appending sections 6–9 to `python -m reasonsmith.demo`. Sections 1–5 are byte-identical to the 561-line transcript above, so every figure this file reports for them stands unre-measured and unchanged.
+
+What was measured on this branch, at commit `8b4c72042443dfdb116c851d67f6dc3884392665`, in the same venv against PyPI `nesyarena==0.1.0`:
+
+- `python -m reasonsmith.demo`, run twice: **905 lines**, byte-identical, `md5sum` `954ba56adb96646647b63aae147b0c2b`. This is the transcript committed in [`docs/example-output.md`](docs/example-output.md), and the pair of numbers `tests/test_docs_example_output.py` checks that file's header against.
+- `pytest`: **226 passed**. That is the whole current suite (`test_docs_example_output.py` 1, `test_html_report.py` 15, `test_reasonsmith.py` 47, `test_v02_core.py` 93, `test_v02_stage2.py` 45, `test_v02_stage3.py` 25), not the v0.1 suite the `35 passed` row counts, and it supersedes the `189 passed` in the PyPI Release Note as the current-suite figure.
+
+Nothing else in this file was re-measured on this branch. Section 1 (`nesyarena`'s own suite) and every Table 19 conformance figure remain the 2026-07-31 measurements at `reasonsmith` commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`, and the four new sections add no figure to them.
 
 ---
 

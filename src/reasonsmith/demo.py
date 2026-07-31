@@ -372,14 +372,9 @@ def stability_demo() -> str:
             "window by window. Nothing about the program changes, and the applicant's other "
             "evidence does not change."]
     topk = ReferenceAdapter(TopK(1))
-    certs = []
-    for w in range(4):
-        case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
-        base = {a: (round(min(0.99, p + 0.06 * w), 4)
-                    if a.pred in ("delinquency_on_file", "bureau_record_matched") else p)
-                for a, p in case.base.items()}
-        cert = certify(case.program, base, case.query, topk, exact_depth=1, labels=case.labels)
-        certs.append(cert)
+    certs = drift_windows("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88,
+                          DRIFT_SIGNALS, 4, topk)
+    for w, cert in enumerate(certs):
         out.append(f"  window {w}: reason given = "
                    f"{', '.join(v.label for v in cert.live) or '(none)'}")
     out += ["",
