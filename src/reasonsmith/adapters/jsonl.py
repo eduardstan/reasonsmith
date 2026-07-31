@@ -1,17 +1,14 @@
 """JSONL decision-log adapter for reasonsmith v0.2.
 
-Point JSONLAdapter at a file or stream of decision records and it is a valid SystemUnderTest.
-Works for a system written in any language that emits a JSONL log trace.
+What this module is for:
+  Adapts JSONL decision log files/streams into a SystemUnderTest for language-agnostic
+  conformance checking.
 
-Capability derivation:
-Capabilities are derived honestly from record content. A capability is what the system can
-emit, so a field present and non-blank in at least ONE record enters the adapter's capability
-set — a field missing from some of the later records is then a trace violation the engines
-report, not a capability the system lacks. Fields present in only some records are recorded in
-`partially_present_fields` for diagnostic inspection.
-
-Derived capabilities are read from one supplied trace, never declared by the system, so
-`capability_basis` records which of the two a result rests on and the report says so.
+What a reader must not break:
+  - Capabilities are derived from fields non-blank in at least ONE record; partial presence is a
+    trace violation reported by engines, not a lack of system capability.
+  - `capability_basis` must honestly record whether capabilities were explicitly declared or
+    trace-derived (`trace_derived`).
 """
 
 from __future__ import annotations

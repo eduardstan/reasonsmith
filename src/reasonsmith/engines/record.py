@@ -1,8 +1,11 @@
 """Record engine for reasonsmith v0.2.
 
-Checks that every signal a requirement names carries a non-blank value in every observed
-decision record. An empty trace is not evaluated; a missing value is an observed violation.
-The engine does not validate or reorganize fields outside the requirement.
+What this module is for:
+  Evaluates record-keeping requirements (`formalism = "record"`) over decision traces.
+
+What a reader must not break:
+  - An empty trace is reported as NOT EVALUATED (`strength=None`), never satisfied.
+  - A missing value in an observed record is an observed violation (`VIOLATED`, `OBSERVED`).
 """
 
 from __future__ import annotations

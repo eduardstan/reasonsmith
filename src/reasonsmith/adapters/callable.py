@@ -1,9 +1,13 @@
 """Callable wrapper adapter for reasonsmith v0.2.
 
-Wraps any Python callable or object with a predict/decide method — a scikit-learn model,
-a PyTorch model, a custom function, or an API client.
+What this module is for:
+  Wraps any Python callable or model object (e.g. scikit-learn, PyTorch, custom function) into a
+  SystemUnderTest.
 
-Capabilities are declared by the author explicitly and never inferred from object inspection.
+What a reader must not break:
+  - Capabilities must be declared by the author explicitly and never inferred from object
+    inspection.
+  - The capability basis must be returned as "declared".
 """
 
 from __future__ import annotations

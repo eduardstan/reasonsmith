@@ -1,11 +1,15 @@
 """System Under Test (SUT) protocol and reference implementations for reasonsmith v0.2.
 
-The SUT protocol is deliberately minimal so that black-box neural models, rule engines,
-and log traces qualify equally.
+What this module is for:
+  Defines the `SystemUnderTest` protocol interface (`capabilities()`, `capability_basis()`,
+  `decisions()`) and `CAPABILITY_TAXONOMY` categories for black-box models, rule engines, and
+  log traces.
 
-The protocol exposes a capability set for unattainability analysis. BaseSUT and the callable
-adapter require an explicit declaration; the JSONL adapter can instead derive the set from a
-supplied trace and labels that basis so reports do not present it as a system declaration.
+What a reader must not break:
+  - BaseSUT requires explicit capability declarations; capability basis must distinguish explicit
+    declarations from trace-derived ones.
+  - Capabilities must be verified against `CAPABILITY_TAXONOMY` to prevent invalid signal
+    registration.
 """
 
 from __future__ import annotations

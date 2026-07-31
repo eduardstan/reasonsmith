@@ -1,31 +1,18 @@
 """The reason-deletion certificate.
 
-For a proof-based system, exact inference enumerates *every* reason for a query. That is a ground
-truth post-hoc explanation methods do not have: there is a complete set to compare an engine's
-answer against, rather than a plausible story about it. nesyarena supplies the pieces — the ground
-program IR, bounded proof enumeration, the exact WMC oracle, and the adapter protocol — so this
-module adds one thing only: the comparison, and the attribution of any gap to an inference setting.
+What this module is for:
+  Compares an engine's output against exact inference ground truth (enumerated via `nesyarena` WMC).
+  Using deletion probes, it tests whether disabling isolated facts changes engine output,
+  attributing dropped reasons to proof truncation or inference settings.
 
-The comparison is a deletion probe, and it works through the adapter protocol as it stands, without
-asking an engine to confess which proofs it used. A reason r that has a *private* fact — one no
-other exact reason uses — can be switched off in isolation by setting that fact's probability to
-zero. Exact inference then loses exactly r's exclusive contribution. If the engine's answer does not
-move at all, the engine's answer did not depend on r: r was deleted.
-
-What the probe establishes and what it does not:
-
-  - It establishes *dependence*, not correct weighting. An engine that uses every reason but weights
-    them wrongly passes the probe; the separate value check against the exact oracle is what catches
-    that, and both must hold for the certificate to pass.
-  - A reason with no private fact cannot be switched off alone. It is reported `unseparable` and the
-    certificate returns INCONCLUSIVE. It is never assumed live.
-  - A probe whose exact-side drop is zero carries no signal (the private fact already had zero
-    probability). It is reported `inconclusive` for the same reason, and never counted as live.
-  - A query for which exact inference enumerates no reason at this depth was never probed at all,
-    so it can never be PASS: the certificate returns INCONCLUSIVE, or FAIL if the engine still
-    answers away from the exact value. A zero value gap on a query nobody enumerated is not
-    agreement, and the attribution names what that case looks like (an unsupported query, a wrong
-    identifier, a proof bound too low).
+What a reader must not break:
+  - Both independent checks must pass for a certificate to pass: the deletion probe
+    (every reason live) and the value check against the exact oracle. Neither check
+    subsumes the other.
+  - A reason with no private fact cannot be switched off alone (`unseparable`) and returns
+    `INCONCLUSIVE`. It is never assumed live.
+  - A probe whose exact-side drop is zero carries no signal and is reported `inconclusive`.
+  - A query with no enumerated reasons is never a `PASS` (returns `INCONCLUSIVE` or `FAIL`).
 """
 
 from __future__ import annotations

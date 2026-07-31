@@ -1,18 +1,22 @@
 """Command-line interface for reasonsmith v0.2.
 
-Usage:
-    python -m reasonsmith.cli check --system <decisions.jsonl> --pack <pack_name>
-        [--system-name <name>] [--system-scope <class>] [--json]
+What this module is for:
+  Provides the CLI entry point (`reasonsmith.cli`) to run conformance checks on SUT decision
+  logs against formal regulation packs (e.g. `ecoa`, `eu_ai_act`, `gdpr`, `table7`).
 
-Exit codes for `check`: 2 when at least one requirement is VIOLATED, 0 otherwise, and 1 on a
-usage or input error.
+  Usage:
+      python -m reasonsmith.cli check --system <decisions.jsonl> --pack <pack_name>
+          [--system-name <name>] [--system-scope <class>] [--json]
 
-Only a violation is a breach, so only a violation is non-zero. Unattainable, not applicable
-and not evaluated are findings to read in the report, not verdicts against the system: an
-unattainable requirement says the system as built cannot discharge the duty on the evidence
-supplied, a not-applicable one says the duty is limited to a regulatory class this system was
-not declared to be in, and a not-evaluated one says no engine here checked it. None of the
-three is evidence the system failed a duty, so none of them fails the caller's build.
+What a reader must not break:
+  - Exit code contract for `check`: 2 when at least one requirement is VIOLATED, 0 otherwise,
+    and 1 on a usage or input error.
+  - Only a violation is a breach, so only a violation is non-zero. Unattainable, not applicable
+    and not evaluated are findings to read in the report, not verdicts against the system: an
+    unattainable requirement says the system as built cannot discharge the duty on the evidence
+    supplied, a not-applicable one says the duty is limited to a regulatory class this system was
+    not declared to be in, and a not-evaluated one says no engine here checked it. None of the
+    three is evidence the system failed a duty, so none of them fails the caller's build.
 """
 
 from __future__ import annotations

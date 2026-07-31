@@ -1,10 +1,14 @@
 """Specification structures and pack loader for reasonsmith v0.2.
 
-A Requirement defines a compliance property with verbatim source traceability,
-its target stakeholder, formalism, specification text, and required signal names.
+What this module is for:
+  Defines `Requirement` and `Pack` data structures and the loader for TOML regulation packs
+  (`packs/*.toml`).
 
-A Pack is a curated collection of Requirements from a specific regulatory or
-governance source.
+What a reader must not break:
+  - `REQUIREMENT_FIELDS` is exact. A pack that omits or adds fields to a `[[requirement]]` block
+    must be rejected at load time to preserve statutory traceability.
+  - Verbatim text and statutory citations loaded from packs must strictly match source documents
+    (`docs/legal-sources.md`).
 """
 
 from __future__ import annotations

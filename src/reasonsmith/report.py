@@ -1,20 +1,16 @@
 """Conformance report skeleton and unattainable analysis for reasonsmith v0.2.
 
-A ConformanceReport carries per-requirement verdict, strength, source clause, signals used,
-missing signals (if unattainable), and a headline summary line.
+What this module is for:
+  Constructs `ConformanceReport` instances carrying per-requirement verdicts, strengths, source
+  clauses, required/missing signals, and headline summaries. Evaluates `check_conformance` and
+  static `analyze_unattainable`.
 
-Two properties this module exists to protect, both inherited from v0.1:
-
-* **No result claims a strength it did not earn.** `strength` is the tier of evidence that
-  actually backs the verdict, and it is `None` when no evidence was gathered at all — because
-  no engine in this build covers the requirement's formalism, or because the decision trace
-  was empty. A requirement that was never evaluated is reported as never evaluated; it is
-  never quietly counted as satisfied, and it is never dropped from the report.
-* **The unattainable analysis never runs the system.** It is a set difference over the
-  capability set supplied by the SUT adapter. Explicit declarations are answerable before a
-  decision is read; a trace-derived adapter labels its weaker basis in the result.
-
-Every emitted report carries explicit limits on its scope and guarantees.
+What a reader must not break:
+  - No result claims a strength it did not earn (`strength` is `None` when un-evaluated).
+  - Combining zero verdicts is `inconclusive`, never vacuously `satisfied`.
+  - The unattainable analysis must NEVER execute the system (`sut.decisions()` is never called);
+    it is purely a set difference over capabilities.
+  - Every emitted report carries explicit limits on its scope and guarantees.
 """
 
 from __future__ import annotations

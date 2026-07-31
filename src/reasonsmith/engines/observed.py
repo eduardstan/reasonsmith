@@ -1,27 +1,15 @@
 """Observed engine for reasonsmith v0.2.
 
-Evaluates temporal properties over decision traces using an rtamt discrete-time STL monitor.
-Requirements with formalism = "temporal" become discrete-time monitors.
+What this module is for:
+  Evaluates temporal properties (`formalism = "temporal"`) over decision traces using an rtamt
+  discrete-time STL monitor.
 
-Behavior:
-- Trace records are converted to discrete time series dataset for rtamt.
-- A violation returns the offending trace segment in details and summary.
-- If rtamt cannot express a formula, the requirement is reported as NOT EVALUATED
-  with the reason (verdict=INCONCLUSIVE, strength=None) — never as satisfied.
-- A trace shorter than MINIMUM_TRACE_LENGTH is reported as NOT EVALUATED for that reason,
-  named as a limit of the trace rather than of the formula the pack wrote.
-- Whether a signal is a magnitude or a flag is read from the requirement's own formula, never
-  from what the trace happened to contain. Asking `var >= 0.5` (or `0.5 <= var`) is the one way
-  a pack asks whether a signal is present at all: that variable is a flag and keeps the 1.0/0.0
-  encoding, so an absent one still fails the check that asks for it. Every other comparison —
-  against any other constant, against 0.5 under any other operator, or against another variable
-  — is a magnitude on both sides: every record must carry a real number for it, and a record
-  that carries none — absent, blank, a bool, the string "45", or a non-finite float — is
-  reported as NOT EVALUATED rather than scored.
-  Coercing those to 0.0 or 1.0 would let a 45-day notice, or a notice nobody ever sent, pass a
-  `<= 30` deadline; NaN would too, since every robustness comparison against it is False.
-  `json.loads` reads bare `NaN`/`Infinity` by default, so a producer that serialises a missing
-  measurement that way reaches here as a float, and a flag valued NaN counts as absent.
+What a reader must not break:
+  - If rtamt cannot express a formula or trace is shorter than `MINIMUM_TRACE_LENGTH`, report
+    `NOT EVALUATED` (`verdict=INCONCLUSIVE`, `strength=None`), NEVER `satisfied`.
+  - Signal types (flag vs. magnitude) must be read from the formula itself, not trace contents.
+    `var >= 0.5` indicates a presence flag; numeric magnitude comparisons must receive finite
+    numbers and never coerce missing/non-finite values to 0.0 or 1.0.
 """
 
 from __future__ import annotations
