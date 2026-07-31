@@ -431,3 +431,40 @@ def test_art13_exact_inference_reports_full_coverage():
     assert conformance.coverage(cert) == 1.0
     assert conformance.fidelity(cert) == 1.0
     assert "1.0000" in art13_evidence_fields(case, cert)["fidelity_coverage_metrics"]
+
+
+# ------------------------------------ EU AI Act Art. 12 (Table 7 row 2) ----
+
+
+def art12_case_and_cert(adapter):
+    case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
+    return case, certify_case(case, adapter)
+
+
+def test_art12_log_records_the_chosen_branch_and_the_full_active_set():
+    """The entry names the branch the engine chose and every constraint exact inference found
+    active — the active-but-unused set is the part an answer-only log would lose."""
+    from reasonsmith.demo import art12_event_log
+
+    case, cert = art12_case_and_cert(ReferenceAdapter(TopK(1)))
+    log = art12_event_log(case, cert)
+    assert "chosen branch/module: C01" in log
+    for code, _text, _facts in CREDIT_REASONS:
+        assert code in log                       # the whole active set, not just the choice
+    assert f"{len(cert.deleted)} (recorded here" in log
+
+
+def test_art12_hashes_are_deterministic_across_runs():
+    from reasonsmith.demo import art12_event_log
+
+    case, cert = art12_case_and_cert(ReferenceAdapter(TopK(1)))
+    assert art12_event_log(case, cert) == art12_event_log(case, cert)
+
+
+def test_art12_record_is_complete_with_log_from_certificate():
+    from reasonsmith.demo import art12_evidence_fields
+
+    case, cert = art12_case_and_cert(ReferenceAdapter(TopK(1)))
+    record = evidence.emit("eu_ai_act_art12_record_keeping", case.case_id,
+                           art12_evidence_fields(case, cert))
+    assert record.complete
