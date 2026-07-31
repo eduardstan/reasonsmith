@@ -27,7 +27,7 @@ DOCS_INDEX = ROOT / "docs" / "index.html"
 #: The command the committed demo page reports, and the one that regenerates it.
 DOCS_COMMAND = (
     "python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 "
-    "--system-name CreditScoringPipeline --html docs/index.html"
+    "--system-name CreditScoringPipeline --system-scope high-risk --html docs/index.html"
 )
 
 
@@ -246,7 +246,10 @@ def test_docs_index_html_matches_the_renderer():
 
 def _docs_report() -> ConformanceReport:
     return check_conformance(
-        JSONLAdapter(str(SAMPLE_LOG)), load_pack("table7"), system_name="CreditScoringPipeline"
+        JSONLAdapter(str(SAMPLE_LOG)),
+        load_pack("table7"),
+        system_name="CreditScoringPipeline",
+        system_scope="high-risk",
     )
 
 

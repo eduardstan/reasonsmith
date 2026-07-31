@@ -640,7 +640,7 @@ CONFORMANCE REPORT
 system: CreditScoringPipeline
 declared scope: undeclared
 pack: table7
-headline: 6 requirements · 4 binding: 2 unattainable, 2 not applicable · 2 interpretive: 2 unattainable
+headline: 6 requirements · 4 binding: 2 observed, 2 not applicable · 2 interpretive: 2 unattainable
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] eu_ai_act_art13_transparency (EU AI Act Art. 13): not_applicable
@@ -651,14 +651,12 @@ REQUIREMENT FINDINGS:
     requires: automatic_event_logs, retention_schedule, signer
     scope limit: high-risk
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
-  [UNATTAINABLE] gdpr_art22_meaningful_information (GDPR Art. 22 (and Rec. 71)): inconclusive
+  [OBSERVED] gdpr_art22_meaningful_information (GDPR Art. 22 (and Rec. 71)): satisfied
     requires: per_decision_reason_string, feature_to_named_concept_mapping, dpia_cross_reference
-    MISSING SIGNALS: dpia_cross_reference, feature_to_named_concept_mapping, per_decision_reason_string
-    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for dpia_cross_reference, feature_to_named_concept_mapping, per_decision_reason_string, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
-  [UNATTAINABLE] ecoa_reg_b_adverse_action (ECOA / Reg B 12 CFR 1002.9): inconclusive
+    summary: Observed over 3 decision(s): every required signal (per_decision_reason_string, feature_to_named_concept_mapping, dpia_cross_reference) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+  [OBSERVED] ecoa_reg_b_adverse_action (ECOA / Reg B 12 CFR 1002.9): satisfied
     requires: stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback
-    MISSING SIGNALS: audit_ids, model_version, retention_for_regulatory_lookback, score_factors, stored_reasons_per_decision
-    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for audit_ids, model_version, retention_for_regulatory_lookback, score_factors, stored_reasons_per_decision, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
+    summary: Observed over 3 decision(s): every required signal (stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
   [UNATTAINABLE] [INTERPRETIVE] fda_gmlp_samd (FDA GMLP agency transparency guidance): inconclusive
     requires: design_history_links, verification_logs, change_control
     MISSING SIGNALS: change_control, design_history_links, verification_logs
