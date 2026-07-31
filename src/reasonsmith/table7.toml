@@ -24,9 +24,9 @@ table = "Table 7"
 caption = "Checklist that ties symbolic artifacts to legal/assurance duties and the associated logging."
 paper = "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
 authors = "Stan, Sciavicco & Napoletano"
-venue = "Journal of Artificial Intelligence Research, Vol. 4, Article 6"
-publication_date = "August 2026"
-page = "6:22"
+venue = "Journal of Artificial Intelligence Research, Vol. 86, Article 36"
+publication_date = "July 2026"
+page = "36:22"
 section = "5.3 Alignment with Regulatory and Governance Requirements"
 columns = [
     "Requirement",
