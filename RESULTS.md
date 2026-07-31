@@ -22,7 +22,16 @@ demo output do not either.
 | pytest | 9.1.1 |
 | ruff | 0.16.1 |
 | reasonsmith | 0.1.0 (this repo, editable install), commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` |
-| nesyarena | 0.1.0.dev0, pinned commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` |
+| nesyarena | 0.1.0.dev0, pinned commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` (repinned to `57720fa212834689692e171882272140f1d1fed7`, see note below) |
+
+**Repin note (2026-07-31):** the measurements below were taken against nesyarena commit
+`fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec`. That commit was later dropped from every branch when
+nesyarena's owner rewrote its git history (stripping AI co-authorship trailers), so `pyproject.toml`
+now pins `57720fa212834689692e171882272140f1d1fed7` instead. The hash changed, the content did not:
+both commits' `git cat-file -p <sha> | grep tree` report the identical tree
+`d050c86ef83b01bac972a0af3afa6f629a4a9972`, verified directly against both commits before this note
+was written. Nothing below was re-measured; the old pin is kept in the table above for the historical
+record of what was actually run.
 
 ### Commands run to build it
 
@@ -35,7 +44,7 @@ pip install -e ".[dev]"                                   # reasonsmith + pinned
 # nesyarena's own suite at the exact pinned commit, its repo is cloned separately and checked
 # out to that commit, then its optional extras are installed into the same venv:
 git clone https://github.com/eduardstan/nesyarena /path/to/nesyarena-src
-cd /path/to/nesyarena-src && git checkout fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec
+cd /path/to/nesyarena-src && git checkout 57720fa212834689692e171882272140f1d1fed7  # was fdf0d5e..., same tree
 pip install -e ".[learning,reporting,dev]"   # torch, torchvision + pyyaml/matplotlib needed
                                               # only so tests/test_e6_findings.py can *collect*
 ```
@@ -329,7 +338,10 @@ windows: 0.3333** (1.0 would mean the same reason every window).
 The complete, unedited output of both demo runs (identical to each other) is 561 lines. Regenerate
 it with `python -m reasonsmith.demo` from commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` — the figures above are direct quotes from
 that output, not paraphrases, and the run is deterministic (see previous section), so a fresh run
-reproduces every line, including the parts not quoted here (the full Table 7 traceability dump in
+reproduces every line. **Re-checked after the repin to nesyarena `57720fa212834689692e171882272140f1d1fed7`
+(2026-07-31):** `python -m reasonsmith.demo`, run twice against the new pin, still produces 561
+identical lines and `pytest` still reports 35 passed, `ruff check .` still reports no findings —
+none of the quoted figures below moved, including the parts not quoted here (the full Table 7 traceability dump in
 section 0, the two perturbed-engine certificates in section 3 that both correctly `FAIL` a
 silently-truncating engine and an engine with an undeclared calibration factor, by different
 routes — the deletion probe catches the first, the value check against the exact oracle catches
