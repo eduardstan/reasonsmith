@@ -805,7 +805,9 @@ def art12_event_log(case: Case, cert) -> str:
         f"  input sha256:{_sha(inputs)} ({len(case.base)} evidence facts)",
         f"  output sha256:{_sha(output)} ({output})",
         f"  chosen branch/module: {chosen} (engine {cert.adapter_name})",
-        f"  active constraints: {active} ({len(cert.verdicts)} fired, none violated)",
+        f"  active constraints: {active} ({len(cert.verdicts)} fired)",
+        "  violated constraints: not assessed — the certificate measures which constraints "
+        "fired and which the engine used; violation status is not part of either",
         f"  active but not in output: {len(cert.deleted)} "
         f"(recorded here; absent from the decision's stated reasons)",
     ])

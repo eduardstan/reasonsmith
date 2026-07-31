@@ -455,10 +455,17 @@ def test_art12_log_records_the_chosen_branch_and_the_full_active_set():
 
 
 def test_art12_hashes_are_deterministic_across_runs():
+    """Two independently built runs of the same frozen decision produce byte-identical log
+    entries, and the digests match the values recorded when the demo was written — a changed
+    hash or a leaked timestamp breaks this test."""
     from reasonsmith.demo import art12_event_log
 
-    case, cert = art12_case_and_cert(ReferenceAdapter(TopK(1)))
-    assert art12_event_log(case, cert) == art12_event_log(case, cert)
+    case_a, cert_a = art12_case_and_cert(ReferenceAdapter(TopK(1)))
+    case_b, cert_b = art12_case_and_cert(ReferenceAdapter(TopK(1)))
+    log_a, log_b = art12_event_log(case_a, cert_a), art12_event_log(case_b, cert_b)
+    assert log_a == log_b
+    assert "input sha256:673a324cc571" in log_a
+    assert "output sha256:43b08d429368" in log_a
 
 
 def test_art12_record_is_complete_with_log_from_certificate():
