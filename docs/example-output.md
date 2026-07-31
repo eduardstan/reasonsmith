@@ -622,14 +622,20 @@ LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
 ```
 
-### 2.2 Table 7 pack — nothing discharged on this trace (exit code 0)
+### 2.2 Table 7 pack — two rows discharged, two out of scope, two unattainable (exit code 0)
 
-The same log checked against the Table 7 pack discharges nothing. That pack names Table 7's own
-evidence-field keys, and this trace carries none of them, so every requirement whose duty reaches
-this system is reported unattainable with its missing signals named rather than violated. The two
-EU AI Act rows are limited to the high-risk class and no scope was declared on the command line, so
-they are reported not applicable — `reasonsmith` never infers that class. Nothing here is a breach,
-so the CLI exits 0.
+The same log checked against the Table 7 pack, which names Table 7's own evidence-field keys. This
+trace carries the keys the GDPR Art. 22 and ECOA rows require, so those two are reported observed
+over the three decisions in it — and observed is as far as a trace can carry them: read from that
+trace alone, and not extended to decisions not in it. The two EU AI Act rows are limited to the
+high-risk class and no scope was declared on the command line, so they are reported not applicable
+— `reasonsmith` never infers that class. The two interpretive rows are reported unattainable with
+their missing signals named, because the trace carries none of the keys they require and the run
+declared no capabilities. Nothing here is a breach, so the CLI exits 0.
+
+Declaring the class with `--system-scope high-risk` is what brings the two EU AI Act rows into
+scope and has them evaluated rather than set aside; that is the run behind the HTML page in
+[`index.html`](index.html), whose regeneration command is in `test_docs_index_html_matches_the_renderer`.
 
 ```sh
 python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline

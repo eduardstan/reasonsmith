@@ -231,151 +231,11 @@ _STRENGTH_ICONS = {
     Strength.PROVED: "🏆",
 }
 
-
-def _render_key_finding_html() -> str:
-    """Render the key finding: Evidence Record [COMPLETE] vs Reason-Deletion Certificate [FAIL].
-
-    Computed live via evidence.emit and certificate.certify so every value on the page
-    matches exact engine outputs.
-    """
-    import html
-
-    from nesyarena.adapters.base import ReferenceAdapter
-    from nesyarena.suts import TopK
-
-    from reasonsmith.demo import (
-        CREDIT_QUERY,
-        CREDIT_REASONS,
-        build_case,
-        certify_case,
-        score_factors,
-    )
-    from reasonsmith.evidence import emit
-
-    case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
-    cert = certify_case(case, ReferenceAdapter(TopK(1)))
-    reasons_line = "\n".join(
-        f"  {v.label}" for v in sorted(cert.live, key=lambda v: v.label)
-    )
-    record = emit(
-        "ecoa_reg_b_adverse_action",
-        case.case_id,
-        {
-            "stored_reasons_per_decision": reasons_line.strip(),
-            "model_version": "credit-scoring-2026.03.1 / rules cs-rules-2026.03",
-            "score_factors": score_factors(cert),
-            "audit_ids": "AAN-2026-0731-1042 / trace-9f3c1b",
-            "retention_for_regulatory_lookback": "25 months from notice date, per lender policy",
-        },
-    )
-
-    rec_d = record.to_dict()
-    cert_d = cert.to_dict()
-
-    rec_fields_html = []
-    for k, v in rec_d["fields"].items():
-        k_esc = html.escape(k)
-        v_esc = html.escape(str(v))
-        rec_fields_html.append(
-            f'<li><span class="check-icon">✓</span> '
-            f'<strong><code>{k_esc}</code></strong>: {v_esc}</li>'
-        )
-
-    cert_reasons_html = []
-    for v_item in sorted(cert_d["verdicts"], key=lambda x: (-x["score"], x["label"])):
-        lbl = html.escape(v_item["label"])
-        sc = v_item["score"]
-        st = v_item["status"]
-        if st == "live":
-            badge_item = '<span class="reason-tag tag-live">[used]</span>'
-            cls_item = "reason-live"
-        elif st == "deleted":
-            badge_item = '<span class="reason-tag tag-deleted">[DELETED]</span>'
-            cls_item = "reason-deleted"
-        else:
-            badge_item = f'<span class="reason-tag tag-other">[{st}]</span>'
-            cls_item = "reason-other"
-
-        cert_reasons_html.append(
-            f'<li class="{cls_item}">{badge_item} <span>{lbl}</span> '
-            f'<span class="reason-score">(score {sc:.4f})</span></li>'
-        )
-
-    rec_fields_str = "\n".join(rec_fields_html)
-    cert_reasons_str = "\n".join(cert_reasons_html)
-
-    sub_title = (
-        "An evidence record can be marked <strong>COMPLETE</strong> while "
-        "four of its five legally-owed reasons are missing due to proof truncation."
-    )
-    rec_status = rec_d["status"]
-    rec_id_esc = html.escape(rec_d["decision_id"])
-    rec_duty_esc = html.escape(rec_d["duty"])
-    rec_source_esc = html.escape(rec_d["legal_source"])
-
-    cert_verdict = cert_d["verdict"]
-    cert_query_esc = html.escape(cert_d["query"])
-    cert_adapter_esc = html.escape(cert_d["adapter_name"])
-    cert_semantics_esc = html.escape(cert_d["claimed_semantics"])
-    reasons_found = cert_d["reasons_found"]
-    reasons_deleted = cert_d["reasons_deleted"]
-
-    return f"""
-    <section class="key-finding-section">
-      <div class="key-finding-banner">
-        <div class="kf-badge">KEY FINDING</div>
-        <h2 class="kf-title">Form Completeness Does Not Imply Reason Fidelity</h2>
-        <div class="kf-subtitle">
-          {sub_title}
-        </div>
-      </div>
-      <div class="key-finding-grid">
-        <div class="kf-card kf-card-record">
-          <div class="kf-card-header">
-            <span class="kf-card-title">Evidence Record</span>
-            <span class="badge verdict-satisfied">
-              <span aria-hidden="true">✓</span> {rec_status}
-            </span>
-          </div>
-          <div class="kf-card-body">
-            <div class="kf-meta-line"><strong>Decision:</strong> <code>{rec_id_esc}</code></div>
-            <div class="kf-meta-line"><strong>Duty:</strong> {rec_duty_esc}</div>
-            <div class="kf-meta-line"><strong>Source:</strong> {rec_source_esc}</div>
-            <div class="kf-subhead">Minimal Evidence Retained (5 of 5 Table 7 fields):</div>
-            <ul class="kf-field-list">
-              {rec_fields_str}
-            </ul>
-          </div>
-        </div>
-        <div class="kf-card kf-card-cert">
-          <div class="kf-card-header">
-            <span class="kf-card-title">Reason-Deletion Certificate</span>
-            <span class="badge verdict-violated">
-              <span aria-hidden="true">✖</span> {cert_verdict}
-            </span>
-          </div>
-          <div class="kf-card-body">
-            <div class="kf-meta-line"><strong>Query:</strong> <code>{cert_query_esc}</code></div>
-            <div class="kf-meta-line">
-              <strong>Engine:</strong> <code>{cert_adapter_esc}</code> ({cert_semantics_esc})
-            </div>
-            <div class="kf-values-bar">
-              <span>Exact: <code>{cert_d['exact_value']:.4f}</code></span>
-              <span>Engine: <code>{cert_d['engine_value']:.4f}</code></span>
-              <span class="kf-gap">Gap: <code>{cert_d['value_gap']:+.4f}</code></span>
-            </div>
-            <div class="kf-subhead">
-              Reason Audit ({reasons_found} found &middot;
-              <strong style="color: #dc2626">{reasons_deleted} deleted</strong>):
-            </div>
-            <ul class="kf-reason-list">
-              {cert_reasons_str}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-"""
+#: Most witness rows the HTML report prints for one violated requirement. A record duty that no
+#: record in the trace discharges makes every record offending, so the segment is trace-sized;
+#: an unbounded table would inline an entire production decision log into the page. The count of
+#: what was elided is always printed with the table, never elided silently.
+_WITNESS_ROW_LIMIT = 20
 
 
 def _source_checkout() -> tuple[str, str]:
@@ -557,6 +417,7 @@ class ConformanceReport:
         self,
         commit_hash: str | None = None,
         command: str | None = None,
+        extra_section_html: str | None = None,
     ) -> str:
         """Self-contained HTML conformance report rendering.
 
@@ -572,6 +433,12 @@ class ConformanceReport:
         which is what a report committed into the tree it describes must say. `command` is
         never guessed: an unsupplied command is left out, because a command line the report
         invented is not provenance.
+
+        `extra_section_html` is inserted verbatim below the headline and is empty unless a
+        caller supplies it. Nothing derived from anything but this report's own results may be
+        rendered by default: a narrative about another system's decision, sitting inside a
+        document handed to an auditor, is exactly the false completeness this package refuses.
+        The caller that passes it owns the claim it makes and escapes its own content.
         """
         import html
 
@@ -615,7 +482,7 @@ class ConformanceReport:
 
         binding_pills = render_pill_group("")
         interp_pills = render_pill_group("interpretive_")
-        key_finding_html = _render_key_finding_html()
+        extra_section = extra_section_html or ""
 
         req_html_blocks = []
         for r in self.results:
@@ -726,8 +593,10 @@ class ConformanceReport:
             offending_segment = r.details.get("offending_trace_segment")
             violation_indices = r.details.get("violation_step_indices")
             if offending_segment and violation_indices:
+                witnesses = list(zip(violation_indices, offending_segment, strict=False))
+                shown = witnesses[:_WITNESS_ROW_LIMIT]
                 rows = []
-                for idx, record in zip(violation_indices, offending_segment, strict=False):
+                for idx, record in shown:
                     rec_str = ", ".join(
                         f"{html.escape(str(k))}: {html.escape(str(v))}" for k, v in record.items()
                     )
@@ -737,10 +606,25 @@ class ConformanceReport:
                     "<thead><tr><th>Trace Step</th><th>Decision Record Witness</th>"
                     f'</tr></thead><tbody>{"".join(rows)}</tbody></table>'
                 )
+                if len(shown) < len(witnesses):
+                    counted = (
+                        f"showing the first {len(shown)} of {len(witnesses)} offending records"
+                    )
+                    truncation_note = (
+                        f'<div class="callout-note">Witness truncated for display: {counted}. '
+                        "The report is a witness that the requirement is violated, not the "
+                        "complete list of decisions that violate it; read the full segment from "
+                        "<code>offending_trace_segment</code> in the JSON output.</div>"
+                    )
+                else:
+                    plural = "" if len(witnesses) == 1 else "s"
+                    counted = f"all {len(witnesses)} offending record{plural}"
+                    truncation_note = ""
                 details_html += (
                     '<div class="callout-box callout-violated">'
-                    "<strong>VIOLATED IN TRACE — Execution Counterexample Witness:</strong>"
-                    f"{witness_table}"
+                    "<strong>VIOLATED IN TRACE — Execution Counterexample Witness "
+                    f"({counted}):</strong>"
+                    f"{witness_table}{truncation_note}"
                     "</div>"
                 )
 
@@ -1156,171 +1040,6 @@ class ConformanceReport:
     }}
     .limits-text {{ font-size: 0.8rem; color: var(--color-slate-600); line-height: 1.6; }}
 
-    .key-finding-section {{
-      margin: 1.5rem;
-      border: 1px solid var(--color-slate-200);
-      border-radius: 10px;
-      background: #ffffff;
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }}
-    .key-finding-banner {{
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #ffffff;
-      padding: 1.25rem 1.5rem;
-      border-bottom: 2px solid #3b82f6;
-    }}
-    .kf-badge {{
-      display: inline-block;
-      font-size: 0.7rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      background: #ef4444;
-      color: #ffffff;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      margin-bottom: 0.35rem;
-    }}
-    .kf-title {{
-      font-size: 1.25rem;
-      font-weight: 800;
-      line-height: 1.3;
-    }}
-    .kf-subtitle {{
-      font-size: 0.9rem;
-      color: #94a3b8;
-      margin-top: 0.25rem;
-    }}
-    .key-finding-grid {{
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-      padding: 1.25rem;
-      background: #f8fafc;
-    }}
-    @media (max-width: 768px) {{
-      .key-finding-grid {{ grid-template-columns: 1fr; }}
-    }}
-    .kf-card {{
-      border-radius: 8px;
-      border: 1px solid var(--color-slate-200);
-      background: #ffffff;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }}
-    .kf-card-record {{
-      border-top: 4px solid #059669;
-    }}
-    .kf-card-cert {{
-      border-top: 4px solid #dc2626;
-    }}
-    .kf-card-header {{
-      padding: 0.85rem 1rem;
-      background: #f1f5f9;
-      border-bottom: 1px solid var(--color-slate-200);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }}
-    .kf-card-title {{
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--color-slate-800);
-    }}
-    .kf-card-body {{
-      padding: 1rem;
-      font-size: 0.85rem;
-      flex: 1;
-    }}
-    .kf-meta-line {{
-      margin-bottom: 0.35rem;
-      color: var(--color-slate-700);
-    }}
-    .kf-subhead {{
-      font-weight: 700;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: var(--color-slate-600);
-      margin-top: 0.85rem;
-      margin-bottom: 0.4rem;
-      padding-top: 0.5rem;
-      border-top: 1px dashed var(--color-slate-200);
-    }}
-    .kf-field-list, .kf-reason-list {{
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }}
-    .kf-field-list li {{
-      margin-bottom: 0.35rem;
-      line-height: 1.4;
-      font-size: 0.8rem;
-    }}
-    .check-icon {{
-      color: #059669;
-      font-weight: 800;
-      margin-right: 0.25rem;
-    }}
-    .kf-values-bar {{
-      display: flex;
-      gap: 0.75rem;
-      background: #f8fafc;
-      padding: 0.4rem 0.6rem;
-      border-radius: 4px;
-      border: 1px solid var(--color-slate-200);
-      margin: 0.5rem 0;
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-    }}
-    .kf-gap {{
-      color: #dc2626;
-      font-weight: 700;
-    }}
-    .kf-reason-list li {{
-      padding: 0.25rem 0.4rem;
-      border-radius: 4px;
-      margin-bottom: 0.3rem;
-      font-size: 0.78rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }}
-    .reason-live {{
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      color: #065f46;
-    }}
-    .reason-deleted {{
-      background: #fef2f2;
-      border: 1px solid #fca5a5;
-      color: #991b1b;
-    }}
-    .reason-tag {{
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      font-weight: 800;
-      padding: 0.05rem 0.3rem;
-      border-radius: 3px;
-      text-transform: uppercase;
-    }}
-    .tag-live {{
-      background: #059669;
-      color: #ffffff;
-    }}
-    .tag-deleted {{
-      background: #dc2626;
-      color: #ffffff;
-    }}
-    .reason-score {{
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--color-slate-600);
-      margin-left: auto;
-    }}
-
     @media print {{
       body {{ background: #ffffff; padding: 0; color: #000000; }}
       .container {{ border: none; box-shadow: none; max-width: 100%; }}
@@ -1367,7 +1086,7 @@ class ConformanceReport:
       {provenance_html}
     </div>
 
-    {key_finding_html}
+    {extra_section}
 
     <section class="dashboard-section">
       <div class="split-grid">

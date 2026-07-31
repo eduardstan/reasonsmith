@@ -16,6 +16,7 @@ from pathlib import Path
 
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.cli import main as cli_main
+from reasonsmith.demo import render_key_finding_html
 from reasonsmith.report import ConformanceReport, RequirementResult, check_conformance
 from reasonsmith.spec import load_pack
 from reasonsmith.verdict import Strength, Verdict
@@ -123,6 +124,108 @@ def test_html_distinguishes_unattainable_from_violated():
     assert "UNATTAINABLE AS BUILT — Missing Capability Signals" in html
     assert "verdict-violated" in html
     assert "VIOLATED IN TRACE — Required Signals Absent from Decision Log" in html
+
+
+def test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure():
+    """A report is read as being about its own system, so nothing else may ride along in it.
+
+    The demonstration's key finding belongs to case `APP-1042` and to the committed example page.
+    A user checking their own decision log must get their own findings and no one else's: a
+    hardcoded evidence record badged COMPLETE, above their results, in a document handed to an
+    auditor, is the false completeness this package exists to refuse.
+    """
+    report = ConformanceReport(
+        pack_id="test_pack",
+        system_name="SomeoneElsesSystem",
+        results=(
+            RequirementResult(
+                requirement_id="req_a",
+                source_clause="GDPR Art. 22",
+                verdict=Verdict.SATISFIED,
+                strength=Strength.OBSERVED,
+                signals_required=("signal_a",),
+                evidence_summary="Observed over 3 decisions",
+                binding=True,
+            ),
+        ),
+    )
+
+    html = report.render_html()
+
+    for narrative in (
+        "KEY FINDING",
+        "key-finding-section",
+        "APP-1042",
+        "AAN-2026-0731-1042",
+        "Reason-Deletion Certificate",
+        "Form Completeness Does Not Imply Reason Fidelity",
+        "25 months from notice date, per lender policy",
+    ):
+        assert narrative not in html, f"{narrative!r} leaked into an unrelated system's report"
+
+    # The example page is the one place it is composed in, and it is composed by the caller.
+    assert "KEY FINDING" in report.render_html(extra_section_html=render_key_finding_html())
+
+
+def test_witness_table_is_capped_and_says_how_many_it_elided():
+    """A record duty no record discharges makes every record offending: the table must not be
+    the whole decision log, and what it drops must be counted on the page, never dropped
+    silently."""
+    records = [{"step": i} for i in range(75)]
+    report = ConformanceReport(
+        pack_id="test_pack",
+        system_name="TestSystem",
+        results=(
+            RequirementResult(
+                requirement_id="req_violated",
+                source_clause="GDPR Art. 22",
+                verdict=Verdict.VIOLATED,
+                strength=Strength.OBSERVED,
+                signals_required=("signal_a",),
+                evidence_summary="Violated over 75 decisions",
+                details={
+                    "offending_trace_segment": records,
+                    "violation_step_indices": list(range(75)),
+                },
+                binding=True,
+            ),
+        ),
+    )
+
+    html = report.render_html()
+
+    assert html.count("<tr><td>Step ") == 20
+    assert "showing the first 20 of 75 offending records" in html
+    assert "Step 19</td>" in html
+    assert "Step 20</td>" not in html
+
+
+def test_witness_table_below_the_cap_states_it_is_complete():
+    """Under the cap nothing is elided, and the page says so rather than leaving it open."""
+    report = ConformanceReport(
+        pack_id="test_pack",
+        system_name="TestSystem",
+        results=(
+            RequirementResult(
+                requirement_id="req_violated",
+                source_clause="GDPR Art. 22",
+                verdict=Verdict.VIOLATED,
+                strength=Strength.OBSERVED,
+                signals_required=("signal_a",),
+                evidence_summary="Violated over 2 decisions",
+                details={
+                    "offending_trace_segment": [{"step": 0}, {"step": 1}],
+                    "violation_step_indices": [0, 1],
+                },
+                binding=True,
+            ),
+        ),
+    )
+
+    html = report.render_html()
+
+    assert "all 2 offending records" in html
+    assert "Witness truncated for display" not in html
 
 
 def test_cli_html_export():
@@ -254,7 +357,11 @@ def _docs_report() -> ConformanceReport:
 
 
 def _render_docs_index() -> str:
-    return _docs_report().render_html(commit_hash="", command=DOCS_COMMAND)
+    return _docs_report().render_html(
+        commit_hash="",
+        command=DOCS_COMMAND,
+        extra_section_html=render_key_finding_html(),
+    )
 
 
 def regenerate_docs_index() -> None:
