@@ -35,6 +35,19 @@ it), clone `github.com/eduardstan/nesyarena` separately and check out the pinned
   for why each check exists before changing one.
 - No check asserts branding, wording or presentation.
 
+In v0.2 the first rule becomes structural. A verdict carries the strength of the evidence behind it
+(`verdict.py`), and `RequirementResult.__post_init__` refuses to construct a result that claims more
+than it has — including `strength=None` for "no engine here evaluated this", which is deliberately
+not a strength on the lattice. Two consequences worth knowing before editing `report.py`: combining
+zero verdicts is `inconclusive`, never vacuously `satisfied`, and `SUPPORTED_FORMALISMS` is the list
+of formalisms an engine actually exists for — widen it when the engine lands, not before.
+
+`src/reasonsmith/packs/*.toml` are derived, not authored. The Table 7 pack restates the rows of
+`src/reasonsmith/table7.toml`, and `test_pack_matches_table7_transcription` holds it to the print:
+quoted text character-for-character, both halves of the legal source, and the paper's own
+evidence-field keys as the signal names. Do not rename a signal to something tidier — that test is
+the only thing keeping the pack attached to the paper.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.

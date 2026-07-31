@@ -51,12 +51,20 @@ Deliberately built as focused modules rather than a generic framework:
 | `src/reasonsmith/certificate.py` | Reason-deletion certificates against exact inference oracle |
 | `src/reasonsmith/conformance.py` | Table 19 checks, including stratified per-group evaluations |
 | `src/reasonsmith/demo.py` | End-to-end demonstration (ECOA/Reg B credit and GDPR Art. 22 clinical) |
+| `src/reasonsmith/verdict.py` | v0.2 core: the evidence strength lattice and the verdict vocabulary |
+| `src/reasonsmith/spec.py` | v0.2 core: requirements with verbatim provenance, loaded from `packs/*.toml` |
+| `src/reasonsmith/sut.py` | v0.2 core: the system-under-test protocol — declared capabilities and a decision trace |
+| `src/reasonsmith/report.py` | v0.2 core: the unattainable analysis and the conformance report |
+| `src/reasonsmith/packs/table7.toml` | The Table 7 rows restated as a requirement pack, derived from `table7.toml` |
 
 ### The Emitter (`evidence.py`)
 `emit(duty_id, decision_id, fields)` returns a record that is either `COMPLETE` or `INCOMPLETE`. An `INCOMPLETE` record explicitly names the fields it lacks. Nothing is defaulted, inferred, or silently dropped. Keys outside the duty's Table 7 row are rejected, and non-Table 7 data is isolated in `attachments`.
 
 ### The Reason-Deletion Certificate (`certificate.py`)
 Compares the reasons an engine actually used against exact inference ground truth (enumerated via WMC in `nesyarena`). Using deletion probes, it tests whether disabling isolated facts changes engine output. Two independent checks must pass: the deletion probe (every reason live) and the value check against the exact oracle. Reasons that cannot be probed in isolation are reported as uncertified (`INCONCLUSIVE`).
+
+### The Strength Lattice (`verdict.py`, `report.py`) — v0.2, first slice only
+A verdict carries the strength of the evidence behind it: `unattainable < observed < probed < proved`. Only the first two rungs exist here. `unattainable` is a set difference over the capabilities a system *declares*, so it is answerable before the system runs at all: a system that cannot emit reasons is reported unattainable on the requirements needing them, with the missing signals named and without being executed. `observed` reads a passive decision trace. `probed` and `proved` need engines this build does not have, so a requirement whose formalism no engine covers is reported as not evaluated — no strength and no verdict — rather than judged by a weaker check; combining zero verdicts is `inconclusive`, never vacuously `satisfied`. These are library modules: there is no CLI, no report renderer beyond text/JSON, and exactly one pack, the Table 7 one.
 
 ### Machine-Readable Output
 Records and certificates also serialise: `to_dict()` returns plain Python, `to_json(indent=None)` returns a JSON string. Each carries the same facts as its text rendering, including its missing-field report and its own limits, so a downstream consumer cannot read a partial document as a complete one. Values outside JSON's own types are stringified rather than raising.

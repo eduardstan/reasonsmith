@@ -5,10 +5,14 @@ This is the evidence artifact for reasonsmith's own claims: an environment was a
 demo was actually executed twice and diffed. Every number in this file is copied from a command's
 real output; the exact commands are given so a stranger can reproduce every one of them from
 reasonsmith commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` (branch `fm/rs-prove-it`), the commit
-every measurement below was taken at. Later commits on this branch that touch only `README.md`, this
-file, and the nesyarena dependency pin in `pyproject.toml` leave all of it standing: nothing under
-`src/` or `tests/` changes, and the repin is to a commit with the identical tree (see the repin note
-below), so the suites and the demo output do not either.
+every measurement below was taken at. Every number here is that commit's and is not re-measured by
+later work. The nesyarena dependency pin in `pyproject.toml` has moved since, but to a commit with
+the identical tree (see the repin note below), so it disturbs none of the figures. What later work
+does change is the suite: section 2's `35 passed` counts it as it stood then, and the v0.2 core
+added since (`verdict.py`, `spec.py`, `sut.py`, `report.py` and `tests/test_v02_core.py`) adds tests
+to that number. Those files are new alongside v0.1 rather than changes to it — `evidence.py`,
+`certificate.py`, `conformance.py` and `demo.py` are untouched — so section 1 (nesyarena's suite)
+and section 3 (the demo output) still describe the code as it is today.
 
 ## Environment
 

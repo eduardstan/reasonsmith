@@ -41,7 +41,7 @@ Issues = "https://github.com/eduardstan/reasonsmith/issues"
 where = ["src"]
 
 [tool.setuptools.package-data]
-reasonsmith = ["table7.toml"]
+reasonsmith = ["table7.toml", "packs/*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
