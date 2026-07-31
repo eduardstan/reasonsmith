@@ -54,7 +54,12 @@ The hash changed, the content did not: both commits' `git cat-file -p <sha> | gr
 
 On 2026-07-31, `nesyarena` 0.1.0 was published to PyPI. `pyproject.toml` was updated from the git SHA dependency (`nesyarena @ git+https://github.com/eduardstan/nesyarena@57720fa212834689692e171882272140f1d1fed7`) to the exact PyPI release pin `nesyarena==0.1.0`.
 
-PyPI 0.1.0 was built from `nesyarena` commit `22b539bad6c3510fe457aa751141c5c4aa1483ea` ("build(nesyarena): prepare 0.1.0 PyPI release and widen CI matrix (#3)"), one commit ahead of the pin it replaces. That commit is identified, not assumed: every file under `src/` in the published sdist (`nesyarena-0.1.0.tar.gz`, sha256 `5e93f9e6fc4662fde1cf9d1b788a9b2573d4728605004a6317d57282d25b7d7c`) hashes to the same git blob as that commit's, `pyproject.toml` included, checked with `git hash-object` against the tree the GitHub API reports for that SHA.
+PyPI 0.1.0 was built from `nesyarena` commit `22b539bad6c3510fe457aa751141c5c4aa1483ea` ("build(nesyarena): prepare 0.1.0 PyPI release and widen CI matrix (#3)"), two commits ahead of the pin it replaces: `57720fa212834689692e171882272140f1d1fed7` → `782a135bd5fbfcde4c663beea74e71c61cee8157` ("ci: add GitHub Actions workflow to run test suite on push and PR (#2)") → `22b539ba…`.
+
+That commit is identified, not assumed, and both published artifacts were checked with `git hash-object` against the tree the GitHub API reports for that SHA:
+
+- **sdist** `nesyarena-0.1.0.tar.gz`, sha256 `5e93f9e6fc4662fde1cf9d1b788a9b2573d4728605004a6317d57282d25b7d7c` — every file under `src/` hashes to the same git blob as that commit's, `pyproject.toml` included.
+- **wheel** `nesyarena-0.1.0-py3-none-any.whl`, sha256 `20eebf9b2fc0d44ff5b99f00209a48b3547a56930b581181faf6b6c2c0d8bf47` — the artifact `pip install -e ".[dev]"` actually resolves, and so the one whose contents back the re-run figures below. All 19 modules it carries hash to that commit's blobs. It carries no `tests/` or `experiments/`, which is why running `nesyarena`'s own suite needs the separate clone in "Build and Reproduction Commands".
 
 What the release commit changes relative to `57720fa212834689692e171882272140f1d1fed7` is two installed files — `src/nesyarena/__init__.py` (`__version__` `0.1.0.dev0` → `0.1.0`, the whole diff) and `pyproject.toml` — plus repository metadata that is not installed (`README.md`, `.gitignore`, `.github/workflows/ci.yml`, `AGENTS.md`, `CLAUDE.md`, `docs/PUBLISHING.md`). The rest of `src/`, and all 45 files under `tests/` and `experiments/`, are byte-identical blobs across the two commits.
 
