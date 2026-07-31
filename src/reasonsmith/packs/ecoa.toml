@@ -1,7 +1,7 @@
 [pack]
 id = "ecoa"
 title = "ECOA / Regulation B (12 CFR 1002.9): Adverse Action Notices"
-description = "Requirements for adverse credit decision notifications, specific principal reasons, and record retention."
+description = "Requirements for adverse credit decision notifications, specific principal reasons, and record retention. The timing requirement needs artifact_logs_counteroffer_not_accepted to tell the 30-day deadline of 1002.9(a)(1)(i)-(iii) from the 90-day deadline of (iv); a log that never carries that field is reported unattainable on it rather than judged against a deadline the clause may not set."
 
 [source]
 document = "CFPB Regulation B / Equal Credit Opportunity Act (12 CFR § 1002.9)"

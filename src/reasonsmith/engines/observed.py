@@ -8,6 +8,8 @@ Behavior:
 - A violation returns the offending trace segment in details and summary.
 - If rtamt cannot express a formula, the requirement is reported as NOT EVALUATED
   with the reason (verdict=INCONCLUSIVE, strength=None) — never as satisfied.
+- A trace shorter than MINIMUM_TRACE_LENGTH is reported as NOT EVALUATED for that reason,
+  named as a limit of the trace rather than of the formula the pack wrote.
 - Whether a signal is a magnitude or a flag is read from the requirement's own formula, never
   from what the trace happened to contain. Asking `var >= 0.5` (or `0.5 <= var`) is the one way
   a pack asks whether a signal is present at all: that variable is a flag and keeps the 1.0/0.0
@@ -51,6 +53,11 @@ from reasonsmith.verdict import Strength, Verdict
 #: The threshold a pack uses to ask whether a signal is present at all. Everything else a
 #: variable is compared against is a quantity, and a quantity has to be measured.
 PRESENCE_THRESHOLD = 0.5
+
+#: rtamt's offline discrete-time evaluator reads the sampling period off the trace, so a
+#: one-sample dataset raises out of its own internals. That is a limit of what was observed,
+#: not a defect in the formula, and it is reported as one rather than blamed on the pack.
+MINIMUM_TRACE_LENGTH = 2
 
 _NUMBER = r"-?\d+(?:\.\d+)?"
 _IDENT = r"[a-zA-Z_][a-zA-Z0-9_]*"
@@ -140,16 +147,24 @@ class ObservedEngine:
     ) -> RequirementResult:
         clause = f"{req.source_document} {req.article_clause}"
 
-        if not records:
+        if len(records) < MINIMUM_TRACE_LENGTH:
+            reason = (
+                "the decision trace is empty, so nothing was observed"
+                if not records
+                else (
+                    f"the decision trace holds {len(records)} decision(s), and a discrete-time "
+                    f"monitor needs at least {MINIMUM_TRACE_LENGTH} samples to establish the "
+                    "sampling period it reasons over"
+                )
+            )
             return RequirementResult(
                 requirement_id=req.id,
                 source_clause=clause,
                 verdict=Verdict.INCONCLUSIVE,
                 strength=None,
                 signals_required=tuple(req.requires),
-                evidence_summary=(
-                    "Not evaluated: the decision trace is empty, so nothing was observed."
-                ),
+                evidence_summary=f"Not evaluated: {reason}.",
+                details={"records_observed": len(records)},
             )
 
         # Extract variable names from formula or req.requires

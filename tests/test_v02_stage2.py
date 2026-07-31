@@ -302,6 +302,31 @@ class TestObservedEngine:
         offending = result.details["offending_trace_segment"]
         assert offending[0]["id"] == 1
 
+    @pytest.mark.parametrize("records", [[], [{"signal_a": True}]])
+    def test_trace_too_short_names_the_trace_not_the_formula(self, records: list):
+        """rtamt cannot read a sampling period off one sample; that is a limit of the trace.
+
+        Letting the failure surface from rtamt's internals would report a well-formed pack
+        requirement as unexpressible and leak a third-party traceback string as the reason.
+        """
+        sut = BaseSUT({"signal_a"})
+        req = Requirement(
+            id="temp_short",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="temporal",
+            spec="always(signal_a >= 0.5)",
+            requires=("signal_a",),
+        )
+        result = ObservedEngine.evaluate(req, sut, records)
+        assert result.verdict == Verdict.INCONCLUSIVE
+        assert result.strength is None
+        assert result.details["records_observed"] == len(records)
+        assert "decision trace" in result.evidence_summary
+        assert "rtamt" not in result.evidence_summary
+
     def test_non_finite_flag_counts_as_absent(self):
         """NaN is the absence of a value, and every robustness comparison against it is False."""
         sut = BaseSUT({"signal_a"})
@@ -346,7 +371,7 @@ class TestObservedEngine:
             spec=spec,
             requires=("signal_a", "signal_b"),
         )
-        result = ObservedEngine.evaluate(req, sut, [{"signal_b": 0.2}])
+        result = ObservedEngine.evaluate(req, sut, [{"signal_b": 0.2}, {"signal_b": 0.3}])
         assert result.verdict == Verdict.INCONCLUSIVE
         assert result.strength is None
         assert "signal_a" in result.details["signals_unmeasured_in_trace"]
@@ -363,10 +388,11 @@ class TestObservedEngine:
             spec="invalid syntax !@#$%",
             requires=("signal_a",),
         )
-        records = [{"signal_a": True}]
+        records = [{"signal_a": True}, {"signal_a": True}]
         result = ObservedEngine.evaluate(req, sut, records)
         assert result.verdict == Verdict.INCONCLUSIVE
         assert result.strength is None
+        assert "cannot express or parse" in result.evidence_summary
         assert "Not evaluated" in result.evidence_summary
 
 
