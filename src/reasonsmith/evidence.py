@@ -1,19 +1,28 @@
 """The evidence emitter: Table 7 rows in, minimal evidence records out.
 
-One rule governs this module. A record that is missing a field Table 7 requires is reported as
-incomplete, and the missing fields are named. There is no path through this code that fills a gap
-with a default, an inference, or a plausible-looking value, and there is no path that drops a
-required field quietly. A partial record presented as complete would launder a compliance gap into
-a document that reads as authoritative, which is worse than emitting nothing.
+What this module is for:
+  Emits minimal evidence records according to Table 7 duties, checking structural completeness
+  and explicitly naming missing fields without throwing errors or filling gaps.
 
-Three consequences of that rule, all deliberate:
+  Core governing rule:
+    A record missing a required field is reported as INCOMPLETE, and the missing fields are named.
+    A partial record presented as complete would launder a compliance gap into a document that
+    reads as authoritative, which is worse than emitting nothing.
 
-  - `emit` never raises for a missing field. Refusing to produce anything would hide the gap just as
-    effectively as filling it; the record is produced, marked INCOMPLETE, and lists what is absent.
-  - A key that is not in the duty's Table 7 row is rejected outright. Accepting it would let a field
-    nobody required stand in for one somebody did.
-  - Material that is not Table 7 evidence travels in `attachments` and renders under its own
-    heading, so it can never be read as discharging part of the row.
+What a reader must not break:
+  - `emit` never raises for a missing field; it marks the record INCOMPLETE and lists what is
+    absent.
+    Why this matters: Refusing to produce anything would hide the gap just as effectively as
+    filling it; emitting the record marked INCOMPLETE exposes what is absent.
+  - A key not in the duty's Table 7 row is rejected outright; unlisted fields cannot substitute
+    for required ones.
+    Why this matters: Accepting unlisted keys would let a field nobody required stand in for one
+    somebody did.
+  - Non-Table 7 material travels in `attachments` and renders under its own heading.
+    Why this matters: Ensures non-Table 7 data can never be read as discharging part of the row.
+  - No default, inference, or dummy fallback may ever be substituted for a missing field.
+    Why this matters: Substituting defaults would launder missing compliance data into complete
+    records.
 """
 
 from __future__ import annotations

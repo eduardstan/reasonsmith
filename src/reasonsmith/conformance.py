@@ -1,16 +1,26 @@
 """Conformance checks, taken from Table 19.
 
-Table 19's first playbook — auditability with minimal retraining, the SKE case where reasons must be
-produced per decision — names its metrics as "fidelity to base model; coverage; stability across
-time/windows; rule size/complexity caps", and names among its controls "Minority over-smoothing:
-stratified fidelity/coverage; per-group checks; reason diversity tests". Those are the five checks
-here, computed from reason-deletion certificates rather than estimated.
+What this module is for:
+  Computes Table 19 conformance metrics directly from reason-deletion certificates rather than
+  estimating them. Table 19's first playbook — auditability with minimal retraining, the SKE case
+  where reasons must be produced per decision — names its metrics as "fidelity to base model;
+  coverage; stability across time/windows; rule size/complexity caps", and names among its controls
+  "Minority over-smoothing: stratified fidelity/coverage; per-group checks; reason diversity tests".
+  Those are the five checks here.
 
-Fidelity follows nesyarena's own definition (metrics.py): one minus the mean absolute error against
-the oracle, clamped to [0, 1]. Two forms are reported, because they disagree and the disagreement is
-informative: absolute fidelity, and retained share, the fraction of the exact answer's value the
-engine's answer still carries. A case built from low-probability reasons has small absolute error by
-construction — the products are small — while having lost most of its value in relative terms.
+What a reader must not break:
+  - Fidelity is reported in both absolute fidelity and retained share forms.
+    Why this matters: Absolute fidelity follows nesyarena's own definition (metrics.py) — one minus
+    the mean absolute error against the oracle, clamped to [0, 1] — so a case built from
+    low-probability reasons scores high by construction, its products being small; retained share,
+    the fraction of the exact answer's value the engine's answer still carries, catches the
+    relative value loss absolute fidelity misses. The two disagree, and the disagreement is
+    informative.
+  - An unmeasured certificate (where exact inference enumerated zero reasons) must never be
+    scored as measured.
+    Why this matters: Prevents un-evaluated certificates from inflating coverage or fidelity scores.
+  - Per-group comparisons carry explicit disclaimers regarding cohort size limits.
+    Why this matters: Per-group figures are only as representative as the cases behind them.
 """
 
 from __future__ import annotations

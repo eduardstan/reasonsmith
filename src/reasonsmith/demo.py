@@ -1,16 +1,23 @@
 """The two demonstrations: ECOA / Reg B credit, and GDPR Art. 22 clinical.
 
-Credit comes first on purpose. ECOA requires the *specific principal reasons* for an adverse action,
-so a reason the engine dropped is not a quality concern — it is a reason the applicant was legally
-owed and did not get. That makes it the sharpest test of whether the certificate is worth anything.
+What this module is for:
+  Executes end-to-end demonstrations comparing Table 7 evidence records against reason-deletion
+  certificates, Table 19 stratified per-group conformance metrics, and window stability checks.
 
-The programs here are frozen synthetic ones in nesyarena's style: realistic structure, no real
-personal data, no ethics approval needed, no randomness. Every probability is a fixed function of
-the case index, so the numbers in the report are reproducible byte for byte. They stand in for a
-neural component's confidence in each piece of evidence; whether real systems produce confidences
-shaped like these is a separate question this does not answer.
+  Run: `python -m reasonsmith.demo`
 
-Run: python -m reasonsmith.demo
+What a reader must not break:
+  - The programs are frozen synthetic ones in nesyarena's style: realistic structure, no real
+    personal data, no ethics approval needed, no randomness. Every probability is a fixed function
+    of the case index.
+    Why this matters: Guarantees every measured figure and transcript line in the paper and repo
+    can be verified and diffed byte-for-byte. Those probabilities stand in for a neural component's
+    confidence in each piece of evidence; whether real systems produce confidences shaped like
+    these is a separate question this does not answer.
+  - Credit comes first on purpose: ECOA requires specific principal reasons, making proof
+    truncation a legal compliance issue.
+    Why this matters: Under credit law, a dropped reason is a reason legally owed to an applicant
+    and withheld, making it the sharpest test of certificate value.
 """
 
 from __future__ import annotations

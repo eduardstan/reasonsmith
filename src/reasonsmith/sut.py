@@ -1,11 +1,32 @@
 """System Under Test (SUT) protocol and reference implementations for reasonsmith v0.2.
 
-The SUT protocol is deliberately minimal so that black-box neural models, rule engines,
-and log traces qualify equally.
+What this module is for:
+  Defines the `SystemUnderTest` protocol interface (`capabilities()`, `decisions()`) and
+  `CAPABILITY_TAXONOMY` categories for black-box models, rule engines, and log traces.
 
-The protocol exposes a capability set for unattainability analysis. BaseSUT and the callable
-adapter require an explicit declaration; the JSONL adapter can instead derive the set from a
-supplied trace and labels that basis so reports do not present it as a system declaration.
+What a reader must not break:
+  - BaseSUT requires explicit capability declarations; an adapter that instead derives them from a
+    trace must say so by setting the plain instance attribute `capability_basis = "trace"`. It is
+    not part of the protocol above: `report._unattainable_result` reads it with
+    `getattr(sut, "capability_basis", "declared")`, so an adapter that sets nothing is worded as
+    declaring its capabilities. Those two literals are the whole vocabulary — any other value, or a
+    method of that name instead of an attribute, silently reads as `"declared"`.
+    Why this matters: Trace-derived capabilities come from observing sample traces, whereas
+    explicit declarations represent an authoritative system claim. A trace-reading adapter that
+    misses the attribute has its finding worded "Unattainable as built ... the system was not
+    executed" — a claim about the system, made from one sample trace.
+  - A capability set is the enabled signal names and nothing else: `_validate_capability_collection`
+    rejects a bare string, a mapping, a non-iterable, and any blank or non-string name, at both
+    sites capabilities cross into reasonsmith.
+    Why this matters: `set("reasons")` would declare seven single-character capabilities, and a
+    capability map would declare the signals it marks False as available — the overclaim this tool
+    exists to prevent.
+  - `CAPABILITY_TAXONOMY` documents the four Section 6.3 categories that signal names are
+    conventionally prefixed with (`provenance_`, `artifact_logs_`, ...). It is a reference for pack
+    and adapter authors, not a validator: nothing here checks a name against it, and a pack is free
+    to name a signal outside it.
+    Why this matters: Reading it as enforced would hide that an out-of-taxonomy signal name passes
+    unremarked and simply reports the requirement unattainable when no adapter supplies it.
 """
 
 from __future__ import annotations

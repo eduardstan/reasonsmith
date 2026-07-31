@@ -1,30 +1,81 @@
-# reasonsmith — audit-grade evidence records and reason-deletion certificates for symbolic decisions.
+# reasonsmith — audit-grade evidence records and reason-deletion certificates for symbolic decisions
 
 [![tests](https://github.com/eduardstan/reasonsmith/actions/workflows/ci.yml/badge.svg)](https://github.com/eduardstan/reasonsmith/actions/workflows/ci.yml)
 [![Python >= 3.11](https://img.shields.io/badge/python->=3.11-blue.svg)](https://www.python.org/)
 [![MIT licence](https://img.shields.io/github/license/eduardstan/reasonsmith)](https://github.com/eduardstan/reasonsmith/blob/main/LICENSE)
 
-A decision that affects a person carries a legal duty to give reasons. `reasonsmith` turns that duty into machine-checkable records: given a decision, the symbolic artifact behind it, and the applicable regulatory duty, it emits the minimal evidence record required—and plainly reports any fields it could not produce. For proof-based systems, exact inference enumerates every reason so that reason-deletion certificates can compare actual engine behaviour against ground truth and attribute dropped reasons.
+`reasonsmith` turns legal reason-giving duties into machine-checkable evidence records and reason-deletion certificates. Given a decision, the symbolic artifact behind it, and an applicable regulatory duty, it evaluates structural record completeness and attributes dropped reasons by comparing actual engine behavior against ground-truth exact inference.
 
-## Key Finding
+## Key Finding: Form Completeness Does Not Imply Reason Fidelity
 
-**Form completeness does not imply truth or reason fidelity.**
+Evaluating structural form alone can launder severe compliance and reasoning gaps into documents that appear authoritative. In the ECOA/Reg B credit demonstration (`python -m reasonsmith.demo`), `reasonsmith` emits an evidence record that reads **`COMPLETE`** while its paired certificate reads **`FAIL`** because four of its five principal reasons were dropped by proof truncation:
 
-In the credit demonstration (`python -m reasonsmith.demo`), `reasonsmith` produces an evidence record that is marked **COMPLETE** under Table 7 form checks while its reason-deletion certificate shows that **four of its five reasons are missing**.
+```text
+EVIDENCE RECORD [COMPLETE]
+decision: APP-1042
+duty: Adverse action reasons in credit decisions
+legal source: ECOA / Reg B (12 CFR 1002.9)
+source of the duty: Table 7 (row 4, p. 36:22), Symbols and Neurons: A Review of Symbolic XAI in Deep Learning, Stan, Sciavicco & Napoletano, Journal of Artificial Intelligence Research, Vol. 86, Article 36, July 2026
+symbolic artifact(s) Table 7 asks for: Rule-based “reason codes” mapped to standardized categories; monotone/eligibility constraints for fairness explanations
+where it fits: Adverse action notice (AAN) pipeline; compliance reporting
 
-Evaluating structural form alone can launder severe compliance and reasoning gaps into documents that appear authoritative. Reason-deletion certificates provide the ground-truth verification needed alongside regulatory evidence records.
+minimal evidence retained:
+  [x] stored_reasons_per_decision (Stored reasons per decision):
+          C01 — Income insufficient for amount of credit requested
+  [x] model_version (model version):
+        credit-scoring-2026.03.1 / rules cs-rules-2026.03
+  [x] score_factors (score factors):
+        C01 0.7656; C02 0.6972; C03 0.6320; C04 0.6004; C05 0.5112
+  [x] audit_ids (audit IDs):
+        AAN-2026-0731-1042 / trace-9f3c1b
+  [x] retention_for_regulatory_lookback (retention for regulatory lookback):
+        25 months from notice date, per lender policy
 
-Every number above is measured and reproduced in **[RESULTS.md](RESULTS.md)**, along with the exact environment and versions, both suites' pass/fail/skip counts with `torch` installed, and a byte-for-byte diff of two demo runs. Figures this README takes from the paper rather than from running code — the 273 primary studies, the six Table 7 duties — and the rough `~1GB` size of the `torch` download are not measurements and are not reproduced there.
+supporting material (NOT Table 7 evidence, and fills no gap above):
+  reason-deletion certificate:
+    REASON-DELETION CERTIFICATE [FAIL]
+    query: adverse_action(APP-1042)
+    engine: reference:top-1-proofs   claims: distribution semantics
+    exact inference: bounded proof enumeration to depth 1 (nesyarena ground-program IR) + exact weighted model counting
+    exact value 0.991399   engine value 0.765600   gap -0.225799   tolerance 1e-09
+    reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not certifiable
+```
 
-## Where the duties come from
+### Automated Conformance Checking
 
-The duty-to-artifact mapping is Table 7 of *Symbols and Neurons: A Review of Symbolic XAI in Deep Learning* (Stan, Sciavicco & Napoletano, JAIR 2026), a review of 273 primary studies tying symbolic artifacts to duties under the EU AI Act, GDPR, ECOA/Reg B, FDA GMLP, and NIST AI RMF.
+`reasonsmith` also checks decision logs against formal regulation packs, producing reports whose verdicts carry the strength of the evidence behind them. Run against the committed sample log:
 
-Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is data, not code: every duty records its row number, and every machine key sits next to the exact cell text it stands for. `traceability_report()` prints the table side by side. Where a design decision and Table 7 disagree, Table 7 wins.
+```sh
+python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline
+```
+
+```text
+CONFORMANCE REPORT
+system: CreditScoringPipeline
+declared scope: undeclared
+pack: ecoa
+headline: 3 requirements · 3 binding: 3 observed
+
+REQUIREMENT FINDINGS:
+  [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
+    requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
+    summary: Observed over 3 decision(s): temporal monitor for 'always((artifact_logs_decision_record >= 0.5) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))' satisfied across all time steps.
+  [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
+    requires: artifact_logs_reason_explanation, artifact_logs_decision_record, provenance_model_version
+    summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, artifact_logs_decision_record, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+    requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
+    summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+
+LIMITS OF THIS REPORT
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+```
+
+`observed` is the weakest rung of the strength lattice that can still say a property held: it is read off the trace supplied and claims nothing about decisions outside it. The same log checked against the Table 7 pack discharges nothing and still exits 0, because nothing there is a breach: the requirements whose duty reaches this system come back unattainable, and the two EU AI Act rows come back not applicable against an undeclared regulatory scope — see [`docs/example-output.md`](docs/example-output.md) for that run and for the full 561-line demo transcript, both stdout pasted unedited.
 
 ## Quick Start
 
-From a fresh clone (requires Python 3.11+ and git):
+Run the full verification suite and demonstration in one block:
 
 ```sh
 python3 -m venv .venv && source .venv/bin/activate
@@ -32,67 +83,76 @@ pip install -e ".[dev]"
 ruff check .
 pytest
 python -m reasonsmith.demo
+python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa
 ```
 
-This single install path is used by CI (`.github/workflows/ci.yml`).
+Every command runs from a fresh clone in that order; `docs/sample_decisions.jsonl` is a committed three-record decision trace, so the last line needs no data of your own. `check` exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise — the `ecoa` run above exits 0.
 
-### Dependencies & PyPI
-- **`nesyarena`**: Supplies the ground-program IR, bounded proof enumeration, exact oracle, and adapter protocol. It is pinned to an immutable git commit in `pyproject.toml` so measurements stay reconstructible.
-- **`rtamt`**: The discrete-time STL monitoring library behind the `observed` engine's temporal verdicts. A declared runtime dependency of this package.
-- **`torch` is deliberately not a declared dependency of this package** (`pyproject.toml` is unaffected): it is an optional dependency of `nesyarena` (`learning`, ~1GB) and is not needed to run this package's own suite or demo, both of which stay pure-Python. It **has** been installed and measured in a separate environment, and `tests/test_e6_findings.py` and `tests/test_learning_parity.py` — the two `nesyarena` modules that could not even be collected without it — now collect and run there. The gaps that remain in `nesyarena`'s own suite are real and are not torch: they need `ltn`, `deeplog`, `deepproblog` (nesyarena's `backends` extra) and `problog` (its `oracles` extra), neither of which was installed. The exact counts, install commands, and complete pass/fail list are in [RESULTS.md](RESULTS.md#1-nesyarenas-own-suite-with-torch-present) — the one place those numbers live.
+*Note:* This single installation path is used by CI (`.github/workflows/ci.yml`). Full empirical environment measurements and torch test counts are documented in **[RESULTS.md](RESULTS.md)**.
 
-## What is in the box
+## Where the Duties Come From
 
-Deliberately built as focused modules rather than a generic framework:
+The duty-to-artifact mapping is Table 7 of *Symbols and Neurons: A Review of Symbolic XAI in Deep Learning* (Stan, Sciavicco & Napoletano, JAIR 2026, p. 36:22), reviewing 273 primary studies across five regulatory frameworks: EU AI Act, GDPR, ECOA/Reg B, FDA GMLP, and NIST AI RMF.
+
+Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is data, not code: every duty records its row number, and every machine key sits next to the exact cell text it stands for. `traceability_report()` prints the table side by side. Where a design decision and Table 7 disagree, Table 7 wins. Statutory texts are backed by retrieval records in [`docs/legal-sources.md`](docs/legal-sources.md).
+
+## What Is in the Box
+
+### Package Architecture
 
 | File / Module | Description |
 |---|---|
-| `src/reasonsmith/table7.toml` | The six duties transcribed verbatim, with row-level traceability |
+| `src/reasonsmith/table7.toml` | The six Table 7 duties transcribed verbatim, with row-level traceability |
 | `src/reasonsmith/evidence.py` | Minimal evidence record emitter and missing field reporter |
-| `src/reasonsmith/certificate.py` | Reason-deletion certificates against exact inference oracle |
+| `src/reasonsmith/certificate.py` | Reason-deletion certificates against exact inference oracle (`nesyarena`) |
 | `src/reasonsmith/conformance.py` | Table 19 checks, including stratified per-group evaluations |
 | `src/reasonsmith/demo.py` | End-to-end demonstration (ECOA/Reg B credit and GDPR Art. 22 clinical) |
-| `src/reasonsmith/verdict.py` | v0.2 core: the evidence strength lattice and the verdict vocabulary |
-| `src/reasonsmith/spec.py` | v0.2 core: requirements with verbatim provenance, loaded from `packs/*.toml` |
-| `src/reasonsmith/sut.py` | v0.2 core: the system-under-test protocol — a capability set and a decision trace |
-| `src/reasonsmith/report.py` | v0.2 core: the unattainable analysis and the conformance report |
-| `src/reasonsmith/adapters/` | v0.2: JSONL decision-log and callable-model adapters onto the SUT protocol |
-| `src/reasonsmith/engines/` | v0.2: the `record` completeness engine and the `observed` rtamt temporal monitor |
-| `src/reasonsmith/cli.py` | v0.2: `check --system <log.jsonl> --pack <name>` |
-| `src/reasonsmith/packs/table7.toml` | The Table 7 rows restated as a requirement pack, derived from `table7.toml` |
-| `src/reasonsmith/packs/{eu_ai_act,gdpr,ecoa}.toml` | v0.2 regulation packs, quoted verbatim from [docs/legal-sources.md](docs/legal-sources.md) |
+| `src/reasonsmith/verdict.py` | Core lattice: evidence strength lattice (`unattainable < observed < probed < proved`) and verdict vocabulary |
+| `src/reasonsmith/spec.py` | Core requirement loader & specification structures from `packs/*.toml` |
+| `src/reasonsmith/sut.py` | System-under-test protocol — declared capability set and decision trace interface |
+| `src/reasonsmith/report.py` | Conformance report skeleton, headline builder, and static unattainable analysis |
+| `src/reasonsmith/adapters/` | SUT protocol adapters for JSONL decision logs and Python callables |
+| `src/reasonsmith/engines/` | Verification engines: `record` completeness check and `observed` rtamt temporal monitor |
+| `src/reasonsmith/cli.py` | Command-line interface: `check --system <log.jsonl> --pack <name>` |
+| `src/reasonsmith/packs/table7.toml` | Table 7 rows restated as a formal requirement pack |
+| `src/reasonsmith/packs/{eu_ai_act,gdpr,ecoa}.toml` | Statutory requirement packs with verbatim quotes from [`docs/legal-sources.md`](docs/legal-sources.md) |
 
-### The Emitter (`evidence.py`)
-`emit(duty_id, decision_id, fields)` returns a record that is either `COMPLETE` or `INCOMPLETE`. An `INCOMPLETE` record explicitly names the fields it lacks. Nothing is defaulted, inferred, or silently dropped. Keys outside the duty's Table 7 row are rejected, and non-Table 7 data is isolated in `attachments`.
+### Core Components
 
-### The Reason-Deletion Certificate (`certificate.py`)
-Compares the reasons an engine actually used against exact inference ground truth (enumerated via WMC in `nesyarena`). Using deletion probes, it tests whether disabling isolated facts changes engine output. Two independent checks must pass: the deletion probe (every reason live) and the value check against the exact oracle. Reasons that cannot be probed in isolation are reported as uncertified (`INCONCLUSIVE`).
+- **The Emitter (`evidence.py`):** `emit(duty_id, decision_id, fields)` returns a record that is either `COMPLETE` or `INCOMPLETE`. An `INCOMPLETE` record explicitly names the fields it lacks. Nothing is defaulted, inferred, or silently dropped. Keys outside the duty's Table 7 row are rejected, and non-Table 7 data is isolated in `attachments`.
+- **The Reason-Deletion Certificate (`certificate.py`):** Compares the reasons an engine actually used against exact inference ground truth (enumerated via WMC in `nesyarena`). Using deletion probes, it tests whether disabling isolated facts changes engine output. Two independent checks must pass: the deletion probe (every reason live) and the value check against the exact oracle. Reasons that cannot be probed in isolation are reported as uncertified (`INCONCLUSIVE`).
+- **The Conformance Core (`verdict.py`, `report.py`):** A verdict carries the strength of the evidence behind it: `unattainable < observed < probed < proved`. This stage produces only the first two. `unattainable` is a set difference over SUT capabilities computed without running the system: a system that cannot emit reasons is reported unattainable on the requirements needing them, with the missing signals named. `observed` evaluates passive decision traces. `probed` and `proved` need engines this build does not have, so a requirement whose formalism no engine covers is reported as not evaluated — no strength and no verdict — rather than judged by a weaker check. Combining zero verdicts is `inconclusive`, never vacuously `satisfied`. Two engines exist: `record` (completeness over a decision trace) and `temporal` (rtamt monitors); `logical` requirements have no engine here.
+- **Binding vs interpretive duties and regulatory scope:** Each requirement records whether it is a legally binding duty or an interpretive recital/guidance item, and any regulatory class it is limited to. The headline names both halves — `6 requirements · 4 binding: 2 observed, 2 unattainable · 2 interpretive: 2 observed` — so an interpretive item is reported without being counted as compliance evidence. A class-limited requirement is checked only against a system declared to be in that class via `--system-scope`; the class is never inferred, so an undeclared system has those requirements reported not applicable. Classes come from one fixed vocabulary — `prohibited`, `high-risk`, `limited-risk`, `minimal-risk`, `general-purpose` — which both a pack's `scope` and a declared `--system-scope` are checked against, after trimming whitespace and lowercasing and with nothing else guessed. A value outside it is a usage error naming what would have been accepted, so a misspelling on either side cannot become a duty that quietly never matches. A class the vocabulary knows but the chosen pack does not target is not an error: those duties are reported not applicable as a declared mismatch.
+- **The CLI (`cli.py`):** Four packs ship — Table 7, EU AI Act, GDPR, ECOA/Reg B — and `reasonsmith.cli` runs one against a JSONL decision log:
 
-### The v0.2 Conformance Core (`verdict.py`, `report.py`)
-A verdict carries the strength of the evidence behind it: `unattainable < observed < probed < proved`. This stage produces only the first two strengths. `unattainable` is a set difference over the capabilities supplied by a SUT adapter, so an explicitly declared capability set is answerable before the system runs at all: a system that cannot emit reasons is reported unattainable on the requirements needing them, with the missing signals named and without being executed. `observed` reads a passive decision trace. `probed` and `proved` need engines this build does not have, so a requirement whose formalism no engine covers is reported as not evaluated — no strength and no verdict — rather than judged by a weaker check; combining zero verdicts is `inconclusive`, never vacuously `satisfied`. Two engines exist: `record` (completeness over a decision trace) and `temporal` (rtamt monitors); `logical` requirements have no engine here and are reported as not evaluated. Four packs ship — Table 7, EU AI Act, GDPR, ECOA/Reg B — and `reasonsmith.cli` runs one against a JSONL decision log:
+  ```sh
+  python -m reasonsmith.cli check --system decisions.jsonl --pack ecoa [--json]
+  python -m reasonsmith.cli check --system decisions.jsonl --pack eu_ai_act --system-scope high-risk
+  ```
 
-```sh
-python -m reasonsmith.cli check --system decisions.jsonl --pack ecoa [--json]
-python -m reasonsmith.cli check --system decisions.jsonl --pack eu_ai_act --system-scope high-risk
-```
-
-Each requirement also records whether it is a legally binding duty or an interpretive recital/guidance item, and any regulatory class it is limited to. The headline names both halves — `6 requirements · 4 binding: 2 observed, 2 unattainable · 2 interpretive: 2 observed` — so an interpretive item is reported without being counted as compliance evidence. A class-limited requirement is checked only against a system declared to be in that class via `--system-scope`; the class is never inferred, so an undeclared system has those requirements reported not applicable rather than assumed in or out of scope. Classes come from one fixed vocabulary — `prohibited`, `high-risk`, `limited-risk`, `minimal-risk`, `general-purpose` — which both a pack's `scope` and a declared `--system-scope` are checked against, after trimming whitespace and lowercasing and with nothing else guessed. A value outside it is a usage error naming what would have been accepted, so a misspelling on either side cannot become a duty that quietly never matches. A class the vocabulary knows but the chosen pack does not target is not an error: those duties are reported not applicable as a declared mismatch, which is the truthful answer for a system that really is out of their scope.
-
-It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise. Unattainable, not applicable and not evaluated are findings to read in the report, not breaches, so none of them changes the exit code. There is no report renderer beyond text/JSON. The CLI takes no capability declaration: it reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system. To declare them instead, construct `JSONLAdapter(path, declared_capabilities={...})` in Python.
-
-### Machine-Readable Output
-Records and certificates also serialise: `to_dict()` returns plain Python, `to_json(indent=None)` returns a JSON string. Each carries the same facts as its text rendering, including its missing-field report and its own limits, so a downstream consumer cannot read a partial document as a complete one. Values outside JSON's own types are stringified rather than raising.
+  It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise. Unattainable, not applicable and not evaluated are findings to read in the report, not breaches, so none of them changes the exit code. There is no report renderer beyond text/JSON. The CLI takes no capability declaration: it reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system. To declare them instead, construct `JSONLAdapter(path, declared_capabilities={...})` in Python.
+- **Machine-Readable Output:** Records, certificates, and reports serialize to dicts (`to_dict()`) and JSON (`to_json(indent=None)`). Each carries the same facts as its text rendering, including its missing-field report and its own limits, so a downstream consumer cannot read a partial document as a complete one. Values outside JSON's own types are stringified rather than raising.
+- **Dependencies & PyPI:** `nesyarena` supplies ground-program IR, proof enumeration, and exact WMC (pinned to an immutable commit in `pyproject.toml`); it is not on PyPI, which is why `pip install -e ".[dev]"` is the single install path. `rtamt`, which supplies STL temporal monitoring, is a declared runtime dependency of `reasonsmith`. `torch`, by contrast, is an optional dependency of `nesyarena` (~1GB) and is deliberately not a declared dependency of `reasonsmith` — it was installed and measured in a separate environment, recorded in [RESULTS.md](RESULTS.md).
 
 ### Summary of Empirical Findings
-- **Stratified checks**: Registered hypothesis that low-probability reasons are dropped first holds in one form, not another. Confidence scaling leaves reason ordering unchanged (flat per-group coverage, but shifting retained share/fidelity). Varying reasons per case does shift coverage. The cohorts are frozen synthetic ones built to separate the two mechanisms; whether real atypical cases trip more reasons is an empirical question this does not answer.
-- **Signal stability**: Under top-1 settings, drift in a single signal can silently swap the reason given to an applicant on an unchanged file.
+
+| Metric / Finding | Observed Result | Rationale & Mechanism |
+|---|---|---|
+| **Stratified Checks (Design A: Confidence Varies)** | Coverage gap: 0.0000<br>Fidelity gap: +0.0535<br>Retained share gap: +0.2802 | Top-k proof truncation keeps fixed proof count regardless of confidence scaling. Coverage remains identical across groups; retained share catches the atypical group's loss of value. |
+| **Stratified Checks (Design B: Reason Multiplicity Varies)** | Coverage gap: +0.3000<br>Fidelity gap: +0.1472<br>Retained share gap: +0.1129 | Cases with more reasons suffer lower coverage under fixed k=1 truncation (a case with 5 reasons retains 1/5th; a case with 2 retains 1/2). |
+| **Signal Stability (Drift across windows)** | Stability score: 0.3333 | Under top-1 settings, drift in a single signal silently swaps the stated reason across windows on an unchanged applicant file. |
+
+The stratified rows are measured on frozen synthetic cohorts, built to separate the two mechanisms from each other. Whether real atypical cases trip more reasons than typical ones is an empirical question about data this table does not have, and the table does not answer it. Every figure in it is reproduced in **[RESULTS.md](RESULTS.md)**, along with the exact environment and versions, both suites' pass/fail/skip counts with `torch` installed, and a byte-for-byte diff of two demo runs.
+
+Figures this README takes from the paper rather than from running code — the 273 primary studies, the six Table 7 duties — and the rough `~1GB` size of the `torch` download are not measurements and are not reproduced there.
 
 ## Limits
 
-**Status: early. Nothing here is a compliance guarantee, and none of it is legal advice.**
+**Status: Early research software. Nothing here is a compliance guarantee, and none of it is legal advice.**
 
 - A certificate speaks only about the specific program, base interpretation, and query tested.
-- Table 7 completeness checks the **form** of a record, never the truth of its contents.
+- Table 7 completeness checks the **form** of a record, never the truth or accuracy of its contents.
+- Static capability analysis (`unattainable`) checks declared or trace-derived signal names, not operational runtime correctness.
 
 ## Licence
 

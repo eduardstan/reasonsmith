@@ -1,9 +1,19 @@
 """Callable wrapper adapter for reasonsmith v0.2.
 
-Wraps any Python callable or object with a predict/decide method — a scikit-learn model,
-a PyTorch model, a custom function, or an API client.
+What this module is for:
+  Wraps any Python callable or model object (e.g. scikit-learn, PyTorch, custom function) into a
+  SystemUnderTest.
 
-Capabilities are declared by the author explicitly and never inferred from object inspection.
+What a reader must not break:
+  - Capabilities must be declared by the author explicitly and never inferred from object
+    inspection.
+    Why this matters: Object inspection can falsely guess capabilities based on dummy attributes
+    or method names rather than genuine model outputs.
+  - The capability basis stays `"declared"`. This adapter sets no `capability_basis` attribute,
+    which is what `report._unattainable_result` falls back to, and that is correct here: the
+    capabilities came from the author, not from a trace.
+    Why this matters: Distinction between declared capabilities and trace-derived capabilities
+    must remain explicit in report findings.
 """
 
 from __future__ import annotations

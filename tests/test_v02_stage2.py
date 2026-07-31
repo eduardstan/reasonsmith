@@ -157,6 +157,34 @@ class TestJSONLAdapter:
         assert "supplied decision trace" in result.evidence_summary
         assert "the system declares no capability" not in result.evidence_summary
 
+    def test_declared_capabilities_word_the_finding_as_about_the_system(
+        self, jsonl_violating_fixture_file: Path
+    ):
+        """The other half of the wording the sut.py docstring describes: declared, not trace."""
+        from reasonsmith.report import evaluate_requirement
+
+        sut = JSONLAdapter(
+            jsonl_violating_fixture_file,
+            declared_capabilities={"provenance_model_version"},
+        )
+        assert sut.capability_basis == "declared"
+        req = Requirement(
+            id="req_never_emitted",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="record",
+            spec="Record check",
+            requires=("scope_statements_explanation_scope",),
+            binding=True,
+            scope="",
+        )
+        result = evaluate_requirement(req, sut)
+        assert result.strength == Strength.UNATTAINABLE
+        assert "Unattainable as built" in result.evidence_summary
+        assert "supplied decision trace" not in result.evidence_summary
+
     def test_explicit_declared_capabilities_override(self, jsonl_fixture_file: Path):
         sut = JSONLAdapter(
             jsonl_fixture_file,
@@ -564,11 +592,12 @@ class TestRegulationPacks:
         """
         report_path = Path(__file__).resolve().parents[1] / "docs" / "legal-sources.md"
         assert report_path.is_file(), f"Legal sources report missing at {report_path}"
-        report_text = report_path.read_text(encoding="utf-8")
+        report_text = report_path.read_text(encoding="utf-8").replace("\r\n", "\n")
 
         pack = load_pack(pack_name)
         for req in pack.requirements:
-            assert req.verbatim_text in report_text, (
+            verbatim = req.verbatim_text.replace("\r\n", "\n")
+            assert verbatim in report_text, (
                 f"Requirement {req.id!r} in pack {pack_name!r} has verbatim_text not found "
                 f"verbatim in docs/legal-sources.md:\n{req.verbatim_text!r}"
             )
