@@ -22,9 +22,15 @@ Behavior:
 
 from __future__ import annotations
 
+import io
 import math
 import re
+import typing
 from typing import Any
+
+# Compatibility shim for antlr4-python3-runtime (rtamt dependency) on Python 3.13+
+if not hasattr(typing, "io"):
+    typing.io = io  # type: ignore
 
 import rtamt
 
