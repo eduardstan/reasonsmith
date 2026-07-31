@@ -18,6 +18,8 @@ Three consequences of that rule, all deliberate:
 
 from __future__ import annotations
 
+import copy
+import json
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -122,6 +124,32 @@ class Record:
                     out.append(f"    {line}")
         out += ["", "LIMITS OF THIS RECORD", f"  {LIMITS}"]
         return "\n".join(out)
+
+    def to_dict(self) -> dict:
+        d = duty(self.duty_id)
+        return {
+            "status": self.status,
+            "complete": self.complete,
+            "duty_id": self.duty_id,
+            "table7_row": d["table7_row"],
+            "decision_id": self.decision_id,
+            "duty": d["requirement"],
+            "legal_source": d["legal_source"],
+            "table7_source": copy.deepcopy(SOURCE),
+            "symbolic_artifacts": list(d["symbolic_artifacts"]),
+            "lifecycle_placement": list(d["lifecycle_placement"]),
+            "fields": dict(self.fields),
+            "missing": list(self.missing),
+            "missing_report": self.missing_report(),
+            "attachments": dict(self.attachments),
+            "limits": LIMITS,
+        }
+
+    def to_json(self, indent: int | None = None) -> str:
+        """JSON for `to_dict`. Values outside JSON's own types are stringified exactly as
+        `render` prints them, so a field carrying an arbitrary object serialises rather than
+        raising."""
+        return json.dumps(self.to_dict(), indent=indent, default=str)
 
 
 def emit(duty_id: str, decision_id: str, fields: dict, attachments: dict | None = None) -> Record:

@@ -56,6 +56,9 @@ Deliberately built as focused modules rather than a generic framework:
 ### The Reason-Deletion Certificate (`certificate.py`)
 Compares the reasons an engine actually used against exact inference ground truth (enumerated via WMC in `nesyarena`). Using deletion probes, it tests whether disabling isolated facts changes engine output. Two independent checks must pass: the deletion probe (every reason live) and the value check against the exact oracle. Reasons that cannot be probed in isolation are reported as uncertified (`INCONCLUSIVE`).
 
+### Machine-Readable Output
+Records and certificates also serialise: `to_dict()` returns plain Python, `to_json(indent=None)` returns a JSON string. Each carries the same facts as its text rendering, including its missing-field report and its own limits, so a downstream consumer cannot read a partial document as a complete one. Values outside JSON's own types are stringified rather than raising.
+
 ### Summary of Empirical Findings
 - **Stratified checks**: Registered hypothesis that low-probability reasons are dropped first holds in one form, not another. Confidence scaling leaves reason ordering unchanged (flat per-group coverage, but shifting retained share/fidelity). Varying reasons per case does shift coverage. The cohorts are frozen synthetic ones built to separate the two mechanisms; whether real atypical cases trip more reasons is an empirical question this does not answer.
 - **Signal stability**: Under top-1 settings, drift in a single signal can silently swap the reason given to an applicant on an unchanged file.
