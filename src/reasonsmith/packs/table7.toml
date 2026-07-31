@@ -4,7 +4,20 @@
 # This pack re-expresses Table 7 of "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
 # (Stan, Sciavicco & Napoletano, JAIR 2026, p. 36:22) as formal requirements with signal dependencies.
 #
-# Every requirement maintains verbatim traceability to the source paper.
+# This file is derived, `../table7.toml` is the authority. The derivation is mechanical and is
+# checked by `tests/test_v02_core.py::test_pack_matches_table7_transcription`, which asserts, per
+# row and by `id`:
+#
+#   * `verbatim_text` equals the row's Requirement column, character for character;
+#   * `source_document` and `article_clause` are both substrings of the row's Legal source column,
+#     which is split across the two fields only so that code can address the document separately;
+#   * `requires` is exactly the row's `evidence_field` keys, in the printed order.
+#
+# So the signal names are the paper's own evidence-field keys, not a house vocabulary. Renaming one
+# here would break that test rather than silently detach the pack from the print.
+#
+# `stakeholder` and `spec` are the only interpretive fields: the paper's table has no such columns.
+# They are editorial, they are not quoted, and no check derives a verdict from their wording.
 ####################################################################################################
 
 [pack]
@@ -62,7 +75,7 @@ stakeholder = "affected individual"
 formalism = "record"
 spec = "Per-decision reason strings and concept mappings for automated decision explanations."
 requires = [
-    "reasons",
+    "per_decision_reason_string",
     "feature_to_named_concept_mapping",
     "dpia_cross_reference",
 ]
@@ -76,7 +89,7 @@ stakeholder = "affected individual"
 formalism = "record"
 spec = "Stored reason codes and score factors for credit adverse action notices."
 requires = [
-    "reasons",
+    "stored_reasons_per_decision",
     "model_version",
     "score_factors",
     "audit_ids",
@@ -99,8 +112,8 @@ requires = [
 
 [[requirement]]
 id = "nist_ai_rmf_risk_evidence"
-source_document = "NIST AI RMF 1.0"
-article_clause = "Govern–Map–Measure–Manage"
+source_document = "NIST AI RMF"
+article_clause = "1.0"
 verbatim_text = "Risk evidence and continuous monitoring"
 stakeholder = "deployer"
 formalism = "record"

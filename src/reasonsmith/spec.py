@@ -17,6 +17,20 @@ from typing import Literal
 VALID_FORMALISMS = ("record", "temporal", "logical")
 PACKS_DIR = Path(__file__).parent / "packs"
 
+#: Every field a [[requirement]] block must carry. A pack that omits one is
+#: rejected at load time rather than producing a requirement that cannot be
+#: traced back to its source.
+REQUIREMENT_FIELDS = (
+    "id",
+    "source_document",
+    "article_clause",
+    "verbatim_text",
+    "stakeholder",
+    "formalism",
+    "spec",
+    "requires",
+)
+
 
 @dataclass(frozen=True)
 class Requirement:
@@ -40,8 +54,29 @@ class Requirement:
             raise ValueError(
                 f"Invalid formalism {self.formalism!r}; must be one of {VALID_FORMALISMS}"
             )
+        # Traceability is the point of a pack: a requirement with a blank source
+        # document, clause or quotation cannot be checked against the print, so it
+        # is malformed rather than merely incomplete.
+        text_fields = (
+            "id", "source_document", "article_clause", "verbatim_text", "stakeholder", "spec",
+        )
+        for name in text_fields:
+            value = getattr(self, name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(
+                    f"Requirement {self.id!r}: field {name!r} must be a non-empty string, "
+                    f"got {value!r}"
+                )
         if not self.requires:
             raise ValueError(f"Requirement {self.id!r} must specify at least one required signal")
+        for signal in self.requires:
+            if not isinstance(signal, str) or not signal.strip():
+                raise ValueError(
+                    f"Requirement {self.id!r}: every entry of 'requires' must be a non-empty "
+                    f"signal name, got {signal!r}"
+                )
+        if len(set(self.requires)) != len(self.requires):
+            raise ValueError(f"Requirement {self.id!r}: 'requires' contains duplicate signal names")
 
     def to_dict(self) -> dict:
         return {
@@ -65,6 +100,16 @@ class Pack:
     description: str
     requirements: tuple[Requirement, ...]
     source_metadata: dict = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.requirements:
+            raise ValueError(f"Pack {self.id!r} contains no requirements")
+        ids = [r.id for r in self.requirements]
+        duplicates = sorted({i for i in ids if ids.count(i) > 1})
+        if duplicates:
+            # get_requirement returns the first match, so a duplicate id would make one of the
+            # two requirements silently unreachable and never reported on.
+            raise ValueError(f"Pack {self.id!r} has duplicate requirement id(s): {duplicates}")
 
     def get_requirement(self, req_id: str) -> Requirement:
         for req in self.requirements:
@@ -91,7 +136,10 @@ def load_pack(name_or_path: str | Path) -> Pack:
             path = candidate
 
     if not path.is_file():
-        raise FileNotFoundError(f"Pack file not found: {name_or_path}")
+        raise FileNotFoundError(
+            f"Pack file not found: {name_or_path}. "
+            f"Built-in packs: {', '.join(list_packs()) or 'none'}"
+        )
 
     with path.open("rb") as f:
         data = tomllib.load(f)
@@ -103,18 +151,36 @@ def load_pack(name_or_path: str | Path) -> Pack:
 
     source_meta = data.get("source", {})
 
+    raw_reqs = data.get("requirement", [])
+    if not raw_reqs:
+        raise ValueError(f"Pack {path} declares no [[requirement]] blocks")
+
     reqs = []
-    for rdata in data.get("requirement", []):
-        req = Requirement(
-            id=rdata["id"],
-            source_document=rdata["source_document"],
-            article_clause=rdata["article_clause"],
-            verbatim_text=rdata["verbatim_text"],
-            stakeholder=rdata["stakeholder"],
-            formalism=rdata["formalism"],
-            spec=rdata["spec"],
-            requires=tuple(rdata["requires"]),
-        )
+    for index, rdata in enumerate(raw_reqs):
+        where = f"{path} [[requirement]] #{index + 1} ({rdata.get('id', 'no id')!r})"
+        missing = [f for f in REQUIREMENT_FIELDS if f not in rdata]
+        if missing:
+            raise ValueError(f"{where}: missing required field(s): {', '.join(missing)}")
+        # A bare string is iterable, so tuple("reasons") would silently become five
+        # single-character signal names. Reject anything that is not a TOML array.
+        if not isinstance(rdata["requires"], list):
+            raise ValueError(
+                f"{where}: 'requires' must be an array of signal names, got "
+                f"{type(rdata['requires']).__name__}"
+            )
+        try:
+            req = Requirement(
+                id=rdata["id"],
+                source_document=rdata["source_document"],
+                article_clause=rdata["article_clause"],
+                verbatim_text=rdata["verbatim_text"],
+                stakeholder=rdata["stakeholder"],
+                formalism=rdata["formalism"],
+                spec=rdata["spec"],
+                requires=tuple(rdata["requires"]),
+            )
+        except ValueError as exc:
+            raise ValueError(f"{where}: {exc}") from exc
         reqs.append(req)
 
     return Pack(

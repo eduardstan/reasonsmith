@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Optional, Protocol, runtime_checkable
 
+from reasonsmith.spec import load_pack
+
 
 @runtime_checkable
 class SystemUnderTest(Protocol):
@@ -29,7 +31,20 @@ class BaseSUT:
     """Convenience base class or reference helper for SUT implementations."""
 
     def __init__(self, declared_capabilities: set[str] | Iterable[str]):
+        # A bare string is iterable, so set("reasons") would silently declare six
+        # single-character capabilities and make every real requirement look
+        # unattainable for the wrong reason.
+        if isinstance(declared_capabilities, str):
+            raise TypeError(
+                "declared_capabilities must be a collection of signal names, not a single string; "
+                f"pass {{{declared_capabilities!r}}} to declare one signal"
+            )
         self._capabilities = set(declared_capabilities)
+        for signal in self._capabilities:
+            if not isinstance(signal, str) or not signal.strip():
+                raise ValueError(
+                    f"Declared capability must be a non-empty signal name, got {signal!r}"
+                )
 
     def capabilities(self) -> set[str]:
         return set(self._capabilities)
@@ -38,84 +53,50 @@ class BaseSUT:
         return []
 
 
-class FullCapabilitySUT(BaseSUT):
-    """Reference SUT declaring full capabilities for all Table 7 requirements."""
+def _table7_signals() -> set[str]:
+    """Every signal the shipped Table 7 pack asks for, read from the pack itself.
 
-    ALL_TABLE7_SIGNALS = {
-        "model_and_data_version_ids",
-        "extraction_timestamp",
-        "dataset_snapshot_hash",
-        "fidelity_coverage_metrics",
-        "explanation_scope",
-        "linkage_from_decision_to_artifact",
-        "automatic_event_logs",
-        "retention_schedule",
-        "signer",
-        "reasons",
-        "feature_to_named_concept_mapping",
-        "dpia_cross_reference",
-        "model_version",
-        "score_factors",
-        "audit_ids",
-        "retention_for_regulatory_lookback",
-        "design_history_links",
-        "verification_logs",
-        "change_control",
-        "continuous_monitoring_logs",
-        "metric_thresholds_and_alerts",
-        "reviews_and_sign_offs",
-        "incident_tickets",
-        "decision",
-        "timestamp",
-    }
+    Read rather than restated: a hand-copied list would drift the moment the pack
+    changes, and a reference system that declares stale signal names would make the
+    unattainable analysis look wrong when it is right.
+    """
+    return {signal for req in load_pack("table7").requirements for signal in req.requires}
+
+
+#: The Table 7 evidence fields that carry a per-decision reason. Row 3 (GDPR Art. 22)
+#: and row 4 (ECOA / Reg B) name these separately, and the pack keeps the paper's own
+#: keys, so a system that gives no reasons is missing both.
+REASON_SIGNALS = frozenset({"per_decision_reason_string", "stored_reasons_per_decision"})
+
+
+class FullCapabilitySUT(BaseSUT):
+    """Reference SUT declaring every signal the Table 7 pack requires."""
 
     def __init__(self, extra_capabilities: Optional[set[str]] = None):
-        super().__init__(self.ALL_TABLE7_SIGNALS | (extra_capabilities or set()))
+        declared = _table7_signals() | {"decision", "timestamp"} | (extra_capabilities or set())
+        super().__init__(declared)
         self.execution_count = 0
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         self.execution_count += 1
-        return [
-            {
-                "decision": "approved",
-                "timestamp": "2026-07-31T09:00:00Z",
-                "reasons": ["credit_score_above_700"],
-                "model_and_data_version_ids": "v1.0.0",
-                "extraction_timestamp": "2026-07-31T09:00:00Z",
-                "dataset_snapshot_hash": "abc123hash",
-                "fidelity_coverage_metrics": "fidelity=0.98",
-                "explanation_scope": "local",
-                "linkage_from_decision_to_artifact": "link_123",
-                "automatic_event_logs": "log_record_123",
-                "retention_schedule": "7_years",
-                "signer": "sys_signer",
-                "feature_to_named_concept_mapping": "mapping_v1",
-                "dpia_cross_reference": "dpia_ref_001",
-                "model_version": "v1.0.0",
-                "score_factors": "score=750",
-                "audit_ids": "audit_001",
-                "retention_for_regulatory_lookback": "true",
-                "design_history_links": "dhl_001",
-                "verification_logs": "ver_log_001",
-                "change_control": "cc_001",
-                "continuous_monitoring_logs": "mon_001",
-                "metric_thresholds_and_alerts": "thresh_001",
-                "reviews_and_sign_offs": "signoff_001",
-                "incident_tickets": "inc_001",
-            }
-        ]
+        record: dict[str, Any] = {
+            "decision": "approved",
+            "timestamp": "2026-07-31T09:00:00Z",
+        }
+        for signal in sorted(self.capabilities() - set(record)):
+            record[signal] = f"{signal}_value"
+        return [record]
 
 
 class NoReasonsSUT(BaseSUT):
-    """Reference SUT declaring capabilities without any reason-giving signal ('reasons').
+    """Reference SUT declaring every Table 7 signal except the reason-giving ones.
 
-    Attempting to call decisions() raises an AssertionError, proving that the
-    unattainable analysis never executes the system.
+    Calling decisions() raises, so any code path that reaches for the trace while
+    answering an unattainable requirement fails loudly instead of quietly working.
     """
 
     def __init__(self):
-        no_reasons_capabilities = FullCapabilitySUT.ALL_TABLE7_SIGNALS - {"reasons"}
-        super().__init__(no_reasons_capabilities)
+        super().__init__((_table7_signals() | {"decision", "timestamp"}) - REASON_SIGNALS)
         self.was_executed = False
 
     def decisions(self) -> Iterable[dict[str, Any]]:

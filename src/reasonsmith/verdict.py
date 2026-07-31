@@ -93,11 +93,17 @@ def combine_verdicts(verdicts: Iterable[Verdict | str]) -> Verdict:
       1. If any verdict is VIOLATED, the combined result is VIOLATED.
       2. Else if any verdict is INCONCLUSIVE, the combined result is INCONCLUSIVE.
       3. Else if all verdicts are SATISFIED, the combined result is SATISFIED.
-      4. An empty collection returns SATISFIED (vacuously true).
+      4. An empty collection returns INCONCLUSIVE.
+
+    Rule 4 is deliberately *not* vacuous truth. Logically an empty conjunction is
+    true, but a conformance verdict is a claim about evidence, and having checked
+    nothing is not evidence that a requirement holds. Returning SATISFIED here
+    would let a run that evaluated no sub-property report as compliant, which is
+    the one failure mode this tool must never have.
     """
     v_list = [Verdict.parse(v) for v in verdicts]
     if not v_list:
-        return Verdict.SATISFIED
+        return Verdict.INCONCLUSIVE
     if any(v == Verdict.VIOLATED for v in v_list):
         return Verdict.VIOLATED
     if any(v == Verdict.INCONCLUSIVE for v in v_list):
