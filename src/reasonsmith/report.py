@@ -365,15 +365,9 @@ def evaluate_requirement(
         from reasonsmith.engines.observed import ObservedEngine
         return ObservedEngine.evaluate(req, sut, records)
 
-    return RequirementResult(
-        requirement_id=req.id,
-        source_clause=clause,
-        verdict=Verdict.INCONCLUSIVE,
-        strength=None,
-        signals_required=tuple(req.requires),
-        evidence_summary=(
-            f"Not evaluated: no engine in this build checks a {req.formalism!r} requirement."
-        ),
+    raise NotImplementedError(
+        f"{req.formalism!r} is listed in SUPPORTED_FORMALISMS but no engine here evaluates it. "
+        "Widen SUPPORTED_FORMALISMS when the engine lands, not before."
     )
 
 

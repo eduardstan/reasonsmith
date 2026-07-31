@@ -27,7 +27,11 @@ dependencies = [
     # CI, and the certificate numbers stay reconstructible. Bump the SHA deliberately, never to a
     # branch name.
     "nesyarena @ git+https://github.com/eduardstan/nesyarena@57720fa212834689692e171882272140f1d1fed7",
-    "rtamt>=0.3.0",
+    # Pinned for the same reason as nesyarena: rtamt robustness scores land in every temporal
+    # result's `evaluation_scores`, so a floating version would move published numbers. 0.3.5
+    # also hard-pins antlr4-python3-runtime==4.7, whose `from typing.io import TextIO` needs the
+    # shim at the top of engines/observed.py on Python 3.13+.
+    "rtamt==0.3.5",
 ]
 
 [project.optional-dependencies]

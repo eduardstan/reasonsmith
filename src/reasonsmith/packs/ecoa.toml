@@ -13,13 +13,17 @@ id = "ecoa_reg_b_1002_9_a_1_timing_of_notice"
 source_document = "ECOA / Regulation B (12 CFR 1002.9)"
 article_clause = "12 CFR 1002.9(a)(1)"
 verbatim_text = """A creditor shall notify an applicant of action taken within:
-(i) 30 days after receiving a completed application concerning the creditor's approval of, counteroffer to, or adverse action on the application;"""
+(i) 30 days after receiving a completed application concerning the creditor's approval of, counteroffer to, or adverse action on the application;
+(ii) 30 days after taking adverse action on an incomplete application, unless notice is provided in accordance with paragraph (c) of this section;
+(iii) 30 days after taking adverse action on an existing account; or
+(iv) 90 days after notifying the applicant of a counteroffer if the applicant does not expressly accept or use the credit offered."""
 stakeholder = "affected individual"
 formalism = "temporal"
-spec = "always((artifact_logs_decision_record >= 0.5) -> (artifact_logs_notification_latency_days <= 30))"
+spec = "always((artifact_logs_decision_record >= 0.5) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))"
 requires = [
     "artifact_logs_decision_record",
     "artifact_logs_notification_latency_days",
+    "artifact_logs_counteroffer_not_accepted",
 ]
 
 [[requirement]]

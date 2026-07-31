@@ -9,11 +9,13 @@ Behavior:
 - If rtamt cannot express a formula, the requirement is reported as NOT EVALUATED
   with the reason (verdict=INCONCLUSIVE, strength=None) — never as satisfied.
 - Whether a signal is a magnitude or a flag is read from the requirement's own formula, never
-  from what the trace happened to contain. A variable compared against the presence threshold
-  (`>= 0.5`) is a flag and keeps the 1.0/0.0 encoding, so an absent one still fails the check
-  that asks for it. A variable compared against any other constant is a magnitude: every record
-  must carry a real number for it, and a record that carries none — absent, blank, a bool, the
-  string "45", or a non-finite float — is reported as NOT EVALUATED rather than scored.
+  from what the trace happened to contain. Asking `var >= 0.5` (or `0.5 <= var`) is the one way
+  a pack asks whether a signal is present at all: that variable is a flag and keeps the 1.0/0.0
+  encoding, so an absent one still fails the check that asks for it. Every other comparison —
+  against any other constant, against 0.5 under any other operator, or against another variable
+  — is a magnitude on both sides: every record must carry a real number for it, and a record
+  that carries none — absent, blank, a bool, the string "45", or a non-finite float — is
+  reported as NOT EVALUATED rather than scored.
   Coercing those to 0.0 or 1.0 would let a 45-day notice, or a notice nobody ever sent, pass a
   `<= 30` deadline; NaN would too, since every robustness comparison against it is False.
   `json.loads` reads bare `NaN`/`Infinity` by default, so a producer that serialises a missing
@@ -22,15 +24,22 @@ Behavior:
 
 from __future__ import annotations
 
-import io
 import math
 import re
+import sys
+import types
 import typing
 from typing import Any
 
-# Compatibility shim for antlr4-python3-runtime (rtamt dependency) on Python 3.13+
-if not hasattr(typing, "io"):
-    typing.io = io  # type: ignore
+# antlr4-python3-runtime 4.7 (hard-pinned by rtamt) runs `from typing.io import TextIO`, and
+# typing.io was removed in Python 3.13. That statement is resolved through sys.modules, not
+# through an attribute on typing, so the shim has to be a registered module.
+if "typing.io" not in sys.modules and not hasattr(typing, "io"):
+    _typing_io = types.ModuleType("typing.io")
+    _typing_io.IO = typing.IO  # type: ignore[attr-defined]
+    _typing_io.TextIO = typing.TextIO  # type: ignore[attr-defined]
+    _typing_io.BinaryIO = typing.BinaryIO  # type: ignore[attr-defined]
+    sys.modules["typing.io"] = _typing_io
 
 import rtamt
 
@@ -45,10 +54,8 @@ PRESENCE_THRESHOLD = 0.5
 
 _NUMBER = r"-?\d+(?:\.\d+)?"
 _IDENT = r"[a-zA-Z_][a-zA-Z0-9_]*"
-_COMPARISONS = (
-    re.compile(rf"({_IDENT})\s*(?:<=|>=|<|>|==|!=)\s*({_NUMBER})"),
-    re.compile(rf"({_NUMBER})\s*(?:<=|>=|<|>|==|!=)\s*({_IDENT})"),
-)
+_OPERAND = rf"(?:{_NUMBER}|{_IDENT})"
+_COMPARISON = re.compile(rf"({_OPERAND})\s*(<=|>=|<|>|==|!=)\s*({_OPERAND})")
 
 
 def _is_real_number(value: Any) -> bool:
@@ -93,14 +100,32 @@ def _monitor(spec_text: str, name: str, spec_vars: set[str], time_series: dict) 
     return spec.evaluate(time_series)
 
 
+def _number(token: str) -> float | None:
+    """The token read as a numeric literal, or None when it is a variable name."""
+    try:
+        return float(token)
+    except ValueError:
+        return None
+
+
 def _magnitude_vars(spec: str) -> set[str]:
-    """The spec variables compared against something other than the presence threshold."""
+    """The spec variables the formula treats as measured quantities.
+
+    Every variable in a comparison is a quantity unless that comparison is the presence test
+    `var >= 0.5`. Bounding a variable at 0.5 under any other operator, or against another
+    variable, is a bound on a quantity — `drift <= 0.5` and `latency <= deadline` both have to
+    be measured, and reading them as flags would score an unmeasured record 0.0 and let it pass
+    the bound it never met.
+    """
     magnitude: set[str] = set()
-    for pattern, var_first in zip(_COMPARISONS, (True, False), strict=True):
-        for left, right in pattern.findall(spec):
-            var, constant = (left, right) if var_first else (right, left)
-            if float(constant) != PRESENCE_THRESHOLD:
-                magnitude.add(var)
+    for left, operator, right in _COMPARISON.findall(spec):
+        for token, other, on_left in ((left, right, True), (right, left, False)):
+            if _number(token) is not None:
+                continue
+            bound = _number(other)
+            is_presence = bound == PRESENCE_THRESHOLD and operator == (">=" if on_left else "<=")
+            if not is_presence:
+                magnitude.add(token)
     return magnitude
 
 

@@ -322,6 +322,35 @@ class TestObservedEngine:
             score == score for _, score in result.details["evaluation_scores"]
         ), "a NaN robustness score would also make the report's JSON unparseable"
 
+    @pytest.mark.parametrize(
+        "spec",
+        [
+            pytest.param("always(signal_a <= 0.5)", id="bound-at-the-presence-threshold"),
+            pytest.param("always(signal_a <= signal_b)", id="variable-against-variable"),
+        ],
+    )
+    def test_quantitative_bound_needs_a_measurement(self, spec: str):
+        """Only `var >= 0.5` asks whether a signal is present; every other bound is a quantity.
+
+        Reading one of these as a flag would score an unmeasured record 0.0 and report the
+        bound satisfied by a number nobody measured.
+        """
+        sut = BaseSUT({"signal_a", "signal_b"})
+        req = Requirement(
+            id="temp_bound",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="temporal",
+            spec=spec,
+            requires=("signal_a", "signal_b"),
+        )
+        result = ObservedEngine.evaluate(req, sut, [{"signal_b": 0.2}])
+        assert result.verdict == Verdict.INCONCLUSIVE
+        assert result.strength is None
+        assert "signal_a" in result.details["signals_unmeasured_in_trace"]
+
     def test_unexpressible_formula_reports_not_evaluated(self):
         sut = BaseSUT({"signal_a"})
         req = Requirement(
@@ -364,6 +393,29 @@ class TestRequirementsMeasureTheirDuty:
 
         on_time = [dict(r, artifact_logs_notification_latency_days=12) for r in records]
         assert ObservedEngine.evaluate(req, sut, on_time).verdict == Verdict.SATISFIED
+
+    def test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline(self):
+        """1002.9(a)(1)(iv) allows 90 days after a counteroffer the applicant never took up.
+
+        Judging that record against the 30-day deadline of (i) would report a breach of a
+        clause the trace does not breach.
+        """
+        req = load_pack("ecoa").get_requirement("ecoa_reg_b_1002_9_a_1_timing_of_notice")
+        sut = BaseSUT(set(req.requires))
+        records = [
+            {"artifact_logs_decision_record": {"id": "dec-1"},
+             "artifact_logs_counteroffer_not_accepted": False,
+             "artifact_logs_notification_latency_days": 12},
+            {"artifact_logs_decision_record": {"id": "dec-2"},
+             "artifact_logs_counteroffer_not_accepted": True,
+             "artifact_logs_notification_latency_days": 45},
+        ]
+        assert ObservedEngine.evaluate(req, sut, records).verdict == Verdict.SATISFIED
+
+        late = [records[0], dict(records[1], artifact_logs_notification_latency_days=95)]
+        result = ObservedEngine.evaluate(req, sut, late)
+        assert result.verdict == Verdict.VIOLATED
+        assert result.details["violation_step_indices"] == [1]
 
     @pytest.mark.parametrize(
         "unmeasured_latency",
@@ -453,7 +505,7 @@ class TestRegulationPacks:
         """Every requirement quote in the regulation packs must be found character-for-character
         in docs/legal-sources.md.
         """
-        report_path = Path("docs/legal-sources.md")
+        report_path = Path(__file__).resolve().parents[1] / "docs" / "legal-sources.md"
         assert report_path.is_file(), f"Legal sources report missing at {report_path}"
         report_text = report_path.read_text(encoding="utf-8")
 
