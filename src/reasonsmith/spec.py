@@ -64,7 +64,10 @@ def normalize_scope(value: Any, what: str = "regulatory class") -> str:
     been accepted, rather than being carried forward as a class nothing can ever match.
 
     Returns "" for None and for the empty string, which mean "not class-limited" on a
-    requirement and "undeclared" on a system.
+    requirement and "undeclared" on a system. A value that is only whitespace is not the empty
+    string and is refused with everything else outside the vocabulary: someone who wrote it
+    meant to name a class, and treating it as the absence of one would leave a duty that no
+    system can ever match — the same unreachable duty a misspelling would leave.
     """
     if value is None:
         return ""
@@ -72,9 +75,9 @@ def normalize_scope(value: Any, what: str = "regulatory class") -> str:
         raise TypeError(
             f"a {what} must be a string or None, got {type(value).__name__}: {value!r}"
         )
-    normalized = value.strip().lower()
-    if not normalized:
+    if not value:
         return ""
+    normalized = value.strip().lower()
     if normalized not in REGULATORY_CLASSES:
         raise ValueError(
             f"{value!r} is not a known {what}. Accepted: "

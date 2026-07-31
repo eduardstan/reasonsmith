@@ -22,6 +22,7 @@ from reasonsmith.spec import (
     Requirement,
     list_packs,
     load_pack,
+    normalize_scope,
 )
 from reasonsmith.sut import REASON_SIGNALS, BaseSUT, FullCapabilitySUT, NoReasonsSUT
 from reasonsmith.verdict import (
@@ -1000,4 +1001,47 @@ def test_a_pack_scope_outside_the_vocabulary_is_refused_at_load(tmp_path):
 
     good = body.replace('"hihg-risk"', '"  High-Risk "')
     assert load_pack(_write_pack(tmp_path, good)).requirements[0].scope == "  High-Risk "
+
+
+def test_a_blank_scope_is_a_typo_not_an_absent_class(tmp_path):
+    """`scope = " "` is someone reaching for a class, not declining to name one.
+
+    Reading it as "not class-limited" would leave a duty every system is answered
+    not-applicable on forever — unreachable in exactly the way a misspelling is. Only the
+    empty string means the absence of a class, on a pack and on a caller alike.
+    """
+    body = (
+        '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
+        'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
+        'spec = "a spec"\nrequires = ["a"]\nbinding = true\nscope = "   "\n'
+    )
+    with pytest.raises(ValueError, match=r"'r1'.*'scope'.*not a known regulatory class"):
+        load_pack(_write_pack(tmp_path, body))
+
+    with pytest.raises(ValueError, match="not a known declared system scope"):
+        check_conformance(FullCapabilitySUT(), load_pack("table7"), system_scope="   ")
+
+    assert load_pack(_write_pack(tmp_path, body.replace('"   "', '""'))).requirements[0].scope == ""
+
+
+@pytest.mark.parametrize("pack_name", ["table7", "eu_ai_act", "gdpr", "ecoa"])
+@pytest.mark.parametrize("declared_scope", ["", "high-risk", "limited-risk"])
+def test_the_two_scope_gates_never_disagree(pack_name, declared_scope):
+    """Applicability is decided twice — once to plan the run, once per requirement.
+
+    check_conformance answers it to know whether the trace is needed at all, and
+    evaluate_requirement answers it again to produce the result. A requirement the planner
+    calls applicable and the evaluator calls not applicable is a duty that is read from the
+    trace and then reported as never checked, so the two must be the same decision.
+    """
+    pack = load_pack(pack_name)
+    report = check_conformance(FullCapabilitySUT(system_scope=declared_scope), pack)
+
+    for req, result in zip(pack.requirements, report.results, strict=True):
+        direct = evaluate_requirement(req, FullCapabilitySUT(system_scope=declared_scope))
+        assert direct.verdict == result.verdict, req.id
+        assert direct.strength == result.strength, req.id
+        assert (result.verdict == Verdict.NOT_APPLICABLE) == (
+            bool(req.scope) and normalize_scope(req.scope) != normalize_scope(declared_scope)
+        ), req.id
 

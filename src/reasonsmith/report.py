@@ -446,11 +446,12 @@ def evaluate_requirement(
 
     sys_scope_norm = normalize_scope(system_scope, "declared system scope")
 
-    if req.scope:
-        req_scope_norm = normalize_scope(req.scope)
+    req_scope_norm = normalize_scope(req.scope)
+
+    if req_scope_norm:
         if not sys_scope_norm or sys_scope_norm != req_scope_norm:
             clause = f"{req.source_document} {req.article_clause}"
-            desc = f"declared as {system_scope!r}" if system_scope else "undeclared"
+            desc = f"declared as {system_scope!r}" if sys_scope_norm else "undeclared"
             return RequirementResult(
                 requirement_id=req.id,
                 source_clause=clause,
