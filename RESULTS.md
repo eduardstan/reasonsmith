@@ -35,9 +35,16 @@ reachable from `main`. (The old commit currently survives on the temporary rollb
 reconstructibility stands on `main` alone.) The hash changed, the content did not: both commits'
 `git cat-file -p <sha> | grep tree` report the identical tree
 `d050c86ef83b01bac972a0af3afa6f629a4a9972`, verified directly against both commits before this note
-was written. The figures below are still the original run's, quoted unedited; they were re-checked
-against the new pin (see "Full transcript") and none moved. The old pin is kept in the table above
-for the historical record of what was actually run.
+was written. The figures below are still the original run's, quoted unedited. What was re-run
+against the new pin is exactly this and nothing more: reasonsmith's own `pytest` suite (35 passed),
+`ruff check .` (no findings), and `python -m reasonsmith.demo` (561 lines, two runs, identical) —
+see "Full transcript"; none of those moved. Section 1's figures are nesyarena's *own* suite
+(`collected 107 items / 3 skipped`, `1 failed, 100 passed, 5 skipped, 4 errors`), measured under the
+old pin `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were
+**not** re-run against `57720fa212834689692e171882272140f1d1fed7`. They are expected to be unchanged
+because the two commits share the tree `d050c86ef83b01bac972a0af3afa6f629a4a9972` and so install
+identical content — but that is an expectation from tree identity, not a measurement. The old pin is
+kept in the table above for the historical record of what was actually run.
 
 ### Commands run to build it
 
