@@ -1,4 +1,4 @@
-"""The two demonstrations: ECOA / Reg B credit, and GDPR Art. 22 clinical.
+"""The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, and NIST AI RMF monitoring.
 
 Credit comes first on purpose. ECOA requires the *specific principal reasons* for an adverse action,
 so a reason the engine dropped is not a quality concern — it is a reason the applicant was legally
@@ -386,6 +386,135 @@ def stability_demo() -> str:
     return "\n".join(out)
 
 
+# ------------------------------------------- NIST AI RMF: continuous monitoring ----
+
+# Declared before the run, like the registered hypothesis in section 4: a floor written after
+# the numbers are in is not a control. Coverage 0.5 = the engine must depend on at least half the
+# reasons exact inference finds; stability 0.8 = the stated reasons may not churn across windows.
+NIST_THRESHOLDS = {"coverage": 0.5, "stability": 0.8}
+
+DRIFT_SIGNALS = ("delinquency_on_file", "bureau_record_matched")
+
+
+def drift_windows(case_id: str, group: str, query_pred: str, reasons, level: float,
+                  drift_preds, n_windows: int, adapter) -> list:
+    """The same decision re-scored once per window while one signal strengthens.
+
+    The program and the rest of the file are identical across windows; only the facts named in
+    `drift_preds` move, by a fixed step per window. One decision re-scored over time is the only
+    input `conformance.stability` is defined on, which makes it the unit a continuous monitor can
+    honestly log.
+    """
+    certs = []
+    for w in range(n_windows):
+        case = build_case(case_id, group, query_pred, reasons, level)
+        base = {a: (round(min(0.99, p + 0.06 * w), 4) if a.pred in drift_preds else p)
+                for a, p in case.base.items()}
+        certs.append(certify(case.program, base, case.query, adapter,
+                             exact_depth=1, labels=case.labels))
+    return certs
+
+
+def threshold_alerts(certs, thresholds: dict) -> list[dict]:
+    """The declared thresholds against the measured metrics, one window at a time.
+
+    An alert fires at the first window a measured metric sits below its floor, once per metric,
+    and records the value actually measured — an alert that restated the number it fired on would
+    be the dashboard version of a filled-in gap. A metric not measured in a window can neither
+    alert nor clear. The two metrics here are the only ones a one-decision monitor has: coverage
+    per window, and cumulative stability over the windows seen so far.
+    """
+    alerts, fired = [], set()
+    for w, cert in enumerate(certs):
+        metrics = {"coverage": conformance.coverage(cert),
+                   "stability": conformance.stability(certs[:w + 1])}
+        for metric, floor in thresholds.items():
+            value = metrics[metric]
+            if metric not in fired and value is not None and value < floor:
+                fired.add(metric)
+                alerts.append({"window": w, "metric": metric, "floor": floor, "value": value})
+    return alerts
+
+
+def nist_evidence_fields(certs, alerts, thresholds: dict) -> dict:
+    """The three row-6 fields a synthetic monitoring run can produce honestly.
+
+    The fourth, `reviews_and_sign_offs`, is not here and must not be: a review is a human act
+    and a frozen run has no human in it. The caller emits the record without that key, and the
+    record says so.
+    """
+    logs = []
+    for w, cert in enumerate(certs):
+        stated = ", ".join(v.label.partition(" — ")[0] for v in cert.live) or "(none)"
+        logs.append(f"window {w}: stated reason {stated}; coverage "
+                    f"{conformance.coverage(cert):.4f} (floor {thresholds['coverage']}); "
+                    f"stability so far {conformance.stability(certs[:w + 1]):.4f} "
+                    f"(floor {thresholds['stability']})")
+    declared = "; ".join(f"{m} >= {f}" for m, f in thresholds.items())
+    fired = "\n".join(
+        f"window {a['window']}: {a['metric']} measured {a['value']:.4f}, below floor {a['floor']}"
+        for a in alerts)
+    tickets = "\n".join(
+        f"INC-2026-0731-{i + 1:02d} (monitor-opened, window {a['window']}): {a['metric']} alert "
+        f"on this decision; measured {a['value']:.4f} against floor {a['floor']}. "
+        f"OPEN at emission time."
+        for i, a in enumerate(alerts)) or "none opened: no threshold was breached"
+    return {
+        "continuous_monitoring_logs": "\n".join(logs),
+        "metric_thresholds_and_alerts": f"declared before the run: {declared}\nalerts fired:"
+                                        + (f"\n{fired}" if fired else " none"),
+        "incident_tickets": tickets,
+    }
+
+
+def nist_demo() -> str:
+    """NIST AI RMF 1.0 end to end: one decision under continuous monitoring, Table 7 row 6."""
+    out = [_head("6. NIST AI RMF 1.0 — RISK EVIDENCE AND CONTINUOUS MONITORING (Table 7 row 6)")]
+    out += ["",
+            "Row 6 asks for risk evidence under continuous monitoring. The monitor is the "
+            "machinery already shown:",
+            "one adverse action re-scored over six windows while the bureau's delinquency signal "
+            "strengthens, a",
+            "certificate per window, and Table 19's coverage and stability as the monitored "
+            "metrics. The thresholds are",
+            "declared before the run:",
+            ""]
+    out += [f"  {m} floor {f}" for m, f in NIST_THRESHOLDS.items()]
+    certs = drift_windows("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88,
+                          DRIFT_SIGNALS, 6, ReferenceAdapter(TopK(1)))
+    alerts = threshold_alerts(certs, NIST_THRESHOLDS)
+    fields = nist_evidence_fields(certs, alerts, NIST_THRESHOLDS)
+    out += ["", "the monitoring log, window by window:", ""]
+    out += [f"  {line}" for line in fields["continuous_monitoring_logs"].splitlines()]
+    record = emit("nist_ai_rmf_risk_evidence", "APP-1042", fields,
+                  attachments={"rule drift report (certificate, final window)":
+                               certs[-1].render()})
+    out += ["", "The risk evidence register entry this run emits:", "", record.render()]
+    out += ["",
+            "Two alerts, two findings. The coverage alert fires at window 0: top-1 keeps one "
+            "reason of five, so the",
+            "deployment was under the floor from the first check — continuous monitoring's first "
+            "value is often showing",
+            "that a standing configuration was never within limits. The stability alert fires at "
+            "window 2, when drift in",
+            "the bureau signal replaces the reason stated to the applicant; the rule drift report "
+            "attached to the record",
+            "is that event's evidence.",
+            "",
+            "The record is INCOMPLETE, and the missing field is the point. Reviews and sign-offs "
+            "are a human act; a",
+            "frozen synthetic run has no reviewer, so the field is reported NOT PRODUCED rather "
+            "than filled with a",
+            "simulated signature. A monitor that could mint its own sign-offs would make the "
+            "register worthless.",
+            "",
+            "LIMITS: the drift here is scripted — one signal on one frozen case — and the "
+            "thresholds above are",
+            "illustrative, not recommended values. Real monitoring faces unscripted drift on "
+            "data this does not have."]
+    return "\n".join(out)
+
+
 def main() -> str:
     parts = [
         _head("0. TRACEABILITY — every schema entry against the Table 7 text it came from"),
@@ -396,6 +525,7 @@ def main() -> str:
         corruption_demo(),
         stratified_demo(),
         stability_demo(),
+        nist_demo(),
     ]
     return "\n".join(parts)
 
