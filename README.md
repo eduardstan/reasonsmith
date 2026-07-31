@@ -115,7 +115,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 | `src/reasonsmith/verdict.py` | Core lattice: evidence strength lattice (`unattainable < observed < probed < proved`) and verdict vocabulary |
 | `src/reasonsmith/spec.py` | Core requirement loader & specification structures from `packs/*.toml` |
 | `src/reasonsmith/sut.py` | System-under-test protocol — declared capability set and decision trace interface |
-| `src/reasonsmith/report.py` | Conformance report skeleton, headline builder, and static unattainable analysis |
+| `src/reasonsmith/report.py` | Conformance report skeleton, headline builder, static unattainable analysis, and the text/JSON/self-contained-HTML renderers |
 | `src/reasonsmith/adapters/` | SUT protocol adapters for JSONL decision logs and Python callables |
 | `src/reasonsmith/engines/` | Verification engines: `record` completeness check and `observed` rtamt temporal monitor |
 | `src/reasonsmith/cli.py` | Command-line interface: `check --system <log.jsonl> --pack <name>` |
