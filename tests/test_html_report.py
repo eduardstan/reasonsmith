@@ -9,6 +9,7 @@ What this module is for:
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import tempfile
@@ -16,6 +17,7 @@ from pathlib import Path
 
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.cli import main as cli_main
+from reasonsmith.demo import render_key_finding_html
 from reasonsmith.report import ConformanceReport, RequirementResult, check_conformance
 from reasonsmith.spec import load_pack
 from reasonsmith.verdict import Strength, Verdict
@@ -24,11 +26,22 @@ ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_LOG = ROOT / "docs" / "sample_decisions.jsonl"
 DOCS_INDEX = ROOT / "docs" / "index.html"
 
-#: The command the committed demo page reports, and the one that regenerates it.
-DOCS_COMMAND = (
-    "python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 "
-    "--system-name CreditScoringPipeline --html docs/index.html"
-)
+
+def _load_build_example():
+    """The committed page's build script, loaded as written: `docs/` is not an import package.
+
+    Loading it is what keeps this test honest. Re-implementing the composition here would let the
+    committed page, the provenance command it prints and this test drift apart in three places.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "build_example", ROOT / "docs" / "build_example.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+build_example = _load_build_example()
 
 
 def _fake_git(
@@ -123,6 +136,108 @@ def test_html_distinguishes_unattainable_from_violated():
     assert "UNATTAINABLE AS BUILT — Missing Capability Signals" in html
     assert "verdict-violated" in html
     assert "VIOLATED IN TRACE — Required Signals Absent from Decision Log" in html
+
+
+def test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure():
+    """A report is read as being about its own system, so nothing else may ride along in it.
+
+    The demonstration's key finding belongs to case `APP-1042` and to the committed example page.
+    A user checking their own decision log must get their own findings and no one else's: a
+    hardcoded evidence record badged COMPLETE, above their results, in a document handed to an
+    auditor, is the false completeness this package exists to refuse.
+    """
+    report = ConformanceReport(
+        pack_id="test_pack",
+        system_name="SomeoneElsesSystem",
+        results=(
+            RequirementResult(
+                requirement_id="req_a",
+                source_clause="GDPR Art. 22",
+                verdict=Verdict.SATISFIED,
+                strength=Strength.OBSERVED,
+                signals_required=("signal_a",),
+                evidence_summary="Observed over 3 decisions",
+                binding=True,
+            ),
+        ),
+    )
+
+    html = report.render_html()
+
+    for narrative in (
+        "KEY FINDING",
+        "key-finding-section",
+        "APP-1042",
+        "AAN-2026-0731-1042",
+        "Reason-Deletion Certificate",
+        "Form Completeness Does Not Imply Reason Fidelity",
+        "25 months from notice date, per lender policy",
+    ):
+        assert narrative not in html, f"{narrative!r} leaked into an unrelated system's report"
+
+    # The example page is the one place it is composed in, and it is composed by the caller.
+    assert "KEY FINDING" in report.render_html(extra_section_html=render_key_finding_html())
+
+
+def test_witness_table_is_capped_and_says_how_many_it_elided():
+    """A record duty no record discharges makes every record offending: the table must not be
+    the whole decision log, and what it drops must be counted on the page, never dropped
+    silently."""
+    records = [{"step": i} for i in range(75)]
+    report = ConformanceReport(
+        pack_id="test_pack",
+        system_name="TestSystem",
+        results=(
+            RequirementResult(
+                requirement_id="req_violated",
+                source_clause="GDPR Art. 22",
+                verdict=Verdict.VIOLATED,
+                strength=Strength.OBSERVED,
+                signals_required=("signal_a",),
+                evidence_summary="Violated over 75 decisions",
+                details={
+                    "offending_trace_segment": records,
+                    "violation_step_indices": list(range(75)),
+                },
+                binding=True,
+            ),
+        ),
+    )
+
+    html = report.render_html()
+
+    assert html.count("<tr><td>Step ") == 20
+    assert "showing the first 20 of 75 offending records" in html
+    assert "Step 19</td>" in html
+    assert "Step 20</td>" not in html
+
+
+def test_witness_table_below_the_cap_states_it_is_complete():
+    """Under the cap nothing is elided, and the page says so rather than leaving it open."""
+    report = ConformanceReport(
+        pack_id="test_pack",
+        system_name="TestSystem",
+        results=(
+            RequirementResult(
+                requirement_id="req_violated",
+                source_clause="GDPR Art. 22",
+                verdict=Verdict.VIOLATED,
+                strength=Strength.OBSERVED,
+                signals_required=("signal_a",),
+                evidence_summary="Violated over 2 decisions",
+                details={
+                    "offending_trace_segment": [{"step": 0}, {"step": 1}],
+                    "violation_step_indices": [0, 1],
+                },
+                binding=True,
+            ),
+        ),
+    )
+
+    html = report.render_html()
+
+    assert "all 2 offending records" in html
+    assert "Witness truncated for display" not in html
 
 
 def test_cli_html_export():
@@ -233,26 +348,38 @@ def test_clean_checkout_names_its_commit(monkeypatch):
 
 
 def test_docs_index_html_matches_the_renderer():
-    """The committed demo page is generated, not hand-maintained: it must match the renderer.
+    """The committed demo page is generated, not hand-maintained: it must match its build script.
 
-    It is rendered with an empty `commit_hash` because a page committed into the tree it
-    describes cannot name the commit that contains it. Regenerate it with:
-
-        PYTHONPATH=src:tests python -c \
-"from test_html_report import regenerate_docs_index; regenerate_docs_index()"
+    Regenerate it with `python docs/build_example.py`, the command the page itself names.
     """
-    assert DOCS_INDEX.read_text(encoding="utf-8") == _render_docs_index()
+    assert DOCS_INDEX.read_text(encoding="utf-8") == build_example.render()
+
+
+def test_the_page_names_a_provenance_command_that_reproduces_it():
+    """A command line the report cannot be reproduced from is not provenance, it is decoration.
+
+    The page carries the key finding, which the CLI never renders, so the CLI command that once
+    stood in this line wrote a byte-different file. The claim and the producer must be the same
+    thing.
+    """
+    page = DOCS_INDEX.read_text(encoding="utf-8")
+
+    assert f"Command: <code>{build_example.BUILD_COMMAND}</code>" in page
+    assert "python -m reasonsmith.cli" not in page
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_file = Path(tmpdir) / "index.html"
+        ret = cli_main([
+            "check",
+            "--system", str(SAMPLE_LOG),
+            "--pack", "table7",
+            "--system-name", "CreditScoringPipeline",
+            "--system-scope", "high-risk",
+            "--html", str(out_file),
+        ])
+        assert ret in (0, 2)
+        assert out_file.read_text(encoding="utf-8") != page
 
 
 def _docs_report() -> ConformanceReport:
-    return check_conformance(
-        JSONLAdapter(str(SAMPLE_LOG)), load_pack("table7"), system_name="CreditScoringPipeline"
-    )
-
-
-def _render_docs_index() -> str:
-    return _docs_report().render_html(commit_hash="", command=DOCS_COMMAND)
-
-
-def regenerate_docs_index() -> None:
-    DOCS_INDEX.write_text(_render_docs_index(), encoding="utf-8")
+    return build_example.example_report()

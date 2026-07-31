@@ -58,6 +58,12 @@ class RecordEngine:
         )
 
         if absent:
+            violation_indices = [
+                idx
+                for idx, rec in enumerate(records)
+                if any(not _is_present(rec.get(sig)) for sig in absent)
+            ]
+            offending_segment = [records[idx] for idx in violation_indices]
             return RequirementResult(
                 requirement_id=req.id,
                 source_clause=clause,
@@ -72,6 +78,8 @@ class RecordEngine:
                 details={
                     "signals_absent_from_trace": absent,
                     "records_observed": len(records),
+                    "offending_trace_segment": offending_segment,
+                    "violation_step_indices": violation_indices,
                 },
                 binding=req.binding,
                 scope=req.scope,

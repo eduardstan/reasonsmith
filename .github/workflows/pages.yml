@@ -23,20 +23,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install dependencies
-        run: pip install -e ".[dev]"
       - name: Build report
         run: |
+          # Publish the committed page rather than re-rendering it here. `docs/index.html` is
+          # held byte-for-byte to `render_html()` by `test_docs_index_html_matches_the_renderer`,
+          # and it is the one page composed with the demonstration's key finding — which the
+          # renderer never adds on its own, because it is about case APP-1042 and not about
+          # whatever system a report is run on. Rendering it again from the CLI here would
+          # publish a page that no test checks and that is missing that section.
           mkdir -p _site
-          # The CLI exits 2 when a requirement is violated. A violation in the example is
-          # expected and is the whole point of the example — form completeness does not imply
-          # reason fidelity — so exit 2 must still publish. Any other non-zero exit is a real
-          # failure and still fails the deploy.
-          python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name "CreditScoringPipeline" --html _site/index.html || [ $? -eq 2 ]
+          cp docs/index.html _site/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

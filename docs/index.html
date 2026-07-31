@@ -413,7 +413,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Declared Scope</span>
-          <span class="meta-value">undeclared</span>
+          <span class="meta-value">high-risk</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Regulation Pack</span>
@@ -424,9 +424,242 @@
 
     <div class="headline-banner">
       <div class="headline-title">Executive Headline Summary</div>
-      <div class="headline-text">6 requirements · 4 binding: 2 unattainable, 2 not applicable · 2 interpretive: 2 unattainable</div>
-      <div class="provenance-bar"><strong>Report Provenance:</strong> Generated without an identified source commit. Command: <code>python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline --html docs/index.html</code></div>
+      <div class="headline-text">6 requirements · 4 binding: 3 observed, 1 violated · 2 interpretive: 2 unattainable</div>
+      <div class="provenance-bar"><strong>Report Provenance:</strong> Generated without an identified source commit. Command: <code>python docs/build_example.py</code></div>
     </div>
+
+    
+    <style>
+
+  .key-finding-section {
+    margin: 1.5rem;
+    border: 1px solid var(--color-slate-200);
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+  .key-finding-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid #3b82f6;
+  }
+  .kf-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: #ef4444;
+    color: #ffffff;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.35rem;
+  }
+  .kf-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+  .kf-subtitle {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+  }
+  .key-finding-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    background: #f8fafc;
+  }
+  @media (max-width: 768px) {
+    .key-finding-grid { grid-template-columns: 1fr; }
+  }
+  .kf-card {
+    border-radius: 8px;
+    border: 1px solid var(--color-slate-200);
+    background: #ffffff;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .kf-card-record {
+    border-top: 4px solid #059669;
+  }
+  .kf-card-cert {
+    border-top: 4px solid #dc2626;
+  }
+  .kf-card-header {
+    padding: 0.85rem 1rem;
+    background: #f1f5f9;
+    border-bottom: 1px solid var(--color-slate-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .kf-card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-slate-800);
+  }
+  .kf-card-body {
+    padding: 1rem;
+    font-size: 0.85rem;
+    flex: 1;
+  }
+  .kf-meta-line {
+    margin-bottom: 0.35rem;
+    color: var(--color-slate-700);
+  }
+  .kf-subhead {
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-slate-600);
+    margin-top: 0.85rem;
+    margin-bottom: 0.4rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--color-slate-200);
+  }
+  .kf-field-list, .kf-reason-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .kf-field-list li {
+    margin-bottom: 0.35rem;
+    line-height: 1.4;
+    font-size: 0.8rem;
+  }
+  .check-icon {
+    color: #059669;
+    font-weight: 800;
+    margin-right: 0.25rem;
+  }
+  .kf-values-bar {
+    display: flex;
+    gap: 0.75rem;
+    background: #f8fafc;
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    border: 1px solid var(--color-slate-200);
+    margin: 0.5rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+  .kf-gap {
+    color: #dc2626;
+    font-weight: 700;
+  }
+  .kf-reason-list li {
+    padding: 0.25rem 0.4rem;
+    border-radius: 4px;
+    margin-bottom: 0.3rem;
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .reason-live {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+  }
+  .reason-deleted {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+  }
+  .reason-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .tag-live {
+    background: #059669;
+    color: #ffffff;
+  }
+  .tag-deleted {
+    background: #dc2626;
+    color: #ffffff;
+  }
+  .reason-score {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-slate-600);
+    margin-left: auto;
+  }
+
+    </style>
+    <section class="key-finding-section">
+      <div class="key-finding-banner">
+        <div class="kf-badge">KEY FINDING</div>
+        <h2 class="kf-title">Form Completeness Does Not Imply Reason Fidelity</h2>
+        <div class="kf-subtitle">
+          An evidence record can be marked <strong>COMPLETE</strong> while four of its five legally-owed reasons are missing due to proof truncation.
+        </div>
+      </div>
+      <div class="key-finding-grid">
+        <div class="kf-card kf-card-record">
+          <div class="kf-card-header">
+            <span class="kf-card-title">Evidence Record</span>
+            <span class="badge verdict-satisfied">
+              <span aria-hidden="true">✓</span> COMPLETE
+            </span>
+          </div>
+          <div class="kf-card-body">
+            <div class="kf-meta-line"><strong>Decision:</strong> <code>APP-1042</code></div>
+            <div class="kf-meta-line"><strong>Duty:</strong> Adverse action reasons in credit decisions</div>
+            <div class="kf-meta-line"><strong>Source:</strong> ECOA / Reg B (12 CFR 1002.9)</div>
+            <div class="kf-subhead">Minimal Evidence Retained (5 of 5 Table 7 fields):</div>
+            <ul class="kf-field-list">
+              <li><span class="check-icon">✓</span> <strong><code>stored_reasons_per_decision</code></strong>: C01 — Income insufficient for amount of credit requested</li>
+<li><span class="check-icon">✓</span> <strong><code>model_version</code></strong>: credit-scoring-2026.03.1 / rules cs-rules-2026.03</li>
+<li><span class="check-icon">✓</span> <strong><code>score_factors</code></strong>: C01 0.7656; C02 0.6972; C03 0.6320; C04 0.6004; C05 0.5112</li>
+<li><span class="check-icon">✓</span> <strong><code>audit_ids</code></strong>: AAN-2026-0731-1042 / trace-9f3c1b</li>
+<li><span class="check-icon">✓</span> <strong><code>retention_for_regulatory_lookback</code></strong>: 25 months from notice date, per lender policy</li>
+            </ul>
+          </div>
+        </div>
+        <div class="kf-card kf-card-cert">
+          <div class="kf-card-header">
+            <span class="kf-card-title">Reason-Deletion Certificate</span>
+            <span class="badge verdict-violated">
+              <span aria-hidden="true">✖</span> FAIL
+            </span>
+          </div>
+          <div class="kf-card-body">
+            <div class="kf-meta-line"><strong>Query:</strong> <code>adverse_action(APP-1042)</code></div>
+            <div class="kf-meta-line">
+              <strong>Engine:</strong> <code>reference:top-1-proofs</code> (distribution semantics)
+            </div>
+            <div class="kf-values-bar">
+              <span>Exact: <code>0.9914</code></span>
+              <span>Engine: <code>0.7656</code></span>
+              <span class="kf-gap">Gap: <code>-0.2258</code></span>
+            </div>
+            <div class="kf-subhead">
+              Reason Audit (5 found &middot;
+              <strong style="color: #dc2626">4 deleted</strong>):
+            </div>
+            <ul class="kf-reason-list">
+              <li class="reason-live"><span class="reason-tag tag-live">[used]</span> <span>C01 — Income insufficient for amount of credit requested</span> <span class="reason-score">(score 0.7656)</span></li>
+<li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C02 — Length of time credit has been established is too short</span> <span class="reason-score">(score 0.6972)</span></li>
+<li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C03 — Delinquent past or present credit obligations</span> <span class="reason-score">(score 0.6320)</span></li>
+<li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C04 — Too many recent inquiries on credit bureau report</span> <span class="reason-score">(score 0.6004)</span></li>
+<li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C05 — Insufficient number of credit references provided</span> <span class="reason-score">(score 0.5112)</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
 
     <section class="dashboard-section">
       <div class="split-grid">
@@ -436,7 +669,7 @@
             <span>4 total</span>
           </div>
           <div class="pill-group">
-            <span class="stat-pill verdict-unattainable"><span aria-hidden="true">⊘</span> 2 unattainable</span><span class="stat-pill verdict-not-applicable"><span aria-hidden="true">⊝</span> 2 not applicable</span>
+            <span class="stat-pill verdict-satisfied"><span aria-hidden="true">👁</span> 3 observed</span><span class="stat-pill verdict-violated"><span aria-hidden="true">✖</span> 1 violated</span>
           </div>
         </div>
         <div class="split-card">
@@ -454,7 +687,7 @@
     <h2 class="section-title">Requirement Findings</h2>
     <main class="req-list">
 
-        <article class="req-card verdict-not-applicable">
+        <article class="req-card verdict-satisfied">
           <header class="req-card-header">
             <div class="req-title-group">
               <span class="req-id">eu_ai_act_art13_transparency</span>
@@ -463,23 +696,23 @@
             <div class="badge-group">
               <span class="badge badge-binding">Binding</span>
               <span class="badge badge-scope">Scope: high-risk</span>
-              <span class="badge verdict-not-applicable"><span aria-hidden="true">⊝</span> NOT APPLICABLE</span>
+              <span class="badge verdict-satisfied"><span aria-hidden="true">✓</span> SATISFIED</span>
             </div>
           </header>
           <div class="lattice-container">
             <span class="lattice-label">Strength Lattice:</span>
-            <div class="lattice-track"><span class="lattice-step "><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+            <div class="lattice-track"><span class="lattice-step "><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step active-observed"><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
           </div>
           <div class="req-card-body">
             <div class="signal-list">
               <strong>Requires Signals:</strong> <span class="signal-tag">model_and_data_version_ids</span><span class="signal-tag">extraction_timestamp</span><span class="signal-tag">dataset_snapshot_hash</span><span class="signal-tag">fidelity_coverage_metrics</span><span class="signal-tag">explanation_scope</span><span class="signal-tag">linkage_from_decision_to_artifact</span>
             </div>
-            <div class="evidence-summary">Not applicable: requirement scope is &#x27;high-risk&#x27;, but system regulatory class is undeclared. reasonsmith never infers a system&#x27;s regulatory class.</div>
+            <div class="evidence-summary">Observed over 3 decision(s): every required signal (model_and_data_version_ids, extraction_timestamp, dataset_snapshot_hash, fidelity_coverage_metrics, explanation_scope, linkage_from_decision_to_artifact) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.</div>
             
           </div>
         </article>
 
-        <article class="req-card verdict-not-applicable">
+        <article class="req-card verdict-violated">
           <header class="req-card-header">
             <div class="req-title-group">
               <span class="req-id">eu_ai_act_art12_record_keeping</span>
@@ -488,23 +721,23 @@
             <div class="badge-group">
               <span class="badge badge-binding">Binding</span>
               <span class="badge badge-scope">Scope: high-risk</span>
-              <span class="badge verdict-not-applicable"><span aria-hidden="true">⊝</span> NOT APPLICABLE</span>
+              <span class="badge verdict-violated"><span aria-hidden="true">✖</span> VIOLATED</span>
             </div>
           </header>
           <div class="lattice-container">
             <span class="lattice-label">Strength Lattice:</span>
-            <div class="lattice-track"><span class="lattice-step "><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+            <div class="lattice-track"><span class="lattice-step "><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step active-observed"><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
           </div>
           <div class="req-card-body">
             <div class="signal-list">
               <strong>Requires Signals:</strong> <span class="signal-tag">automatic_event_logs</span><span class="signal-tag">retention_schedule</span><span class="signal-tag">signer</span>
             </div>
-            <div class="evidence-summary">Not applicable: requirement scope is &#x27;high-risk&#x27;, but system regulatory class is undeclared. reasonsmith never infers a system&#x27;s regulatory class.</div>
-            
+            <div class="evidence-summary">Violated over 3 observed decision(s): the system declares it can emit these signals, but records carry no value for signer.</div>
+            <div class="callout-box callout-violated"><strong>VIOLATED IN TRACE — Required Signals Absent from Decision Log:</strong><br><span class="signal-tag absent">signer</span></div><div class="callout-box callout-violated"><strong>VIOLATED IN TRACE — Execution Counterexample Witness (all 1 offending record):</strong><table class="witness-table"><thead><tr><th>Trace Step</th><th>Decision Record Witness</th></tr></thead><tbody><tr><td>Step 1</td><td><code>artifact_logs_decision_record: {&#x27;id&#x27;: &#x27;APP-1043&#x27;, &#x27;result&#x27;: &#x27;adverse_action&#x27;}, artifact_logs_reason_explanation: C03 - Delinquent past or present credit obligations, artifact_logs_notification_latency_days: 21, artifact_logs_counteroffer_not_accepted: 0, provenance_model_version: credit-scoring-2026.03.1, provenance_constraint_set: [&#x27;cs-rules-2026.03&#x27;], provenance_active_exceptions: [], scope_statements_local_vs_global: local, scope_statements_explanation_scope: local, scope_statements_approximation_vs_guarantee: approximation, stability_signals_artifact_drift: 0.01, model_and_data_version_ids: credit-scoring-2026.03.1 / dataset cs-data-2026.03, extraction_timestamp: 2026-07-31T22:05:00Z, dataset_snapshot_hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855, fidelity_coverage_metrics: fidelity: 0.9914, coverage: 1.0000, explanation_scope: local (per-applicant decision explanation), linkage_from_decision_to_artifact: AAN-2026-0731-1043 -&gt; cs-rules-2026.03, automatic_event_logs: event_id: EVT-1043-01, status: logged, level: info, retention_schedule: retention_period: 25 months, policy: ECOA 1002.9, per_decision_reason_string: C03 — Delinquent past or present credit obligations, feature_to_named_concept_mapping: delinquency_on_file -&gt; C03: Delinquent obligations, dpia_cross_reference: DPIA-2026-014 s.4.2 (automated credit scoring), stored_reasons_per_decision: C03 — Delinquent past or present credit obligations, model_version: credit-scoring-2026.03.1 / rules cs-rules-2026.03, score_factors: C03 0.8120; C01 0.7210, audit_ids: AAN-2026-0731-1043 / trace-9f3c1c, retention_for_regulatory_lookback: 25 months from notice date, per lender policy</code></td></tr></tbody></table></div>
           </div>
         </article>
 
-        <article class="req-card verdict-unattainable">
+        <article class="req-card verdict-satisfied">
           <header class="req-card-header">
             <div class="req-title-group">
               <span class="req-id">gdpr_art22_meaningful_information</span>
@@ -513,23 +746,23 @@
             <div class="badge-group">
               <span class="badge badge-binding">Binding</span>
               
-              <span class="badge verdict-unattainable"><span aria-hidden="true">⊘</span> UNATTAINABLE</span>
+              <span class="badge verdict-satisfied"><span aria-hidden="true">✓</span> SATISFIED</span>
             </div>
           </header>
           <div class="lattice-container">
             <span class="lattice-label">Strength Lattice:</span>
-            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+            <div class="lattice-track"><span class="lattice-step "><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step active-observed"><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
           </div>
           <div class="req-card-body">
             <div class="signal-list">
               <strong>Requires Signals:</strong> <span class="signal-tag">per_decision_reason_string</span><span class="signal-tag">feature_to_named_concept_mapping</span><span class="signal-tag">dpia_cross_reference</span>
             </div>
-            <div class="evidence-summary">Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for dpia_cross_reference, feature_to_named_concept_mapping, per_decision_reason_string, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.</div>
-            <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">dpia_cross_reference</span><span class="signal-tag missing">feature_to_named_concept_mapping</span><span class="signal-tag missing">per_decision_reason_string</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
+            <div class="evidence-summary">Observed over 3 decision(s): every required signal (per_decision_reason_string, feature_to_named_concept_mapping, dpia_cross_reference) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.</div>
+            
           </div>
         </article>
 
-        <article class="req-card verdict-unattainable">
+        <article class="req-card verdict-satisfied">
           <header class="req-card-header">
             <div class="req-title-group">
               <span class="req-id">ecoa_reg_b_adverse_action</span>
@@ -538,19 +771,19 @@
             <div class="badge-group">
               <span class="badge badge-binding">Binding</span>
               
-              <span class="badge verdict-unattainable"><span aria-hidden="true">⊘</span> UNATTAINABLE</span>
+              <span class="badge verdict-satisfied"><span aria-hidden="true">✓</span> SATISFIED</span>
             </div>
           </header>
           <div class="lattice-container">
             <span class="lattice-label">Strength Lattice:</span>
-            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+            <div class="lattice-track"><span class="lattice-step "><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step active-observed"><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
           </div>
           <div class="req-card-body">
             <div class="signal-list">
               <strong>Requires Signals:</strong> <span class="signal-tag">stored_reasons_per_decision</span><span class="signal-tag">model_version</span><span class="signal-tag">score_factors</span><span class="signal-tag">audit_ids</span><span class="signal-tag">retention_for_regulatory_lookback</span>
             </div>
-            <div class="evidence-summary">Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for audit_ids, model_version, retention_for_regulatory_lookback, score_factors, stored_reasons_per_decision, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.</div>
-            <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">audit_ids</span><span class="signal-tag missing">model_version</span><span class="signal-tag missing">retention_for_regulatory_lookback</span><span class="signal-tag missing">score_factors</span><span class="signal-tag missing">stored_reasons_per_decision</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
+            <div class="evidence-summary">Observed over 3 decision(s): every required signal (stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.</div>
+            
           </div>
         </article>
 

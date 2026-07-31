@@ -622,14 +622,21 @@ LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
 ```
 
-### 2.2 Table 7 pack — nothing discharged on this trace (exit code 0)
+### 2.2 Table 7 pack — two rows discharged, two out of scope, two unattainable (exit code 0)
 
-The same log checked against the Table 7 pack discharges nothing. That pack names Table 7's own
-evidence-field keys, and this trace carries none of them, so every requirement whose duty reaches
-this system is reported unattainable with its missing signals named rather than violated. The two
-EU AI Act rows are limited to the high-risk class and no scope was declared on the command line, so
-they are reported not applicable — `reasonsmith` never infers that class. Nothing here is a breach,
-so the CLI exits 0.
+The same log checked against the Table 7 pack, which names Table 7's own evidence-field keys. This
+trace carries the keys the GDPR Art. 22 and ECOA rows require, so those two are reported observed
+over the three decisions in it — and observed is as far as a trace can carry them: read from that
+trace alone, and not extended to decisions not in it. The two EU AI Act rows are limited to the
+high-risk class and no scope was declared on the command line, so they are reported not applicable
+— `reasonsmith` never infers that class. The two interpretive rows are reported unattainable with
+their missing signals named, because the trace carries none of the keys they require and the run
+declared no capabilities. Nothing here is a breach, so the CLI exits 0.
+
+Declaring the class with `--system-scope high-risk` is what brings the two EU AI Act rows into
+scope and has them evaluated rather than set aside; that is the run behind the HTML page in
+[`index.html`](index.html), which is built by `python docs/build_example.py` rather than by the CLI,
+because it also carries the demonstration's key finding.
 
 ```sh
 python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline
@@ -640,7 +647,7 @@ CONFORMANCE REPORT
 system: CreditScoringPipeline
 declared scope: undeclared
 pack: table7
-headline: 6 requirements · 4 binding: 2 unattainable, 2 not applicable · 2 interpretive: 2 unattainable
+headline: 6 requirements · 4 binding: 2 observed, 2 not applicable · 2 interpretive: 2 unattainable
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] eu_ai_act_art13_transparency (EU AI Act Art. 13): not_applicable
@@ -651,14 +658,12 @@ REQUIREMENT FINDINGS:
     requires: automatic_event_logs, retention_schedule, signer
     scope limit: high-risk
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
-  [UNATTAINABLE] gdpr_art22_meaningful_information (GDPR Art. 22 (and Rec. 71)): inconclusive
+  [OBSERVED] gdpr_art22_meaningful_information (GDPR Art. 22 (and Rec. 71)): satisfied
     requires: per_decision_reason_string, feature_to_named_concept_mapping, dpia_cross_reference
-    MISSING SIGNALS: dpia_cross_reference, feature_to_named_concept_mapping, per_decision_reason_string
-    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for dpia_cross_reference, feature_to_named_concept_mapping, per_decision_reason_string, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
-  [UNATTAINABLE] ecoa_reg_b_adverse_action (ECOA / Reg B 12 CFR 1002.9): inconclusive
+    summary: Observed over 3 decision(s): every required signal (per_decision_reason_string, feature_to_named_concept_mapping, dpia_cross_reference) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+  [OBSERVED] ecoa_reg_b_adverse_action (ECOA / Reg B 12 CFR 1002.9): satisfied
     requires: stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback
-    MISSING SIGNALS: audit_ids, model_version, retention_for_regulatory_lookback, score_factors, stored_reasons_per_decision
-    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for audit_ids, model_version, retention_for_regulatory_lookback, score_factors, stored_reasons_per_decision, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
+    summary: Observed over 3 decision(s): every required signal (stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
   [UNATTAINABLE] [INTERPRETIVE] fda_gmlp_samd (FDA GMLP agency transparency guidance): inconclusive
     requires: design_history_links, verification_logs, change_control
     MISSING SIGNALS: change_control, design_history_links, verification_logs

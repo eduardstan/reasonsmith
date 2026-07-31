@@ -231,6 +231,12 @@ _STRENGTH_ICONS = {
     Strength.PROVED: "🏆",
 }
 
+#: Most witness rows the HTML report prints for one violated requirement. A record duty that no
+#: record in the trace discharges makes every record offending, so the segment is trace-sized;
+#: an unbounded table would inline an entire production decision log into the page. The count of
+#: what was elided is always printed with the table, never elided silently.
+_WITNESS_ROW_LIMIT = 20
+
 
 def _source_checkout() -> tuple[str, str]:
     """Identify the git checkout this package was imported from.
@@ -411,6 +417,7 @@ class ConformanceReport:
         self,
         commit_hash: str | None = None,
         command: str | None = None,
+        extra_section_html: str | None = None,
     ) -> str:
         """Self-contained HTML conformance report rendering.
 
@@ -426,6 +433,12 @@ class ConformanceReport:
         which is what a report committed into the tree it describes must say. `command` is
         never guessed: an unsupplied command is left out, because a command line the report
         invented is not provenance.
+
+        `extra_section_html` is inserted verbatim below the headline and is empty unless a
+        caller supplies it. Nothing derived from anything but this report's own results may be
+        rendered by default: a narrative about another system's decision, sitting inside a
+        document handed to an auditor, is exactly the false completeness this package refuses.
+        The caller that passes it owns the claim it makes and escapes its own content.
         """
         import html
 
@@ -469,6 +482,7 @@ class ConformanceReport:
 
         binding_pills = render_pill_group("")
         interp_pills = render_pill_group("interpretive_")
+        extra_section = extra_section_html or ""
 
         req_html_blocks = []
         for r in self.results:
@@ -579,8 +593,10 @@ class ConformanceReport:
             offending_segment = r.details.get("offending_trace_segment")
             violation_indices = r.details.get("violation_step_indices")
             if offending_segment and violation_indices:
+                witnesses = list(zip(violation_indices, offending_segment, strict=False))
+                shown = witnesses[:_WITNESS_ROW_LIMIT]
                 rows = []
-                for idx, record in zip(violation_indices, offending_segment, strict=False):
+                for idx, record in shown:
                     rec_str = ", ".join(
                         f"{html.escape(str(k))}: {html.escape(str(v))}" for k, v in record.items()
                     )
@@ -590,10 +606,25 @@ class ConformanceReport:
                     "<thead><tr><th>Trace Step</th><th>Decision Record Witness</th>"
                     f'</tr></thead><tbody>{"".join(rows)}</tbody></table>'
                 )
+                if len(shown) < len(witnesses):
+                    counted = (
+                        f"showing the first {len(shown)} of {len(witnesses)} offending records"
+                    )
+                    truncation_note = (
+                        f'<div class="callout-note">Witness truncated for display: {counted}. '
+                        "The report is a witness that the requirement is violated, not the "
+                        "complete list of decisions that violate it; read the full segment from "
+                        "<code>offending_trace_segment</code> in the JSON output.</div>"
+                    )
+                else:
+                    plural = "" if len(witnesses) == 1 else "s"
+                    counted = f"all {len(witnesses)} offending record{plural}"
+                    truncation_note = ""
                 details_html += (
                     '<div class="callout-box callout-violated">'
-                    "<strong>VIOLATED IN TRACE — Execution Counterexample Witness:</strong>"
-                    f"{witness_table}"
+                    "<strong>VIOLATED IN TRACE — Execution Counterexample Witness "
+                    f"({counted}):</strong>"
+                    f"{witness_table}{truncation_note}"
                     "</div>"
                 )
 
@@ -1054,6 +1085,8 @@ class ConformanceReport:
       <div class="headline-text">{headline_esc}</div>
       {provenance_html}
     </div>
+
+    {extra_section}
 
     <section class="dashboard-section">
       <div class="split-grid">
