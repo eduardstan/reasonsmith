@@ -48,7 +48,7 @@ The measurements below were taken against `nesyarena` commit `fdf0d5eb54c7af181e
 
 (The old commit currently survives on the temporary rollback ref `refs/heads/backup/pre-coauthor-strip`, which is expected to be deleted; nothing here relies on it — reconstructibility stands on `main` alone.)
 
-The hash changed, the content did not: both commits' `git cat-file -p <sha> | grep tree` report the identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, verified directly against both commits before this note was written. The figures below are still the original run's, quoted unedited. What was re-run against the new pin is exactly this and nothing more: `reasonsmith`'s own `pytest` suite (35 passed), `ruff check .` (no findings), and `python -m reasonsmith.demo` (561 lines, two runs, identical) — see "Full transcript"; none of those moved. Section 1's figures are `nesyarena`'s *own* suite (`collected 107 items / 3 skipped`, `1 failed, 100 passed, 5 skipped, 4 errors`), measured under the old pin `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against `57720fa212834689692e171882272140f1d1fed7`. They are expected to be unchanged because the two commits share the tree `d050c86ef83b01bac972a0af3afa6f629a4a9972` and so install identical content — but that is an expectation from tree identity, not a measurement. The old pin is kept in the table above for the historical record of what was actually run.
+The hash changed, the content did not: both commits' `git cat-file -p <sha> | grep tree` report the identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, verified directly against both commits before this note was written. The figures below are still the original run's, quoted unedited. What was re-run against the new pin is exactly this and nothing more: `reasonsmith`'s own `pytest` suite (35 passed), `ruff check .` (no findings), and `python -m reasonsmith.demo` (561 lines, two runs, identical) — see "Full Transcript Provenance"; none of those moved. Section 1's figures are `nesyarena`'s *own* suite (`collected 107 items / 3 skipped`, `1 failed, 100 passed, 5 skipped, 4 errors`), measured under the old pin `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against `57720fa212834689692e171882272140f1d1fed7`. They are expected to be unchanged because the two commits share the tree `d050c86ef83b01bac972a0af3afa6f629a4a9972` and so install identical content — but that is an expectation from tree identity, not a measurement. The old pin is kept in the table above for the historical record of what was actually run.
 
 ### Build and Reproduction Commands
 
@@ -278,7 +278,7 @@ diff run1.txt run2.txt          # empty
 md5sum run1.txt run2.txt        # c5976971e24a86886f1e0ad54f0b9ce9 for both
 ```
 
-**The two runs are byte-identical: `diff` produces no output, both files hash to `c5976971e24a86886f1e0ad54f0b9ce9`.** The module docstring's "reproducible byte for byte" claim holds, measured, not assumed.
+**The two runs are byte-identical: `diff` produces no output, both files hash to `c5976971e24a86886f1e0ad54f0b9ce9`.** `demo.py`'s docstring claim that every figure and transcript line "can be verified and diffed byte-for-byte" holds, measured, not assumed.
 
 ### Empirical Details of Key Finding Figures
 

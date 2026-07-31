@@ -50,7 +50,7 @@ Building an end-to-end demo script or extending an engine for one of these dutie
 ## Standing Rules for Changes
 
 1. **Table 7 and Legal Quotes Are Verbatim:**
-   `src/reasonsmith/table7.toml` and statutory text quotes in `src/reasonsmith/packs/*.toml` reproduce published papers and official statutory texts (`docs/legal-sources.md`). They are guarded by automated tests (`test_pack_matches_table7_transcription`). Do not tidy, modernize, or alter quotes of law or Table 7 wording.
+   `src/reasonsmith/table7.toml` and statutory text quotes in `src/reasonsmith/packs/*.toml` reproduce published papers and official statutory texts (`docs/legal-sources.md`). They are guarded by automated tests: `test_pack_matches_table7_transcription` holds the Table 7 pack to `table7.toml`, and `test_pack_quotes_found_verbatim_in_legal_sources_report` holds every statutory quote to `docs/legal-sources.md`. Do not tidy, modernize, or alter quotes of law or Table 7 wording.
 
 2. **No Satisfied Verdicts on Absent Evidence:**
    Nothing in `reasonsmith` may report `satisfied` or `COMPLETE` on missing or incomplete evidence. Default values or fallbacks must never be substituted for missing fields.
