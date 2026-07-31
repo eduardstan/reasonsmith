@@ -2,9 +2,9 @@
 
 What this module is for:
   Defines the formal evidence strength lattice (`unattainable < observed < probed < proved`) and
-  the verdict vocabulary (`satisfied`, `violated`, `inconclusive`) for compliance
-  checking. Compliance claims carry both a verdict (whether a property holds) and a strength
-  (how deeply the system exposed itself for verification).
+  the verdict vocabulary (`satisfied`, `violated`, `inconclusive`, `not_applicable`) for
+  compliance checking. Compliance claims carry both a verdict (whether a property holds) and a
+  strength (how deeply the system exposed itself for verification).
 
   Strengths form a strict total order (the strength lattice):
     unattainable — The system cannot discharge the requirement as built (missing signals).
@@ -13,9 +13,10 @@ What this module is for:
     proved       — The property holds for all inputs via formal reasoning / solver proof.
 
   Verdicts record whether a property is met:
-    satisfied    — Evidence proves or demonstrates the requirement holds.
-    violated     — Evidence demonstrates a counterexample or breach.
-    inconclusive — Evidence is insufficient, incomplete, or unattainable.
+    satisfied      — Evidence proves or demonstrates the requirement holds.
+    violated       — Evidence demonstrates a counterexample or breach.
+    inconclusive   — Evidence is insufficient, incomplete, or unattainable.
+    not_applicable — The requirement's scope does not reach the system, so it was never checked.
 
   Lineage & Section 6.3 Scope Statements:
     The strength lattice is the operational form of Section 6.3's scope statement ("Governance,

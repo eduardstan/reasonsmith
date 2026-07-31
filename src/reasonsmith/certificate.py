@@ -15,8 +15,9 @@ What a reader must not break:
     (every reason live) and the value check against the exact oracle. Neither check
     subsumes the other.
     Why this matters: An engine that uses every reason but weights them wrongly passes the probe;
-    the value check is what catches that. Conversely, a silently truncated engine can have small
-    value gaps caught only by the deletion probe.
+    the value check is what catches that. Conversely, an engine that drops a reason and
+    compensates its value back onto the exact one passes the value check; the deletion probe is
+    what catches that, and it names the reason that stopped mattering.
   - A reason with no private fact cannot be switched off alone (`unseparable`) and returns
     `INCONCLUSIVE`.
     Why this matters: Reasons sharing all facts cannot be probed in isolation, so dependency
