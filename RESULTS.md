@@ -40,7 +40,7 @@ Every number in this file is copied from a command's real output. The exact comm
 | **pytest** | 9.1.1 |
 | **ruff** | 0.16.1 |
 | **reasonsmith** | `0.1.0` (editable install), commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` |
-| **nesyarena** | `0.1.0.dev0`, pinned commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` (repinned to `57720fa212834689692e171882272140f1d1fed7`, see note below) |
+| **nesyarena** | `0.1.0` (PyPI release), originally measured at pinned commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` (repinned to `57720fa212834689692e171882272140f1d1fed7`, now `nesyarena==0.1.0` on PyPI, see notes below) |
 
 ### Repin Note (2026-07-31)
 
@@ -49,6 +49,12 @@ The measurements below were taken against `nesyarena` commit `fdf0d5eb54c7af181e
 (The old commit currently survives on the temporary rollback ref `refs/heads/backup/pre-coauthor-strip`, which is expected to be deleted; nothing here relies on it — reconstructibility stands on `main` alone.)
 
 The hash changed, the content did not: both commits' `git cat-file -p <sha> | grep tree` report the identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, verified directly against both commits before this note was written. The figures below are still the original run's, quoted unedited. What was re-run against the new pin is exactly this and nothing more: `reasonsmith`'s own `pytest` suite (35 passed), `ruff check .` (no findings), and `python -m reasonsmith.demo` (561 lines, two runs, identical) — see "Full Transcript Provenance"; none of those moved. Section 1's figures are `nesyarena`'s *own* suite (`collected 107 items / 3 skipped`, `1 failed, 100 passed, 5 skipped, 4 errors`), measured under the old pin `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against `57720fa212834689692e171882272140f1d1fed7`. They are expected to be unchanged because the two commits share the tree `d050c86ef83b01bac972a0af3afa6f629a4a9972` and so install identical content — but that is an expectation from tree identity, not a measurement. The old pin is kept in the table above for the historical record of what was actually run.
+
+### PyPI Release Note (2026-07-31)
+
+On 2026-07-31, `nesyarena` 0.1.0 was published to PyPI. `pyproject.toml` was updated from the git SHA dependency (`nesyarena @ git+https://github.com/eduardstan/nesyarena@57720fa212834689692e171882272140f1d1fed7`) to the exact PyPI release pin `nesyarena==0.1.0`.
+
+PyPI 0.1.0 was built from a later commit than `57720fa212834689692e171882272140f1d1fed7`. `reasonsmith`'s own test suite (`174 passed` on current suite, `35 passed` on v0.1 suite), `ruff check .` (0 findings), and `python -m reasonsmith.demo` (561 lines, two runs byte-identical, `md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`) were re-run against PyPI `nesyarena==0.1.0` and confirmed fully passing and unchanged. The historical figures in Section 1 were measured under `nesyarena` commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment and remain attributed to that pin.
 
 ### Build and Reproduction Commands
 
@@ -331,7 +337,7 @@ One unchanged applicant file, four windows, a strengthening delinquency signal: 
 
 The complete, unedited output of both demo runs (identical to each other) is 561 lines, available in [`docs/example-output.md`](docs/example-output.md). Regenerate it with `python -m reasonsmith.demo` from commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`.
 
-**Re-checked after repin to nesyarena `57720fa212834689692e171882272140f1d1fed7` (2026-07-31):** `python -m reasonsmith.demo`, run twice against the new pin, still produces the same 561 identical lines, `pytest` still reports 35 passed, and `ruff check .` still reports no findings.
+**Re-checked after repin to nesyarena `57720fa212834689692e171882272140f1d1fed7` and update to PyPI release `nesyarena==0.1.0` (2026-07-31):** `python -m reasonsmith.demo`, run twice against PyPI `nesyarena==0.1.0`, still produces the same 561 identical lines (`md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`), `pytest` reports 174 passed (35 passed on v0.1 suite), and `ruff check .` reports no findings.
 
 ---
 

@@ -4,7 +4,7 @@ Every block below is stdout pasted unedited from a real run, not a hand-written 
 what the tool would print. Regenerate any block by running the command shown above it.
 
 - **Captured at:** commit `ea4bf3711abbd6922dcf4f1448cb177807bbe3d6` (branch `fm/rs-readable-repo`)
-- **Environment:** Python 3.12.9, Linux, `nesyarena` at the commit `pyproject.toml` pins
+- **Environment:** Python 3.12.9, Linux, `nesyarena==0.1.0` (PyPI release)
 - **Demo transcript:** 561 lines, `md5sum` `c5976971e24a86886f1e0ad54f0b9ce9` — the same length and
   hash [RESULTS.md](../RESULTS.md) reports, which is what lets the two files be checked against
   each other

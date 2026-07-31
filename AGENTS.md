@@ -16,10 +16,10 @@ value is that a lawyer can check it against the print.
 ## Dependency
 
 nesyarena supplies the ground-program IR, bounded proof enumeration, the exact WMC oracle and the
-adapter protocol. Depend on it; do not reimplement any of those. It is not on PyPI, so
-`pyproject.toml` pins it to an immutable commit of the public repo — `pip install -e ".[dev]"` in a
-venv is the single install path, and `.github/workflows/ci.yml` uses that same one. Never point it
-at a sibling checkout or a branch: the measured numbers must stay reconstructible. `torch` is
+adapter protocol. Depend on it; do not reimplement any of those. `pyproject.toml` pins `nesyarena==0.1.0`
+from PyPI — `pip install -e ".[dev]"` in a venv is the single install path, and `.github/workflows/ci.yml`
+uses that same one. Never point it at a sibling checkout, tag, or a branch: the measured numbers must
+stay reconstructible. `torch` is
 deliberately not a declared dependency of *this* package (see README, "Dependencies & PyPI") but
 has been installed and measured in a separate environment — see [RESULTS.md](RESULTS.md) for the
 exact commands and counts, and do not re-litigate that caveat from stale memory of "torch was never
