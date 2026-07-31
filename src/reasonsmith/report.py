@@ -24,7 +24,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from reasonsmith.spec import Pack, Requirement
+from reasonsmith.spec import Pack, Requirement, normalize_scope
 from reasonsmith.sut import SystemUnderTest, _validate_capability_collection
 from reasonsmith.verdict import Strength, Verdict
 
@@ -349,51 +349,6 @@ class ConformanceReport:
         return json.dumps(self.to_dict(), indent=indent, default=str)
 
 
-def _normalize_scope(value: Any) -> str:
-    """Normalize a regulatory class for comparison: surrounding whitespace and case, nothing else.
-
-    Deliberately not a fuzzy match. `high-risk` and `high_risk` are different strings and stay
-    different: guessing that two spellings mean the same class would let a run silently answer
-    a duty it was never told applies. What a caller wrote is compared to what a pack declares,
-    and a value that matches nothing is refused by `_validate_declared_scope` rather than
-    quietly turning every class-limited duty not applicable.
-    """
-    if value is None:
-        return ""
-    if not isinstance(value, str):
-        raise TypeError(
-            f"a regulatory class must be a string or None, got {type(value).__name__}: {value!r}"
-        )
-    return value.strip().lower()
-
-
-def _validate_declared_scope(pack: Pack, system_scope: str | None) -> None:
-    """Refuse a declared class no requirement in this pack is limited to.
-
-    Only a violation exits non-zero, so a misspelled class would otherwise turn every
-    class-limited duty in the pack not applicable and end in a clean run indistinguishable
-    from a legitimate out-of-class one. The pack is the only list of classes that means
-    anything here, so the check is against that list and the error names both the value given
-    and what would have been accepted.
-    """
-    declared = _normalize_scope(system_scope)
-    if not declared:
-        return
-    accepted = sorted({_normalize_scope(req.scope) for req in pack.requirements if req.scope})
-    if declared in accepted:
-        return
-    known = (
-        ", ".join(repr(s) for s in accepted)
-        if accepted
-        else "none — no requirement in this pack is limited to a regulatory class"
-    )
-    raise ValueError(
-        f"Declared system scope {system_scope!r} is not a regulatory class any requirement in "
-        f"pack {pack.id!r} is limited to. Accepted: {known}. Classes are compared after "
-        "trimming surrounding whitespace and lowercasing, and are not otherwise guessed at."
-    )
-
-
 def analyze_unattainable(req: Requirement, sut: SystemUnderTest) -> tuple[bool, tuple[str, ...]]:
     """Perform the unattainable analysis for a requirement against a SUT.
 
@@ -477,7 +432,9 @@ def evaluate_requirement(
     class is not that class, the duty does not reach this system and the result is
     NOT_APPLICABLE with no strength, because nothing about the system was checked. The class
     is never inferred — an undeclared system is not silently treated as in scope, and the
-    result says which of the two it was.
+    result says which of the two it was. A declared class outside `REGULATORY_CLASSES` is
+    refused rather than answered, here as well as in `check_conformance`, so a caller reaching
+    this function directly gets the same guarantee.
 
     If the adapter's capability set does not cover the required signals, returns UNATTAINABLE
     without executing the SUT. Otherwise `records` is used as the decision trace; when it is
@@ -487,9 +444,10 @@ def evaluate_requirement(
     if system_scope is None:
         system_scope = getattr(sut, "system_scope", getattr(sut, "declared_scope", None))
 
+    sys_scope_norm = normalize_scope(system_scope, "declared system scope")
+
     if req.scope:
-        req_scope_norm = _normalize_scope(req.scope)
-        sys_scope_norm = _normalize_scope(system_scope)
+        req_scope_norm = normalize_scope(req.scope)
         if not sys_scope_norm or sys_scope_norm != req_scope_norm:
             clause = f"{req.source_document} {req.article_clause}"
             desc = f"declared as {system_scope!r}" if system_scope else "undeclared"
@@ -561,17 +519,17 @@ def check_conformance(
     run the system" a property of the code rather than of the order the requirements happen to
     appear in.
 
-    A declared regulatory class this pack does not know is refused before any of that, so a
-    misspelling cannot pass for a system that is simply out of scope.
+    A declared class outside `REGULATORY_CLASSES` is refused before any of that, so a
+    misspelling cannot pass for a system that is simply out of scope. A class the vocabulary
+    knows but this pack does not target is not an error: the system is genuinely out of scope
+    for those duties, and they are reported not applicable as a declared mismatch.
     """
     if system_scope is None:
         system_scope = getattr(sut, "system_scope", getattr(sut, "declared_scope", None))
-    _validate_declared_scope(pack, system_scope)
-
-    sys_norm = _normalize_scope(system_scope)
+    sys_norm = normalize_scope(system_scope, "declared system scope")
     eval_plan = []
     for req in pack.requirements:
-        req_norm = _normalize_scope(req.scope)
+        req_norm = normalize_scope(req.scope)
         applicable = not req_norm or (bool(sys_norm) and sys_norm == req_norm)
         if not applicable:
             eval_plan.append((req, False, False, ()))

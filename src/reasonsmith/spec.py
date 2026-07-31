@@ -12,7 +12,7 @@ from __future__ import annotations
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 VALID_FORMALISMS = ("record", "temporal", "logical")
 PACKS_DIR = Path(__file__).parent / "packs"
@@ -38,6 +38,54 @@ REQUIREMENT_FIELDS = (
 )
 
 
+#: The regulatory classes this tool knows how to name, as a fixed vocabulary rather than
+#: whatever strings a pack or a caller happens to write. Both sides of the comparison are
+#: checked against this list, so a misspelling is refused where it is written instead of
+#: silently never matching: a pack typo would leave a duty unreachable for every system, and a
+#: caller typo would turn every class-limited duty not applicable in a run that still exits
+#: clean. An empty class is not a member — it means "not class-limited" on a requirement and
+#: "undeclared" on a system, which are absences rather than classes.
+REGULATORY_CLASSES = (
+    "prohibited",
+    "high-risk",
+    "limited-risk",
+    "minimal-risk",
+    "general-purpose",
+)
+
+
+def normalize_scope(value: Any, what: str = "regulatory class") -> str:
+    """Normalize a regulatory class for comparison and refuse one outside the vocabulary.
+
+    Normalization is surrounding whitespace and letter case, and nothing else. `high-risk` and
+    `high_risk` are different strings and stay different: guessing that two spellings mean the
+    same class would let a run answer a duty it was never told applies. A value that is not a
+    member of `REGULATORY_CLASSES` is refused here, naming what was given and what would have
+    been accepted, rather than being carried forward as a class nothing can ever match.
+
+    Returns "" for None and for the empty string, which mean "not class-limited" on a
+    requirement and "undeclared" on a system.
+    """
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise TypeError(
+            f"a {what} must be a string or None, got {type(value).__name__}: {value!r}"
+        )
+    normalized = value.strip().lower()
+    if not normalized:
+        return ""
+    if normalized not in REGULATORY_CLASSES:
+        raise ValueError(
+            f"{value!r} is not a known {what}. Accepted: "
+            f"{', '.join(repr(c) for c in REGULATORY_CLASSES)}, or leave it unset for a "
+            "requirement that is not class-limited or a system whose class is undeclared. "
+            "Classes are compared after trimming surrounding whitespace and lowercasing, and "
+            "are not otherwise guessed at."
+        )
+    return normalized
+
+
 @dataclass(frozen=True)
 class Requirement:
     """A single regulatory or governance requirement with signal dependencies.
@@ -46,7 +94,8 @@ class Requirement:
     requirement to be checkable at all.
     `binding` indicates whether this duty is a legally binding obligation (true) or an
     interpretive recital/guidance item (false). `scope` records any regulatory class the duty
-    is limited to (e.g. 'high-risk'); empty means the duty is not class-limited.
+    is limited to; empty means the duty is not class-limited, and anything else must be a
+    member of `REGULATORY_CLASSES`.
 
     Neither field has a default, here or in the loader: defaulting a missing `binding` to true
     would silently promote an unclassified item to a legal obligation, and defaulting it to
@@ -71,6 +120,10 @@ class Requirement:
             raise ValueError(f"Requirement {self.id!r}: field 'binding' must be a boolean")
         if not isinstance(self.scope, str):
             raise ValueError(f"Requirement {self.id!r}: field 'scope' must be a string")
+        try:
+            normalize_scope(self.scope)
+        except ValueError as exc:
+            raise ValueError(f"Requirement {self.id!r}: field 'scope': {exc}") from exc
         if self.formalism not in VALID_FORMALISMS:
             raise ValueError(
                 f"Invalid formalism {self.formalism!r}; must be one of {VALID_FORMALISMS}"

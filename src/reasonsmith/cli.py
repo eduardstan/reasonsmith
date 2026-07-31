@@ -22,7 +22,7 @@ import sys
 
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.report import check_conformance
-from reasonsmith.spec import list_packs, load_pack
+from reasonsmith.spec import REGULATORY_CLASSES, list_packs, load_pack
 from reasonsmith.verdict import Verdict
 
 
@@ -38,7 +38,7 @@ def main(args: list[str] | None = None) -> int:
             "     the report for them.\n"
             "  2  at least one requirement is violated.\n"
             "  1  usage or input error (unknown pack, unreadable system log, or a\n"
-            "     --system-scope naming a class the pack limits no requirement to)."
+            "     --system-scope that is not a known regulatory class)."
         ),
     )
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")
@@ -66,11 +66,11 @@ def main(args: list[str] | None = None) -> int:
         "--scope",
         default=None,
         help=(
-            "Declared regulatory classification of the system (e.g. high-risk). Requirements "
-            "limited to another class, or to any class when this is left undeclared, are "
-            "reported not applicable rather than assumed to apply. Must name a class the "
-            "chosen pack actually limits a requirement to, compared after trimming whitespace "
-            "and lowercasing; anything else is a usage error rather than a clean run"
+            "Declared regulatory classification of the system, one of: "
+            f"{', '.join(REGULATORY_CLASSES)}. Requirements limited to another class, or to "
+            "any class when this is left undeclared, are reported not applicable rather than "
+            "assumed to apply. Compared after trimming whitespace and lowercasing; a value "
+            "outside that list is a usage error rather than a clean run"
         ),
     )
     check_parser.add_argument(

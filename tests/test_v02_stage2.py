@@ -624,7 +624,7 @@ class TestDefinitionOfDoneEndToEnd:
         assert "NOT APPLICABLE" in captured.out
         assert "declared scope: undeclared" in captured.out
 
-    def test_cli_rejects_a_scope_the_pack_does_not_know(
+    def test_cli_rejects_a_scope_outside_the_vocabulary(
         self, jsonl_fixture_file: Path, capsys
     ):
         """A typo must not pass for an out-of-class run that exits clean.
@@ -649,6 +649,26 @@ class TestDefinitionOfDoneEndToEnd:
         assert "CONFORMANCE REPORT" not in captured.out
         assert "'hihg-risk'" in captured.err
         assert "'high-risk'" in captured.err
+
+    def test_cli_accepts_a_known_class_the_pack_does_not_target(
+        self, jsonl_fixture_file: Path, capsys
+    ):
+        """limited-risk is a real class, so the run answers rather than refusing."""
+        rc = cli_main(
+            [
+                "check",
+                "--system",
+                str(jsonl_fixture_file),
+                "--pack",
+                "eu_ai_act",
+                "--system-scope",
+                "limited-risk",
+            ]
+        )
+        assert rc == 0
+        captured = capsys.readouterr()
+        assert "declared scope: limited-risk" in captured.out
+        assert "NOT APPLICABLE" in captured.out
 
     def test_cli_exits_zero_when_findings_are_unattainable(
         self, jsonl_fixture_file: Path, capsys
