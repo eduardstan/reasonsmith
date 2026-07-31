@@ -25,6 +25,11 @@ What a reader must not break:
     operator that rounds differently — to make a property come out `unsat` for a reason the system
     does not implement. One agreed witness is not a proof of equivalence, but it is what catches
     the divergence before it is reported as `proved`.
+  - A `proved` verdict resting on Real arithmetic MUST carry `REAL_ARITHMETIC_LIMIT`.
+    Why this matters: the solver reasons over exact rationals while the system runs float64, so
+    `t = a + b; d = t - b` proves `d == a` and yet returns 0.10000000000000003 for a=0.1, b=0.2.
+    Encoding IEEE floats would be a different engine; naming the abstraction on the result that
+    makes the claim is what stops `proved` from being read as more than it is.
   - A counterexample model produced by Z3 MUST be verified to reproduce on the system under test
     before reporting `VIOLATED` at strength `PROVED`, and the evidence summary must say what that
     verification actually ran against.
@@ -52,7 +57,14 @@ from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
 
-__all__ = ["ProvedEngine", "UnsupportedConstructError"]
+__all__ = ["REAL_ARITHMETIC_LIMIT", "ProvedEngine", "UnsupportedConstructError"]
+
+#: The limit every proof touching a `real` carries, stated on the result that makes the claim.
+REAL_ARITHMETIC_LIMIT = (
+    "Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the "
+    "system, so this holds over the rationals and not over the arithmetic the system runs. A "
+    "property that depends on rounding can be proved here and still fail in execution."
+)
 
 
 def _declare(name: str, var_types: dict[str, str], suffix: str = "") -> Any:
@@ -75,12 +87,19 @@ class _Scope:
         self.var_types: dict[str, str] = dict(var_types or {})
         self.current: dict[str, Any] = {}
         self.inputs: dict[str, Any] = {}
+        self.uses_real_arithmetic = False
         self._versions: dict[str, int] = {}
+
+    def note_sort(self, expr: Any) -> Any:
+        """Record that the encoding reached the Real sort, and return `expr` unchanged."""
+        if isinstance(expr, z3.ArithRef) and expr.is_real():
+            self.uses_real_arithmetic = True
+        return expr
 
     def read(self, name: str) -> Any:
         """Return the constant holding the current value of `name`, declaring it as a free input."""
         if name not in self.current:
-            const = _declare(name, self.var_types)
+            const = self.note_sort(_declare(name, self.var_types))
             self.current[name] = const
             self.inputs[name] = const
         return self.current[name]
@@ -89,7 +108,7 @@ class _Scope:
         """Bind `name` to a fresh constant and return it."""
         version = self._versions.get(name, 0) + 1
         self._versions[name] = version
-        const = _declare(name, self.var_types, f"#{version}")
+        const = self.note_sort(_declare(name, self.var_types, f"#{version}"))
         self.current[name] = const
         return const
 
@@ -146,7 +165,7 @@ def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
         if isinstance(val, int):
             return z3.IntVal(val)
         if isinstance(val, float):
-            return z3.RealVal(val)
+            return scope.note_sort(z3.RealVal(val))
         if isinstance(val, str):
             return z3.StringVal(val)
         raise UnsupportedConstructError(f"Unsupported constant type {type(val).__name__}: {val!r}")
@@ -176,9 +195,9 @@ def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
         if isinstance(node.op, ast.Mult):
             return left * right
         if isinstance(node.op, ast.Div):
-            return _to_real(left) / _to_real(right)
+            return scope.note_sort(_to_real(left) / _to_real(right))
         if isinstance(node.op, ast.Mod):
-            return _python_mod(left, right)
+            return scope.note_sort(_python_mod(left, right))
         raise UnsupportedConstructError(f"Unsupported binary operator: {type(node.op).__name__}")
 
     if isinstance(node, ast.BoolOp):
@@ -585,6 +604,11 @@ class ProvedEngine:
             )
 
         if check_res == z3.unsat:
+            proof_details: dict[str, Any] = {"solver": "z3", "result": "unsat"}
+            proof_limits = ""
+            if scope.uses_real_arithmetic:
+                proof_limits = REAL_ARITHMETIC_LIMIT
+                proof_details["limits"] = proof_limits
             return RequirementResult(
                 requirement_id=req.id,
                 source_clause=clause,
@@ -594,8 +618,9 @@ class ProvedEngine:
                 evidence_summary=(
                     f"Proved for all inputs: formal solver verified requirement {req.spec!r} "
                     "holds across all valid inputs under system constraints."
+                    + (f" {proof_limits}" if proof_limits else "")
                 ),
-                details={"solver": "z3", "result": "unsat"},
+                details=proof_details,
                 binding=req.binding,
                 scope=req.scope,
             )

@@ -457,6 +457,34 @@ def test_encoding_disagreeing_with_the_interpreter_is_not_a_proof(monkeypatch):
     assert "encoding_mismatch" in res.details
 
 
+def test_a_proof_over_reals_says_it_is_a_proof_over_the_rationals():
+    """`real` is exact to the solver and float64 to the system; the verdict must name that gap."""
+    reals = RulesAdapter(
+        rules=["t = a + b", "d = t - b"],
+        variables={"a": "real", "b": "real", "t": "real", "d": "real"},
+    )
+
+    res = evaluate_requirement(_logical_req(spec="d == a", requires=("a", "b", "d")), reals)
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+    assert res.details["limits"] == proved.REAL_ARITHMETIC_LIMIT
+    assert proved.REAL_ARITHMETIC_LIMIT in res.evidence_summary
+    # The limit is not decoration: the system's own float64 arithmetic falsifies the property.
+    decided = reals.decide({"a": 0.1, "b": 0.2})
+    assert decided["d"] != decided["a"]
+
+    # A proof with no real arithmetic in it carries no such limit.
+    integers = RulesAdapter(
+        rules=["total = x + y"], variables={"x": "int", "y": "int", "total": "int"}
+    )
+    res = evaluate_requirement(
+        _logical_req(spec="total - y == x", requires=("x", "y", "total")), integers
+    )
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+    assert "limits" not in res.details
+
+
 def test_rules_undefined_on_the_witness_are_named_as_such():
     """A divisor the solver may zero is a missing constraint, not an encoding disagreement."""
     sut = RulesAdapter(
