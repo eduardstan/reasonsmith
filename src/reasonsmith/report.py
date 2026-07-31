@@ -19,12 +19,11 @@ Every emitted report carries explicit limits on its scope and guarantees.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
 from reasonsmith.spec import Pack, Requirement
-from reasonsmith.sut import SystemUnderTest
+from reasonsmith.sut import SystemUnderTest, _validate_capability_collection
 from reasonsmith.verdict import Strength, Verdict
 
 LIMITS = (
@@ -234,14 +233,7 @@ def analyze_unattainable(req: Requirement, sut: SystemUnderTest) -> tuple[bool, 
         is_unattainable is True.
     """
     declared = sut.capabilities()
-    # A bare string is iterable, so set("reasons") reads every character as a declared signal.
-    # Anything else iterable is a collection of names; matching BaseSUT.__init__ keeps a
-    # third-party system free to return dict_keys or a generator expression.
-    if isinstance(declared, (str, bytes)) or not isinstance(declared, Iterable):
-        raise TypeError(
-            f"{type(sut).__name__}.capabilities() must return a collection of signal names, "
-            f"got {type(declared).__name__}"
-        )
+    _validate_capability_collection(declared, f"{type(sut).__name__}.capabilities() must return")
     missing = tuple(sorted(set(req.requires) - set(declared)))
     return bool(missing), missing
 

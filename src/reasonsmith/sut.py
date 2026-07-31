@@ -9,9 +9,38 @@ relies on the system explicitly stating what signals it can emit.
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Optional, Protocol, runtime_checkable
+from collections.abc import Iterable, Mapping
+from typing import Any, Optional, Protocol, runtime_checkable
 
 from reasonsmith.spec import load_pack
+
+
+def _validate_capability_collection(declared: Any, subject: str) -> None:
+    """Refuse anything that is not a plain collection of enabled signal names.
+
+    Shared by the two places capabilities cross into reasonsmith — BaseSUT.__init__ and the
+    unattainable analysis — because a system whose declaration is misread there is judged
+    against signals it never claimed, in either direction.
+
+    A bare string is iterable, so set("reasons") would declare seven single-character
+    capabilities. A mapping is iterable over its keys, so a capability map would declare the
+    signals it marks False as available — the overclaim this tool exists to prevent.
+    """
+    if isinstance(declared, (str, bytes)):
+        raise TypeError(
+            f"{subject} a collection of signal names, not a single string; "
+            f"pass {{{declared!r}}} to declare one signal"
+        )
+    if isinstance(declared, Mapping):
+        raise TypeError(
+            f"{subject} the enabled signal names, not a capability map; got "
+            f"{type(declared).__name__}, whose False-valued entries would be read as declared. "
+            "Pass the enabled names alone, e.g. {name for name, on in capabilities.items() if on}"
+        )
+    if not isinstance(declared, Iterable):
+        raise TypeError(
+            f"{subject} a collection of signal names, got {type(declared).__name__}"
+        )
 
 
 @runtime_checkable
@@ -31,14 +60,7 @@ class BaseSUT:
     """Convenience base class or reference helper for SUT implementations."""
 
     def __init__(self, declared_capabilities: set[str] | Iterable[str]):
-        # A bare string is iterable, so set("reasons") would silently declare six
-        # single-character capabilities and make every real requirement look
-        # unattainable for the wrong reason.
-        if isinstance(declared_capabilities, str):
-            raise TypeError(
-                "declared_capabilities must be a collection of signal names, not a single string; "
-                f"pass {{{declared_capabilities!r}}} to declare one signal"
-            )
+        _validate_capability_collection(declared_capabilities, "declared_capabilities must be")
         self._capabilities = set(declared_capabilities)
         for signal in self._capabilities:
             if not isinstance(signal, str) or not signal.strip():

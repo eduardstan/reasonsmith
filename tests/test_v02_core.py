@@ -316,6 +316,13 @@ def test_base_sut_rejects_a_bare_capability_string():
         BaseSUT("per_decision_reason_string")
     assert BaseSUT({"a", "b"}).capabilities() == {"a", "b"}
     assert BaseSUT(["a"]).capabilities() == {"a"}
+    assert BaseSUT({"a": None, "b": None}.keys()).capabilities() == {"a", "b"}
+
+
+def test_base_sut_rejects_a_capability_map():
+    """Iterating a map yields its keys, so a signal switched off would read as declared."""
+    with pytest.raises(TypeError, match="not a capability map"):
+        BaseSUT({"per_decision_reason_string": False, "model_version": True})
 
 
 def test_reference_systems_declare_the_packs_signals():
@@ -448,6 +455,26 @@ def test_unattainable_analysis_rejects_a_bad_capabilities_return():
         False,
         (),
     )
+
+
+def test_unattainable_analysis_rejects_a_capability_map():
+    """A map is iterable over its keys, so a signal declared unavailable would read as declared.
+
+    `{"per_decision_reason_string": False}` says the system cannot give reasons. Reading its
+    keys would report the requirement checkable and judge it against the trace instead of
+    reporting it unattainable — the overclaim direction this analysis exists to close.
+    """
+
+    class MappingCapabilities:
+        def capabilities(self):
+            return {"per_decision_reason_string": False, "model_version": True}
+
+        def decisions(self):
+            return []
+
+    req = _requirement(requires=("per_decision_reason_string",))
+    with pytest.raises(TypeError, match="not a capability map"):
+        analyze_unattainable(req, MappingCapabilities())
 
 
 def test_no_reasons_system_against_the_whole_table7_pack():
