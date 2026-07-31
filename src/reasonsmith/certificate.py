@@ -30,6 +30,7 @@ What the probe establishes and what it does not:
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 
 from nesyarena.ir import Atom, GroundProgram
@@ -167,8 +168,10 @@ class Certificate:
         }
 
     def to_json(self, indent: int | None = None) -> str:
-        import json
-        return json.dumps(self.to_dict(), indent=indent)
+        """JSON for `to_dict`. Values outside JSON's own types are stringified exactly as
+        `render` prints them, so an adapter-supplied value of any type serialises rather than
+        raising."""
+        return json.dumps(self.to_dict(), indent=indent, default=str)
 
 
 

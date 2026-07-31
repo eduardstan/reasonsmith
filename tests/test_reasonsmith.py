@@ -4,6 +4,8 @@ Nothing here asserts wording, branding or presentation. Where a check needs a di
 present it asserts that the module's own constant appears, not what that constant says.
 """
 
+import json
+
 import pytest
 from nesyarena.adapters.base import ReferenceAdapter
 from nesyarena.ir import Atom, GroundProgram, Rule
@@ -328,8 +330,6 @@ def test_the_whole_report_runs():
 
 
 def test_record_json_roundtrip_preserves_incomplete_status_and_missing_fields():
-    import json
-
     withheld = {k: v for k, v in FULL.items() if k != "audit_ids"}
     rec = evidence.emit(ECOA, "APP-1", withheld)
 
@@ -348,9 +348,37 @@ def test_record_json_roundtrip_preserves_incomplete_status_and_missing_fields():
     assert loaded["limits"] == evidence.LIMITS
 
 
-def test_certificate_json_roundtrip_preserves_verdict_and_reasons():
-    import json
+def test_record_json_cites_the_table_7_row_the_human_output_cites():
+    rec = evidence.emit(ECOA, "APP-1", FULL)
+    row = evidence.duty(ECOA)["table7_row"]
+    assert rec.to_dict()["table7_row"] == row
+    assert json.loads(rec.to_json())["table7_row"] == row
 
+
+def test_record_json_stringifies_values_json_has_no_type_for():
+    rec = evidence.emit(ECOA, "APP-1", {**FULL, "audit_ids": {"a", "b"}},
+                        attachments={"model": object()})
+    loaded = json.loads(rec.to_json())
+    assert loaded["fields"]["audit_ids"] == str(rec.fields["audit_ids"])
+    assert loaded["attachments"]["model"] == str(rec.attachments["model"])
+
+
+def test_record_dict_does_not_hand_out_the_module_schema_to_mutate():
+    rec = evidence.emit(ECOA, "APP-1", FULL)
+    payload = rec.to_dict()
+    payload["table7_source"]["paper"] = "REDACTED"
+    payload["table7_source"]["columns"].append("invented")
+    payload["symbolic_artifacts"].append("invented")
+    payload["lifecycle_placement"].clear()
+
+    assert rec.to_dict() == evidence.emit(ECOA, "APP-1", FULL).to_dict()
+    assert evidence.SOURCE["paper"] != "REDACTED"
+    assert "invented" not in evidence.SOURCE["columns"]
+    assert "invented" not in evidence.duty(ECOA)["symbolic_artifacts"]
+    assert evidence.duty(ECOA)["lifecycle_placement"]
+
+
+def test_certificate_json_roundtrip_preserves_verdict_and_reasons():
     case = credit_case()
     cert = certify_case(case, ReferenceAdapter(TopK(1)))
 
