@@ -395,6 +395,7 @@ def test_certificate_json_roundtrip_preserves_verdict_and_reasons():
 
 
 
+<<<<<<< HEAD
 # ------------------------------------ EU AI Act Art. 13 (Table 7 row 1) ----
 
 
@@ -474,4 +475,46 @@ def test_art12_record_is_complete_with_log_from_certificate():
     case, cert = art12_case_and_cert(ReferenceAdapter(TopK(1)))
     record = evidence.emit("eu_ai_act_art12_record_keeping", case.case_id,
                            art12_evidence_fields(case, cert))
+    assert record.complete
+
+
+# ------------------------------------------ FDA GMLP (Table 7 row 5) ----
+
+
+def fda_case_and_certs():
+    from reasonsmith.demo import CLINICAL_QUERY, CLINICAL_REASONS
+
+    case = build_case("PT-0731", "typical", CLINICAL_QUERY, CLINICAL_REASONS, 0.86)
+    return (case,
+            certify_case(case, ReferenceAdapter(TopK(1))),
+            certify_case(case, ReferenceAdapter(ExactWMC())))
+
+
+def test_fda_design_history_chain_links_requirement_test_and_artifact():
+    from reasonsmith.demo import fda_evidence_fields
+
+    case, cert_deployed, cert_exact = fda_case_and_certs()
+    links = fda_evidence_fields(case, cert_deployed, cert_exact)["design_history_links"]
+    assert "REQ-TRIAGE-07" in links
+    assert "VER-TRIAGE-07" in links
+    assert case.case_id in links                       # the artifact is this decision's certificate
+    assert cert_deployed.verdict in links              # filed with its real verdict, not a pass
+
+
+def test_fda_verification_log_carries_both_measured_verdicts():
+    from reasonsmith.demo import fda_evidence_fields
+
+    case, cert_deployed, cert_exact = fda_case_and_certs()
+    log = fda_evidence_fields(case, cert_deployed, cert_exact)["verification_logs"]
+    assert cert_deployed.verdict == "FAIL"
+    assert cert_exact.verdict == "PASS"
+    assert "verdict FAIL" in log and "verdict PASS" in log
+
+
+def test_fda_record_is_complete_with_verdicts_from_certificates():
+    from reasonsmith.demo import fda_evidence_fields
+
+    case, cert_deployed, cert_exact = fda_case_and_certs()
+    record = evidence.emit("fda_gmlp_samd", case.case_id,
+                           fda_evidence_fields(case, cert_deployed, cert_exact))
     assert record.complete

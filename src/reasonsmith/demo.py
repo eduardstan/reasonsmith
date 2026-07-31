@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 """The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, and EU AI Act Art. 12.
+=======
+"""The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, and FDA GMLP for SaMD.
+>>>>>>> 3b9300b (feat(reasonsmith): add FDA GMLP SaMD demo (Table 7 row 5))
 
 What this module is for:
   Executes end-to-end demonstrations comparing Table 7 evidence records against reason-deletion
@@ -394,6 +398,7 @@ def stability_demo() -> str:
     return "\n".join(out)
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 # --------------------------------------------------- the key finding, as a page ----
 
@@ -860,6 +865,85 @@ def art12_demo() -> str:
     return "\n".join(out)
 
 
+# ------------------------------------------ FDA GMLP: SaMD transparency ----
+
+def fda_evidence_fields(case: Case, cert_deployed, cert_exact) -> dict:
+    """The three row-5 fields for one design history file entry.
+
+    GMLP asks for a traceable chain from requirement to test to artifact. Here the chain closes
+    mechanically: the requirement (no protocol rule silently dropped) is machine-checkable, the
+    test is the certificate, and the artifact is the certificate's own output — the first row
+    whose verification log can be produced by the tool rather than about it. `change_control`
+    records what the PCCP boundary means in measured terms: moving the engine off top-1 changes
+    the stated reasons from one to all five, which is exactly the kind of change a PCCP must
+    pre-specify.
+    """
+    links = "\n".join([
+        "REQ-TRIAGE-07 \"every withheld fast-track states each protocol rule that fired\"",
+        "  -> test VER-TRIAGE-07: reason-deletion certificate on the deployed engine, "
+        "verdict must be PASS",
+        f"  -> artifact: certificate for decision {case.case_id} "
+        f"(engine {cert_deployed.adapter_name}, verdict {cert_deployed.verdict}) — attached",
+    ])
+    verification = "\n".join(
+        f"engine {c.adapter_name}: verdict {c.verdict} "
+        f"({len(c.deleted)} of {len(c.verdicts)} reasons deleted, "
+        f"value gap {c.value_gap:+.6f})"
+        for c in (cert_deployed, cert_exact))
+    change = "; ".join([
+        "PCCP-2026-02 names the proof-selection setting a controlled parameter",
+        f"measured effect of moving off top-1: stated reasons {len(cert_deployed.live)} -> "
+        f"{len(cert_exact.live)} of {len(cert_exact.verdicts)}, engine value "
+        f"{cert_deployed.engine_value:.6f} -> {cert_exact.engine_value:.6f}",
+        "outside the currently approved PCCP boundary: premarket submission required before "
+        "deployment",
+    ])
+    return {
+        "design_history_links": links,
+        "verification_logs": verification,
+        "change_control": change,
+    }
+
+
+def fda_demo() -> str:
+    """FDA GMLP end to end: one SaMD triage decision in the design history file, Table 7 row 5."""
+    out = [_head("8. FDA GMLP — TRANSPARENCY FOR SaMD (Table 7 row 5)")]
+    out += ["",
+            "The clinical triage model is software as a medical device, and GMLP wants the design "
+            "history file to",
+            "trace each requirement to its test and its artifact. The deployed engine keeps the "
+            "single best proof;",
+            "exact inference is the pre-specified alternative sitting behind the PCCP boundary. "
+            "Both are certified."]
+    case = build_case("PT-0731", "typical", CLINICAL_QUERY, CLINICAL_REASONS, 0.86)
+    cert_deployed = certify_case(case, ReferenceAdapter(TopK(1)))
+    cert_exact = certify_case(case, ReferenceAdapter(ExactWMC()))
+    record = emit("fda_gmlp_samd", case.case_id,
+                  fda_evidence_fields(case, cert_deployed, cert_exact),
+                  attachments={"reason-deletion certificate (deployed engine)":
+                               cert_deployed.render()})
+    out += ["", record.render()]
+    out += ["",
+            "The chain is honest because the artifact fails the requirement it is filed under: "
+            "VER-TRIAGE-07 demands",
+            "PASS, the deployed engine's certificate says FAIL, and the record carries that "
+            "verdict instead of",
+            "re-running until something passes. A design history file that only ever contains "
+            "passing artifacts is",
+            "not traceability, it is curation. The change-control field is the second half of the "
+            "same discipline:",
+            "the PCCP boundary is stated as a measured delta — one stated reason versus five — "
+            "not as a parameter",
+            "name, so a reviewer can see what the boundary costs the patient before deciding "
+            "whether to cross it.",
+            "",
+            "LIMITS: REQ/VER/PCCP identifiers are stand-ins for a real quality system; what "
+            "transfers is that the",
+            "verification log and the change delta are measured by the certificate, not asserted "
+            "about it."]
+    return "\n".join(out)
+
+
 def main() -> str:
     parts = [
         _head("0. TRACEABILITY — every schema entry against the Table 7 text it came from"),
@@ -872,6 +956,7 @@ def main() -> str:
         stability_demo(),
         art13_demo(),
         art12_demo(),
+        fda_demo(),
     ]
     return "\n".join(parts)
 
