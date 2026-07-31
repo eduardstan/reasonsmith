@@ -33,19 +33,18 @@ All three must pass cleanly with zero errors or warnings. Continuous integration
 
 | Category | Status | Details |
 |---|---|---|
-| **What is built** | Complete (v0.2 Core) | The module inventory lives in the [`README.md`](README.md) architecture table — read it there rather than here. Beyond the modules: the HTML report is published to GitHub Pages by `.github/workflows/pages.yml`, and demonstrations exist for ECOA credit (Table 7 row 4) and GDPR clinical (Table 7 row 3). |
-| **What is next** | Active / Open Work | Demonstrations and engine integration for remaining Table 7 duties (**Issue 6**) and expanded temporal monitor rule sets. |
+| **What is built** | Complete (v0.2 Core) | The module inventory lives in the [`README.md`](README.md) architecture table — read it there rather than here. Beyond the modules: the HTML report is published to GitHub Pages by `.github/workflows/pages.yml`, and end-to-end demonstrations exist for all six Table 7 rows — the `demo.py` line of that same architecture table lists them. |
+| **What is next** | Active / Open Work | The `probed` engine and expanded temporal monitor rule sets — see the open work listed below. |
 | **Deliberately NOT done** | Out of Scope | Web/GUI dashboards — the `--html` report is one static offline file, not a served application — reimplementing `nesyarena` IR or oracle engines, generating automated legal opinions, or making un-hedged legal compliance guarantees. |
 
 ### Concrete Open Work for Contributors
 
-If you want to contribute, a great place to start is **Issue 6: End-to-end demonstrations for remaining Table 7 duties**. Specifically:
-- **Row 1:** EU AI Act Art. 13 transparency and information to deployers.
-- **Row 2:** EU AI Act Art. 12 record-keeping (event logging).
-- **Row 5:** FDA GMLP Software as a Medical Device (SaMD) total product lifecycle transparency.
-- **Row 6:** NIST AI RMF 1.0 continuous risk monitoring logs.
+The demonstrations **Issue 6** asked for — rows 1, 2, 5 and 6 — have landed, so every Table 7 row now has one. What is still open:
 
-Building an end-to-end demo script or extending an engine for one of these duties is a concrete, high-impact contribution.
+- **The `probed` engine.** `report.py:SUPPORTED_FORMALISMS` lists the formalisms an engine actually exists for. A requirement whose formalism none covers is reported not evaluated rather than judged by a weaker check, and the list is widened when the engine lands, not before.
+- **Wider temporal monitor rule sets** for the `observed` rtamt engine.
+
+Extending an engine, rather than adding another demo, is now the concrete, high-impact contribution.
 
 ## Standing Rules for Changes
 

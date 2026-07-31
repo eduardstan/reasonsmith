@@ -7,6 +7,7 @@ what the tool would print. Regenerate any block by running the command shown abo
   `fm/rs-land-contributor-demos`), where the demo transcript was regenerated over the four Table 7
   demos added on that branch; the two CLI blocks are unchanged from commit
   `ea4bf3711abbd6922dcf4f1448cb177807bbe3d6` (branch `fm/rs-readable-repo`) and reproduce at both
+  commits
 - **Environment:** Python 3.12.9, Linux, `nesyarena` at the commit `pyproject.toml` pinned when
   these transcripts were captured (`57720fa212834689692e171882272140f1d1fed7`); re-run since
   against the PyPI release `nesyarena==0.1.0` now pinned, byte-for-byte identical

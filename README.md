@@ -111,7 +111,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 | `src/reasonsmith/evidence.py` | Minimal evidence record emitter and missing field reporter |
 | `src/reasonsmith/certificate.py` | Reason-deletion certificates against exact inference oracle (`nesyarena`) |
 | `src/reasonsmith/conformance.py` | Table 19 checks, including stratified per-group evaluations |
-| `src/reasonsmith/demo.py` | End-to-end demonstration (ECOA/Reg B credit and GDPR Art. 22 clinical) |
+| `src/reasonsmith/demo.py` | End-to-end demonstration of all six Table 7 duties (EU AI Act Art. 13 and Art. 12, GDPR Art. 22 clinical, ECOA/Reg B credit, FDA GMLP SaMD, NIST AI RMF continuous monitoring) |
 | `src/reasonsmith/verdict.py` | Core lattice: evidence strength lattice (`unattainable < observed < probed < proved`) and verdict vocabulary |
 | `src/reasonsmith/spec.py` | Core requirement loader & specification structures from `packs/*.toml` |
 | `src/reasonsmith/sut.py` | System-under-test protocol — declared capability set and decision trace interface |
