@@ -1,7 +1,6 @@
 # Official Statutory Text Findings & Provenance Report
 
 ## Document Overview
-- **Target Deliverable Location:** `data/rs-legal-sources/report.md`
 - **Purpose:** Provide exact, verbatim statutory texts for Reasonsmith's regulation packs from official legal sources, along with citation metadata, retrieval timestamps, notes on statutory hierarchy, and verbatim operative demands.
 - **Date of Retrieval:** 2026-07-31
 

@@ -299,9 +299,9 @@ class TestRegulationPacks:
     @pytest.mark.parametrize("pack_name", ["eu_ai_act", "gdpr", "ecoa"])
     def test_pack_quotes_found_verbatim_in_legal_sources_report(self, pack_name: str):
         """Every requirement quote in the regulation packs must be found character-for-character
-        in data/rs-legal-sources/report.md.
+        in docs/legal-sources.md.
         """
-        report_path = Path("data/rs-legal-sources/report.md")
+        report_path = Path("docs/legal-sources.md")
         assert report_path.is_file(), f"Legal sources report missing at {report_path}"
         report_text = report_path.read_text(encoding="utf-8")
 
@@ -309,7 +309,7 @@ class TestRegulationPacks:
         for req in pack.requirements:
             assert req.verbatim_text in report_text, (
                 f"Requirement {req.id!r} in pack {pack_name!r} has verbatim_text not found "
-                f"verbatim in data/rs-legal-sources/report.md:\n{req.verbatim_text!r}"
+                f"verbatim in docs/legal-sources.md:\n{req.verbatim_text!r}"
             )
 
 
