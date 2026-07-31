@@ -5,9 +5,10 @@ This is the evidence artifact for reasonsmith's own claims: an environment was a
 demo was actually executed twice and diffed. Every number in this file is copied from a command's
 real output; the exact commands are given so a stranger can reproduce every one of them from
 reasonsmith commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` (branch `fm/rs-prove-it`), the commit
-every measurement below was taken at. Later commits on this branch that touch only `README.md` and
-this file leave all of it standing: nothing under `src/` or `tests/` changes, so the suites and the
-demo output do not either.
+every measurement below was taken at. Later commits on this branch that touch only `README.md`, this
+file, and the nesyarena dependency pin in `pyproject.toml` leave all of it standing: nothing under
+`src/` or `tests/` changes, and the repin is to a commit with the identical tree (see the repin note
+below), so the suites and the demo output do not either.
 
 ## Environment
 
@@ -22,7 +23,28 @@ demo output do not either.
 | pytest | 9.1.1 |
 | ruff | 0.16.1 |
 | reasonsmith | 0.1.0 (this repo, editable install), commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` |
-| nesyarena | 0.1.0.dev0, pinned commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` |
+| nesyarena | 0.1.0.dev0, pinned commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` (repinned to `57720fa212834689692e171882272140f1d1fed7`, see note below) |
+
+**Repin note (2026-07-31):** the measurements below were taken against nesyarena commit
+`fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec`. nesyarena's owner then rewrote its git history to strip
+AI co-authorship trailers, which gave every commit a new hash: that old commit is no longer
+reachable from nesyarena's default branch `main`, so `pip install` can no longer resolve it from
+there and `pyproject.toml` now pins `57720fa212834689692e171882272140f1d1fed7` instead, which is
+reachable from `main`. (The old commit currently survives on the temporary rollback ref
+`refs/heads/backup/pre-coauthor-strip`, which is expected to be deleted; nothing here relies on it —
+reconstructibility stands on `main` alone.) The hash changed, the content did not: both commits'
+`git cat-file -p <sha> | grep tree` report the identical tree
+`d050c86ef83b01bac972a0af3afa6f629a4a9972`, verified directly against both commits before this note
+was written. The figures below are still the original run's, quoted unedited. What was re-run
+against the new pin is exactly this and nothing more: reasonsmith's own `pytest` suite (35 passed),
+`ruff check .` (no findings), and `python -m reasonsmith.demo` (561 lines, two runs, identical) —
+see "Full transcript"; none of those moved. Section 1's figures are nesyarena's *own* suite
+(`collected 107 items / 3 skipped`, `1 failed, 100 passed, 5 skipped, 4 errors`), measured under the
+old pin `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were
+**not** re-run against `57720fa212834689692e171882272140f1d1fed7`. They are expected to be unchanged
+because the two commits share the tree `d050c86ef83b01bac972a0af3afa6f629a4a9972` and so install
+identical content — but that is an expectation from tree identity, not a measurement. The old pin is
+kept in the table above for the historical record of what was actually run.
 
 ### Commands run to build it
 
@@ -35,7 +57,7 @@ pip install -e ".[dev]"                                   # reasonsmith + pinned
 # nesyarena's own suite at the exact pinned commit, its repo is cloned separately and checked
 # out to that commit, then its optional extras are installed into the same venv:
 git clone https://github.com/eduardstan/nesyarena /path/to/nesyarena-src
-cd /path/to/nesyarena-src && git checkout fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec
+cd /path/to/nesyarena-src && git checkout 57720fa212834689692e171882272140f1d1fed7  # was fdf0d5e..., same tree
 pip install -e ".[learning,reporting,dev]"   # torch, torchvision + pyyaml/matplotlib needed
                                               # only so tests/test_e6_findings.py can *collect*
 ```
@@ -333,7 +355,10 @@ reproduces every line, including the parts not quoted here (the full Table 7 tra
 section 0, the two perturbed-engine certificates in section 3 that both correctly `FAIL` a
 silently-truncating engine and an engine with an undeclared calibration factor, by different
 routes — the deletion probe catches the first, the value check against the exact oracle catches
-the second).
+the second). **Re-checked after the repin to nesyarena
+`57720fa212834689692e171882272140f1d1fed7` (2026-07-31):** `python -m reasonsmith.demo`, run twice
+against the new pin, still produces the same 561 identical lines, `pytest` still reports 35 passed
+and `ruff check .` still reports no findings — none of the figures above moved.
 
 ## What changed from the README's prior torch caveat
 

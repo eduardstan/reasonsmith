@@ -24,7 +24,7 @@ dependencies = [
     # public repository: `pip install -e .` therefore resolves it identically for a stranger and for
     # CI, and the certificate numbers stay reconstructible. Bump the SHA deliberately, never to a
     # branch name.
-    "nesyarena @ git+https://github.com/eduardstan/nesyarena@fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec",
+    "nesyarena @ git+https://github.com/eduardstan/nesyarena@57720fa212834689692e171882272140f1d1fed7",
 ]
 
 [project.optional-dependencies]
