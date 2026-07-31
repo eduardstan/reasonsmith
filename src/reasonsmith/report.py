@@ -595,7 +595,7 @@ class ConformanceReport:
                 )
 
             counterexample = r.details.get("counterexample")
-            if counterexample:
+            if counterexample and r.verdict == Verdict.VIOLATED:
                 ce_str = ", ".join(
                     f"{html.escape(str(k))}: {html.escape(str(v))}"
                     for k, v in counterexample.items()

@@ -10,8 +10,17 @@ What a reader must not break:
     `proved`.
     Why this matters: Never report `proved` from a solver result you did not obtain. Assuming an
     undecided or unmodelled property holds is the single overclaim this tool exists to prevent.
+  - The encoded premises MUST be checked satisfiable before `unsat` on the negated property is
+    read as a proof.
+    Why this matters: `unsat` from premises no input can satisfy proves every property and its
+    negation alike. A vacuous model is a modelling failure, so it is reported NOT EVALUATED.
+  - Rule assignments MUST be encoded in static single assignment form.
+    Why this matters: `logic()` describes a program executed statement by statement, so `score =
+    score + 10` reassigns. Encoding it as one equality per name turns reassignment into a
+    contradiction, which is the vacuous proof above wearing a different hat.
   - A counterexample model produced by Z3 MUST be verified to reproduce on the system under test
-    before reporting `VIOLATED` at strength `PROVED`.
+    before reporting `VIOLATED` at strength `PROVED`, and the evidence summary must say what that
+    verification actually ran against.
     Why this matters: A counterexample that does not reproduce on the actual system under test is
     worse than none and indicates a model mismatch. If verification fails, report NOT EVALUATED.
 """
@@ -19,43 +28,71 @@ What a reader must not break:
 from __future__ import annotations
 
 import ast
-import re
 from typing import Any, Optional
 
 import z3
 
 from reasonsmith.report import RequirementResult
+from reasonsmith.rulelang import (
+    UnsupportedConstructError,
+    assignment_target,
+    eval_expression,
+    parse_expression,
+)
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
 
-
-class UnsupportedConstructError(Exception):
-    """Raised when logic or requirement spec uses constructs unsupported by the Z3 encoding."""
-
-    pass
+__all__ = ["ProvedEngine", "UnsupportedConstructError"]
 
 
-def _preprocess_spec(spec: str) -> str:
-    """Preprocess requirement spec text to normalize implication and equivalence operators."""
-    s = spec.strip()
-    s = re.sub(r"\s*<=>\s*", " == ", s)
-    s = re.sub(r"\s*<->\s*", " == ", s)
-    s = re.sub(r"\s*=>\s*", " implies ", s)
-    s = re.sub(r"\s*->\s*", " implies ", s)
-    if " implies " in s:
-        parts = s.split(" implies ", 1)
-        return f"Implies(({parts[0]}), ({parts[1]}))"
-    return s
+def _declare(name: str, var_types: dict[str, str], suffix: str = "") -> Any:
+    """Create a Z3 constant for `name` at the sort its declared type asks for."""
+    vtype = str(var_types.get(name, "real")).lower()
+    label = f"{name}{suffix}"
+    if vtype in ("int", "integer"):
+        return z3.Int(label)
+    if vtype in ("bool", "boolean"):
+        return z3.Bool(label)
+    if vtype in ("str", "string"):
+        return z3.String(label)
+    return z3.Real(label)
+
+
+class _Scope:
+    """Static single assignment name table: current version per name, plus the free inputs."""
+
+    def __init__(self, var_types: Optional[dict[str, str]]):
+        self.var_types: dict[str, str] = dict(var_types or {})
+        self.current: dict[str, Any] = {}
+        self.inputs: dict[str, Any] = {}
+        self._versions: dict[str, int] = {}
+
+    def read(self, name: str) -> Any:
+        """Return the constant holding the current value of `name`, declaring it as a free input."""
+        if name not in self.current:
+            const = _declare(name, self.var_types)
+            self.current[name] = const
+            self.inputs[name] = const
+        return self.current[name]
+
+    def assign(self, name: str) -> Any:
+        """Bind `name` to a fresh constant and return it."""
+        version = self._versions.get(name, 0) + 1
+        self._versions[name] = version
+        const = _declare(name, self.var_types, f"#{version}")
+        self.current[name] = const
+        return const
+
+    def snapshot(self) -> dict[str, Any]:
+        return dict(self.current)
+
+    def restore(self, snapshot: dict[str, Any]) -> None:
+        self.current = dict(snapshot)
 
 
 def _z3_promote(a: Any, b: Any) -> tuple[Any, Any]:
     """Promote Z3 Int to Real if one operand is Real and the other is Int."""
-    if isinstance(a, (int, float)) and not isinstance(a, bool):
-        a = z3.RealVal(a) if isinstance(b, z3.ArithRef) and b.is_real() else z3.RealVal(a)
-    if isinstance(b, (int, float)) and not isinstance(b, bool):
-        b = z3.RealVal(b) if isinstance(a, z3.ArithRef) and a.is_real() else z3.RealVal(b)
-
     if isinstance(a, z3.ArithRef) and isinstance(b, z3.ArithRef):
         if a.is_real() and b.is_int():
             return a, z3.ToReal(b)
@@ -64,14 +101,10 @@ def _z3_promote(a: Any, b: Any) -> tuple[Any, Any]:
     return a, b
 
 
-def _ast_to_z3(
-    node: ast.AST,
-    z3_vars: dict[str, Any],
-    var_types: dict[str, str],
-) -> Any:
+def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
     """Recursively convert a Python AST node to a Z3 expression."""
     if isinstance(node, ast.Expression):
-        return _ast_to_z3(node.body, z3_vars, var_types)
+        return _ast_to_z3(node.body, scope)
 
     if isinstance(node, ast.Constant):
         val = node.value
@@ -86,25 +119,14 @@ def _ast_to_z3(
         raise UnsupportedConstructError(f"Unsupported constant type {type(val).__name__}: {val!r}")
 
     if isinstance(node, ast.Name):
-        name = node.id
-        if name == "True":
+        if node.id == "True":
             return z3.BoolVal(True)
-        if name == "False":
+        if node.id == "False":
             return z3.BoolVal(False)
-        if name not in z3_vars:
-            vtype = var_types.get(name, "real").lower()
-            if vtype in ("int", "integer"):
-                z3_vars[name] = z3.Int(name)
-            elif vtype in ("bool", "boolean"):
-                z3_vars[name] = z3.Bool(name)
-            elif vtype in ("str", "string"):
-                z3_vars[name] = z3.String(name)
-            else:
-                z3_vars[name] = z3.Real(name)
-        return z3_vars[name]
+        return scope.read(node.id)
 
     if isinstance(node, ast.UnaryOp):
-        operand = _ast_to_z3(node.operand, z3_vars, var_types)
+        operand = _ast_to_z3(node.operand, scope)
         if isinstance(node.op, ast.Not):
             return z3.Not(operand)
         if isinstance(node.op, ast.USub):
@@ -114,8 +136,8 @@ def _ast_to_z3(
         raise UnsupportedConstructError(f"Unsupported unary operator: {type(node.op).__name__}")
 
     if isinstance(node, ast.BinOp):
-        left = _ast_to_z3(node.left, z3_vars, var_types)
-        right = _ast_to_z3(node.right, z3_vars, var_types)
+        left = _ast_to_z3(node.left, scope)
+        right = _ast_to_z3(node.right, scope)
         left, right = _z3_promote(left, right)
 
         if isinstance(node.op, ast.Add):
@@ -131,7 +153,7 @@ def _ast_to_z3(
         raise UnsupportedConstructError(f"Unsupported binary operator: {type(node.op).__name__}")
 
     if isinstance(node, ast.BoolOp):
-        values = [_ast_to_z3(val, z3_vars, var_types) for val in node.values]
+        values = [_ast_to_z3(val, scope) for val in node.values]
         if isinstance(node.op, ast.And):
             return z3.And(*values)
         if isinstance(node.op, ast.Or):
@@ -139,11 +161,11 @@ def _ast_to_z3(
         raise UnsupportedConstructError(f"Unsupported boolean operator: {type(node.op).__name__}")
 
     if isinstance(node, ast.Compare):
-        left = _ast_to_z3(node.left, z3_vars, var_types)
+        left = _ast_to_z3(node.left, scope)
         z3_ops = []
         curr = left
         for op, comparator in zip(node.ops, node.comparators, strict=False):
-            nxt = _ast_to_z3(comparator, z3_vars, var_types)
+            nxt = _ast_to_z3(comparator, scope)
             c_left, c_nxt = _z3_promote(curr, nxt)
             if isinstance(op, ast.Eq):
                 z3_ops.append(c_left == c_nxt)
@@ -166,27 +188,31 @@ def _ast_to_z3(
         func_name = ""
         if isinstance(node.func, ast.Name):
             func_name = node.func.id
+        if node.keywords:
+            raise UnsupportedConstructError(
+                f"Keyword arguments are unsupported: {ast.unparse(node)!r}"
+            )
 
         if func_name in ("implies", "Implies"):
             if len(node.args) != 2:
                 raise UnsupportedConstructError(
                     f"Implies expects 2 arguments, got {len(node.args)}"
                 )
-            arg0 = _ast_to_z3(node.args[0], z3_vars, var_types)
-            arg1 = _ast_to_z3(node.args[1], z3_vars, var_types)
+            arg0 = _ast_to_z3(node.args[0], scope)
+            arg1 = _ast_to_z3(node.args[1], scope)
             return z3.Implies(arg0, arg1)
 
         if func_name == "abs":
             if len(node.args) != 1:
                 raise UnsupportedConstructError("abs expects 1 argument")
-            arg = _ast_to_z3(node.args[0], z3_vars, var_types)
+            arg = _ast_to_z3(node.args[0], scope)
             return z3.If(arg >= 0, arg, -arg)
 
         if func_name in ("min", "max"):
             if len(node.args) != 2:
                 raise UnsupportedConstructError(f"{func_name} expects 2 arguments")
-            arg0 = _ast_to_z3(node.args[0], z3_vars, var_types)
-            arg1 = _ast_to_z3(node.args[1], z3_vars, var_types)
+            arg0 = _ast_to_z3(node.args[0], scope)
+            arg1 = _ast_to_z3(node.args[1], scope)
             arg0, arg1 = _z3_promote(arg0, arg1)
             if func_name == "min":
                 return z3.If(arg0 <= arg1, arg0, arg1)
@@ -195,6 +221,59 @@ def _ast_to_z3(
         raise UnsupportedConstructError(f"Unsupported function call: {ast.unparse(node)!r}")
 
     raise UnsupportedConstructError(f"Unsupported language construct: {type(node).__name__}")
+
+
+def _as_bool(expr: Any, what: str) -> Any:
+    """Return `expr` if it is a Z3 Boolean, else refuse it as an unsupported construct."""
+    if not z3.is_bool(expr):
+        raise UnsupportedConstructError(f"{what} is not a boolean property")
+    return expr
+
+
+def _encode_block(stmts: list[ast.stmt], scope: _Scope, solver: z3.Solver) -> None:
+    """Encode a rule block into `solver` in static single assignment form."""
+    for stmt in stmts:
+        if isinstance(stmt, ast.Assign):
+            name = assignment_target(stmt)
+            val_z3 = _ast_to_z3(stmt.value, scope)
+            tgt_z3 = scope.assign(name)
+            tgt_z3, val_z3 = _z3_promote(tgt_z3, val_z3)
+            solver.add(tgt_z3 == val_z3)
+
+        elif isinstance(stmt, ast.If):
+            test_z3 = _as_bool(
+                _ast_to_z3(stmt.test, scope), f"Rule condition {ast.unparse(stmt.test)!r}"
+            )
+            before = scope.snapshot()
+
+            _encode_block(stmt.body, scope, solver)
+            then_state = scope.snapshot()
+
+            scope.restore(before)
+            _encode_block(stmt.orelse, scope, solver)
+            else_state = scope.snapshot()
+
+            scope.restore(before)
+            for name in sorted(set(then_state) | set(else_state)):
+                then_val = then_state[name] if name in then_state else scope.read(name)
+                else_val = else_state[name] if name in else_state else scope.read(name)
+                if z3.eq(then_val, else_val):
+                    scope.current[name] = then_val
+                    continue
+                then_val, else_val = _z3_promote(then_val, else_val)
+                merged = scope.assign(name)
+                merged, chosen = _z3_promote(merged, z3.If(test_z3, then_val, else_val))
+                solver.add(merged == chosen)
+
+        elif isinstance(stmt, ast.Expr):
+            solver.add(
+                _as_bool(_ast_to_z3(stmt.value, scope), f"Rule assertion {ast.unparse(stmt)!r}")
+            )
+
+        else:
+            raise UnsupportedConstructError(
+                f"Unsupported rule statement type: {type(stmt).__name__}"
+            )
 
 
 def _extract_model_value(val: Any) -> Any:
@@ -230,17 +309,7 @@ def _extract_model_value(val: Any) -> Any:
 
 def _eval_python_spec(spec_text: str, record: dict[str, Any]) -> bool:
     """Evaluate requirement specification expression over a decision record."""
-    safe_builtins = {"True": True, "False": False, "abs": abs, "min": min, "max": max}
-
-    def Implies(a: bool, b: bool) -> bool:
-        return (not a) or b
-
-    prep = _preprocess_spec(spec_text)
-    tree = ast.parse(prep, mode="eval")
-    code = compile(tree, "<spec>", "eval")
-    env = dict(record)
-    env["Implies"] = Implies
-    return bool(eval(code, {"__builtins__": safe_builtins}, env))
+    return bool(eval_expression(parse_expression(spec_text), dict(record)))
 
 
 def _verify_counterexample(
@@ -250,32 +319,37 @@ def _verify_counterexample(
     try:
         if hasattr(sut, "decide") and callable(sut.decide):
             output_rec = sut.decide(ce_inputs)
-        elif hasattr(sut, "target") and hasattr(sut.target, "decide"):
-            output_rec = sut.target.decide(ce_inputs)
+            ran_against = "the system's own decide()"
         else:
             from reasonsmith.adapters.rules import RulesAdapter
 
             logic_data = sut.logic()
-            if isinstance(logic_data, dict) and "rules" in logic_data:
-                temp_adapter = RulesAdapter(
-                    rules=logic_data.get("rules", []),
-                    variables=logic_data.get("variables"),
-                    constraints=logic_data.get("constraints"),
-                )
-                output_rec = temp_adapter.decide(ce_inputs)
-            else:
+            if not isinstance(logic_data, dict) or "rules" not in logic_data:
                 return (
                     False,
                     "System under test provides no decide() method to verify counterexample",
                 )
+            temp_adapter = RulesAdapter(
+                rules=logic_data.get("rules", []),
+                variables=logic_data.get("variables"),
+                constraints=logic_data.get("constraints"),
+            )
+            output_rec = temp_adapter.decide(ce_inputs)
+            ran_against = (
+                "the declared logic from sut.logic(), executed by the reference rule "
+                "interpreter, because the system exposes no decide() to run"
+            )
 
         if not isinstance(output_rec, dict):
             return False, f"SUT decide() returned {type(output_rec).__name__}, expected dict"
 
         spec_holds = _eval_python_spec(req.spec, output_rec)
         if not spec_holds:
-            return True, "Counterexample reproduces violation on SUT"
-        return False, "SUT output on counterexample input satisfied requirement (did not violate)"
+            return True, f"Counterexample reproduces the violation against {ran_against}"
+        return False, (
+            f"Output of {ran_against} on the counterexample input satisfied the requirement "
+            "(did not violate)"
+        )
     except Exception as exc:
         return False, f"SUT execution on counterexample raised exception: {exc}"
 
@@ -292,22 +366,27 @@ class ProvedEngine:
     ) -> RequirementResult:
         clause = f"{req.source_document} {req.article_clause}"
 
-        logic_func = getattr(sut, "logic", None)
-        logic_data = logic_func() if callable(logic_func) else None
-
-        if logic_data is None:
+        def not_evaluated(summary: str, details: dict[str, Any]) -> RequirementResult:
             return RequirementResult(
                 requirement_id=req.id,
                 source_clause=clause,
                 verdict=Verdict.INCONCLUSIVE,
                 strength=None,
                 signals_required=tuple(req.requires),
-                evidence_summary=(
-                    f"Not evaluated: no decision logic exposed for {req.formalism!r} requirement "
-                    "(sut.logic() returned None). A formal proof requires explicit system logic."
-                ),
+                evidence_summary=summary,
+                details=details,
                 binding=req.binding,
                 scope=req.scope,
+            )
+
+        logic_func = getattr(sut, "logic", None)
+        logic_data = logic_func() if callable(logic_func) else None
+
+        if logic_data is None:
+            return not_evaluated(
+                f"Not evaluated: no decision logic exposed for {req.formalism!r} requirement "
+                "(sut.logic() returned None). A formal proof requires explicit system logic.",
+                {},
             )
 
         if isinstance(logic_data, dict):
@@ -320,107 +399,65 @@ class ProvedEngine:
             constraints = getattr(logic_data, "constraints", [])
         else:
             tname = type(logic_data).__name__
-            return RequirementResult(
-                requirement_id=req.id,
-                source_clause=clause,
-                verdict=Verdict.INCONCLUSIVE,
-                strength=None,
-                signals_required=tuple(req.requires),
-                evidence_summary=f"Not evaluated: sut.logic() returned unexpected type {tname}.",
-                binding=req.binding,
-                scope=req.scope,
+            return not_evaluated(
+                f"Not evaluated: sut.logic() returned unexpected type {tname}.", {}
             )
 
-        z3_vars: dict[str, Any] = {}
+        scope = _Scope(variables)
         solver = z3.Solver()
         solver.set("timeout", timeout_ms)
 
         try:
             for c_text in constraints:
-                tree = ast.parse(_preprocess_spec(c_text), mode="eval")
-                c_z3 = _ast_to_z3(tree, z3_vars, variables)
-                solver.add(c_z3)
+                c_z3 = _ast_to_z3(parse_expression(c_text), scope)
+                solver.add(_as_bool(c_z3, f"System constraint {c_text!r}"))
 
             for r_text in rules:
-                rule_ast = ast.parse(r_text, mode="exec")
-                for stmt in rule_ast.body:
-                    if isinstance(stmt, ast.Assign):
-                        t_name = (
-                            stmt.targets[0].id if isinstance(stmt.targets[0], ast.Name) else ""
-                        )
-                        if not t_name:
-                            err = f"Unsupported assignment target in rule {r_text!r}"
-                            raise UnsupportedConstructError(err)
-                        val_z3 = _ast_to_z3(stmt.value, z3_vars, variables)
-                        _ast_to_z3(stmt.targets[0], z3_vars, variables)
-                        tgt_z3 = z3_vars[t_name]
-                        tgt_z3, val_z3 = _z3_promote(tgt_z3, val_z3)
-                        solver.add(tgt_z3 == val_z3)
-                    elif isinstance(stmt, ast.If):
-                        test_z3 = _ast_to_z3(stmt.test, z3_vars, variables)
-                        for b_stmt in stmt.body:
-                            if isinstance(b_stmt, ast.Assign) and isinstance(
-                                b_stmt.targets[0], ast.Name
-                            ):
-                                tn = b_stmt.targets[0].id
-                                v_z3 = _ast_to_z3(b_stmt.value, z3_vars, variables)
-                                _ast_to_z3(b_stmt.targets[0], z3_vars, variables)
-                                tg_z3, v_z3 = _z3_promote(z3_vars[tn], v_z3)
-                                solver.add(z3.Implies(test_z3, tg_z3 == v_z3))
-                        for o_stmt in stmt.orelse:
-                            if isinstance(o_stmt, ast.Assign) and isinstance(
-                                o_stmt.targets[0], ast.Name
-                            ):
-                                tn = o_stmt.targets[0].id
-                                v_z3 = _ast_to_z3(o_stmt.value, z3_vars, variables)
-                                _ast_to_z3(o_stmt.targets[0], z3_vars, variables)
-                                tg_z3, v_z3 = _z3_promote(z3_vars[tn], v_z3)
-                                solver.add(z3.Implies(z3.Not(test_z3), tg_z3 == v_z3))
-                    elif isinstance(stmt, ast.Expr):
-                        expr_z3 = _ast_to_z3(stmt.value, z3_vars, variables)
-                        solver.add(expr_z3)
-                    else:
-                        stype = type(stmt).__name__
-                        raise UnsupportedConstructError(
-                            f"Unsupported rule statement type: {stype}"
-                        )
+                _encode_block(ast.parse(r_text, mode="exec").body, scope, solver)
 
-            spec_prep = _preprocess_spec(req.spec)
-            spec_ast = ast.parse(spec_prep, mode="eval")
-            spec_z3 = _ast_to_z3(spec_ast, z3_vars, variables)
+            spec_z3 = _as_bool(
+                _ast_to_z3(parse_expression(req.spec), scope),
+                f"Requirement spec {req.spec!r}",
+            )
+
+            premise_check = solver.check()
+            premise_reason = (
+                solver.reason_unknown() if premise_check == z3.unknown else ""
+            ) or "solver returned unknown or timed out"
+
+            solver.add(z3.Not(spec_z3))
+            check_res = solver.check()
+            unknown_reason = (
+                solver.reason_unknown() if check_res == z3.unknown else ""
+            ) or "solver returned unknown or timed out"
 
         except UnsupportedConstructError as exc:
-            return RequirementResult(
-                requirement_id=req.id,
-                source_clause=clause,
-                verdict=Verdict.INCONCLUSIVE,
-                strength=None,
-                signals_required=tuple(req.requires),
-                evidence_summary=(
-                    f"Not evaluated: system logic or requirement spec uses unsupported "
-                    f"construct: {exc}."
-                ),
-                details={"reason": str(exc)},
-                binding=req.binding,
-                scope=req.scope,
+            return not_evaluated(
+                f"Not evaluated: system logic or requirement spec uses unsupported "
+                f"construct: {exc}.",
+                {"reason": str(exc)},
             )
         except Exception as exc:
-            return RequirementResult(
-                requirement_id=req.id,
-                source_clause=clause,
-                verdict=Verdict.INCONCLUSIVE,
-                strength=None,
-                signals_required=tuple(req.requires),
-                evidence_summary=(
-                    f"Not evaluated: error parsing decision logic or property {req.spec!r}: {exc}"
-                ),
-                details={"error": str(exc)},
-                binding=req.binding,
-                scope=req.scope,
+            return not_evaluated(
+                f"Not evaluated: error parsing decision logic or property {req.spec!r}: {exc}",
+                {"error": str(exc)},
             )
 
-        solver.add(z3.Not(spec_z3))
-        check_res = solver.check()
+        if premise_check == z3.unsat:
+            return not_evaluated(
+                "Not evaluated: the encoded system logic and constraints admit no input at all, "
+                "so the negated property is unsatisfiable for a reason that has nothing to do "
+                f"with requirement {req.spec!r}. A vacuous model proves everything and is "
+                "therefore reported as no evidence.",
+                {"solver": "z3", "result": "unsatisfiable_premises"},
+            )
+
+        if premise_check != z3.sat:
+            return not_evaluated(
+                f"Not evaluated: formal solver could not decide requirement {req.spec!r}: "
+                f"{premise_reason}.",
+                {"solver": "z3", "reason_unknown": premise_reason},
+            )
 
         if check_res == z3.unsat:
             return RequirementResult(
@@ -441,9 +478,8 @@ class ProvedEngine:
         if check_res == z3.sat:
             m = solver.model()
             ce_inputs = {}
-            for name, z_var in z3_vars.items():
-                val = m[z_var]
-                py_val = _extract_model_value(val)
+            for name, z_var in scope.inputs.items():
+                py_val = _extract_model_value(m[z_var])
                 if py_val is not None:
                     ce_inputs[name] = py_val
 
@@ -457,7 +493,7 @@ class ProvedEngine:
                     signals_required=tuple(req.requires),
                     evidence_summary=(
                         f"Violated: formal solver produced counterexample {ce_inputs} for "
-                        f"property {req.spec!r}. Counterexample verified against SUT."
+                        f"property {req.spec!r}. {verif_msg}."
                     ),
                     details={
                         "solver": "z3",
@@ -468,38 +504,19 @@ class ProvedEngine:
                     scope=req.scope,
                 )
 
-            return RequirementResult(
-                requirement_id=req.id,
-                source_clause=clause,
-                verdict=Verdict.INCONCLUSIVE,
-                strength=None,
-                signals_required=tuple(req.requires),
-                evidence_summary=(
-                    f"Not evaluated: solver produced counterexample {ce_inputs}, but "
-                    f"verification against SUT failed: {verif_msg}. Never report proved from "
-                    "unverified evidence."
-                ),
-                details={
+            return not_evaluated(
+                f"Not evaluated: solver produced counterexample {ce_inputs}, but "
+                f"verification against SUT failed: {verif_msg}. Never report proved from "
+                "unverified evidence.",
+                {
                     "solver": "z3",
-                    "counterexample": ce_inputs,
+                    "unverified_counterexample": ce_inputs,
                     "verification_error": verif_msg,
                 },
-                binding=req.binding,
-                scope=req.scope,
             )
 
-        reason = solver.reason_unknown() or "solver returned unknown or timed out"
-        return RequirementResult(
-            requirement_id=req.id,
-            source_clause=clause,
-            verdict=Verdict.INCONCLUSIVE,
-            strength=None,
-            signals_required=tuple(req.requires),
-            evidence_summary=(
-                f"Not evaluated: formal solver could not decide requirement {req.spec!r}: "
-                f"{reason}."
-            ),
-            details={"solver": "z3", "reason_unknown": reason},
-            binding=req.binding,
-            scope=req.scope,
+        return not_evaluated(
+            f"Not evaluated: formal solver could not decide requirement {req.spec!r}: "
+            f"{unknown_reason}.",
+            {"solver": "z3", "reason_unknown": unknown_reason},
         )

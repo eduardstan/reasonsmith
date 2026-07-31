@@ -7,11 +7,13 @@ What this module is for:
 
 from __future__ import annotations
 
+import pytest
 import z3
 
 from reasonsmith.adapters.rules import RulesAdapter
 from reasonsmith.engines.proved import ProvedEngine
 from reasonsmith.report import check_conformance, evaluate_requirement
+from reasonsmith.rulelang import UnsupportedConstructError, preprocess_spec
 from reasonsmith.spec import Pack, Requirement
 from reasonsmith.sut import BaseSUT
 from reasonsmith.verdict import Strength, Verdict
@@ -220,3 +222,159 @@ def test_conformance_report_rendering_proved_agrees():
     assert "r1_proved" in html
     assert "r2_violated" in html
     assert "VIOLATED — Formal Counterexample Input" in html
+
+
+def test_reassignment_is_executed_in_order_not_treated_as_a_contradiction():
+    """A rule that reassigns a name means what it means when executed, not `x == x + 10`."""
+    rules = ["score = base", "score = score + 10", "approved = score >= 50"]
+    variables = {"base": "int", "score": "int", "approved": "bool"}
+    sut = RulesAdapter(rules=rules, variables=variables)
+
+    # The system does not approve everyone, and the solver must agree with its own decide().
+    res = evaluate_requirement(
+        _logical_req(spec="approved == True", requires=("base", "approved")), sut
+    )
+    assert res.verdict == Verdict.VIOLATED
+    assert sut.decide(res.details["counterexample"])["approved"] is False
+
+    # What the rules do establish is proved.
+    res = evaluate_requirement(
+        _logical_req(spec="base >= 40 implies approved == True", requires=("base", "approved")),
+        sut,
+    )
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+
+
+def test_unsatisfiable_premises_are_not_a_proof():
+    """Constraints no input can satisfy make every property vacuously unsat: report no evidence."""
+    sut = RulesAdapter(
+        rules=["approved = income >= 30000"],
+        variables={"income": "real", "approved": "bool"},
+        constraints=["income > 10", "income < 5"],
+    )
+
+    res = evaluate_requirement(
+        _logical_req(spec="approved == True", requires=("income", "approved")), sut
+    )
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+    assert res.details["result"] == "unsatisfiable_premises"
+
+
+def test_non_boolean_spec_degrades_instead_of_aborting_the_run():
+    """A spec that is not a property is one not-evaluated requirement, not a dead run."""
+    sut = RulesAdapter(
+        rules=["approved = income >= 30000"],
+        variables={"income": "real", "approved": "bool"},
+    )
+    req_bad = _logical_req(req_id="r_bad", spec="income + 1", requires=("income",))
+    req_good = _logical_req(
+        req_id="r_good", spec="income >= 30000 implies approved == True",
+        requires=("income", "approved"),
+    )
+
+    report = check_conformance(sut, Pack("p", "P", "", (req_bad, req_good)))
+    by_id = {r.requirement_id: r for r in report.results}
+    assert by_id["r_bad"].verdict == Verdict.INCONCLUSIVE
+    assert by_id["r_bad"].strength is None
+    assert by_id["r_good"].verdict == Verdict.SATISFIED
+
+
+def test_nested_and_augmented_statements_are_modelled_or_refused_by_both_sides():
+    """Neither the encoder nor the interpreter may skip a statement it does not model."""
+    nested = RulesAdapter(
+        rules=["if x > 0:\n    y = 1\n    if x > 5:\n        y = 99\nelse:\n    y = 0"],
+        variables={"x": "int", "y": "int"},
+    )
+    res = evaluate_requirement(_logical_req(spec="y <= 1", requires=("x", "y")), nested)
+    assert res.verdict == Verdict.VIOLATED
+    assert nested.decide(res.details["counterexample"])["y"] == 99
+    assert evaluate_requirement(
+        _logical_req(spec="y <= 99", requires=("x", "y")), nested
+    ).verdict == Verdict.SATISFIED
+
+    augmented = RulesAdapter(rules=["y = 1", "y += 5"], variables={"y": "int"})
+    with pytest.raises(UnsupportedConstructError):
+        augmented.decide({})
+    assert evaluate_requirement(
+        _logical_req(spec="y <= 1", requires=("y",)), augmented
+    ).verdict == Verdict.INCONCLUSIVE
+
+
+def test_arrow_rewriting_respects_parentheses_and_precedence():
+    """Operator rewriting must not silently produce a different property."""
+    assert "==" in preprocess_spec("approved <=> income >= 30000")
+
+    equivalence = RulesAdapter(
+        rules=["approved = income >= 30000"],
+        variables={"income": "real", "approved": "bool"},
+    )
+    res = evaluate_requirement(
+        _logical_req(spec="approved <=> income >= 30000", requires=("income", "approved")),
+        equivalence,
+    )
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+
+    # A parenthesised implication is usable, and binds tighter than the surrounding `and`.
+    grouped = RulesAdapter(
+        rules=["b = a", "c = True"], variables={"a": "bool", "b": "bool", "c": "bool"}
+    )
+    res = evaluate_requirement(
+        _logical_req(spec="(a -> b) and c", requires=("a", "b", "c")), grouped
+    )
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+
+
+def test_pack_text_is_never_executed_as_python():
+    """Rule and spec text is data: a construct outside the whitelist is refused, not run."""
+    escape = "().__class__.__base__.__subclasses__()"
+    sut = RulesAdapter(rules=[f"y = len({escape})"], variables={"y": "int"})
+
+    with pytest.raises(UnsupportedConstructError):
+        sut.decide({})
+
+    res = evaluate_requirement(_logical_req(spec="y >= 0", requires=("y",)), sut)
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+
+
+def test_unverified_counterexample_is_not_rendered_as_a_violation(monkeypatch):
+    """A not-evaluated result must never render the red violation callout."""
+    sut = RulesAdapter(
+        rules=["approved = income >= 30000"],
+        variables={"income": "real", "approved": "bool"},
+    )
+    monkeypatch.setattr(sut, "decide", lambda case: {"income": 35000, "approved": False})
+    req = _logical_req(spec="approved == False", requires=("income", "approved"))
+
+    report = check_conformance(sut, Pack("p", "P", "", (req,)))
+    assert report.results[0].verdict == Verdict.INCONCLUSIVE
+    assert "VIOLATED — Formal Counterexample Input" not in report.render_html()
+
+
+def test_declared_capabilities_exclude_callee_and_module_names():
+    """Callee names are not signals the system claims it can emit."""
+    sut = RulesAdapter(rules=["y = abs(x) + math.pi"])
+    assert sut.capabilities() == {"x", "y"}
+
+
+def test_counterexample_replayed_on_declared_logic_says_so():
+    """A system exposing only logic() is replayed through it, and the report says so."""
+    class LogicOnlySUT(BaseSUT):
+        def logic(self):
+            return {
+                "variables": {"income": "real", "approved": "bool"},
+                "rules": ["approved = income >= 30000"],
+                "constraints": [],
+            }
+
+    sut = LogicOnlySUT(declared_capabilities={"income", "approved"})
+    res = evaluate_requirement(
+        _logical_req(spec="approved == True", requires=("income", "approved")), sut
+    )
+    assert res.verdict == Verdict.VIOLATED
+    assert "declared logic from sut.logic()" in res.evidence_summary
+    assert "exposes no decide()" in res.evidence_summary

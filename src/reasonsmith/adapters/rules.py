@@ -9,9 +9,12 @@ What a reader must not break:
     rules, and constraints) without hiding or simplifying active constraints.
     Why this matters: Formal proofs hold relative to the logic exposed; an incomplete or inaccurate
     logic representation produces false proof verdicts.
-  - `decide(inputs)` must evaluate the exact same rules as exposed by `logic()`.
+  - `decide(inputs)` must evaluate the exact same rules as exposed by `logic()`, and must refuse
+    any construct it does not model rather than skipping it.
     Why this matters: Counterexample verification checks Z3 models against `decide()`; if execution
-    diverges from `logic()`, counterexample reproduction will fail.
+    diverges from `logic()` — including by quietly ignoring a statement — reproduction agrees with
+    the solver about a program neither of them was given. Both sides share
+    `reasonsmith.rulelang` so the accepted construct set cannot drift apart.
 """
 
 from __future__ import annotations
@@ -20,16 +23,27 @@ import ast
 from collections.abc import Iterable
 from typing import Any, Optional
 
+from reasonsmith.rulelang import CONSTANTS, execute_statements
 from reasonsmith.sut import BaseSUT
 
 
 def _extract_names(node: ast.AST) -> set[str]:
-    """Extract variable names from an AST node."""
+    """Extract variable names an AST node reads or writes, excluding callees and module roots."""
+    callees: set[int] = set()
+    for child in ast.walk(node):
+        if isinstance(child, ast.Call) and isinstance(child.func, ast.Name):
+            callees.add(id(child.func))
+        elif isinstance(child, ast.Attribute):
+            root = child.value
+            while isinstance(root, ast.Attribute):
+                root = root.value
+            if isinstance(root, ast.Name):
+                callees.add(id(root))
+
     names = set()
     for child in ast.walk(node):
-        if isinstance(child, ast.Name) and not isinstance(child.ctx, ast.Param):
-            # Exclude built-in names or keywords if any
-            if child.id not in ("True", "False", "None"):
+        if isinstance(child, ast.Name) and id(child) not in callees:
+            if child.id not in CONSTANTS:
                 names.add(child.id)
     return names
 
@@ -86,48 +100,13 @@ class RulesAdapter(BaseSUT):
     def decide(self, case: dict[str, Any]) -> dict[str, Any]:
         """Execute decision rules sequentially on input values in `case`."""
         env: dict[str, Any] = dict(case)
-        # Standard safe builtins for rule evaluation
-        safe_builtins = {"True": True, "False": False, "abs": abs, "min": min, "max": max}
 
         for rule in self._rules:
             try:
                 tree = ast.parse(rule, mode="exec")
             except SyntaxError as exc:
                 raise ValueError(f"Invalid rule syntax {rule!r}: {exc}") from exc
-
-            for stmt in tree.body:
-                if isinstance(stmt, ast.Assign):
-                    val = eval(
-                        compile(ast.Expression(stmt.value), "<rule>", "eval"),
-                        {"__builtins__": safe_builtins},
-                        env,
-                    )
-                    for target in stmt.targets:
-                        if isinstance(target, ast.Name):
-                            env[target.id] = val
-                elif isinstance(stmt, ast.If):
-                    test_val = eval(
-                        compile(ast.Expression(stmt.test), "<rule>", "eval"),
-                        {"__builtins__": safe_builtins},
-                        env,
-                    )
-                    body_stmts = stmt.body if test_val else stmt.orelse
-                    for b_stmt in body_stmts:
-                        if isinstance(b_stmt, ast.Assign):
-                            val = eval(
-                                compile(ast.Expression(b_stmt.value), "<rule>", "eval"),
-                                {"__builtins__": safe_builtins},
-                                env,
-                            )
-                            for target in b_stmt.targets:
-                                if isinstance(target, ast.Name):
-                                    env[target.id] = val
-                elif isinstance(stmt, ast.Expr):
-                    eval(
-                        compile(ast.Expression(stmt.value), "<rule>", "eval"),
-                        {"__builtins__": safe_builtins},
-                        env,
-                    )
+            execute_statements(tree.body, env)
 
         return env
 
