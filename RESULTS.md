@@ -21,7 +21,7 @@ This is the evidence artifact for `reasonsmith`'s own claims: an environment was
 | | Design B (Multiplicity Varies) | Coverage gap: **+0.3000**<br>Fidelity gap: **+0.1472**<br>Retained share gap: **+0.1129** | Typical: cov 0.5000, fid 0.7831, ret 0.7292<br>Atypical: cov 0.2000, fid 0.6360, ret 0.6163 |
 | | Signal Stability | **0.3333** across 4 windows | Delinquency signal drift swaps stated reason from C01 to C03 |
 
-**What the `35 passed` figure does and does not count.** Every number in this file is a measurement taken at `reasonsmith` commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`, and none of them is re-measured by later work — that is what makes them reconstructible, and it is also what makes this one stale. Section 2's `35 passed` counts the suite as it stood then, and the v0.2 work added since (`verdict.py`, `spec.py`, `sut.py`, `report.py`, `adapters/`, `engines/`, `cli.py`, the `packs/` requirement packs, and `tests/test_v02_core.py` plus `tests/test_v02_stage2.py`) adds tests to that number. Read `35` as the v0.1 suite's count at that commit, never as the current suite's: for the current count, run `pytest` yourself. Those v0.2 files are new alongside v0.1 rather than changes to it — `evidence.py`, `certificate.py`, `conformance.py` and `demo.py` are untouched — so section 1 (nesyarena's suite) and section 3 (the demo output) still describe the code as it is today.
+**What the `35 passed` figure does and does not count.** Every number in this file is a measurement taken at `reasonsmith` commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`, and none of them is re-measured by later work — that is what makes them reconstructible, and it is also what makes this one stale. Section 2's `35 passed` counts the suite as it stood then, and the v0.2 work added since (`verdict.py`, `spec.py`, `sut.py`, `report.py`, `adapters/`, `engines/`, `cli.py`, the `packs/` requirement packs, and `tests/test_v02_core.py` plus `tests/test_v02_stage2.py`) adds tests to that number. Read `35` as the v0.1 suite's count at that commit, never as the current suite's: for the current count, run `pytest` yourself. Those v0.2 files are new alongside v0.1 rather than changes to it — `evidence.py`, `certificate.py`, `conformance.py` and `demo.py` are untouched — so section 3 (the demo output) still describes the code as it is today. Section 1 (nesyarena's suite) was measured under `nesyarena` commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` and was **not** re-measured under the PyPI release now pinned; it is expected to hold because that release's `tests/` and `experiments/` are byte-identical to the measured commit's — see the PyPI Release Note for what was checked and what was not.
 
 ---
 
@@ -40,7 +40,7 @@ Every number in this file is copied from a command's real output. The exact comm
 | **pytest** | 9.1.1 |
 | **ruff** | 0.16.1 |
 | **reasonsmith** | `0.1.0` (editable install), commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f` |
-| **nesyarena** | `0.1.0` (PyPI release), originally measured at pinned commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` (repinned to `57720fa212834689692e171882272140f1d1fed7`, now `nesyarena==0.1.0` on PyPI, see notes below) |
+| **nesyarena** | `0.1.0` (PyPI release, built from commit `22b539bad6c3510fe457aa751141c5c4aa1483ea`), originally measured at pinned commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` (repinned to `57720fa212834689692e171882272140f1d1fed7`, then to the PyPI release, see notes below) |
 
 ### Repin Note (2026-07-31)
 
@@ -54,7 +54,11 @@ The hash changed, the content did not: both commits' `git cat-file -p <sha> | gr
 
 On 2026-07-31, `nesyarena` 0.1.0 was published to PyPI. `pyproject.toml` was updated from the git SHA dependency (`nesyarena @ git+https://github.com/eduardstan/nesyarena@57720fa212834689692e171882272140f1d1fed7`) to the exact PyPI release pin `nesyarena==0.1.0`.
 
-PyPI 0.1.0 was built from a later commit than `57720fa212834689692e171882272140f1d1fed7`. `reasonsmith`'s own test suite (`174 passed` on current suite, `35 passed` on v0.1 suite), `ruff check .` (0 findings), and `python -m reasonsmith.demo` (561 lines, two runs byte-identical, `md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`) were re-run against PyPI `nesyarena==0.1.0` and confirmed fully passing and unchanged. The historical figures in Section 1 were measured under `nesyarena` commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment and remain attributed to that pin.
+PyPI 0.1.0 was built from `nesyarena` commit `22b539bad6c3510fe457aa751141c5c4aa1483ea` ("build(nesyarena): prepare 0.1.0 PyPI release and widen CI matrix (#3)"), one commit ahead of the pin it replaces. That commit is identified, not assumed: every file under `src/` in the published sdist (`nesyarena-0.1.0.tar.gz`, sha256 `5e93f9e6fc4662fde1cf9d1b788a9b2573d4728605004a6317d57282d25b7d7c`) hashes to the same git blob as that commit's, `pyproject.toml` included, checked with `git hash-object` against the tree the GitHub API reports for that SHA.
+
+What the release commit changes relative to `57720fa212834689692e171882272140f1d1fed7` is two installed files — `src/nesyarena/__init__.py` (`__version__` `0.1.0.dev0` → `0.1.0`, the whole diff) and `pyproject.toml` — plus repository metadata that is not installed (`README.md`, `.gitignore`, `.github/workflows/ci.yml`, `AGENTS.md`, `CLAUDE.md`, `docs/PUBLISHING.md`). The rest of `src/`, and all 45 files under `tests/` and `experiments/`, are byte-identical blobs across the two commits.
+
+`reasonsmith`'s own test suite (`174 passed` on current suite, `35 passed` on v0.1 suite), `ruff check .` (0 findings), and `python -m reasonsmith.demo` (561 lines, two runs byte-identical, `md5sum` `c5976971e24a86886f1e0ad54f0b9ce9`) were re-run against PyPI `nesyarena==0.1.0` and confirmed fully passing and unchanged. Section 1's figures are `nesyarena`'s *own* suite, measured under `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec` in the separate torch environment, and they were **not** re-run against the PyPI release. They are expected to be unchanged because `tests/` and `experiments/` are byte-identical across `fdf0d5eb…` → `57720fa…` (identical tree `d050c86ef83b01bac972a0af3afa6f629a4a9972`, see the Repin Note) → `22b539ba…`, and the installed source differs only in the `__version__` string — but that is an expectation from blob identity, not a measurement.
 
 ### Build and Reproduction Commands
 
@@ -64,10 +68,11 @@ pip install -e ".[dev]"                                   # reasonsmith + pinned
 
 # nesyarena's own suite needs its tests/ and experiments/ directories, which the pip-installed
 # wheel does not carry (pip installs the built package, not the whole git repo). To run
-# nesyarena's own suite at the exact pinned commit, its repo is cloned separately and checked
-# out to that commit, then its optional extras are installed into the same venv:
+# nesyarena's own suite at the commit PyPI 0.1.0 was built from, its repo is cloned separately
+# and checked out to that commit, then its optional extras are installed into the same venv:
 git clone https://github.com/eduardstan/nesyarena /path/to/nesyarena-src
-cd /path/to/nesyarena-src && git checkout 57720fa212834689692e171882272140f1d1fed7  # was fdf0d5e..., same tree
+cd /path/to/nesyarena-src && git checkout 22b539bad6c3510fe457aa751141c5c4aa1483ea  # source of nesyarena==0.1.0;
+                                              # was 57720fa..., before that fdf0d5e...: same tests/, same experiments/
 pip install -e ".[learning,reporting,dev]"   # torch, torchvision + pyyaml/matplotlib needed
                                               # only so tests/test_e6_findings.py can *collect*
 ```

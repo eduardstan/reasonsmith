@@ -26,7 +26,9 @@ exact commands and counts, and do not re-litigate that caveat from stale memory 
 installed here". `tests/conftest.py` puts `src` on the path so this package itself needs no
 install, but nesyarena does. `pip install`ing nesyarena only gets the built package, not its
 `tests/`/`experiments/` directories — to run nesyarena's *own* suite (as opposed to depending on
-it), clone `github.com/eduardstan/nesyarena` separately and check out the pinned commit.
+it), clone `github.com/eduardstan/nesyarena` separately and check out
+`22b539bad6c3510fe457aa751141c5c4aa1483ea`, the commit 0.1.0 was built from (RESULTS.md, "PyPI
+Release Note", records how that was verified; the repo publishes no tag).
 
 ## Two rules that shaped the code
 
