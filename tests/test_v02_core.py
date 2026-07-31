@@ -628,11 +628,11 @@ def test_an_empty_trace_is_not_evidence():
     assert "[NOT EVALUATED]" in report.render_text()
 
 
-@pytest.mark.parametrize("formalism", ["temporal", "logical"])
+@pytest.mark.parametrize("formalism", ["logical"])
 def test_a_formalism_without_an_engine_is_not_evaluated(formalism):
-    """Declaring the signals a temporal or logical property needs does not establish it.
+    """Declaring the signals a logical property needs does not establish it.
 
-    There is no monitor and no solver in this build. Checking such a requirement by looking
+    There is no solver in this build (stage 3). Checking such a requirement by looking
     for the signal names in the trace would report `satisfied` for a property nothing tested —
     the failure mode that would make every verdict in this tool unfalsifiable.
     """

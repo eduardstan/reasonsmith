@@ -1,6 +1,6 @@
 """reasonsmith: Table 7 of a published review, made executable.
 
-Four modules and one data file:
+The original evidence and verification surface:
 
   table7.toml     the duty schema, transcribed verbatim from the paper
   evidence.py     the emitter — minimal evidence records, with every field it could not produce
@@ -8,17 +8,19 @@ Four modules and one data file:
   conformance.py  the Table 19 checks, including stratified per-group ones
   demo.py         ECOA / Reg B credit and GDPR Art. 22 clinical, end to end
 
-Alongside them, the first slice of the v0.2 conformance core — a verdict carries the strength of
-the evidence behind it, and the strongest thing this tool can say is often computable before the
-system runs at all:
+The v0.2 conformance surface:
 
   verdict.py      the strength lattice (unattainable < observed < probed < proved) and verdicts
   spec.py         requirements with verbatim provenance, loaded from packs/*.toml
-  sut.py          the system-under-test protocol: declared capabilities, and a decision trace
+  sut.py          the system-under-test protocol: capabilities and a decision trace
   report.py       the unattainable analysis and the conformance report
+  adapters/       JSONL decision-log and Python-callable adapters
+  engines/        record completeness and rtamt temporal monitors
+  cli.py          checks a JSONL decision log against a requirement pack
+  packs/          Table 7, EU AI Act, GDPR, and ECOA / Regulation B requirements
 
 Only the `unattainable` and `observed` rungs of that lattice are implemented. `probed` and `proved`
-need engines that do not exist yet, and a requirement no engine here covers is reported as not
+need engines that do not exist yet. Logical requirements have no engine and are reported as not
 evaluated rather than judged by a weaker check.
 
 Nothing produced here is a compliance guarantee and nothing here is legal advice.

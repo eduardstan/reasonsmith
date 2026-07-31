@@ -42,7 +42,9 @@ not a strength on the lattice. Two consequences worth knowing before editing `re
 zero verdicts is `inconclusive`, never vacuously `satisfied`, and `SUPPORTED_FORMALISMS` is the list
 of formalisms an engine actually exists for — widen it when the engine lands, not before.
 
-`src/reasonsmith/packs/*.toml` are derived, not authored. The Table 7 pack restates the rows of
+`src/reasonsmith/packs/*.toml` are derived, not authored. The EU AI Act, GDPR and ECOA packs quote
+`docs/legal-sources.md`, which is the retrieval record for the official statutory text and the one
+place a quote is checked against the law. The Table 7 pack restates the rows of
 `src/reasonsmith/table7.toml`, and `test_pack_matches_table7_transcription` holds it to the print:
 quoted text character-for-character, both halves of the legal source, and the paper's own
 evidence-field keys as the signal names. Do not rename a signal to something tidier — that test is

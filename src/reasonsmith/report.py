@@ -10,8 +10,9 @@ Two properties this module exists to protect, both inherited from v0.1:
   no engine in this build covers the requirement's formalism, or because the decision trace
   was empty. A requirement that was never evaluated is reported as never evaluated; it is
   never quietly counted as satisfied, and it is never dropped from the report.
-* **The unattainable analysis never runs the system.** It is a set difference over declared
-  capabilities, so it is answerable before a single decision is read.
+* **The unattainable analysis never runs the system.** It is a set difference over the
+  capability set supplied by the SUT adapter. Explicit declarations are answerable before a
+  decision is read; a trace-derived adapter labels its weaker basis in the result.
 
 Every emitted report carries explicit limits on its scope and guarantees.
 """
@@ -29,17 +30,17 @@ from reasonsmith.verdict import Strength, Verdict
 
 LIMITS = (
     "This report is not a compliance guarantee and is not legal advice. It assesses system "
-    "capability declarations and trace evidence against formal specifications. Whether these "
+    "capability information and trace evidence against formal specifications. Whether these "
     "findings discharge legal duties remains a determination this tool does not make and cannot "
     "make. A requirement reported without a strength was not evaluated, and no verdict on it "
     "should be read from this report."
 )
 
-#: Formalisms this build can actually evaluate. `temporal` and `logical` requirements need the
-#: monitor and solver engines, which are not part of this stage; until they land, such
+#: Formalisms this build can actually evaluate. `logical` requirements need the
+#: solver engine, which is part of stage 3; until it lands, such
 #: requirements are reported as not evaluated rather than judged by a weaker check that would
 #: not establish the property.
-SUPPORTED_FORMALISMS = ("record",)
+SUPPORTED_FORMALISMS = ("record", "temporal")
 
 
 def _is_present(value: Any) -> bool:
@@ -64,9 +65,9 @@ class RequirementResult:
     """The conformance result for a single requirement.
 
     `strength` is `None` when the requirement was not evaluated at all; see the module
-    docstring. `signals_missing` names the required signals the system does not declare,
-    and is therefore populated only on an unattainable result — signals that are declared
-    but absent from a particular trace are a different finding and land in `details`.
+    docstring. `signals_missing` names required signals missing from the adapter's capability
+    set and is therefore populated only on an unattainable result. Signals in that set but
+    absent from a particular trace are a different finding and land in `details`.
     """
 
     requirement_id: str
@@ -254,11 +255,11 @@ class ConformanceReport:
 def analyze_unattainable(req: Requirement, sut: SystemUnderTest) -> tuple[bool, tuple[str, ...]]:
     """Perform the unattainable analysis for a requirement against a SUT.
 
-    COMPUTED WITHOUT EXECUTING THE SYSTEM (sut.decisions is never called): the answer is the
-    set difference between the signals the requirement needs and the signals the system
-    declares it can emit. Capabilities are what the system *declares*, never what a trace
-    happens to contain, so a shortfall is a statement about the system as built rather than
-    about the run you happen to have.
+    COMPUTED WITHOUT EXECUTING THE SYSTEM (`sut.decisions()` is never called here): the answer
+    is the set difference between the signals the requirement needs and the capability set the
+    SUT adapter supplies. Most adapters require an explicit system declaration. A trace-derived
+    adapter is weaker: its result is limited to that supplied trace rather than stated as a
+    property of the system as built.
 
     Returns:
         (is_unattainable, missing_signals) — missing_signals is sorted and never empty when
@@ -287,7 +288,28 @@ def _read_trace(sut: SystemUnderTest) -> list[dict[str, Any]]:
     return records
 
 
-def _unattainable_result(req: Requirement, missing: tuple[str, ...]) -> RequirementResult:
+def _unattainable_result(
+    req: Requirement, missing: tuple[str, ...], sut: SystemUnderTest | None = None
+) -> RequirementResult:
+    """The unattainable result, worded for how the capability set was established.
+
+    A system that declares its capabilities is speaking about itself as built. An adapter
+    that infers them from a supplied trace is not: a longer trace could carry the signal, so
+    the result says what it was read from rather than putting a claim in the system's mouth.
+    """
+    if getattr(sut, "capability_basis", "declared") == "trace":
+        summary = (
+            "Unattainable on the evidence supplied: no record in the supplied decision trace "
+            f"carries a value for {', '.join(missing)}, and the system declared no "
+            "capabilities, so nothing here can discharge this requirement. Read from that "
+            "trace alone; a longer trace could show the system emitting these signals."
+        )
+    else:
+        summary = (
+            "Unattainable as built: the system declares no capability to emit "
+            f"{', '.join(missing)}, so no amount of testing can discharge this requirement. "
+            "Determined from declared capabilities alone; the system was not executed."
+        )
     return RequirementResult(
         requirement_id=req.id,
         source_clause=f"{req.source_document} {req.article_clause}",
@@ -295,11 +317,7 @@ def _unattainable_result(req: Requirement, missing: tuple[str, ...]) -> Requirem
         strength=Strength.UNATTAINABLE,
         signals_required=tuple(req.requires),
         signals_missing=missing,
-        evidence_summary=(
-            "Unattainable as built: the system declares no capability to emit "
-            f"{', '.join(missing)}, so no amount of testing can discharge this requirement. "
-            "Determined from declared capabilities alone; the system was not executed."
-        ),
+        evidence_summary=summary,
     )
 
 
@@ -310,14 +328,14 @@ def evaluate_requirement(
 ) -> RequirementResult:
     """Evaluate a single requirement against a SUT.
 
-    If declared capabilities do not cover the required signals, returns UNATTAINABLE without
-    executing the SUT. Otherwise `records` is used as the decision trace; when it is None the
-    trace is fetched from the SUT, so callers holding a trace already can avoid re-running the
-    system once per requirement.
+    If the adapter's capability set does not cover the required signals, returns UNATTAINABLE
+    without executing the SUT. Otherwise `records` is used as the decision trace; when it is
+    None the trace is fetched from the SUT, so callers holding a trace already can avoid
+    re-running the system once per requirement.
     """
     is_unattainable, missing = analyze_unattainable(req, sut)
     if is_unattainable:
-        return _unattainable_result(req, missing)
+        return _unattainable_result(req, missing, sut)
 
     clause = f"{req.source_document} {req.article_clause}"
 
@@ -340,57 +358,16 @@ def evaluate_requirement(
     if records is None:
         records = _read_trace(sut)
 
-    if not records:
-        return RequirementResult(
-            requirement_id=req.id,
-            source_clause=clause,
-            verdict=Verdict.INCONCLUSIVE,
-            strength=None,
-            signals_required=tuple(req.requires),
-            evidence_summary=(
-                "Not evaluated: the decision trace is empty, so nothing was observed. "
-                "An empty trace is not evidence that the requirement holds."
-            ),
-        )
+    if req.formalism == "record":
+        from reasonsmith.engines.record import RecordEngine
+        return RecordEngine.evaluate(req, sut, records)
+    elif req.formalism == "temporal":
+        from reasonsmith.engines.observed import ObservedEngine
+        return ObservedEngine.evaluate(req, sut, records)
 
-    absent = sorted(
-        {
-            signal
-            for rec in records
-            for signal in req.requires
-            if not _is_present(rec.get(signal))
-        }
-    )
-
-    if absent:
-        return RequirementResult(
-            requirement_id=req.id,
-            source_clause=clause,
-            verdict=Verdict.VIOLATED,
-            strength=Strength.OBSERVED,
-            signals_required=tuple(req.requires),
-            evidence_summary=(
-                f"Violated over {len(records)} observed decision(s): the system declares it can "
-                f"emit these signals, but records carry no value for {', '.join(absent)}."
-            ),
-            details={
-                "signals_absent_from_trace": absent,
-                "records_observed": len(records),
-            },
-        )
-
-    return RequirementResult(
-        requirement_id=req.id,
-        source_clause=clause,
-        verdict=Verdict.SATISFIED,
-        strength=Strength.OBSERVED,
-        signals_required=tuple(req.requires),
-        evidence_summary=(
-            f"Observed over {len(records)} decision(s): every required signal "
-            f"({', '.join(req.requires)}) carries a value in every record. Holds on the trace "
-            "supplied; nothing here extends the claim to decisions not in it."
-        ),
-        details={"records_observed": len(records)},
+    raise NotImplementedError(
+        f"{req.formalism!r} is listed in SUPPORTED_FORMALISMS but no engine here evaluates it. "
+        "Widen SUPPORTED_FORMALISMS when the engine lands, not before."
     )
 
 
