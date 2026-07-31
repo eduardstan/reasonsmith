@@ -296,20 +296,21 @@ class TestRegulationPacks:
                     f"Section 6.3 taxonomy {CAPABILITY_TAXONOMY}"
                 )
 
-    def test_eu_ai_act_verbatim_quotes(self):
-        pack = load_pack("eu_ai_act")
-        req12 = pack.get_requirement("eu_ai_act_art12_1_automatic_logging")
-        assert "automatic recording of events" in req12.verbatim_text
+    @pytest.mark.parametrize("pack_name", ["eu_ai_act", "gdpr", "ecoa"])
+    def test_pack_quotes_found_verbatim_in_legal_sources_report(self, pack_name: str):
+        """Every requirement quote in the regulation packs must be found character-for-character
+        in data/rs-legal-sources/report.md.
+        """
+        report_path = Path("data/rs-legal-sources/report.md")
+        assert report_path.is_file(), f"Legal sources report missing at {report_path}"
+        report_text = report_path.read_text(encoding="utf-8")
 
-    def test_gdpr_verbatim_quotes(self):
-        pack = load_pack("gdpr")
-        req22 = pack.get_requirement("gdpr_art22_1_automated_decision_prohibition")
-        assert "right not to be subject to a decision" in req22.verbatim_text
-
-    def test_ecoa_verbatim_quotes(self):
-        pack = load_pack("ecoa")
-        req9 = pack.get_requirement("ecoa_reg_b_1002_9_a_1_timing_of_notice")
-        assert "30 days" in req9.verbatim_text
+        pack = load_pack(pack_name)
+        for req in pack.requirements:
+            assert req.verbatim_text in report_text, (
+                f"Requirement {req.id!r} in pack {pack_name!r} has verbatim_text not found "
+                f"verbatim in data/rs-legal-sources/report.md:\n{req.verbatim_text!r}"
+            )
 
 
 class TestDefinitionOfDoneEndToEnd:
