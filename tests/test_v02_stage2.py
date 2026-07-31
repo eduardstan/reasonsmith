@@ -166,6 +166,17 @@ class TestJSONLAdapter:
         assert len(records) == 2
         assert records[0]["provenance_model_version"] == "v1.2.0"
 
+    def test_inline_jsonl_string_longer_than_the_filename_limit(self):
+        """A realistic inline trace exceeds the OS filename limit; it is text, not a path."""
+        text = "\n".join(
+            json.dumps({"decision_id": f"app-{i}", "artifact_logs_reason_explanation": "x" * 60})
+            for i in range(4)
+        )
+        assert len(text) > 255
+        sut = JSONLAdapter(text)
+        assert len(list(sut.decisions())) == 4
+        assert "artifact_logs_reason_explanation" in sut.capabilities()
+
     def test_invalid_json_raises_value_error(self, tmp_path: Path):
         log_file = tmp_path / "bad.jsonl"
         log_file.write_text("not json\n")

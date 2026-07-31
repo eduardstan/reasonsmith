@@ -56,7 +56,13 @@ class JSONLAdapter(BaseSUT):
         records: list[dict[str, Any]] = []
         if isinstance(source, (str, Path)):
             path = Path(source)
-            if not path.is_file():
+            try:
+                is_file = path.is_file()
+            except (OSError, ValueError):
+                # Inline JSONL text is not a path: it can exceed the OS filename
+                # limit or carry characters the platform rejects in a path.
+                is_file = False
+            if not is_file:
                 # Allow inline JSONL string if it contains newlines or json syntax
                 text = str(source).strip()
                 if "\n" in text or (text.startswith("{") and text.endswith("}")):
