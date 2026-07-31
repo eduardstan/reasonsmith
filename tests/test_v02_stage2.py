@@ -592,11 +592,12 @@ class TestRegulationPacks:
         """
         report_path = Path(__file__).resolve().parents[1] / "docs" / "legal-sources.md"
         assert report_path.is_file(), f"Legal sources report missing at {report_path}"
-        report_text = report_path.read_text(encoding="utf-8")
+        report_text = report_path.read_text(encoding="utf-8").replace("\r\n", "\n")
 
         pack = load_pack(pack_name)
         for req in pack.requirements:
-            assert req.verbatim_text in report_text, (
+            verbatim = req.verbatim_text.replace("\r\n", "\n")
+            assert verbatim in report_text, (
                 f"Requirement {req.id!r} in pack {pack_name!r} has verbatim_text not found "
                 f"verbatim in docs/legal-sources.md:\n{req.verbatim_text!r}"
             )
