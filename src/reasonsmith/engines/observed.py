@@ -55,6 +55,39 @@ def _is_real_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
+_ALWAYS = re.compile(r"^\s*always\s*\((.*)\)\s*$", re.DOTALL)
+
+
+def _always_body(spec: str) -> str | None:
+    """The body of a spec that is a single unbounded `always(...)`, else None.
+
+    The robustness of `always` at step t is the minimum over the whole suffix, so every step
+    before a breach inherits the breach's negative score. Naming the steps that actually breach
+    the duty means monitoring the body on its own.
+    """
+    match = _ALWAYS.match(spec)
+    if match is None:
+        return None
+    body = match.group(1)
+    depth = 0
+    for char in body:
+        depth += (char == "(") - (char == ")")
+        if depth < 0:
+            return None  # the paren we stripped closed something else, e.g. always(a) and b
+    return body if depth == 0 else None
+
+
+def _monitor(spec_text: str, name: str, spec_vars: set[str], time_series: dict) -> list:
+    """Robustness of `spec_text` at every time step of `time_series`."""
+    spec = rtamt.StlDiscreteTimeSpecification()
+    spec.name = name
+    for var in spec_vars:
+        spec.declare_var(var, "float")
+    spec.spec = spec_text
+    spec.parse()
+    return spec.evaluate(time_series)
+
+
 def _magnitude_vars(spec: str) -> set[str]:
     """The spec variables compared against something other than the presence threshold."""
     magnitude: set[str] = set()
@@ -149,13 +182,14 @@ class ObservedEngine:
 
         # Construct rtamt STL specification
         try:
-            spec = rtamt.StlDiscreteTimeSpecification()
-            spec.name = f"spec_{req.id.replace('-', '_')}"
-            for var in spec_vars:
-                spec.declare_var(var, "float")
-            spec.spec = req.spec
-            spec.parse()
-            res = spec.evaluate(time_series)
+            spec_name = f"spec_{req.id.replace('-', '_')}"
+            res = _monitor(req.spec, spec_name, spec_vars, time_series)
+            always_body = _always_body(req.spec)
+            violation_res = (
+                _monitor(always_body, f"{spec_name}_body", spec_vars, time_series)
+                if always_body is not None
+                else res
+            )
         except Exception as exc:
             return RequirementResult(
                 requirement_id=req.id,
@@ -171,8 +205,10 @@ class ObservedEngine:
             )
 
         # Check evaluations for violations (robustness < 0)
-        # res is a list of [time, robustness_score] pairs
-        violation_indices = [int(t) for t, rob in res if rob < 0]
+        # For a top-level `always`, use its body's robustness to identify the records that
+        # actually breach the duty; the outer formula's suffix minimum also makes earlier,
+        # compliant records negative.
+        violation_indices = [int(t) for t, rob in violation_res if rob < 0]
 
         if violation_indices:
             offending_segment = [records[t] for t in violation_indices]

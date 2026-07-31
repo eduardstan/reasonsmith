@@ -359,6 +359,8 @@ class TestRequirementsMeasureTheirDuty:
         ]
         result = ObservedEngine.evaluate(req, sut, records)
         assert result.verdict == Verdict.VIOLATED
+        assert result.details["violation_step_indices"] == [1]
+        assert result.details["offending_trace_segment"] == [records[1]]
 
         on_time = [dict(r, artifact_logs_notification_latency_days=12) for r in records]
         assert ObservedEngine.evaluate(req, sut, on_time).verdict == Verdict.SATISFIED
