@@ -14,6 +14,8 @@ In the credit demonstration (`python -m reasonsmith.demo`), `reasonsmith` produc
 
 Evaluating structural form alone can launder severe compliance and reasoning gaps into documents that appear authoritative. Reason-deletion certificates provide the ground-truth verification needed alongside regulatory evidence records.
 
+Every number above, and every other figure this README states, is measured and reproduced in **[RESULTS.md](RESULTS.md)**, including the exact environment, both suites' pass/fail/skip counts with `torch` installed, and a byte-for-byte diff of two demo runs.
+
 ## Where the duties come from
 
 The duty-to-artifact mapping is Table 7 of *Symbols and Neurons: A Review of Symbolic XAI in Deep Learning* (Stan, Sciavicco & Napoletano, JAIR 2026), a review of 273 primary studies tying symbolic artifacts to duties under the EU AI Act, GDPR, ECOA/Reg B, FDA GMLP, and NIST AI RMF.
@@ -36,7 +38,7 @@ This single install path is used by CI (`.github/workflows/ci.yml`).
 
 ### Dependencies & PyPI
 - **`nesyarena`**: Supplies the ground-program IR, bounded proof enumeration, exact oracle, and adapter protocol. It is pinned to an immutable git commit in `pyproject.toml` so measurements stay reconstructible.
-- **`torch` is deliberately omitted**: It is an optional dependency of `nesyarena` (`learning`, ~1GB) and is not needed for this test suite or demo. Known consequence, reported rather than hidden: in `nesyarena`'s own suite 98 tests pass while `tests/test_e6_findings.py` and `tests/test_learning_parity.py` fail to collect without `torch`. Those modules live in `nesyarena`'s repository, are not collected here, and are a pre-existing environment gap not fixed here; run them there with `pip install "nesyarena[learning]"`.
+- **`torch` is deliberately not a declared dependency of this package** (`pyproject.toml` is unaffected): it is an optional dependency of `nesyarena` (`learning`, ~1GB) and is not needed to run this package's own suite or demo, both of which stay pure-Python. It **has** been installed, measured, and reported: with `torch` (and `nesyarena`'s `reporting` extra, needed only so `tests/test_e6_findings.py` can collect at all) present in a separate environment, `nesyarena`'s own suite goes from the previously-reported 98 collected tests to **110 collected — 100 passed, 5 skipped, 4 errors, 1 failed**, and both `tests/test_e6_findings.py` and `tests/test_learning_parity.py` now collect and run. The remaining gaps are real and are named, not torch: 4 errors and 2 of the 5 skips need `ltn` (LTNtorch, nesyarena's `backends` extra), 1 failure and 2 more skips need `problog` (nesyarena's `oracles` extra) — neither extra was installed here. Full counts, the exact install commands, and the complete pass/fail list are in [RESULTS.md](RESULTS.md#1-nesyarenas-own-suite-with-torch-present).
 
 ## What is in the box
 
