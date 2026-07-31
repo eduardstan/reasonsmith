@@ -1,0 +1,113 @@
+####################################################################################################
+# Table 7 regulation pack for reasonsmith v0.2.
+#
+# This pack re-expresses Table 7 of "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
+# (Stan, Sciavicco & Napoletano, JAIR 2026, p. 36:22) as formal requirements with signal dependencies.
+#
+# Every requirement maintains verbatim traceability to the source paper.
+####################################################################################################
+
+[pack]
+id = "table7"
+title = "Table 7: Symbolic XAI Regulatory & Governance Duties"
+description = "Checklist tying symbolic artifacts to legal/assurance duties and required minimal evidence."
+
+[source]
+table = "Table 7"
+caption = "Checklist that ties symbolic artifacts to legal/assurance duties and the associated logging."
+paper = "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
+authors = "Stan, Sciavicco & Napoletano"
+venue = "Journal of Artificial Intelligence Research, Vol. 86, Article 36"
+publication_date = "July 2026"
+page = "36:22"
+section = "5.3 Alignment with Regulatory and Governance Requirements"
+
+[[requirement]]
+id = "eu_ai_act_art13_transparency"
+source_document = "EU AI Act"
+article_clause = "Art. 13"
+verbatim_text = "Transparency and information to deployers"
+stakeholder = "deployer"
+formalism = "record"
+spec = "Technical documentation and minimal evidence retainment for transparency duties."
+requires = [
+    "model_and_data_version_ids",
+    "extraction_timestamp",
+    "dataset_snapshot_hash",
+    "fidelity_coverage_metrics",
+    "explanation_scope",
+    "linkage_from_decision_to_artifact",
+]
+
+[[requirement]]
+id = "eu_ai_act_art12_record_keeping"
+source_document = "EU AI Act"
+article_clause = "Art. 12"
+verbatim_text = "Record–keeping (event logging)"
+stakeholder = "regulator"
+formalism = "record"
+spec = "Automatic event logs and retention schedules for high-risk AI system record-keeping."
+requires = [
+    "automatic_event_logs",
+    "retention_schedule",
+    "signer",
+]
+
+[[requirement]]
+id = "gdpr_art22_meaningful_information"
+source_document = "GDPR"
+article_clause = "Art. 22 (and Rec. 71)"
+verbatim_text = "Automated decisions: “meaningful information about the logic involved”"
+stakeholder = "affected individual"
+formalism = "record"
+spec = "Per-decision reason strings and concept mappings for automated decision explanations."
+requires = [
+    "reasons",
+    "feature_to_named_concept_mapping",
+    "dpia_cross_reference",
+]
+
+[[requirement]]
+id = "ecoa_reg_b_adverse_action"
+source_document = "ECOA / Reg B"
+article_clause = "12 CFR 1002.9"
+verbatim_text = "Adverse action reasons in credit decisions"
+stakeholder = "affected individual"
+formalism = "record"
+spec = "Stored reason codes and score factors for credit adverse action notices."
+requires = [
+    "reasons",
+    "model_version",
+    "score_factors",
+    "audit_ids",
+    "retention_for_regulatory_lookback",
+]
+
+[[requirement]]
+id = "fda_gmlp_samd"
+source_document = "FDA GMLP"
+article_clause = "agency transparency guidance"
+verbatim_text = "Good ML Practice/transparency for SaMD"
+stakeholder = "regulator"
+formalism = "record"
+spec = "Design history links and verification logs for Software as a Medical Device."
+requires = [
+    "design_history_links",
+    "verification_logs",
+    "change_control",
+]
+
+[[requirement]]
+id = "nist_ai_rmf_risk_evidence"
+source_document = "NIST AI RMF 1.0"
+article_clause = "Govern–Map–Measure–Manage"
+verbatim_text = "Risk evidence and continuous monitoring"
+stakeholder = "deployer"
+formalism = "record"
+spec = "Continuous monitoring logs and metric thresholds for risk governance."
+requires = [
+    "continuous_monitoring_logs",
+    "metric_thresholds_and_alerts",
+    "reviews_and_sign_offs",
+    "incident_tickets",
+]
