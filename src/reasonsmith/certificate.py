@@ -5,14 +5,28 @@ What this module is for:
   Using deletion probes, it tests whether disabling isolated facts changes engine output,
   attributing dropped reasons to proof truncation or inference settings.
 
+  Deletion probe mechanism:
+    A reason r with a private fact (one no other exact reason uses) is switched off by setting its
+    fact probability to zero. Exact inference loses r's exclusive contribution. If the engine's
+    answer does not move at all, the engine did not depend on r: r was deleted.
+
 What a reader must not break:
   - Both independent checks must pass for a certificate to pass: the deletion probe
     (every reason live) and the value check against the exact oracle. Neither check
     subsumes the other.
+    Why this matters: An engine that uses every reason but weights them wrongly passes the probe;
+    the value check is what catches that. Conversely, a silently truncated engine can have small
+    value gaps caught only by the deletion probe.
   - A reason with no private fact cannot be switched off alone (`unseparable`) and returns
-    `INCONCLUSIVE`. It is never assumed live.
+    `INCONCLUSIVE`.
+    Why this matters: Reasons sharing all facts cannot be probed in isolation, so dependency
+    cannot be proven and is never assumed live.
   - A probe whose exact-side drop is zero carries no signal and is reported `inconclusive`.
+    Why this matters: Zero drop means the private fact already had zero probability, producing no
+    measurable signal.
   - A query with no enumerated reasons is never a `PASS` (returns `INCONCLUSIVE` or `FAIL`).
+    Why this matters: A zero value gap on an un-enumerated query is not agreement; exact inference
+    never evaluated it.
 """
 
 from __future__ import annotations

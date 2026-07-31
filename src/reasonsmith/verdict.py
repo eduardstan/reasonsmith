@@ -3,7 +3,19 @@
 What this module is for:
   Defines the formal evidence strength lattice (`unattainable < observed < probed < proved`) and
   the verdict vocabulary (`satisfied`, `violated`, `inconclusive`, `not_applicable`) for compliance
-  checking. Compliance claims carry both a verdict and the evidence strength that backs it.
+  checking. Compliance claims carry both a verdict (whether a property holds) and a strength
+  (how deeply the system exposed itself for verification).
+
+  Strengths form a strict total order (the strength lattice):
+    unattainable — The system cannot discharge the requirement as built (missing signals).
+    observed     — The property holds over passive decision traces (monitors / record checks).
+    probed       — The property holds under active perturbation/replay.
+    proved       — The property holds for all inputs via formal reasoning / solver proof.
+
+  Verdicts record whether a property is met:
+    satisfied    — Evidence proves or demonstrates the requirement holds.
+    violated     — Evidence demonstrates a counterexample or breach.
+    inconclusive — Evidence is insufficient, incomplete, or unattainable.
 
   Lineage & Section 6.3 Scope Statements:
     The strength lattice is the operational form of Section 6.3's scope statement ("Governance,
@@ -15,11 +27,17 @@ What this module is for:
 What a reader must not break:
   - Do not alter the strict total order of the strength lattice
     (`UNATTAINABLE < OBSERVED < PROBED < PROVED`).
+    Why this matters: Order guarantees that weaker passive evidence can never masquerade as
+    active probing or formal proof.
   - `RequirementResult` refuses to construct a result claiming more than it has (including
     `strength=None` for "no engine here evaluated this", which is deliberately not a strength on
     the lattice).
+    Why this matters: Prevents un-evaluated or un-measured checks from being counted as satisfied
+    or silently assigned a strength tier.
   - Nothing in this module asserts legal compliance or guarantees correctness beyond the formal
     bounds of the evidence provided.
+    Why this matters: Technical checks measure evidence records against specifications, not legal
+    counsel or guarantees.
 """
 
 from __future__ import annotations

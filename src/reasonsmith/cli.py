@@ -11,12 +11,16 @@ What this module is for:
 What a reader must not break:
   - Exit code contract for `check`: 2 when at least one requirement is VIOLATED, 0 otherwise,
     and 1 on a usage or input error.
+    Why this matters: Automation pipelines rely on exit code 2 to distinguish a breach from a
+    clean run (0) or a CLI syntax/file error (1).
   - Only a violation is a breach, so only a violation is non-zero. Unattainable, not applicable
     and not evaluated are findings to read in the report, not verdicts against the system: an
     unattainable requirement says the system as built cannot discharge the duty on the evidence
     supplied, a not-applicable one says the duty is limited to a regulatory class this system was
-    not declared to be in, and a not-evaluated one says no engine here checked it. None of the
-    three is evidence the system failed a duty, so none of them fails the caller's build.
+    not declared to be in, and a not-evaluated one says no engine here checked it.
+    Why this matters: none of the three is evidence the system failed a duty, so none of them
+    fails the caller's build.
+
 """
 
 from __future__ import annotations

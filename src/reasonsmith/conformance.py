@@ -6,12 +6,15 @@ What this module is for:
   reason-deletion certificates.
 
 What a reader must not break:
-  - Fidelity is reported in both absolute fidelity and retained share forms; do not drop
-    retained share, as it catches value loss that absolute fidelity misses for low-probability
-    reason cases.
+  - Fidelity is reported in both absolute fidelity and retained share forms.
+    Why this matters: Absolute fidelity measures MAE against the oracle, but low-probability
+    reasons have small absolute error by construction; retained share catches relative value loss
+    that absolute fidelity misses.
   - An unmeasured certificate (where exact inference enumerated zero reasons) must never be
     scored as measured.
+    Why this matters: Prevents un-evaluated certificates from inflating coverage or fidelity scores.
   - Per-group comparisons carry explicit disclaimers regarding cohort size limits.
+    Why this matters: Per-group figures are only as representative as the cases behind them.
 """
 
 from __future__ import annotations

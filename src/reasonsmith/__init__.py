@@ -24,9 +24,12 @@ What this module is for:
 What a reader must not break:
   - Only `unattainable` and `observed` rungs of the lattice are implemented here. `probed` and
     `proved` need engines that do not exist yet.
+    Why this matters: Claiming a higher strength without an engine would launder unverified claims.
   - Logical requirements have no engine and are reported as not evaluated rather than judged by a
     weaker check.
+    Why this matters: Evaluated status must reflect actual engine verification, not fallbacks.
   - Nothing produced here is a compliance guarantee and nothing here is legal advice.
+    Why this matters: Technical record checks cannot replace legal determination or guarantees.
 """
 
 __version__ = "0.1.0"

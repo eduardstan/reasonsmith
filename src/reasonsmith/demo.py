@@ -9,8 +9,12 @@ What this module is for:
 What a reader must not break:
   - Synthetic programs are frozen and deterministic without randomness; demo output must remain
     reproducible byte-for-byte.
+    Why this matters: Guarantees every measured figure and transcript line in the paper and repo
+    can be verified and diffed byte-for-byte.
   - Credit comes first on purpose: ECOA requires specific principal reasons, making proof
     truncation a legal compliance issue.
+    Why this matters: Under credit law, a dropped reason is a reason legally owed to an applicant
+    and withheld, making it the sharpest test of certificate value.
 """
 
 from __future__ import annotations

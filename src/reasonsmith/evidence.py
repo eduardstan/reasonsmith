@@ -4,14 +4,25 @@ What this module is for:
   Emits minimal evidence records according to Table 7 duties, checking structural completeness
   and explicitly naming missing fields without throwing errors or filling gaps.
 
+  Core governing rule:
+    A record missing a required field is reported as INCOMPLETE, and the missing fields are named.
+    A partial record presented as complete would launder a compliance gap into a document that
+    reads as authoritative, which is worse than emitting nothing.
+
 What a reader must not break:
   - `emit` never raises for a missing field; it marks the record INCOMPLETE and lists what is
     absent.
+    Why this matters: Refusing to produce anything would hide the gap just as effectively as
+    filling it; emitting the record marked INCOMPLETE exposes what is absent.
   - A key not in the duty's Table 7 row is rejected outright; unlisted fields cannot substitute
     for required ones.
-  - Non-Table 7 material travels in `attachments` and renders under its own heading so it cannot
-    be read as discharging part of a row.
+    Why this matters: Accepting unlisted keys would let a field nobody required stand in for one
+    somebody did.
+  - Non-Table 7 material travels in `attachments` and renders under its own heading.
+    Why this matters: Ensures non-Table 7 data can never be read as discharging part of the row.
   - No default, inference, or dummy fallback may ever be substituted for a missing field.
+    Why this matters: Substituting defaults would launder missing compliance data into complete
+    records.
 """
 
 from __future__ import annotations

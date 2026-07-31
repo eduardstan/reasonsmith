@@ -8,8 +8,11 @@ What this module is for:
 What a reader must not break:
   - BaseSUT requires explicit capability declarations; capability basis must distinguish explicit
     declarations from trace-derived ones.
+    Why this matters: Trace-derived capabilities come from observing sample traces, whereas
+    explicit declarations represent an authoritative system claim.
   - Capabilities must be verified against `CAPABILITY_TAXONOMY` to prevent invalid signal
     registration.
+    Why this matters: Guarantees capability signal names align with Section 6.3 taxonomy categories.
 """
 
 from __future__ import annotations

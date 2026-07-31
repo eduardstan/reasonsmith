@@ -7,8 +7,13 @@ What this module is for:
 What a reader must not break:
   - Capabilities are derived from fields non-blank in at least ONE record; partial presence is a
     trace violation reported by engines, not a lack of system capability.
+    Why this matters: A capability represents what the system can emit; a field present in some
+    records but omitted in others indicates an operational trace breach, not an unattainable
+    requirement.
   - `capability_basis` must honestly record whether capabilities were explicitly declared or
     trace-derived (`trace_derived`).
+    Why this matters: Reports must explicitly state when capabilities were derived from a single
+    sample trace rather than authoritatively declared by system maintainers.
 """
 
 from __future__ import annotations

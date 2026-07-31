@@ -7,7 +7,11 @@ What this module is for:
 What a reader must not break:
   - Capabilities must be declared by the author explicitly and never inferred from object
     inspection.
+    Why this matters: Object inspection can falsely guess capabilities based on dummy attributes
+    or method names rather than genuine model outputs.
   - The capability basis must be returned as "declared".
+    Why this matters: Distinction between declared capabilities and trace-derived capabilities
+    must remain explicit in report findings.
 """
 
 from __future__ import annotations

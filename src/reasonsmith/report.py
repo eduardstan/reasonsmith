@@ -7,10 +7,16 @@ What this module is for:
 
 What a reader must not break:
   - No result claims a strength it did not earn (`strength` is `None` when un-evaluated).
+    Why this matters: A requirement never evaluated (e.g. unsupported formalism or empty trace)
+    is recorded as un-evaluated, never quietly counted as satisfied or given an unearned strength.
   - Combining zero verdicts is `inconclusive`, never vacuously `satisfied`.
-  - The unattainable analysis must NEVER execute the system (`sut.decisions()` is never called);
-    it is purely a set difference over capabilities.
+    Why this matters: Having checked nothing is not evidence that a requirement holds.
+  - The unattainable analysis must NEVER execute the system (`sut.decisions()` is never called).
+    Why this matters: Static capability checking acts as a pre-execution safety gate using set
+    differences over declared signal names before running decision traces.
   - Every emitted report carries explicit limits on its scope and guarantees.
+    Why this matters: Reports assess technical trace evidence against specifications, not legal
+    counsel.
 """
 
 from __future__ import annotations

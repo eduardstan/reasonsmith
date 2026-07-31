@@ -7,9 +7,13 @@ What this module is for:
 What a reader must not break:
   - If rtamt cannot express a formula or trace is shorter than `MINIMUM_TRACE_LENGTH`, report
     `NOT EVALUATED` (`verdict=INCONCLUSIVE`, `strength=None`), NEVER `satisfied`.
+    Why this matters: STL monitors require sufficient trace points to establish time bounds; an
+    unsupported formula or insufficient trace length cannot prove a temporal property.
   - Signal types (flag vs. magnitude) must be read from the formula itself, not trace contents.
     `var >= 0.5` indicates a presence flag; numeric magnitude comparisons must receive finite
     numbers and never coerce missing/non-finite values to 0.0 or 1.0.
+    Why this matters: Coercing absent or non-finite values to numbers would let invalid or un-sent
+    notices pass strict deadline comparisons (e.g. `<= 30` days).
 """
 
 from __future__ import annotations

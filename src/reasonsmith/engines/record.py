@@ -5,7 +5,11 @@ What this module is for:
 
 What a reader must not break:
   - An empty trace is reported as NOT EVALUATED (`strength=None`), never satisfied.
+    Why this matters: Having observed zero decisions provides no empirical evidence that required
+    fields are kept.
   - A missing value in an observed record is an observed violation (`VIOLATED`, `OBSERVED`).
+    Why this matters: Every observed decision record must carry every required signal to satisfy
+    record-keeping duties.
 """
 
 from __future__ import annotations
