@@ -394,6 +394,7 @@ def test_certificate_json_roundtrip_preserves_verdict_and_reasons():
     assert loaded["limits"] == certificate.LIMITS
 
 
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 # ------------------------------------ EU AI Act Art. 13 (Table 7 row 1) ----
@@ -518,3 +519,49 @@ def test_fda_record_is_complete_with_verdicts_from_certificates():
     record = evidence.emit("fda_gmlp_samd", case.case_id,
                            fda_evidence_fields(case, cert_deployed, cert_exact))
     assert record.complete
+
+
+# ------------------------------------------------ NIST AI RMF (Table 7 row 6) ----
+
+
+def nist_windows(adapter):
+    from reasonsmith.demo import DRIFT_SIGNALS, drift_windows
+
+    return drift_windows("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88,
+                         DRIFT_SIGNALS, 6, adapter)
+
+
+def test_stability_alert_fires_when_drift_replaces_the_stated_reason():
+    from reasonsmith.demo import NIST_THRESHOLDS, threshold_alerts
+
+    certs = nist_windows(ReferenceAdapter(TopK(1)))
+    stated = {tuple(v.label for v in c.live) for c in certs}
+    assert len(stated) > 1                                   # the stated reason really changed
+    alerts = {a["metric"]: a for a in threshold_alerts(certs, NIST_THRESHOLDS)}
+    assert alerts["coverage"]["window"] == 0            # top-1 was under the floor from the start
+    assert alerts["coverage"]["value"] == pytest.approx(1 / len(CREDIT_REASONS))
+    assert alerts["stability"]["window"] == 2           # drift swaps the stated reason at window 2
+    # the alert carries the value actually measured, not a restated one
+    assert alerts["stability"]["value"] == conformance.stability(certs[:3])
+
+
+def test_an_engine_within_the_floors_raises_no_alert():
+    from reasonsmith.demo import NIST_THRESHOLDS, threshold_alerts
+
+    certs = nist_windows(ReferenceAdapter(ExactWMC()))
+    assert all(conformance.coverage(c) == 1.0 for c in certs)
+    assert conformance.stability(certs) == 1.0
+    assert threshold_alerts(certs, NIST_THRESHOLDS) == []
+
+
+def test_nist_record_is_incomplete_on_the_sign_off_it_cannot_produce():
+    """A frozen synthetic run has no reviewer: reviews_and_sign_offs is reported NOT PRODUCED,
+    never filled with a simulated signature."""
+    from reasonsmith.demo import NIST_THRESHOLDS, nist_evidence_fields, threshold_alerts
+
+    certs = nist_windows(ReferenceAdapter(TopK(1)))
+    fields = nist_evidence_fields(certs, threshold_alerts(certs, NIST_THRESHOLDS), NIST_THRESHOLDS)
+    rec = evidence.emit("nist_ai_rmf_risk_evidence", "APP-1042", fields)
+    assert rec.status == "INCOMPLETE"
+    assert rec.missing == ("reviews_and_sign_offs",)
+    assert "NOT PRODUCED" in rec.render()
