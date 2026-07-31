@@ -299,6 +299,19 @@ def test_loader_error_names_the_offending_block(tmp_path):
         load_pack(_write_pack(tmp_path, good + "\n" + bad))
 
 
+def test_loader_rejects_an_unknown_field(tmp_path):
+    """A key the loader never reads would vanish, leaving a pack that looks complete."""
+    good = (
+        '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
+        'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
+        'spec = "a spec"\nrequires = ["a"]\n'
+    )
+    with pytest.raises(ValueError, match=r"custom\.toml.*unknown field\(s\): stakeholders"):
+        load_pack(_write_pack(tmp_path, good + 'stakeholders = "deployer"\n'))
+    with pytest.raises(ValueError, match=r"unknown field\(s\): strength"):
+        load_pack(_write_pack(tmp_path, good + 'strength = "proved"\n'))
+
+
 def test_requirement_needs_at_least_one_signal():
     """A requirement with no required signals could never be unattainable, so it is malformed."""
     with pytest.raises(ValueError, match="at least one required signal"):
@@ -677,6 +690,81 @@ def test_result_cannot_claim_more_than_its_evidence():
             signals_missing=("z",),
             **ok,
         )
+
+
+def test_a_string_verdict_or_strength_is_parsed_not_trusted():
+    """The invariants compare against enum members, so a raw string must not slip past them.
+
+    `strength="unattainable"` is not `Strength.UNATTAINABLE`, so every guard above would have
+    read False and constructed a result rendering as `[UNATTAINABLE] r1 (...): satisfied` —
+    the exact overclaim this class exists to make unconstructible.
+    """
+    ok = {
+        "requirement_id": "r1",
+        "source_clause": "Doc Art. 1",
+        "signals_required": ("a",),
+    }
+
+    with pytest.raises(ValueError, match="cannot be reported satisfied"):
+        RequirementResult(verdict=Verdict.SATISFIED, strength="unattainable", **ok)
+
+    res = RequirementResult(verdict="satisfied", strength="observed", **ok)
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.OBSERVED
+    assert res.to_dict()["strength"] == "observed"
+    assert res == RequirementResult(verdict=Verdict.SATISFIED, strength=Strength.OBSERVED, **ok)
+
+    # `None` stays legal: it marks "no engine here evaluated this", not a rung on the lattice.
+    assert RequirementResult(verdict="inconclusive", strength=None, **ok).evaluated is False
+
+    with pytest.raises(ValueError, match="Unknown strength"):
+        RequirementResult(verdict=Verdict.INCONCLUSIVE, strength="vibes", **ok)
+    with pytest.raises(ValueError, match="Unknown verdict"):
+        RequirementResult(verdict="probably", strength=Strength.OBSERVED, **ok)
+
+
+def test_result_rejects_a_bare_signal_string():
+    """signals_required="reasons" would become seven one-character signals; refuse it."""
+    with pytest.raises(TypeError, match="signals_required must be a sequence"):
+        RequirementResult(
+            requirement_id="r1",
+            source_clause="Doc Art. 1",
+            verdict=Verdict.INCONCLUSIVE,
+            strength=None,
+            signals_required="reasons",
+        )
+    with pytest.raises(TypeError, match="signals_missing must be a sequence"):
+        RequirementResult(
+            requirement_id="r1",
+            source_clause="Doc Art. 1",
+            verdict=Verdict.INCONCLUSIVE,
+            strength=Strength.UNATTAINABLE,
+            signals_required=("a",),
+            signals_missing="a",
+        )
+    # A list of names is fine and arrives as a tuple.
+    res = RequirementResult(
+        requirement_id="r1",
+        source_clause="Doc Art. 1",
+        verdict=Verdict.INCONCLUSIVE,
+        strength=None,
+        signals_required=["a", "b"],
+    )
+    assert res.signals_required == ("a", "b")
+
+
+def test_a_trace_of_the_wrong_shape_names_the_system():
+    """One record instead of a list of records iterates its keys; say which system did it."""
+
+    class OneRecordSUT(BaseSUT):
+        def decisions(self):
+            return {"signal_a": "value"}
+
+    sut = OneRecordSUT({"signal_a"})
+    with pytest.raises(TypeError, match=r"OneRecordSUT\.decisions\(\).*got str"):
+        evaluate_requirement(_requirement(), sut)
+    with pytest.raises(TypeError, match="each a mapping of signal name to value"):
+        check_conformance(sut, Pack("p", "P", "", (_requirement(),)))
 
 
 def test_headline_and_counts_never_disagree():

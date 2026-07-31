@@ -19,6 +19,7 @@ Every emitted report carries explicit limits on its scope and guarantees.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -78,6 +79,15 @@ class RequirementResult:
     details: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        # Every invariant below compares against the enum members, so a raw string would
+        # match none of them and walk past all of them. Normalise first: the guards are the
+        # only thing standing between a caller and a result that claims more than it has.
+        object.__setattr__(self, "verdict", Verdict.parse(self.verdict))
+        if self.strength is not None:
+            object.__setattr__(self, "strength", Strength.parse(self.strength))
+        for name in ("signals_required", "signals_missing"):
+            object.__setattr__(self, name, self._signal_names(name))
+
         unattainable = self.strength == Strength.UNATTAINABLE
         if unattainable and self.verdict != Verdict.INCONCLUSIVE:
             raise ValueError(
@@ -100,6 +110,28 @@ class RequirementResult:
                 f"{self.requirement_id}: signals_missing names signals the requirement does not "
                 f"require: {sorted(unknown)}"
             )
+
+    def _signal_names(self, name: str) -> tuple[str, ...]:
+        """Coerce a signal field to a tuple of names, refusing shapes that would be misread.
+
+        A bare string is iterable, so signals_required="reasons" would become seven
+        single-character signals; a mapping is iterable over its keys, for the same reason
+        the capability sites reject one.
+        """
+        value = getattr(self, name)
+        if isinstance(value, (str, bytes, Mapping)) or not isinstance(value, Iterable):
+            raise TypeError(
+                f"{self.requirement_id}: {name} must be a sequence of signal names, got "
+                f"{type(value).__name__}; pass ({value!r},) to name one signal"
+            )
+        names = tuple(value)
+        bad = [s for s in names if not isinstance(s, str) or not s.strip()]
+        if bad:
+            raise TypeError(
+                f"{self.requirement_id}: every entry of {name} must be a non-empty signal "
+                f"name, got {bad!r}"
+            )
+        return names
 
     @property
     def evaluated(self) -> bool:
@@ -238,6 +270,23 @@ def analyze_unattainable(req: Requirement, sut: SystemUnderTest) -> tuple[bool, 
     return bool(missing), missing
 
 
+def _read_trace(sut: SystemUnderTest) -> list[dict[str, Any]]:
+    """Read a SUT's decision trace, refusing a shape that would be read record by record.
+
+    A system returning one record instead of a list of records yields its key strings, which
+    would otherwise blow up deep inside the signal check with no mention of the system that
+    caused it. Shared by both places a trace is read, so neither can drift from the other.
+    """
+    records = list(sut.decisions())
+    for rec in records:
+        if not isinstance(rec, Mapping):
+            raise TypeError(
+                f"{type(sut).__name__}.decisions() must return an iterable of decision records, "
+                f"each a mapping of signal name to value; got {type(rec).__name__}"
+            )
+    return records
+
+
 def _unattainable_result(req: Requirement, missing: tuple[str, ...]) -> RequirementResult:
     return RequirementResult(
         requirement_id=req.id,
@@ -289,7 +338,7 @@ def evaluate_requirement(
         )
 
     if records is None:
-        records = list(sut.decisions())
+        records = _read_trace(sut)
 
     if not records:
         return RequirementResult(
@@ -363,14 +412,11 @@ def check_conformance(
     )
     # When nothing needs the trace this stays empty and is never read: the only requirements
     # left are unattainable or of a formalism no engine here checks.
-    records = list(sut.decisions()) if needs_trace else []
+    records = _read_trace(sut) if needs_trace else []
 
-    results = [
-        _unattainable_result(req, missing)
-        if is_unattainable
-        else evaluate_requirement(req, sut, records)
-        for req, is_unattainable, missing in verdicts
-    ]
+    # `records` is a list by now, so evaluate_requirement never re-reads the trace; it
+    # re-derives the unattainable result itself, which is why there is no branch here.
+    results = [evaluate_requirement(req, sut, records) for req, _, _ in verdicts]
     return ConformanceReport(
         pack_id=pack.id,
         system_name=system_name,

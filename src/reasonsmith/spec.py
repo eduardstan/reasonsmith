@@ -161,6 +161,15 @@ def load_pack(name_or_path: str | Path) -> Pack:
         missing = [f for f in REQUIREMENT_FIELDS if f not in rdata]
         if missing:
             raise ValueError(f"{where}: missing required field(s): {', '.join(missing)}")
+        # A key the loader does not read is silently dropped, so a pack with `stakeholders`
+        # or a speculative `strength` would load clean and look like it carries data it does
+        # not. evidence.emit rejects off-row keys for the same reason.
+        unknown = sorted(set(rdata) - set(REQUIREMENT_FIELDS))
+        if unknown:
+            raise ValueError(
+                f"{where}: unknown field(s): {', '.join(unknown)}. A requirement block carries "
+                f"exactly these fields: {', '.join(REQUIREMENT_FIELDS)}"
+            )
         # A bare string is iterable, so tuple("reasons") would silently become five
         # single-character signal names. Reject anything that is not a TOML array.
         if not isinstance(rdata["requires"], list):
