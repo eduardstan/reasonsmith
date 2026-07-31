@@ -1,4 +1,4 @@
-"""The two demonstrations: ECOA / Reg B credit, and GDPR Art. 22 clinical.
+"""The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, and EU AI Act Art. 12.
 
 Credit comes first on purpose. ECOA requires the *specific principal reasons* for an adverse action,
 so a reason the engine dropped is not a quality concern — it is a reason the applicant was legally
@@ -15,6 +15,7 @@ Run: python -m reasonsmith.demo
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 
 from nesyarena.adapters.base import ReferenceAdapter
@@ -386,6 +387,87 @@ def stability_demo() -> str:
     return "\n".join(out)
 
 
+# ------------------------------------ EU AI Act Art. 12: record-keeping ----
+
+def _sha(text: str) -> str:
+    """A short deterministic digest, for log fields that must be reproducible byte for byte."""
+    return hashlib.sha256(text.encode()).hexdigest()[:12]
+
+
+def art12_event_log(case: Case, cert) -> str:
+    """One automatic event-log entry, built from the certificate rather than beside it.
+
+    Row 2 asks each entry to carry timestamp, input/output hashes, the chosen branch, and the
+    active constraints. The certificate holds both halves of that: exact inference enumerates
+    every constraint that fired, the engine's answer shows which branch was actually chosen. A
+    log written from the final answer alone would record the branch and lose the active set —
+    the four constraints that fired and never reached the output — which is exactly the
+    difference post-market monitoring exists to see.
+    """
+    query = str(cert.query)
+    inputs = "\n".join(f"{a} {p}" for a, p in sorted(case.base.items(), key=lambda kv: repr(kv[0])))
+    chosen = ", ".join(v.label.partition(" — ")[0] for v in cert.live) or "(none)"
+    active = ", ".join(v.label.partition(" — ")[0]
+                       for v in sorted(cert.verdicts, key=lambda v: v.label))
+    output = f"{query} = {cert.engine_value:.6f}; stated reasons: {chosen}"
+    return "\n".join([
+        f"2026-07-31T00:00:00Z event=decision id={case.case_id}",
+        f"  input sha256:{_sha(inputs)} ({len(case.base)} evidence facts)",
+        f"  output sha256:{_sha(output)} ({output})",
+        f"  chosen branch/module: {chosen} (engine {cert.adapter_name})",
+        f"  active constraints: {active} ({len(cert.verdicts)} fired, none violated)",
+        f"  active but not in output: {len(cert.deleted)} "
+        f"(recorded here; absent from the decision's stated reasons)",
+    ])
+
+
+def art12_evidence_fields(case: Case, cert) -> dict:
+    return {
+        "automatic_event_logs": art12_event_log(case, cert),
+        "retention_schedule": "10 years from placing on the market, WORM-stored, per QMS "
+                              "procedure QS-LOG-07",
+        "signer": "logging subsystem logd-01, Ed25519 key SHA256:2f8ad1c4 (automated integrity "
+                  "signature over each entry; QMS countersignature at quarterly review QS-2026-Q3)",
+    }
+
+
+def art12_demo() -> str:
+    """EU AI Act Art. 12 end to end: the automatic event log, Table 7 row 2."""
+    out = [_head("6. EU AI ACT ART. 12 — RECORD-KEEPING / EVENT LOGGING (Table 7 row 2)")]
+    out += ["",
+            "Art. 12 makes the logging subsystem part of the compliance surface: each event "
+            "record must name the",
+            "chosen branch and the constraints that were active, not just the final answer. The "
+            "certificate is the one",
+            "place both halves already exist, so the log entry below is built from it — exact "
+            "inference supplies the",
+            "active set, the engine's answer supplies the choice."]
+    case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
+    cert = certify_case(case, ReferenceAdapter(TopK(1)))
+    record = emit("eu_ai_act_art12_record_keeping", case.case_id,
+                  art12_evidence_fields(case, cert),
+                  attachments={"reason-deletion certificate": cert.render()})
+    out += ["", record.render()]
+    out += ["",
+            "Read the log line against the certificate: branch C01 chosen, five constraints "
+            "active, four of them absent",
+            "from the output. That gap is not an Art. 12 violation — the rule does not say the "
+            "engine must use every",
+            "constraint — but Art. 12 is what makes the gap retrievable after the fact. A log "
+            "that recorded only the",
+            "answer would pass the same form check ('automatic event logs: present') while making "
+            "post-market",
+            "monitoring blind to exactly the event it exists for. Form completeness over a log "
+            "that cannot be",
+            "interrogated is the row-2 version of the finding in section 1.",
+            "",
+            "LIMITS: timestamps are fixed and hashes are digests of frozen synthetic inputs, so "
+            "the entry reproduces",
+            "byte for byte; the signer is a stand-in for a real key-management story this package "
+            "does not provide."]
+    return "\n".join(out)
+
+
 def main() -> str:
     parts = [
         _head("0. TRACEABILITY — every schema entry against the Table 7 text it came from"),
@@ -396,6 +478,7 @@ def main() -> str:
         corruption_demo(),
         stratified_demo(),
         stability_demo(),
+        art12_demo(),
     ]
     return "\n".join(parts)
 
