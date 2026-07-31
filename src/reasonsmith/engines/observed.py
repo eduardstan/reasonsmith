@@ -12,13 +12,17 @@ Behavior:
   from what the trace happened to contain. A variable compared against the presence threshold
   (`>= 0.5`) is a flag and keeps the 1.0/0.0 encoding, so an absent one still fails the check
   that asks for it. A variable compared against any other constant is a magnitude: every record
-  must carry a real number for it, and a record that carries none — absent, blank, a bool, or
-  the string "45" — is reported as NOT EVALUATED rather than scored. Coercing those to 0.0 or
-  1.0 would let a 45-day notice, or a notice nobody ever sent, pass a `<= 30` deadline.
+  must carry a real number for it, and a record that carries none — absent, blank, a bool, the
+  string "45", or a non-finite float — is reported as NOT EVALUATED rather than scored.
+  Coercing those to 0.0 or 1.0 would let a 45-day notice, or a notice nobody ever sent, pass a
+  `<= 30` deadline; NaN would too, since every robustness comparison against it is False.
+  `json.loads` reads bare `NaN`/`Infinity` by default, so a producer that serialises a missing
+  measurement that way reaches here as a float, and a flag valued NaN counts as absent.
 """
 
 from __future__ import annotations
 
+import math
 import re
 from typing import Any
 
@@ -40,6 +44,15 @@ _COMPARISONS = (
     re.compile(rf"({_IDENT})\s*(?:<=|>=|<|>|==|!=)\s*({_NUMBER})"),
     re.compile(rf"({_NUMBER})\s*(?:<=|>=|<|>|==|!=)\s*({_IDENT})"),
 )
+
+
+def _is_real_number(value: Any) -> bool:
+    """True for a value that can stand for a measured quantity.
+
+    A bool is a flag wearing a number's clothes, and NaN or ±Infinity is the absence of a
+    measurement written as a float — neither is a quantity a bound can be checked against.
+    """
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
 def _magnitude_vars(spec: str) -> set[str]:
@@ -97,7 +110,7 @@ class ObservedEngine:
             for rec in records:
                 val = rec.get(var)
                 if var in magnitude_vars:
-                    if isinstance(val, (int, float)) and not isinstance(val, bool):
+                    if _is_real_number(val):
                         values.append(float(val))
                     else:
                         not_measured += 1
@@ -105,7 +118,7 @@ class ObservedEngine:
                 elif isinstance(val, bool):
                     values.append(1.0 if val else 0.0)
                 elif isinstance(val, (int, float)):
-                    values.append(float(val))
+                    values.append(float(val) if math.isfinite(val) else 0.0)
                 elif _is_present(val):
                     # Categorical: carries something, so it counts as present
                     values.append(1.0)

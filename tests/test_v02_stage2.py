@@ -302,6 +302,26 @@ class TestObservedEngine:
         offending = result.details["offending_trace_segment"]
         assert offending[0]["id"] == 1
 
+    def test_non_finite_flag_counts_as_absent(self):
+        """NaN is the absence of a value, and every robustness comparison against it is False."""
+        sut = BaseSUT({"signal_a"})
+        req = Requirement(
+            id="temp_nan_flag",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="temporal",
+            spec="always(signal_a >= 0.5)",
+            requires=("signal_a",),
+        )
+        records = [{"signal_a": True}, {"signal_a": float("nan")}]
+        result = ObservedEngine.evaluate(req, sut, records)
+        assert result.verdict == Verdict.VIOLATED
+        assert all(
+            score == score for _, score in result.details["evaluation_scores"]
+        ), "a NaN robustness score would also make the report's JSON unparseable"
+
     def test_unexpressible_formula_reports_not_evaluated(self):
         sut = BaseSUT({"signal_a"})
         req = Requirement(
@@ -350,6 +370,12 @@ class TestRequirementsMeasureTheirDuty:
             pytest.param({"artifact_logs_notification_latency_days": ""}, id="blank"),
             pytest.param({"artifact_logs_notification_latency_days": "45"}, id="json-string"),
             pytest.param({"artifact_logs_notification_latency_days": True}, id="bool"),
+            pytest.param(
+                {"artifact_logs_notification_latency_days": float("nan")}, id="nan"
+            ),
+            pytest.param(
+                {"artifact_logs_notification_latency_days": float("inf")}, id="infinity"
+            ),
         ],
     )
     def test_ecoa_thirty_day_notice_not_evaluated_without_a_measured_latency(
