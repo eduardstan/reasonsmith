@@ -26,6 +26,7 @@ What a reader must not break:
 from __future__ import annotations
 
 import argparse
+import shlex
 import sys
 
 from reasonsmith.adapters.jsonl import JSONLAdapter
@@ -119,15 +120,25 @@ def main(args: list[str] | None = None) -> int:
 
         if parsed.html:
             cmd_args = args if args is not None else sys.argv[1:]
-            cmd_str = f"python -m reasonsmith.cli {' '.join(cmd_args)}"
+            cmd_str = f"python -m reasonsmith.cli {shlex.join(cmd_args)}"
             html_content = report.render_html(command=cmd_str)
             if parsed.html == "-":
+                if parsed.json:
+                    print(
+                        "Error: --json and --html - both write the whole report to stdout, "
+                        "so one would be lost. Give --html a FILE.",
+                        file=sys.stderr,
+                    )
+                    return 1
                 print(html_content)
             else:
-                with open(parsed.html, "w", encoding="utf-8") as f:
-                    f.write(html_content)
-                if not parsed.json:
-                    print(report.render_text())
+                try:
+                    with open(parsed.html, "w", encoding="utf-8") as f:
+                        f.write(html_content)
+                except OSError as exc:
+                    print(f"Error writing HTML report to {parsed.html!r}: {exc}", file=sys.stderr)
+                    return 1
+                print(report.to_json(indent=2) if parsed.json else report.render_text())
         elif parsed.json:
             print(report.to_json(indent=2))
         else:

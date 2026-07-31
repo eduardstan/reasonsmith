@@ -32,7 +32,11 @@ jobs:
       - name: Build report
         run: |
           mkdir -p _site
-          python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name "CreditScoringPipeline" --html _site/index.html
+          # The CLI exits 2 when a requirement is violated. A violation in the example is
+          # expected and is the whole point of the example — form completeness does not imply
+          # reason fidelity — so exit 2 must still publish. Any other non-zero exit is a real
+          # failure and still fails the deploy.
+          python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name "CreditScoringPipeline" --html _site/index.html || [ $? -eq 2 ]
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

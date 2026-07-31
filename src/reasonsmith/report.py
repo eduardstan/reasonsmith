@@ -22,8 +22,10 @@ What a reader must not break:
 from __future__ import annotations
 
 import json
+import subprocess
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from reasonsmith.spec import Pack, Requirement, normalize_scope
@@ -206,6 +208,65 @@ _CATEGORY_LABELS = (
 )
 
 
+#: How each category of `_CATEGORY_LABELS` is drawn in the HTML report: (style class, icon).
+#: Keyed by the same keys, so a category added there and forgotten here raises rather than
+#: silently rendering no pill.
+_CATEGORY_PILL_STYLE = {
+    "proved": ("satisfied", "🏆"),
+    "probed": ("satisfied", "🔍"),
+    "observed": ("satisfied", "👁"),
+    "violated": ("violated", "✖"),
+    "inconclusive": ("inconclusive", "?"),
+    "not_evaluated": ("inconclusive", "−"),
+    "unattainable": ("unattainable", "⊘"),
+    "not_applicable": ("not-applicable", "⊝"),
+}
+
+#: Icon per lattice rung. The rungs and their order come from `Strength` itself, so the drawn
+#: lattice cannot disagree with the lattice the verdicts are computed on.
+_STRENGTH_ICONS = {
+    Strength.UNATTAINABLE: "⊘",
+    Strength.OBSERVED: "👁",
+    Strength.PROBED: "🔍",
+    Strength.PROVED: "🏆",
+}
+
+
+def _source_checkout() -> tuple[str, str]:
+    """Identify the git checkout this package was imported from.
+
+    Returns `(commit, state)`, where state is `"clean"`, `"modified"` or `"unknown"`. The
+    commit is non-empty only for a clean checkout: naming a commit in a report claims the
+    reader can check that commit out and reproduce the run, and neither a tree with
+    uncommitted changes nor a checkout git cannot describe can honour that claim.
+
+    The checkout inspected is the one holding this module, not the caller's working
+    directory: what a report can attest to is the code that produced it.
+    """
+    repo = str(Path(__file__).resolve().parent)
+
+    def git(*argv: str) -> subprocess.CompletedProcess[str] | None:
+        try:
+            return subprocess.run(
+                ["git", "-C", repo, *argv],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+
+    status = git("status", "--porcelain")
+    if status is None or status.returncode != 0:
+        return "", "unknown"
+    if status.stdout.strip():
+        return "", "modified"
+    head = git("rev-parse", "HEAD")
+    if head is None or head.returncode != 0 or not head.stdout.strip():
+        return "", "unknown"
+    return head.stdout.strip(), "clean"
+
+
 def _category_counts(
     results: list[RequirementResult], prefix: str = ""
 ) -> dict[str, int]:
@@ -345,28 +406,22 @@ class ConformanceReport:
         Zero external dependencies, network-free, printable on A4. Presents the
         evidence strength lattice, counts split by binding vs interpretive,
         and visually distinguishes unattainable architectural gaps from violated trace failures.
-        Carries explicit provenance naming the commit and command that produced it.
+
+        The provenance bar states what can be established and nothing more. `commit_hash`
+        left `None` means "work it out": the commit is named only when the checkout this
+        package was imported from is clean (see `_source_checkout`), and a modified or
+        unidentifiable checkout is reported as such rather than given a hash it would not
+        reproduce. Passing an empty `commit_hash` asserts no commit identifies this report,
+        which is what a report committed into the tree it describes must say. `command` is
+        never guessed: an unsupplied command is left out, because a command line the report
+        invented is not provenance.
         """
         import html
-        import subprocess
-        import sys
 
         if commit_hash is None:
-            try:
-                commit_hash = subprocess.check_output(
-                    ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
-                ).strip()
-            except Exception:
-                commit_hash = ""
-
-        if command is None:
-            try:
-                if sys.argv and ("reasonsmith" in sys.argv[0] or "pytest" in sys.argv[0]):
-                    command = f"python -m reasonsmith.cli {' '.join(sys.argv[1:])}"
-                else:
-                    command = "reasonsmith check"
-            except Exception:
-                command = "reasonsmith check"
+            commit_hash, tree_state = _source_checkout()
+        else:
+            tree_state = "clean" if commit_hash else "unknown"
 
         counts = self.counts
         sys_name = html.escape(self.system_name)
@@ -374,33 +429,25 @@ class ConformanceReport:
         sys_scope = html.escape(self.system_scope or "undeclared")
         headline_esc = html.escape(self.headline)
         limits_esc = html.escape(self.limits)
-        c_short = commit_hash[:7] if commit_hash else ""
-        c_short_esc = html.escape(c_short)
-        cmd_esc = html.escape(command)
+        c_short_esc = html.escape(commit_hash[:7]) if commit_hash else ""
 
-        provenance_html = ""
-        if c_short or command:
-            c_part = f"from commit <code>{c_short_esc}</code>" if c_short else ""
-            cmd_part = f"via <code>{cmd_esc}</code>" if command else ""
-            provenance_html = (
-                '<div class="provenance-bar">'
-                f'<strong>Report Provenance:</strong> Generated {c_part} {cmd_part}'
-                '</div>'
-            )
+        if c_short_esc:
+            origin = f"from commit <code>{c_short_esc}</code>"
+        elif tree_state == "modified":
+            origin = "from a modified working tree, which no commit identifies"
+        else:
+            origin = "without an identified source commit"
+        cmd_part = f" Command: <code>{html.escape(command)}</code>" if command else ""
+        provenance_html = (
+            '<div class="provenance-bar">'
+            f'<strong>Report Provenance:</strong> Generated {origin}.{cmd_part}'
+            '</div>'
+        )
 
         def render_pill_group(prefix: str) -> str:
-            cats = [
-                ("proved", "proved", "satisfied", "🏆"),
-                ("probed", "probed", "satisfied", "🔍"),
-                ("observed", "observed", "satisfied", "👁"),
-                ("violated", "violated", "violated", "✖"),
-                ("inconclusive", "inconclusive", "inconclusive", "?"),
-                ("not_evaluated", "not evaluated", "inconclusive", "−"),
-                ("unattainable", "unattainable", "unattainable", "⊘"),
-                ("not_applicable", "not applicable", "not-applicable", "⊝"),
-            ]
             pills = []
-            for key, label, style_key, icon in cats:
+            for key, label in _CATEGORY_LABELS:
+                style_key, icon = _CATEGORY_PILL_STYLE[key]
                 val = counts.get(f"{prefix}{key}", 0)
                 if val > 0:
                     pills.append(
@@ -459,26 +506,23 @@ class ConformanceReport:
                 )
 
             # Strength Lattice render
-            l_steps = [
-                ("unattainable", "unattainable", "⊘"),
-                ("observed", "observed", "👁"),
-                ("probed", "probed", "🔍"),
-                ("proved", "proved", "🏆"),
-            ]
             cur_rank = r.strength.rank if r.strength is not None else None
             lattice_spans = []
-            for step_key, step_label, step_icon in l_steps:
-                step_rank = {"unattainable": 0, "observed": 1, "probed": 2, "proved": 3}[step_key]
-                if r.strength is not None and r.strength.value == step_key:
-                    active_cls = f"active-{step_key}"
-                elif cur_rank is not None and cur_rank > step_rank and step_key != "unattainable":
+            for step in sorted(Strength, key=lambda s: s.rank):
+                if r.strength is step:
+                    active_cls = f"active-{step.value}"
+                elif (
+                    cur_rank is not None
+                    and cur_rank > step.rank
+                    and step is not Strength.UNATTAINABLE
+                ):
                     active_cls = "passed"
                 else:
                     active_cls = ""
 
                 lattice_spans.append(
                     f'<span class="lattice-step {active_cls}">'
-                    f'<span aria-hidden="true">{step_icon}</span> {step_label}</span>'
+                    f'<span aria-hidden="true">{_STRENGTH_ICONS[step]}</span> {step.value}</span>'
                 )
 
             lattice_html = (
