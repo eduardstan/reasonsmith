@@ -1,7 +1,7 @@
 """System Under Test (SUT) protocol and reference implementations for reasonsmith v0.2.
 
 What this module is for:
-  Defines the `SystemUnderTest` protocol interface (`capabilities()`, `decisions()`) and
+  Defines the `SystemUnderTest` protocol interface (`capabilities()`, `decisions()`, `logic()`) and
   `CAPABILITY_TAXONOMY` categories for black-box models, rule engines, and log traces.
 
 What a reader must not break:
@@ -91,6 +91,10 @@ class SystemUnderTest(Protocol):
         """Return an iterable of decision trace records."""
         ...
 
+    def logic(self) -> Any:
+        """Return exposed decision logic for formal verification, if available."""
+        ...
+
 
 class BaseSUT:
     """Convenience base class or reference helper for SUT implementations."""
@@ -109,6 +113,9 @@ class BaseSUT:
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         return []
+
+    def logic(self) -> Any:
+        return None
 
 
 def _table7_signals() -> set[str]:

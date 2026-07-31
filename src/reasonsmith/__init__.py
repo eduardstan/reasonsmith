@@ -14,19 +14,22 @@ What this module is for:
   The v0.2 conformance surface:
     verdict.py      the strength lattice (unattainable < observed < probed < proved) and verdicts
     spec.py         requirements with verbatim provenance, loaded from packs/*.toml
-    sut.py          the system-under-test protocol: capabilities and a decision trace
+    sut.py          the system-under-test protocol: capabilities, a decision trace, exposed logic
     report.py       the unattainable analysis and the conformance report
-    adapters/       JSONL decision-log and Python-callable adapters
-    engines/        record completeness and rtamt temporal monitors
+    rulelang.py     the whitelisted mini-language rules and properties are parsed and run in
+    adapters/       JSONL decision-log, Python-callable and rule-based-system adapters
+    engines/        record completeness, rtamt temporal monitors and the Z3 proved engine
     cli.py          checks a JSONL decision log against a requirement pack
     packs/          Table 7, EU AI Act, GDPR, and ECOA / Regulation B requirements
 
 What a reader must not break:
-  - Only `unattainable` and `observed` rungs of the lattice are implemented here. `probed` and
-    `proved` need engines that do not exist yet.
+  - Every rung of the lattice except `probed` is implemented here; `probed` needs an engine that
+    does not exist yet, and a requirement whose formalism no engine covers is reported as not
+    evaluated rather than judged by a weaker check.
     Why this matters: Claiming a higher strength without an engine would launder unverified claims.
-  - Logical requirements have no engine and are reported as not evaluated rather than judged by a
-    weaker check.
+  - `proved` is claimed only on what the solver actually established: `engines/proved.py` refuses
+    an unmodelled construct, an `unknown` or timed-out solver result, and premises no input can
+    satisfy, and it replays a counterexample before reporting a violation.
     Why this matters: Evaluated status must reflect actual engine verification, not fallbacks.
   - Nothing produced here is a compliance guarantee and nothing here is legal advice.
     Why this matters: Technical record checks cannot replace legal determination or guarantees.

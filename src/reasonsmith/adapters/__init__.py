@@ -1,7 +1,7 @@
 """Adapters for System Under Test implementations in reasonsmith.
 
 What this module is for:
-  Exports System Under Test (SUT) adapters (`JSONLAdapter`, `CallableAdapter`).
+  Exports System Under Test (SUT) adapters (`JSONLAdapter`, `CallableAdapter`, `RulesAdapter`).
 
 What a reader must not break:
   - Do not export SUT adapters that infer capabilities without explicit declarations or
@@ -12,10 +12,13 @@ What a reader must not break:
 
 from reasonsmith.adapters.callable import CallableAdapter, CallableSUT
 from reasonsmith.adapters.jsonl import JSONLAdapter, JsonlSUT
+from reasonsmith.adapters.rules import RulesAdapter, RulesSUT
 
 __all__ = [
     "JSONLAdapter",
     "JsonlSUT",
     "CallableAdapter",
     "CallableSUT",
+    "RulesAdapter",
+    "RulesSUT",
 ]

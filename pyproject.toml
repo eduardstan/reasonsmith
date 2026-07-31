@@ -30,6 +30,11 @@ dependencies = [
     # also hard-pins antlr4-python3-runtime==4.7, whose `from typing.io import TextIO` needs the
     # shim at the top of engines/observed.py on Python 3.13+.
     "rtamt==0.3.5",
+    # Z3 SMT solver for the proved engine (formal logic verification). Pinned exactly for the same
+    # reason as the two above: the solver picks which counterexample to return, and that value is
+    # printed verbatim in the evidence summary and the HTML report, so an unpinned solver moves
+    # reported output between installs.
+    "z3-solver==5.0.0.0",
 ]
 
 [project.optional-dependencies]
