@@ -215,7 +215,8 @@ cd reasonsmith && ruff check . && python -m pytest -q -rA
 
 `ruff check .`: **All checks passed!**
 
-`pytest`: **35 passed, 0 failed, 0 skipped** — the complete output of that command, verbatim:
+`pytest`: **35 passed, 0 failed, 0 skipped** — the progress line and the `-rA` report that command
+printed, verbatim (its trailing timing line is omitted, nothing else is):
 
 ```
 ...................................                                      [100%]
