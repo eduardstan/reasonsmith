@@ -50,6 +50,11 @@ quoted text character-for-character, both halves of the legal source, and the pa
 evidence-field keys as the signal names. Do not rename a signal to something tidier — that test is
 the only thing keeping the pack attached to the paper.
 
+`docs/example-output.md` is derived too. `tests/test_docs_example_output.py` re-runs every command
+block in it and compares stdout byte-for-byte, and cross-checks the header's line count and
+`md5sum` against RESULTS.md. So anything that changes what the demo or the CLI prints — a wording
+tweak included — means regenerating the transcripts and updating both files' headers together.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.
