@@ -57,9 +57,8 @@ package, only of the separate nesyarena checkout used to measure nesyarena's own
 cd /path/to/nesyarena-src && python -m pytest -q -rA
 ```
 
-nesyarena's `pyproject.toml` sets `addopts = "-q"`, which suppresses pytest's collection header and
-its final summary line. Both are quoted verbatim below from the same suite run with that option
-neutralised (`python -m pytest -o addopts=""`), so the counts here are pytest's own, not derived:
+The same suite, invoked as `python -m pytest -o addopts=""`, printed these two lines, quoted
+verbatim — so the counts here are pytest's own, not derived:
 
 ```
 collected 107 items / 3 skipped
@@ -68,7 +67,7 @@ collected 107 items / 3 skipped
 
 The 3 in `107 items / 3 skipped` are whole modules skipped at collection time, which pytest counts
 separately from the 107 collected items; the 5 in the summary line is those 3 plus the 2 tests
-skipped while running. `python -m pytest --collect-only -q` ends with `107 tests collected`.
+skipped while running, both of them listed by file and line in the transcript below.
 
 Both modules the README used to say could not even be collected — `tests/test_e6_findings.py` and
 `tests/test_learning_parity.py` — collect and run now. `test_learning_parity.py` runs 5 tests to a
@@ -259,9 +258,8 @@ PASSED tests/test_reasonsmith.py::test_record_dict_does_not_hand_out_the_module_
 PASSED tests/test_reasonsmith.py::test_certificate_json_roundtrip_preserves_verdict_and_reasons
 ```
 
-This repo's `pyproject.toml` also sets `addopts = "-q"`, so pytest prints no `collected ...` header
-and no closing `N passed` line here either; the 35 above is the number of `PASSED` lines pytest
-itself printed, and nothing is skipped, failed or errored because pytest listed nothing else.
+The 35 above is the number of `PASSED` lines pytest itself printed, and nothing is skipped, failed
+or errored because pytest listed nothing else.
 
 ## 3. `python -m reasonsmith.demo`, twice, diffed
 
