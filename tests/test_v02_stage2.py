@@ -343,14 +343,29 @@ class TestRequirementsMeasureTheirDuty:
         on_time = [dict(r, artifact_logs_notification_latency_days=12) for r in records]
         assert ObservedEngine.evaluate(req, sut, on_time).verdict == Verdict.SATISFIED
 
-    def test_ecoa_thirty_day_notice_not_evaluated_when_no_latency_was_recorded(self):
-        """A decision nobody recorded a notification for is not a notification in 0 days."""
+    @pytest.mark.parametrize(
+        "unmeasured_latency",
+        [
+            pytest.param({}, id="absent"),
+            pytest.param({"artifact_logs_notification_latency_days": ""}, id="blank"),
+            pytest.param({"artifact_logs_notification_latency_days": "45"}, id="json-string"),
+            pytest.param({"artifact_logs_notification_latency_days": True}, id="bool"),
+        ],
+    )
+    def test_ecoa_thirty_day_notice_not_evaluated_without_a_measured_latency(
+        self, unmeasured_latency: dict
+    ):
+        """Nothing that is not a number is a number of days.
+
+        Absence is not a notice in 0 days and the string "45" is not a notice in 1 day; both
+        would otherwise pass the deadline they breach.
+        """
         req = load_pack("ecoa").get_requirement("ecoa_reg_b_1002_9_a_1_timing_of_notice")
         sut = BaseSUT(set(req.requires))
         records = [
             {"artifact_logs_decision_record": {"id": "dec-1"},
              "artifact_logs_notification_latency_days": 12},
-            {"artifact_logs_decision_record": {"id": "dec-2"}},
+            {"artifact_logs_decision_record": {"id": "dec-2"}, **unmeasured_latency},
         ]
         result = ObservedEngine.evaluate(req, sut, records)
         assert result.verdict == Verdict.INCONCLUSIVE
@@ -358,6 +373,18 @@ class TestRequirementsMeasureTheirDuty:
         assert result.details["signals_unmeasured_in_trace"] == {
             "artifact_logs_notification_latency_days": 1
         }
+
+    def test_ecoa_thirty_day_notice_not_evaluated_when_the_signal_is_only_declared(self):
+        """Declaring the capability is not measuring it: an all-zero column is not evidence."""
+        req = load_pack("ecoa").get_requirement("ecoa_reg_b_1002_9_a_1_timing_of_notice")
+        sut = BaseSUT(set(req.requires))
+        records = [
+            {"artifact_logs_decision_record": {"id": "dec-1"}},
+            {"artifact_logs_decision_record": {"id": "dec-2"}},
+        ]
+        result = ObservedEngine.evaluate(req, sut, records)
+        assert result.verdict == Verdict.INCONCLUSIVE
+        assert result.strength is None
 
     def test_eu_ai_act_traceability_violated_by_an_unlogged_decision(self):
         req = load_pack("eu_ai_act").get_requirement("eu_ai_act_art12_2_traceability_monitoring")

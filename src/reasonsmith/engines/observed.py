@@ -8,11 +8,13 @@ Behavior:
 - A violation returns the offending trace segment in details and summary.
 - If rtamt cannot express a formula, the requirement is reported as NOT EVALUATED
   with the reason (verdict=INCONCLUSIVE, strength=None) — never as satisfied.
-- A signal the trace measures numerically is a magnitude, not a flag: a record that carries
-  no value for it has no measurement, and encoding that absence as the numeral 0.0 would let
-  a decision nobody was notified about pass a `<= 30` deadline. Such a gap is reported as NOT
-  EVALUATED. A signal only ever checked for presence keeps the 1.0/0.0 encoding, so an absent
-  one still fails the check that asks for it.
+- Whether a signal is a magnitude or a flag is read from the requirement's own formula, never
+  from what the trace happened to contain. A variable compared against the presence threshold
+  (`>= 0.5`) is a flag and keeps the 1.0/0.0 encoding, so an absent one still fails the check
+  that asks for it. A variable compared against any other constant is a magnitude: every record
+  must carry a real number for it, and a record that carries none — absent, blank, a bool, or
+  the string "45" — is reported as NOT EVALUATED rather than scored. Coercing those to 0.0 or
+  1.0 would let a 45-day notice, or a notice nobody ever sent, pass a `<= 30` deadline.
 """
 
 from __future__ import annotations
@@ -26,6 +28,29 @@ from reasonsmith.report import RequirementResult, _is_present
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
+
+
+#: The threshold a pack uses to ask whether a signal is present at all. Everything else a
+#: variable is compared against is a quantity, and a quantity has to be measured.
+PRESENCE_THRESHOLD = 0.5
+
+_NUMBER = r"-?\d+(?:\.\d+)?"
+_IDENT = r"[a-zA-Z_][a-zA-Z0-9_]*"
+_COMPARISONS = (
+    re.compile(rf"({_IDENT})\s*(?:<=|>=|<|>|==|!=)\s*({_NUMBER})"),
+    re.compile(rf"({_NUMBER})\s*(?:<=|>=|<|>|==|!=)\s*({_IDENT})"),
+)
+
+
+def _magnitude_vars(spec: str) -> set[str]:
+    """The spec variables compared against something other than the presence threshold."""
+    magnitude: set[str] = set()
+    for pattern, var_first in zip(_COMPARISONS, (True, False)):
+        for left, right in pattern.findall(spec):
+            var, constant = (left, right) if var_first else (right, left)
+            if float(constant) != PRESENCE_THRESHOLD:
+                magnitude.add(var)
+    return magnitude
 
 
 class ObservedEngine:
@@ -61,29 +86,33 @@ class ObservedEngine:
         }
         formula_vars = found_vars - keywords
         spec_vars = formula_vars | var_names
+        magnitude_vars = _magnitude_vars(req.spec)
 
         # Build dataset for rtamt
         time_series: dict[str, list[float]] = {"time": list(range(len(records)))}
         unmeasured: dict[str, int] = {}
         for var in spec_vars:
             values: list[float] = []
-            measured_numerically = False
-            absent = 0
+            not_measured = 0
             for rec in records:
                 val = rec.get(var)
-                if isinstance(val, bool):
+                if var in magnitude_vars:
+                    if isinstance(val, (int, float)) and not isinstance(val, bool):
+                        values.append(float(val))
+                    else:
+                        not_measured += 1
+                        values.append(0.0)
+                elif isinstance(val, bool):
                     values.append(1.0 if val else 0.0)
                 elif isinstance(val, (int, float)):
-                    measured_numerically = True
                     values.append(float(val))
                 elif _is_present(val):
                     # Categorical: carries something, so it counts as present
                     values.append(1.0)
                 else:
-                    absent += 1
                     values.append(0.0)
-            if measured_numerically and absent and var in formula_vars:
-                unmeasured[var] = absent
+            if not_measured:
+                unmeasured[var] = not_measured
             time_series[var] = values
 
         if unmeasured:
@@ -98,9 +127,9 @@ class ObservedEngine:
                 strength=None,
                 signals_required=tuple(req.requires),
                 evidence_summary=(
-                    "Not evaluated: the trace carries no measurement for "
-                    f"{gaps}, and an absent measurement is not a measurement of zero. "
-                    f"The monitor for {req.spec!r} was not run over this trace."
+                    f"Not evaluated: {req.spec!r} compares a magnitude the trace does not "
+                    f"measure — no numeric value for {gaps}. An absent, blank or non-numeric "
+                    "value is not a measurement, so the monitor was not run over this trace."
                 ),
                 details={"signals_unmeasured_in_trace": dict(sorted(unmeasured.items()))},
             )
