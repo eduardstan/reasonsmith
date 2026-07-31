@@ -1,4 +1,4 @@
-"""The two demonstrations: ECOA / Reg B credit, and GDPR Art. 22 clinical.
+"""The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, and EU AI Act Art. 13.
 
 Credit comes first on purpose. ECOA requires the *specific principal reasons* for an adverse action,
 so a reason the engine dropped is not a quality concern — it is a reason the applicant was legally
@@ -386,6 +386,74 @@ def stability_demo() -> str:
     return "\n".join(out)
 
 
+# --------------------------------- EU AI Act Art. 13: information to deployers ----
+
+def art13_evidence_fields(case: Case, cert) -> dict:
+    """The six row-1 fields for one deployer information package.
+
+    Four are provenance the provider supplies and this package only carries. One,
+    `fidelity_coverage_metrics`, is the field the package itself computes: the certificate's
+    measured fidelity and coverage against exact inference, so the information the deployer gets
+    is a measurement, not a claim. The sixth, `explanation_scope`, states what the artifact
+    explains and what it does not.
+    """
+    linkage = "\n".join(
+        f"{case.case_id} -> rule {code} on ({', '.join(facts)})"
+        for code, _text, facts in CREDIT_REASONS)
+    return {
+        "model_and_data_version_ids": "model credit-scoring-2026.03.1; rules cs-rules-2026.03; "
+                                      "training data snapshot bureau-panel-2025-Q4",
+        "extraction_timestamp": "2026-07-31T00:00:00Z (frozen synthetic run: fixed at authoring "
+                                "time, not wall-clock)",
+        "dataset_snapshot_hash": "sha256:9f3c1b07ad4e (synthetic cohort APP-*, no personal data)",
+        "fidelity_coverage_metrics": f"fidelity {conformance.fidelity(cert):.4f}; coverage "
+                                     f"{conformance.coverage(cert):.4f} — measured against exact "
+                                     f"inference on the same program, not claimed",
+        "explanation_scope": "per-decision principal reasons over the adverse-action rule set "
+                             f"({len(CREDIT_REASONS)} candidate rules); decision-local, not a "
+                             "global account of the model",
+        "linkage_from_decision_to_artifact": linkage,
+    }
+
+
+def art13_demo() -> str:
+    """EU AI Act Art. 13 end to end: the deployer information package, Table 7 row 1."""
+    out = [_head("6. EU AI ACT ART. 13 — TRANSPARENCY AND INFORMATION TO DEPLOYERS "
+                 "(Table 7 row 1)")]
+    out += ["",
+            "Credit scoring is Annex III high-risk, so the provider owes the deployer an "
+            "information package, and",
+            "row 1 lists what it must retain. Five of the six fields are provenance the provider "
+            "hands over; the sixth,",
+            "fidelity/coverage, is the one this package computes — measured here on the deployed "
+            "top-1 engine against",
+            "exact inference on the same program."]
+    case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
+    cert = certify_case(case, ReferenceAdapter(TopK(1)))
+    fields = art13_evidence_fields(case, cert)
+    record = emit("eu_ai_act_art13_transparency", case.case_id, fields,
+                  attachments={"reason-deletion certificate": cert.render()})
+    out += ["", record.render()]
+    out += ["",
+            "The record is COMPLETE, and its own numbers argue against the engine it documents. "
+            f"Coverage {conformance.coverage(cert):.4f}",
+            f"means the deployer is told, in the provider's own package, that the stated reasons "
+            f"are {len(cert.live)} of",
+            f"{len(cert.verdicts)}. That is Art. 13 working as intended: transparency is not the "
+            "absence of gaps, it is",
+            "the gaps being on the page. A package whose fidelity/coverage figures were asserted "
+            "rather than measured",
+            "would pass the same form check while saying nothing — which is why this field is "
+            "computed from the",
+            "certificate and never accepted as input.",
+            "",
+            "LIMITS: the provenance values above are fixed stand-ins for a synthetic cohort; a "
+            "real package draws",
+            "them from its model registry and dataset store. The measured field transfers "
+            "unchanged."]
+    return "\n".join(out)
+
+
 def main() -> str:
     parts = [
         _head("0. TRACEABILITY — every schema entry against the Table 7 text it came from"),
@@ -396,6 +464,7 @@ def main() -> str:
         corruption_demo(),
         stratified_demo(),
         stability_demo(),
+        art13_demo(),
     ]
     return "\n".join(parts)
 
