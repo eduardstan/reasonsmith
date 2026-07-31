@@ -174,7 +174,6 @@ class Certificate:
         return json.dumps(self.to_dict(), indent=indent, default=str)
 
 
-
 def _attribute(verdicts, value_gap: float, tol: float) -> str:
     deleted = [v for v in verdicts if v.status == "deleted"]
     live = [v for v in verdicts if v.status == "live"]

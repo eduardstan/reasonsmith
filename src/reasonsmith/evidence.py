@@ -152,7 +152,6 @@ class Record:
         return json.dumps(self.to_dict(), indent=indent, default=str)
 
 
-
 def emit(duty_id: str, decision_id: str, fields: dict, attachments: dict | None = None) -> Record:
     """Build the minimal evidence record for `duty_id`, naming every required field it lacks.
 

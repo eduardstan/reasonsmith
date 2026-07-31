@@ -12,7 +12,6 @@ from nesyarena.ir import Atom, GroundProgram, Rule
 from nesyarena.suts import ExactWMC, TopK, proof_score
 
 from reasonsmith import certificate, conformance, evidence
-
 from reasonsmith.certificate import certify
 from reasonsmith.demo import (
     CREDIT_QUERY,
