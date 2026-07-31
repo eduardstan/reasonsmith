@@ -157,6 +157,34 @@ class TestJSONLAdapter:
         assert "supplied decision trace" in result.evidence_summary
         assert "the system declares no capability" not in result.evidence_summary
 
+    def test_declared_capabilities_word_the_finding_as_about_the_system(
+        self, jsonl_violating_fixture_file: Path
+    ):
+        """The other half of the wording the sut.py docstring describes: declared, not trace."""
+        from reasonsmith.report import evaluate_requirement
+
+        sut = JSONLAdapter(
+            jsonl_violating_fixture_file,
+            declared_capabilities={"provenance_model_version"},
+        )
+        assert sut.capability_basis == "declared"
+        req = Requirement(
+            id="req_never_emitted",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="record",
+            spec="Record check",
+            requires=("scope_statements_explanation_scope",),
+            binding=True,
+            scope="",
+        )
+        result = evaluate_requirement(req, sut)
+        assert result.strength == Strength.UNATTAINABLE
+        assert "Unattainable as built" in result.evidence_summary
+        assert "supplied decision trace" not in result.evidence_summary
+
     def test_explicit_declared_capabilities_override(self, jsonl_fixture_file: Path):
         sut = JSONLAdapter(
             jsonl_fixture_file,

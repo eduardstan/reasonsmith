@@ -40,8 +40,8 @@ All three must pass cleanly with zero errors or warnings. Continuous integration
 ### Concrete Open Work for Contributors
 
 If you want to contribute, a great place to start is **Issue 6: End-to-end demonstrations for remaining Table 7 duties**. Specifically:
-- **Row 1:** EU AI Act Art. 12(3) biometric identification logging.
-- **Row 2:** EU AI Act Art. 13 deployer transparency instructions.
+- **Row 1:** EU AI Act Art. 13 transparency and information to deployers.
+- **Row 2:** EU AI Act Art. 12 record-keeping (event logging).
 - **Row 5:** FDA GMLP Software as a Medical Device (SaMD) total product lifecycle transparency.
 - **Row 6:** NIST AI RMF 1.0 continuous risk monitoring logs.
 
