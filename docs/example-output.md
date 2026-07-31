@@ -3,11 +3,15 @@
 Every block below is stdout pasted unedited from a real run, not a hand-written illustration of
 what the tool would print. Regenerate any block by running the command shown above it.
 
-- **Captured at:** commit `ea4bf3711abbd6922dcf4f1448cb177807bbe3d6` (branch `fm/rs-readable-repo`)
+- **Captured at:** commit `8b4c72042443dfdb116c851d67f6dc3884392665` (branch
+  `fm/rs-land-contributor-demos`), where the demo transcript was regenerated over the four Table 7
+  demos added on that branch; the two CLI blocks are unchanged from commit
+  `ea4bf3711abbd6922dcf4f1448cb177807bbe3d6` (branch `fm/rs-readable-repo`) and reproduce at both
+  commits
 - **Environment:** Python 3.12.9, Linux, `nesyarena` at the commit `pyproject.toml` pinned when
   these transcripts were captured (`57720fa212834689692e171882272140f1d1fed7`); re-run since
   against the PyPI release `nesyarena==0.1.0` now pinned, byte-for-byte identical
-- **Demo transcript:** 561 lines, `md5sum` `c5976971e24a86886f1e0ad54f0b9ce9` — the same length and
+- **Demo transcript:** 905 lines, `md5sum` `954ba56adb96646647b63aae147b0c2b` — the same length and
   hash [RESULTS.md](../RESULTS.md) reports, which is what lets the two files be checked against
   each other
 
@@ -584,6 +588,350 @@ window by window. Nothing about the program changes, and the applicant's other e
   The applicant's file did not change, and the reason they are given did. Under a top-1 setting the reason
   stated is whichever proof currently scores highest, so drift in one signal silently replaces the stated
   reason with another. Exact inference has nothing to reorder — it gives all of them in every window.
+
+====================================================================================================
+6. EU AI ACT ART. 13 — TRANSPARENCY AND INFORMATION TO DEPLOYERS (Table 7 row 1)
+====================================================================================================
+
+Credit scoring is Annex III high-risk, so the provider owes the deployer an information package, and
+row 1 lists what it must retain. Five of the six fields are provenance the provider hands over; the sixth,
+fidelity/coverage, is the one this package computes — measured here on the deployed top-1 engine against
+exact inference on the same program.
+
+EVIDENCE RECORD [COMPLETE]
+decision: APP-1042
+duty: Transparency and information to deployers
+legal source: EU AI Act Art. 13
+source of the duty: Table 7 (row 1, p. 36:22), Symbols and Neurons: A Review of Symbolic XAI in Deep Learning, Stan, Sciavicco & Napoletano, Journal of Artificial Intelligence Research, Vol. 86, Article 36, July 2026
+symbolic artifact(s) Table 7 asks for: Rule lists/decision paths; clause truth-value tables; KG path rationales; constraint compliance summaries
+where it fits: Technical documentation (Art. 11); user information package; conformity/assurance file
+
+minimal evidence retained:
+  [x] model_and_data_version_ids (Model and data version IDs):
+        model credit-scoring-2026.03.1; rules cs-rules-2026.03; training data snapshot bureau-panel-2025-Q4
+  [x] extraction_timestamp (extraction timestamp):
+        2026-07-31T00:00:00Z (frozen synthetic run: fixed at authoring time, not wall-clock)
+  [x] dataset_snapshot_hash (dataset snapshot hash):
+        sha256:9f3c1b07ad4e (synthetic cohort APP-*, no personal data)
+  [x] fidelity_coverage_metrics (fidelity/coverage metrics):
+        fidelity 0.7742; coverage 0.2000 — measured against exact inference on the same program, not claimed
+  [x] explanation_scope (explanation scope):
+        per-decision principal reasons over the adverse-action rule set (5 candidate rules); decision-local, not a global account of the model
+  [x] linkage_from_decision_to_artifact (linkage from decision to artifact):
+        APP-1042 -> rule C01 on (dti_above_policy, income_verified)
+        APP-1042 -> rule C02 on (history_under_24_months, file_thin)
+        APP-1042 -> rule C03 on (delinquency_on_file, bureau_record_matched)
+        APP-1042 -> rule C04 on (inquiries_over_policy, bureau_record_matched)
+        APP-1042 -> rule C05 on (references_under_policy, application_complete)
+
+supporting material (NOT Table 7 evidence, and fills no gap above):
+  reason-deletion certificate:
+    REASON-DELETION CERTIFICATE [FAIL]
+    query: adverse_action(APP-1042)
+    engine: reference:top-1-proofs   claims: distribution semantics
+    exact inference: bounded proof enumeration to depth 1 (nesyarena ground-program IR) + exact weighted model counting
+    exact value 0.991399   engine value 0.765600   gap -0.225799   tolerance 1e-09
+    reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not certifiable
+    
+      [           used] C01 — Income insufficient for amount of credit requested  (score 0.765600)
+                        facts: dti_above_policy(APP-1042), income_verified(APP-1042)
+                        deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason.
+      [        DELETED] C02 — Length of time credit has been established is too short  (score 0.697200)
+                        facts: file_thin(APP-1042), history_under_24_months(APP-1042)
+                        deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] C03 — Delinquent past or present credit obligations  (score 0.632000)
+                        facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
+                        deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] C04 — Too many recent inquiries on credit bureau report  (score 0.600400)
+                        facts: bureau_record_matched(APP-1042), inquiries_over_policy(APP-1042)
+                        deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] C05 — Insufficient number of credit references provided  (score 0.511200)
+                        facts: application_complete(APP-1042), references_under_policy(APP-1042)
+                        deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+    
+    MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
+      - C02 — Length of time credit has been established is too short: file_thin(APP-1042), history_under_24_months(APP-1042)
+      - C03 — Delinquent past or present credit obligations: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
+      - C04 — Too many recent inquiries on credit bureau report: bureau_record_matched(APP-1042), inquiries_over_policy(APP-1042)
+      - C05 — Insufficient number of credit references provided: application_complete(APP-1042), references_under_policy(APP-1042)
+    
+    ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799.
+    
+    LIMITS OF THIS CERTIFICATE
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+
+LIMITS OF THIS RECORD
+  This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.
+
+The record is COMPLETE, and its own numbers argue against the engine it documents. Coverage 0.2000
+means the deployer is told, in the provider's own package, that the stated reasons are 1 of
+5. That is Art. 13 working as intended: transparency is not the absence of gaps, it is
+the gaps being on the page. A package whose fidelity/coverage figures were asserted rather than measured
+would pass the same form check while saying nothing — which is why this field is computed from the
+certificate and never accepted as input.
+
+LIMITS: the provenance values above are fixed stand-ins for a synthetic cohort; a real package draws
+them from its model registry and dataset store. The measured field transfers unchanged.
+
+====================================================================================================
+7. EU AI ACT ART. 12 — RECORD-KEEPING / EVENT LOGGING (Table 7 row 2)
+====================================================================================================
+
+Art. 12 makes the logging subsystem part of the compliance surface: each event record must name the
+chosen branch and the constraints that were active, not just the final answer. The certificate is the one
+place both halves already exist, so the log entry below is built from it — exact inference supplies the
+active set, the engine's answer supplies the choice.
+
+EVIDENCE RECORD [COMPLETE]
+decision: APP-1042
+duty: Record–keeping (event logging)
+legal source: EU AI Act Art. 12
+source of the duty: Table 7 (row 2, p. 36:22), Symbols and Neurons: A Review of Symbolic XAI in Deep Learning, Stan, Sciavicco & Napoletano, Journal of Artificial Intelligence Research, Vol. 86, Article 36, July 2026
+symbolic artifact(s) Table 7 asks for: Per-decision traces (activated rules, tree paths, module layouts); constraint satisfaction/violation records
+where it fits: Logging subsystem; post-market monitoring; quality management system
+
+minimal evidence retained:
+  [x] automatic_event_logs (Automatic event logs (timestamp, input/output hashes, chosen branch/module, violated/active constraints)):
+        2026-07-31T00:00:00Z event=decision id=APP-1042
+          input sha256:673a324cc571 (9 evidence facts)
+          output sha256:43b08d429368 (adverse_action(APP-1042) = 0.765600; stated reasons: C01)
+          chosen branch/module: C01 (engine reference:top-1-proofs)
+          active constraints: C01, C02, C03, C04, C05 (5 fired)
+          violated constraints: not assessed — the certificate measures which constraints fired and which the engine used; violation status is not part of either
+          active but not in output: 4 (recorded here; absent from the decision's stated reasons)
+  [x] retention_schedule (retention schedule):
+        10 years from placing on the market, WORM-stored, per QMS procedure QS-LOG-07
+  [x] signer (signer):
+        logging subsystem logd-01, Ed25519 key SHA256:2f8ad1c4 (automated integrity signature over each entry; QMS countersignature at quarterly review QS-2026-Q3)
+
+supporting material (NOT Table 7 evidence, and fills no gap above):
+  reason-deletion certificate:
+    REASON-DELETION CERTIFICATE [FAIL]
+    query: adverse_action(APP-1042)
+    engine: reference:top-1-proofs   claims: distribution semantics
+    exact inference: bounded proof enumeration to depth 1 (nesyarena ground-program IR) + exact weighted model counting
+    exact value 0.991399   engine value 0.765600   gap -0.225799   tolerance 1e-09
+    reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not certifiable
+    
+      [           used] C01 — Income insufficient for amount of credit requested  (score 0.765600)
+                        facts: dti_above_policy(APP-1042), income_verified(APP-1042)
+                        deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason.
+      [        DELETED] C02 — Length of time credit has been established is too short  (score 0.697200)
+                        facts: file_thin(APP-1042), history_under_24_months(APP-1042)
+                        deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] C03 — Delinquent past or present credit obligations  (score 0.632000)
+                        facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
+                        deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] C04 — Too many recent inquiries on credit bureau report  (score 0.600400)
+                        facts: bureau_record_matched(APP-1042), inquiries_over_policy(APP-1042)
+                        deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] C05 — Insufficient number of credit references provided  (score 0.511200)
+                        facts: application_complete(APP-1042), references_under_policy(APP-1042)
+                        deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+    
+    MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
+      - C02 — Length of time credit has been established is too short: file_thin(APP-1042), history_under_24_months(APP-1042)
+      - C03 — Delinquent past or present credit obligations: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
+      - C04 — Too many recent inquiries on credit bureau report: bureau_record_matched(APP-1042), inquiries_over_policy(APP-1042)
+      - C05 — Insufficient number of credit references provided: application_complete(APP-1042), references_under_policy(APP-1042)
+    
+    ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799.
+    
+    LIMITS OF THIS CERTIFICATE
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+
+LIMITS OF THIS RECORD
+  This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.
+
+Read the log line against the certificate: branch C01 chosen, five constraints active, four of them absent
+from the output. That gap is not an Art. 12 violation — the rule does not say the engine must use every
+constraint — but Art. 12 is what makes the gap retrievable after the fact. A log that recorded only the
+answer would pass the same form check ('automatic event logs: present') while making post-market
+monitoring blind to exactly the event it exists for. Form completeness over a log that cannot be
+interrogated is the row-2 version of the finding in section 1.
+
+LIMITS: timestamps are fixed and hashes are digests of frozen synthetic inputs, so the entry reproduces
+byte for byte; the signer is a stand-in for a real key-management story this package does not provide.
+
+====================================================================================================
+8. FDA GMLP — TRANSPARENCY FOR SaMD (Table 7 row 5)
+====================================================================================================
+
+The clinical triage model is software as a medical device, and GMLP wants the design history file to
+trace each requirement to its test and its artifact. The deployed engine keeps the single best proof;
+exact inference is the pre-specified alternative sitting behind the PCCP boundary. Both are certified.
+
+EVIDENCE RECORD [COMPLETE]
+decision: PT-0731
+duty: Good ML Practice/transparency for SaMD
+legal source: FDA GMLP; agency transparency guidance
+source of the duty: Table 7 (row 5, p. 36:22), Symbols and Neurons: A Review of Symbolic XAI in Deep Learning, Stan, Sciavicco & Napoletano, Journal of Artificial Intelligence Research, Vol. 86, Article 36, July 2026
+symbolic artifact(s) Table 7 asks for: Explainability specification; constraint definitions tied to hazards; proof/trace exemplars (e.g., clause activations)
+where it fits: Design history file; quality system records; post-market surveillance
+
+minimal evidence retained:
+  [x] design_history_links (Design history links from requirement to test to artifact):
+        REQ-TRIAGE-07 "every withheld fast-track states each protocol rule that fired"
+          -> test VER-TRIAGE-07: reason-deletion certificate on the deployed engine, verdict must be PASS
+          -> artifact: certificate for decision PT-0731 (engine reference:top-1-proofs, verdict FAIL) — attached
+  [x] verification_logs (verification logs):
+        engine reference:top-1-proofs: verdict FAIL (4 of 5 reasons deleted, value gap -0.260424)
+        engine reference:exact-wmc: verdict PASS (0 of 5 reasons deleted, value gap +0.000000)
+  [x] change_control (change control (e.g., PCCP)):
+        PCCP-2026-02 names the proof-selection setting a controlled parameter; measured effect of moving off top-1: stated reasons 1 -> 5 of 5, engine value 0.731000 -> 0.991424; outside the currently approved PCCP boundary: premarket submission required before deployment
+
+supporting material (NOT Table 7 evidence, and fills no gap above):
+  reason-deletion certificate (deployed engine):
+    REASON-DELETION CERTIFICATE [FAIL]
+    query: withhold_fast_track(PT-0731)
+    engine: reference:top-1-proofs   claims: distribution semantics
+    exact inference: bounded proof enumeration to depth 1 (nesyarena ground-program IR) + exact weighted model counting
+    exact value 0.991424   engine value 0.731000   gap -0.260424   tolerance 1e-09
+    reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not certifiable
+    
+      [           used] H01 — Comorbidity burden above the fast-track ceiling  (score 0.731000)
+                        facts: comorbidity_index_high(PT-0731), history_coded(PT-0731)
+                        deleting comorbidity_index_high(PT-0731) moves exact inference by -0.023306 and the engine by -0.066800: the engine's answer depends on this reason.
+      [        DELETED] H02 — Renal function below the protocol floor  (score 0.664200)
+                        facts: egfr_below_floor(PT-0731), labs_within_window(PT-0731)
+                        deleting egfr_below_floor(PT-0731) moves exact inference by -0.016964 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] H03 — Interacting medication on the active list  (score 0.600600)
+                        facts: interacting_drug_active(PT-0731), medication_list_current(PT-0731)
+                        deleting interacting_drug_active(PT-0731) moves exact inference by -0.012897 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] H04 — Vital-sign instability in the observation window  (score 0.540200)
+                        facts: monitoring_continuous(PT-0731), vitals_unstable(PT-0731)
+                        deleting monitoring_continuous(PT-0731) moves exact inference by -0.010076 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] H05 — Imaging finding outside the automated-review scope  (score 0.483000)
+                        facts: imaging_finding_out_of_scope(PT-0731), imaging_reported(PT-0731)
+                        deleting imaging_finding_out_of_scope(PT-0731) moves exact inference by -0.008012 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+    
+    MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
+      - H02 — Renal function below the protocol floor: egfr_below_floor(PT-0731), labs_within_window(PT-0731)
+      - H03 — Interacting medication on the active list: interacting_drug_active(PT-0731), medication_list_current(PT-0731)
+      - H04 — Vital-sign instability in the observation window: monitoring_continuous(PT-0731), vitals_unstable(PT-0731)
+      - H05 — Imaging finding outside the automated-review scope: imaging_finding_out_of_scope(PT-0731), imaging_reported(PT-0731)
+    
+    ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.260424.
+    
+    LIMITS OF THIS CERTIFICATE
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+
+LIMITS OF THIS RECORD
+  This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.
+
+The chain is honest because the artifact fails the requirement it is filed under: VER-TRIAGE-07 demands
+PASS, the deployed engine's certificate says FAIL, and the record carries that verdict instead of
+re-running until something passes. A design history file that only ever contains passing artifacts is
+not traceability, it is curation. The change-control field is the second half of the same discipline:
+the PCCP boundary is stated as a measured delta — one stated reason versus five — not as a parameter
+name, so a reviewer can see what the boundary costs the patient before deciding whether to cross it.
+
+LIMITS: REQ/VER/PCCP identifiers are stand-ins for a real quality system; what transfers is that the
+verification log and the change delta are measured by the certificate, not asserted about it.
+
+====================================================================================================
+9. NIST AI RMF 1.0 — RISK EVIDENCE AND CONTINUOUS MONITORING (Table 7 row 6)
+====================================================================================================
+
+Row 6 asks for risk evidence under continuous monitoring. The monitor is the machinery already shown:
+one adverse action re-scored over six windows while the bureau's delinquency signal strengthens, a
+certificate per window, and Table 19's coverage and stability as the monitored metrics. The thresholds are
+declared before the run:
+
+  coverage floor 0.5
+  stability floor 0.8
+
+the monitoring log, window by window:
+
+  window 0: stated reason C01; coverage 0.2000 (floor 0.5); stability so far 1.0000 (floor 0.8)
+  window 1: stated reason C01; coverage 0.2000 (floor 0.5); stability so far 1.0000 (floor 0.8)
+  window 2: stated reason C03; coverage 0.2000 (floor 0.5); stability so far 0.3333 (floor 0.8)
+  window 3: stated reason C03; coverage 0.2000 (floor 0.5); stability so far 0.3333 (floor 0.8)
+  window 4: stated reason C03; coverage 0.2000 (floor 0.5); stability so far 0.4000 (floor 0.8)
+  window 5: stated reason C03; coverage 0.2000 (floor 0.5); stability so far 0.4667 (floor 0.8)
+
+The risk evidence register entry this run emits:
+
+EVIDENCE RECORD [INCOMPLETE]
+decision: APP-1042
+duty: Risk evidence and continuous monitoring
+legal source: NIST AI RMF 1.0
+source of the duty: Table 7 (row 6, p. 36:22), Symbols and Neurons: A Review of Symbolic XAI in Deep Learning, Stan, Sciavicco & Napoletano, Journal of Artificial Intelligence Research, Vol. 86, Article 36, July 2026
+symbolic artifact(s) Table 7 asks for: Risk evidence register: explanation coverage and stability metrics; constraint dashboards; rule drift reports
+where it fits: RMF Govern–Map–Measure–Manage artifacts; model registry
+
+minimal evidence retained:
+  [x] continuous_monitoring_logs (Continuous monitoring logs):
+        window 0: stated reason C01; coverage 0.2000 (floor 0.5); stability so far 1.0000 (floor 0.8)
+        window 1: stated reason C01; coverage 0.2000 (floor 0.5); stability so far 1.0000 (floor 0.8)
+        window 2: stated reason C03; coverage 0.2000 (floor 0.5); stability so far 0.3333 (floor 0.8)
+        window 3: stated reason C03; coverage 0.2000 (floor 0.5); stability so far 0.3333 (floor 0.8)
+        window 4: stated reason C03; coverage 0.2000 (floor 0.5); stability so far 0.4000 (floor 0.8)
+        window 5: stated reason C03; coverage 0.2000 (floor 0.5); stability so far 0.4667 (floor 0.8)
+  [x] metric_thresholds_and_alerts (metric thresholds and alerts):
+        declared before the run: coverage >= 0.5; stability >= 0.8
+        alerts fired:
+        window 0: coverage measured 0.2000, below floor 0.5
+        window 2: stability measured 0.3333, below floor 0.8
+  [ ] reviews_and_sign_offs (reviews and sign-offs): NOT PRODUCED
+  [x] incident_tickets (incident tickets):
+        INC-2026-0731-01 (monitor-opened, window 0): coverage alert on this decision; measured 0.2000 against floor 0.5. OPEN at emission time.
+        INC-2026-0731-02 (monitor-opened, window 2): stability alert on this decision; measured 0.3333 against floor 0.8. OPEN at emission time.
+
+INCOMPLETE: 1 of 4 required fields could not be produced. This record does not carry the minimal evidence Table 7 specifies for this duty. Missing:
+  - reviews_and_sign_offs — reviews and sign-offs
+
+supporting material (NOT Table 7 evidence, and fills no gap above):
+  rule drift report (certificate, final window):
+    REASON-DELETION CERTIFICATE [FAIL]
+    query: adverse_action(APP-1042)
+    engine: reference:top-1-proofs   claims: distribution semantics
+    exact inference: bounded proof enumeration to depth 1 (nesyarena ground-program IR) + exact weighted model counting
+    exact value 0.999571   engine value 0.980100   gap -0.019471   tolerance 1e-09
+    reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not certifiable
+    
+      [           used] C03 — Delinquent past or present credit obligations  (score 0.980100)
+                        facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
+                        deleting delinquency_on_file(APP-1042) moves exact inference by -0.008161 and the engine by -0.214500: the engine's answer depends on this reason.
+      [        DELETED] C01 — Income insufficient for amount of credit requested  (score 0.765600)
+                        facts: dti_above_policy(APP-1042), income_verified(APP-1042)
+                        deleting dti_above_policy(APP-1042) moves exact inference by -0.001402 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] C04 — Too many recent inquiries on credit bureau report  (score 0.752400)
+                        facts: bureau_record_matched(APP-1042), inquiries_over_policy(APP-1042)
+                        deleting inquiries_over_policy(APP-1042) moves exact inference by -0.000261 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] C02 — Length of time credit has been established is too short  (score 0.697200)
+                        facts: file_thin(APP-1042), history_under_24_months(APP-1042)
+                        deleting file_thin(APP-1042) moves exact inference by -0.000989 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+      [        DELETED] C05 — Insufficient number of credit references provided  (score 0.511200)
+                        facts: application_complete(APP-1042), references_under_policy(APP-1042)
+                        deleting application_complete(APP-1042) moves exact inference by -0.000449 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+    
+    MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
+      - C01 — Income insufficient for amount of credit requested: dti_above_policy(APP-1042), income_verified(APP-1042)
+      - C04 — Too many recent inquiries on credit bureau report: bureau_record_matched(APP-1042), inquiries_over_policy(APP-1042)
+      - C02 — Length of time credit has been established is too short: file_thin(APP-1042), history_under_24_months(APP-1042)
+      - C05 — Insufficient number of credit references provided: application_complete(APP-1042), references_under_policy(APP-1042)
+    
+    ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.019471.
+    
+    LIMITS OF THIS CERTIFICATE
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+
+LIMITS OF THIS RECORD
+  This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.
+
+Two alerts, two findings. The coverage alert fires at window 0: top-1 keeps one reason of five, so the
+deployment was under the floor from the first check — continuous monitoring's first value is often showing
+that a standing configuration was never within limits. The stability alert fires at window 2, when drift in
+the bureau signal replaces the reason stated to the applicant; the rule drift report attached to the record
+is that event's evidence.
+
+The record is INCOMPLETE, and the missing field is the point. Reviews and sign-offs are a human act; a
+frozen synthetic run has no reviewer, so the field is reported NOT PRODUCED rather than filled with a
+simulated signature. A monitor that could mint its own sign-offs would make the register worthless.
+
+LIMITS: the drift here is scripted — one signal on one frozen case — and the thresholds above are
+illustrative, not recommended values. Real monitoring faces unscripted drift on data this does not have.
 ```
 
 ---

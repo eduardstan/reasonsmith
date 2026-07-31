@@ -1,4 +1,5 @@
-"""The two demonstrations: ECOA / Reg B credit, and GDPR Art. 22 clinical.
+"""The demonstrations: ECOA / Reg B credit, GDPR Art. 22 clinical, EU AI Act Art. 13,
+EU AI Act Art. 12, FDA GMLP SaMD, and NIST AI RMF 1.0.
 
 What this module is for:
   Executes end-to-end demonstrations comparing Table 7 evidence records against reason-deletion
@@ -22,6 +23,7 @@ What a reader must not break:
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 
 from nesyarena.adapters.base import ReferenceAdapter
@@ -370,14 +372,9 @@ def stability_demo() -> str:
             "window by window. Nothing about the program changes, and the applicant's other "
             "evidence does not change."]
     topk = ReferenceAdapter(TopK(1))
-    certs = []
-    for w in range(4):
-        case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
-        base = {a: (round(min(0.99, p + 0.06 * w), 4)
-                    if a.pred in ("delinquency_on_file", "bureau_record_matched") else p)
-                for a, p in case.base.items()}
-        cert = certify(case.program, base, case.query, topk, exact_depth=1, labels=case.labels)
-        certs.append(cert)
+    certs = drift_windows("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88,
+                          DRIFT_SIGNALS, 4, topk)
+    for w, cert in enumerate(certs):
         out.append(f"  window {w}: reason given = "
                    f"{', '.join(v.label for v in cert.live) or '(none)'}")
     out += ["",
@@ -391,8 +388,6 @@ def stability_demo() -> str:
             "  reason with another. Exact inference has nothing to reorder — it gives all of them "
             "in every window."]
     return "\n".join(out)
-
-
 # --------------------------------------------------- the key finding, as a page ----
 
 #: Styling for `render_key_finding_html`, carried by the section itself so a report that
@@ -708,6 +703,363 @@ def render_key_finding_html() -> str:
 """
 
 
+def art13_evidence_fields(case: Case, cert) -> dict:
+    """The six row-1 fields for one deployer information package.
+
+    Four are provenance the provider supplies and this package only carries. One,
+    `fidelity_coverage_metrics`, is the field the package itself computes: the certificate's
+    measured fidelity and coverage against exact inference, so the information the deployer gets
+    is a measurement, not a claim. The sixth, `explanation_scope`, states what the artifact
+    explains and what it does not.
+    """
+    linkage = "\n".join(
+        f"{case.case_id} -> rule {code} on ({', '.join(facts)})"
+        for code, _text, facts in CREDIT_REASONS)
+    return {
+        "model_and_data_version_ids": "model credit-scoring-2026.03.1; rules cs-rules-2026.03; "
+                                      "training data snapshot bureau-panel-2025-Q4",
+        "extraction_timestamp": "2026-07-31T00:00:00Z (frozen synthetic run: fixed at authoring "
+                                "time, not wall-clock)",
+        "dataset_snapshot_hash": "sha256:9f3c1b07ad4e (synthetic cohort APP-*, no personal data)",
+        "fidelity_coverage_metrics": f"fidelity {conformance.fidelity(cert):.4f}; coverage "
+                                     f"{conformance.coverage(cert):.4f} — measured against exact "
+                                     f"inference on the same program, not claimed",
+        "explanation_scope": "per-decision principal reasons over the adverse-action rule set "
+                             f"({len(CREDIT_REASONS)} candidate rules); decision-local, not a "
+                             "global account of the model",
+        "linkage_from_decision_to_artifact": linkage,
+    }
+
+
+def art13_demo() -> str:
+    """EU AI Act Art. 13 end to end: the deployer information package, Table 7 row 1."""
+    out = [_head("6. EU AI ACT ART. 13 — TRANSPARENCY AND INFORMATION TO DEPLOYERS "
+                 "(Table 7 row 1)")]
+    out += ["",
+            "Credit scoring is Annex III high-risk, so the provider owes the deployer an "
+            "information package, and",
+            "row 1 lists what it must retain. Five of the six fields are provenance the provider "
+            "hands over; the sixth,",
+            "fidelity/coverage, is the one this package computes — measured here on the deployed "
+            "top-1 engine against",
+            "exact inference on the same program."]
+    case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
+    cert = certify_case(case, ReferenceAdapter(TopK(1)))
+    fields = art13_evidence_fields(case, cert)
+    record = emit("eu_ai_act_art13_transparency", case.case_id, fields,
+                  attachments={"reason-deletion certificate": cert.render()})
+    out += ["", record.render()]
+    out += ["",
+            "The record is COMPLETE, and its own numbers argue against the engine it documents. "
+            f"Coverage {conformance.coverage(cert):.4f}",
+            f"means the deployer is told, in the provider's own package, that the stated reasons "
+            f"are {len(cert.live)} of",
+            f"{len(cert.verdicts)}. That is Art. 13 working as intended: transparency is not the "
+            "absence of gaps, it is",
+            "the gaps being on the page. A package whose fidelity/coverage figures were asserted "
+            "rather than measured",
+            "would pass the same form check while saying nothing — which is why this field is "
+            "computed from the",
+            "certificate and never accepted as input.",
+            "",
+            "LIMITS: the provenance values above are fixed stand-ins for a synthetic cohort; a "
+            "real package draws",
+            "them from its model registry and dataset store. The measured field transfers "
+            "unchanged."]
+    return "\n".join(out)
+
+
+# ------------------------------------ EU AI Act Art. 12: record-keeping ----
+
+def _sha(text: str) -> str:
+    """A short deterministic digest, for log fields that must be reproducible byte for byte."""
+    return hashlib.sha256(text.encode()).hexdigest()[:12]
+
+
+def art12_event_log(case: Case, cert) -> str:
+    """One automatic event-log entry, built from the certificate rather than beside it.
+
+    Row 2 asks each entry to carry timestamp, input/output hashes, the chosen branch, and the
+    active constraints. The certificate holds both halves of that: exact inference enumerates
+    every constraint that fired, the engine's answer shows which branch was actually chosen. A
+    log written from the final answer alone would record the branch and lose the active set —
+    the four constraints that fired and never reached the output — which is exactly the
+    difference post-market monitoring exists to see.
+    """
+    query = str(cert.query)
+    inputs = "\n".join(f"{a} {p}" for a, p in sorted(case.base.items(), key=lambda kv: repr(kv[0])))
+    chosen = ", ".join(v.label.partition(" — ")[0] for v in cert.live) or "(none)"
+    active = ", ".join(v.label.partition(" — ")[0]
+                       for v in sorted(cert.verdicts, key=lambda v: v.label))
+    output = f"{query} = {cert.engine_value:.6f}; stated reasons: {chosen}"
+    return "\n".join([
+        f"2026-07-31T00:00:00Z event=decision id={case.case_id}",
+        f"  input sha256:{_sha(inputs)} ({len(case.base)} evidence facts)",
+        f"  output sha256:{_sha(output)} ({output})",
+        f"  chosen branch/module: {chosen} (engine {cert.adapter_name})",
+        f"  active constraints: {active} ({len(cert.verdicts)} fired)",
+        "  violated constraints: not assessed — the certificate measures which constraints "
+        "fired and which the engine used; violation status is not part of either",
+        f"  active but not in output: {len(cert.deleted)} "
+        f"(recorded here; absent from the decision's stated reasons)",
+    ])
+
+
+def art12_evidence_fields(case: Case, cert) -> dict:
+    return {
+        "automatic_event_logs": art12_event_log(case, cert),
+        "retention_schedule": "10 years from placing on the market, WORM-stored, per QMS "
+                              "procedure QS-LOG-07",
+        "signer": "logging subsystem logd-01, Ed25519 key SHA256:2f8ad1c4 (automated integrity "
+                  "signature over each entry; QMS countersignature at quarterly review QS-2026-Q3)",
+    }
+
+
+def art12_demo() -> str:
+    """EU AI Act Art. 12 end to end: the automatic event log, Table 7 row 2."""
+    out = [_head("7. EU AI ACT ART. 12 — RECORD-KEEPING / EVENT LOGGING (Table 7 row 2)")]
+    out += ["",
+            "Art. 12 makes the logging subsystem part of the compliance surface: each event "
+            "record must name the",
+            "chosen branch and the constraints that were active, not just the final answer. The "
+            "certificate is the one",
+            "place both halves already exist, so the log entry below is built from it — exact "
+            "inference supplies the",
+            "active set, the engine's answer supplies the choice."]
+    case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
+    cert = certify_case(case, ReferenceAdapter(TopK(1)))
+    record = emit("eu_ai_act_art12_record_keeping", case.case_id,
+                  art12_evidence_fields(case, cert),
+                  attachments={"reason-deletion certificate": cert.render()})
+    out += ["", record.render()]
+    out += ["",
+            "Read the log line against the certificate: branch C01 chosen, five constraints "
+            "active, four of them absent",
+            "from the output. That gap is not an Art. 12 violation — the rule does not say the "
+            "engine must use every",
+            "constraint — but Art. 12 is what makes the gap retrievable after the fact. A log "
+            "that recorded only the",
+            "answer would pass the same form check ('automatic event logs: present') while making "
+            "post-market",
+            "monitoring blind to exactly the event it exists for. Form completeness over a log "
+            "that cannot be",
+            "interrogated is the row-2 version of the finding in section 1.",
+            "",
+            "LIMITS: timestamps are fixed and hashes are digests of frozen synthetic inputs, so "
+            "the entry reproduces",
+            "byte for byte; the signer is a stand-in for a real key-management story this package "
+            "does not provide."]
+    return "\n".join(out)
+
+
+# ------------------------------------------ FDA GMLP: SaMD transparency ----
+
+def fda_evidence_fields(case: Case, cert_deployed, cert_exact) -> dict:
+    """The three row-5 fields for one design history file entry.
+
+    GMLP asks for a traceable chain from requirement to test to artifact. Here the chain closes
+    mechanically: the requirement (no protocol rule silently dropped) is machine-checkable, the
+    test is the certificate, and the artifact is the certificate's own output — the first row
+    whose verification log can be produced by the tool rather than about it. `change_control`
+    records what the PCCP boundary means in measured terms: moving the engine off top-1 changes
+    the stated reasons from one to all five, which is exactly the kind of change a PCCP must
+    pre-specify.
+    """
+    links = "\n".join([
+        "REQ-TRIAGE-07 \"every withheld fast-track states each protocol rule that fired\"",
+        "  -> test VER-TRIAGE-07: reason-deletion certificate on the deployed engine, "
+        "verdict must be PASS",
+        f"  -> artifact: certificate for decision {case.case_id} "
+        f"(engine {cert_deployed.adapter_name}, verdict {cert_deployed.verdict}) — attached",
+    ])
+    verification = "\n".join(
+        f"engine {c.adapter_name}: verdict {c.verdict} "
+        f"({len(c.deleted)} of {len(c.verdicts)} reasons deleted, "
+        f"value gap {c.value_gap:+.6f})"
+        for c in (cert_deployed, cert_exact))
+    change = "; ".join([
+        "PCCP-2026-02 names the proof-selection setting a controlled parameter",
+        f"measured effect of moving off top-1: stated reasons {len(cert_deployed.live)} -> "
+        f"{len(cert_exact.live)} of {len(cert_exact.verdicts)}, engine value "
+        f"{cert_deployed.engine_value:.6f} -> {cert_exact.engine_value:.6f}",
+        "outside the currently approved PCCP boundary: premarket submission required before "
+        "deployment",
+    ])
+    return {
+        "design_history_links": links,
+        "verification_logs": verification,
+        "change_control": change,
+    }
+
+
+def fda_demo() -> str:
+    """FDA GMLP end to end: one SaMD triage decision in the design history file, Table 7 row 5."""
+    out = [_head("8. FDA GMLP — TRANSPARENCY FOR SaMD (Table 7 row 5)")]
+    out += ["",
+            "The clinical triage model is software as a medical device, and GMLP wants the design "
+            "history file to",
+            "trace each requirement to its test and its artifact. The deployed engine keeps the "
+            "single best proof;",
+            "exact inference is the pre-specified alternative sitting behind the PCCP boundary. "
+            "Both are certified."]
+    case = build_case("PT-0731", "typical", CLINICAL_QUERY, CLINICAL_REASONS, 0.86)
+    cert_deployed = certify_case(case, ReferenceAdapter(TopK(1)))
+    cert_exact = certify_case(case, ReferenceAdapter(ExactWMC()))
+    record = emit("fda_gmlp_samd", case.case_id,
+                  fda_evidence_fields(case, cert_deployed, cert_exact),
+                  attachments={"reason-deletion certificate (deployed engine)":
+                               cert_deployed.render()})
+    out += ["", record.render()]
+    out += ["",
+            "The chain is honest because the artifact fails the requirement it is filed under: "
+            "VER-TRIAGE-07 demands",
+            "PASS, the deployed engine's certificate says FAIL, and the record carries that "
+            "verdict instead of",
+            "re-running until something passes. A design history file that only ever contains "
+            "passing artifacts is",
+            "not traceability, it is curation. The change-control field is the second half of the "
+            "same discipline:",
+            "the PCCP boundary is stated as a measured delta — one stated reason versus five — "
+            "not as a parameter",
+            "name, so a reviewer can see what the boundary costs the patient before deciding "
+            "whether to cross it.",
+            "",
+            "LIMITS: REQ/VER/PCCP identifiers are stand-ins for a real quality system; what "
+            "transfers is that the",
+            "verification log and the change delta are measured by the certificate, not asserted "
+            "about it."]
+    return "\n".join(out)
+
+
+# ------------------------------------------- NIST AI RMF: continuous monitoring ----
+
+# Declared before the run, like the registered hypothesis in section 4: a floor written after
+# the numbers are in is not a control. Coverage 0.5 = the engine must depend on at least half the
+# reasons exact inference finds; stability 0.8 = the stated reasons may not churn across windows.
+NIST_THRESHOLDS = {"coverage": 0.5, "stability": 0.8}
+
+DRIFT_SIGNALS = ("delinquency_on_file", "bureau_record_matched")
+
+
+def drift_windows(case_id: str, group: str, query_pred: str, reasons, level: float,
+                  drift_preds, n_windows: int, adapter) -> list:
+    """The same decision re-scored once per window while one signal strengthens.
+
+    The program and the rest of the file are identical across windows; only the facts named in
+    `drift_preds` move, by a fixed step per window. One decision re-scored over time is the only
+    input `conformance.stability` is defined on, which makes it the unit a continuous monitor can
+    honestly log.
+    """
+    certs = []
+    for w in range(n_windows):
+        case = build_case(case_id, group, query_pred, reasons, level)
+        base = {a: (round(min(0.99, p + 0.06 * w), 4) if a.pred in drift_preds else p)
+                for a, p in case.base.items()}
+        certs.append(certify(case.program, base, case.query, adapter,
+                             exact_depth=1, labels=case.labels))
+    return certs
+
+
+def threshold_alerts(certs, thresholds: dict) -> list[dict]:
+    """The declared thresholds against the measured metrics, one window at a time.
+
+    An alert fires at the first window a measured metric sits below its floor, once per metric,
+    and records the value actually measured — an alert that restated the number it fired on would
+    be the dashboard version of a filled-in gap. A metric not measured in a window can neither
+    alert nor clear. The two metrics here are the only ones a one-decision monitor has: coverage
+    per window, and cumulative stability over the windows seen so far.
+    """
+    alerts, fired = [], set()
+    for w, cert in enumerate(certs):
+        metrics = {"coverage": conformance.coverage(cert),
+                   "stability": conformance.stability(certs[:w + 1])}
+        for metric, floor in thresholds.items():
+            value = metrics[metric]
+            if metric not in fired and value is not None and value < floor:
+                fired.add(metric)
+                alerts.append({"window": w, "metric": metric, "floor": floor, "value": value})
+    return alerts
+
+
+def nist_evidence_fields(certs, alerts, thresholds: dict) -> dict:
+    """The three row-6 fields a synthetic monitoring run can produce honestly.
+
+    The fourth, `reviews_and_sign_offs`, is not here and must not be: a review is a human act
+    and a frozen run has no human in it. The caller emits the record without that key, and the
+    record says so.
+    """
+    logs = []
+    for w, cert in enumerate(certs):
+        stated = ", ".join(v.label.partition(" — ")[0] for v in cert.live) or "(none)"
+        logs.append(f"window {w}: stated reason {stated}; coverage "
+                    f"{conformance.coverage(cert):.4f} (floor {thresholds['coverage']}); "
+                    f"stability so far {conformance.stability(certs[:w + 1]):.4f} "
+                    f"(floor {thresholds['stability']})")
+    declared = "; ".join(f"{m} >= {f}" for m, f in thresholds.items())
+    fired = "\n".join(
+        f"window {a['window']}: {a['metric']} measured {a['value']:.4f}, below floor {a['floor']}"
+        for a in alerts)
+    tickets = "\n".join(
+        f"INC-2026-0731-{i + 1:02d} (monitor-opened, window {a['window']}): {a['metric']} alert "
+        f"on this decision; measured {a['value']:.4f} against floor {a['floor']}. "
+        f"OPEN at emission time."
+        for i, a in enumerate(alerts)) or "none opened: no threshold was breached"
+    return {
+        "continuous_monitoring_logs": "\n".join(logs),
+        "metric_thresholds_and_alerts": f"declared before the run: {declared}\nalerts fired:"
+                                        + (f"\n{fired}" if fired else " none"),
+        "incident_tickets": tickets,
+    }
+
+
+def nist_demo() -> str:
+    """NIST AI RMF 1.0 end to end: one decision under continuous monitoring, Table 7 row 6."""
+    out = [_head("9. NIST AI RMF 1.0 — RISK EVIDENCE AND CONTINUOUS MONITORING (Table 7 row 6)")]
+    out += ["",
+            "Row 6 asks for risk evidence under continuous monitoring. The monitor is the "
+            "machinery already shown:",
+            "one adverse action re-scored over six windows while the bureau's delinquency signal "
+            "strengthens, a",
+            "certificate per window, and Table 19's coverage and stability as the monitored "
+            "metrics. The thresholds are",
+            "declared before the run:",
+            ""]
+    out += [f"  {m} floor {f}" for m, f in NIST_THRESHOLDS.items()]
+    certs = drift_windows("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88,
+                          DRIFT_SIGNALS, 6, ReferenceAdapter(TopK(1)))
+    alerts = threshold_alerts(certs, NIST_THRESHOLDS)
+    fields = nist_evidence_fields(certs, alerts, NIST_THRESHOLDS)
+    out += ["", "the monitoring log, window by window:", ""]
+    out += [f"  {line}" for line in fields["continuous_monitoring_logs"].splitlines()]
+    record = emit("nist_ai_rmf_risk_evidence", "APP-1042", fields,
+                  attachments={"rule drift report (certificate, final window)":
+                               certs[-1].render()})
+    out += ["", "The risk evidence register entry this run emits:", "", record.render()]
+    out += ["",
+            "Two alerts, two findings. The coverage alert fires at window 0: top-1 keeps one "
+            "reason of five, so the",
+            "deployment was under the floor from the first check — continuous monitoring's first "
+            "value is often showing",
+            "that a standing configuration was never within limits. The stability alert fires at "
+            "window 2, when drift in",
+            "the bureau signal replaces the reason stated to the applicant; the rule drift report "
+            "attached to the record",
+            "is that event's evidence.",
+            "",
+            "The record is INCOMPLETE, and the missing field is the point. Reviews and sign-offs "
+            "are a human act; a",
+            "frozen synthetic run has no reviewer, so the field is reported NOT PRODUCED rather "
+            "than filled with a",
+            "simulated signature. A monitor that could mint its own sign-offs would make the "
+            "register worthless.",
+            "",
+            "LIMITS: the drift here is scripted — one signal on one frozen case — and the "
+            "thresholds above are",
+            "illustrative, not recommended values. Real monitoring faces unscripted drift on "
+            "data this does not have."]
+    return "\n".join(out)
+
+
 def main() -> str:
     parts = [
         _head("0. TRACEABILITY — every schema entry against the Table 7 text it came from"),
@@ -718,6 +1070,10 @@ def main() -> str:
         corruption_demo(),
         stratified_demo(),
         stability_demo(),
+        art13_demo(),
+        art12_demo(),
+        fda_demo(),
+        nist_demo(),
     ]
     return "\n".join(parts)
 
