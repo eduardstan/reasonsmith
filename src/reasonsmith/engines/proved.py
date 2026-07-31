@@ -18,6 +18,13 @@ What a reader must not break:
     Why this matters: `logic()` describes a program executed statement by statement, so `score =
     score + 10` reassigns. Encoding it as one equality per name turns reassignment into a
     contradiction, which is the vacuous proof above wearing a different hat.
+  - The encoding MUST be checked against the reference interpreter on the premise model before any
+    verdict is read off the solver, and a disagreement MUST be reported as NOT EVALUATED.
+    Why this matters: this module and `rulelang` are two implementations of one language, and the
+    solver is free to exploit any gap between them — a declared sort narrowing the inputs, an
+    operator that rounds differently — to make a property come out `unsat` for a reason the system
+    does not implement. One agreed witness is not a proof of equivalence, but it is what catches
+    the divergence before it is reported as `proved`.
   - A counterexample model produced by Z3 MUST be verified to reproduce on the system under test
     before reporting `VIOLATED` at strength `PROVED`, and the evidence summary must say what that
     verification actually ran against.
@@ -28,6 +35,7 @@ What a reader must not break:
 from __future__ import annotations
 
 import ast
+import math
 from typing import Any, Optional
 
 import z3
@@ -37,6 +45,7 @@ from reasonsmith.rulelang import (
     UnsupportedConstructError,
     assignment_target,
     eval_expression,
+    execute_statements,
     parse_expression,
 )
 from reasonsmith.spec import Requirement
@@ -119,10 +128,6 @@ def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
         raise UnsupportedConstructError(f"Unsupported constant type {type(val).__name__}: {val!r}")
 
     if isinstance(node, ast.Name):
-        if node.id == "True":
-            return z3.BoolVal(True)
-        if node.id == "False":
-            return z3.BoolVal(False)
         return scope.read(node.id)
 
     if isinstance(node, ast.UnaryOp):
@@ -147,6 +152,10 @@ def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
         if isinstance(node.op, ast.Mult):
             return left * right
         if isinstance(node.op, ast.Div):
+            if isinstance(left, z3.ArithRef) and left.is_int():
+                left = z3.ToReal(left)
+            if isinstance(right, z3.ArithRef) and right.is_int():
+                right = z3.ToReal(right)
             return left / right
         if isinstance(node.op, ast.Mod):
             return left % right
@@ -230,15 +239,31 @@ def _as_bool(expr: Any, what: str) -> Any:
     return expr
 
 
+def _bind(scope: _Scope, name: str, val_z3: Any, solver: z3.Solver, what: str) -> None:
+    """Bind a fresh version of `name` to `val_z3`, refusing what the declared sort cannot hold."""
+    tgt_z3 = scope.assign(name)
+    if isinstance(tgt_z3, z3.ArithRef) and isinstance(val_z3, z3.ArithRef):
+        if tgt_z3.is_int() and val_z3.is_real():
+            raise UnsupportedConstructError(
+                f"{what} gives {name!r} a real value, but {name!r} is declared int. The solver "
+                "could only satisfy that by restricting the inputs, which the rules do not do"
+            )
+        tgt_z3, val_z3 = _z3_promote(tgt_z3, val_z3)
+    elif tgt_z3.sort() != val_z3.sort():
+        raise UnsupportedConstructError(
+            f"{what} gives {name!r} a value of sort {val_z3.sort()}, "
+            f"but {name!r} is declared {tgt_z3.sort()}"
+        )
+    solver.add(tgt_z3 == val_z3)
+
+
 def _encode_block(stmts: list[ast.stmt], scope: _Scope, solver: z3.Solver) -> None:
     """Encode a rule block into `solver` in static single assignment form."""
     for stmt in stmts:
         if isinstance(stmt, ast.Assign):
             name = assignment_target(stmt)
             val_z3 = _ast_to_z3(stmt.value, scope)
-            tgt_z3 = scope.assign(name)
-            tgt_z3, val_z3 = _z3_promote(tgt_z3, val_z3)
-            solver.add(tgt_z3 == val_z3)
+            _bind(scope, name, val_z3, solver, f"Rule {ast.unparse(stmt)!r}")
 
         elif isinstance(stmt, ast.If):
             test_z3 = _as_bool(
@@ -261,13 +286,18 @@ def _encode_block(stmts: list[ast.stmt], scope: _Scope, solver: z3.Solver) -> No
                     scope.current[name] = then_val
                     continue
                 then_val, else_val = _z3_promote(then_val, else_val)
-                merged = scope.assign(name)
-                merged, chosen = _z3_promote(merged, z3.If(test_z3, then_val, else_val))
-                solver.add(merged == chosen)
+                _bind(
+                    scope,
+                    name,
+                    z3.If(test_z3, then_val, else_val),
+                    solver,
+                    f"Branch on {ast.unparse(stmt.test)!r}",
+                )
 
         elif isinstance(stmt, ast.Expr):
-            solver.add(
-                _as_bool(_ast_to_z3(stmt.value, scope), f"Rule assertion {ast.unparse(stmt)!r}")
+            raise UnsupportedConstructError(
+                f"A rule statement must decide something: {ast.unparse(stmt)!r} computes a value "
+                "and discards it. State an input invariant in `constraints` instead."
             )
 
         else:
@@ -310,6 +340,53 @@ def _extract_model_value(val: Any) -> Any:
 def _eval_python_spec(spec_text: str, record: dict[str, Any]) -> bool:
     """Evaluate requirement specification expression over a decision record."""
     return bool(eval_expression(parse_expression(spec_text), dict(record)))
+
+
+def _model_inputs(scope: _Scope, model: z3.ModelRef) -> dict[str, Any]:
+    """Read the free inputs of a Z3 model back as native Python values."""
+    inputs = {}
+    for name, const in scope.inputs.items():
+        value = _extract_model_value(model[const])
+        if value is not None:
+            inputs[name] = value
+    return inputs
+
+
+def _values_agree(encoded: Any, computed: Any) -> bool:
+    """Compare a Z3 model valuation with an interpreter result, allowing float representation."""
+    if isinstance(encoded, bool) or isinstance(computed, bool):
+        return encoded is computed
+    if isinstance(encoded, (int, float)) and isinstance(computed, (int, float)):
+        return math.isclose(encoded, computed, rel_tol=1e-9, abs_tol=1e-9)
+    return encoded == computed
+
+
+def _encoding_matches_declared_logic(
+    rules: list[str], scope: _Scope, model: z3.ModelRef
+) -> tuple[bool, str]:
+    """Check the Z3 encoding against the reference interpreter on one witness the solver chose."""
+    env = _model_inputs(scope, model)
+    try:
+        for r_text in rules:
+            execute_statements(ast.parse(r_text, mode="exec").body, env)
+    except Exception as exc:
+        return False, (
+            f"the reference interpreter could not execute the declared logic on the solver's own "
+            f"model {env}: {exc}"
+        )
+
+    for name, const in sorted(scope.current.items()):
+        if name not in env:
+            continue
+        encoded = _extract_model_value(model[const])
+        if encoded is None:
+            continue
+        if not _values_agree(encoded, env[name]):
+            return False, (
+                f"on inputs {_model_inputs(scope, model)} the solver's model has "
+                f"{name}={encoded!r} while the declared rules compute {name}={env[name]!r}"
+            )
+    return True, ""
 
 
 def _verify_counterexample(
@@ -424,12 +501,7 @@ class ProvedEngine:
             premise_reason = (
                 solver.reason_unknown() if premise_check == z3.unknown else ""
             ) or "solver returned unknown or timed out"
-
-            solver.add(z3.Not(spec_z3))
-            check_res = solver.check()
-            unknown_reason = (
-                solver.reason_unknown() if check_res == z3.unknown else ""
-            ) or "solver returned unknown or timed out"
+            premise_model = solver.model() if premise_check == z3.sat else None
 
         except UnsupportedConstructError as exc:
             return not_evaluated(
@@ -452,11 +524,32 @@ class ProvedEngine:
                 {"solver": "z3", "result": "unsatisfiable_premises"},
             )
 
-        if premise_check != z3.sat:
+        if premise_check != z3.sat or premise_model is None:
             return not_evaluated(
                 f"Not evaluated: formal solver could not decide requirement {req.spec!r}: "
                 f"{premise_reason}.",
                 {"solver": "z3", "reason_unknown": premise_reason},
+            )
+
+        faithful, mismatch = _encoding_matches_declared_logic(rules, scope, premise_model)
+        if not faithful:
+            return not_evaluated(
+                "Not evaluated: the solver encoding does not agree with the declared logic — "
+                f"{mismatch}. A property proved about an encoding the system does not implement "
+                "is not evidence about the system.",
+                {"solver": "z3", "encoding_mismatch": mismatch},
+            )
+
+        try:
+            solver.add(z3.Not(spec_z3))
+            check_res = solver.check()
+            unknown_reason = (
+                solver.reason_unknown() if check_res == z3.unknown else ""
+            ) or "solver returned unknown or timed out"
+        except Exception as exc:
+            return not_evaluated(
+                f"Not evaluated: error checking property {req.spec!r}: {exc}",
+                {"error": str(exc)},
             )
 
         if check_res == z3.unsat:
@@ -476,13 +569,7 @@ class ProvedEngine:
             )
 
         if check_res == z3.sat:
-            m = solver.model()
-            ce_inputs = {}
-            for name, z_var in scope.inputs.items():
-                py_val = _extract_model_value(m[z_var])
-                if py_val is not None:
-                    ce_inputs[name] = py_val
-
+            ce_inputs = _model_inputs(scope, solver.model())
             reproduced, verif_msg = _verify_counterexample(sut, req, ce_inputs)
             if reproduced:
                 return RequirementResult(

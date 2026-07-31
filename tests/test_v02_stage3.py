@@ -361,6 +361,105 @@ def test_declared_capabilities_exclude_callee_and_module_names():
     assert sut.capabilities() == {"x", "y"}
 
 
+def test_capability_discovery_reads_constraints_the_way_the_engine_does():
+    """A constraint written with an arrow still contributes its variables to the capability set."""
+    sut = RulesAdapter(rules=["approved = flagged"], constraints=["reviewed -> flagged"])
+    assert {"reviewed", "flagged", "approved"} <= sut.capabilities()
+
+    # The signal exists, so the requirement must not be dismissed as unattainable as built.
+    res = evaluate_requirement(
+        _logical_req(spec="approved == flagged", requires=("reviewed", "approved")), sut
+    )
+    assert res.strength is not Strength.UNATTAINABLE
+    assert not res.signals_missing
+
+
+def test_bare_expression_rules_are_refused_by_both_sides():
+    """An expression asserts nothing to one side and everything to the other: refuse it."""
+    asserted = RulesAdapter(
+        rules=["approved = income >= 30000", "income > 100"],
+        variables={"income": "real", "approved": "bool"},
+    )
+    res = evaluate_requirement(
+        _logical_req(spec="income > 100", requires=("income", "approved")), asserted
+    )
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+    with pytest.raises(UnsupportedConstructError):
+        asserted.decide({"income": 5})
+
+    in_branch = RulesAdapter(
+        rules=["if x > 0:\n    x > 100\nelse:\n    y = 0"], variables={"x": "int", "y": "int"}
+    )
+    res = evaluate_requirement(_logical_req(spec="x > 100", requires=("x", "y")), in_branch)
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+
+
+def test_declared_sorts_never_become_hidden_input_constraints():
+    """A declared sort describes the system; it may not be satisfied by narrowing the inputs."""
+    widened = RulesAdapter(
+        rules=["half = x * 0.5"], variables={"x": "int", "half": "int"}
+    )
+    res = evaluate_requirement(_logical_req(spec="x % 2 == 0", requires=("x", "half")), widened)
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+    assert widened.decide({"x": 3})["half"] == 1.5
+
+    divided = RulesAdapter(
+        rules=["half = x / 2"], variables={"x": "int", "half": "int"}, constraints=["x == 5"]
+    )
+    res = evaluate_requirement(_logical_req(spec="half == 2", requires=("x", "half")), divided)
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+    assert divided.decide({"x": 5})["half"] == 2.5
+
+
+def test_encoding_disagreeing_with_the_interpreter_is_not_a_proof():
+    """Z3 and Python disagree on `%` with a negative divisor; the witness check must catch it."""
+    sut = RulesAdapter(
+        rules=["y = x % -3"], variables={"x": "int", "y": "int"}, constraints=["x == 7"]
+    )
+
+    res = evaluate_requirement(_logical_req(spec="y == 1", requires=("x", "y")), sut)
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+    assert "does not agree with the declared logic" in res.evidence_summary
+    assert sut.decide({"x": 7})["y"] == -2
+
+
+def test_division_is_true_division_on_both_sides():
+    """`/` means the same thing to the solver and to the interpreter."""
+    sut = RulesAdapter(
+        rules=["half = x / 2"],
+        variables={"x": "int", "half": "real"},
+        constraints=["x == 5"],
+    )
+    res = evaluate_requirement(_logical_req(spec="half == 2.5", requires=("x", "half")), sut)
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+    assert sut.decide({"x": 5})["half"] == 2.5
+
+
+def test_arrow_rewriting_leaves_string_literals_alone():
+    """An arrow inside a string literal is data, not an operator."""
+    assert preprocess_spec('note == "a -> b"') == 'note == "a -> b"'
+
+    sut = RulesAdapter(
+        rules=['flagged = note == "a -> b"'],
+        variables={"note": "str", "flagged": "bool"},
+    )
+    res = evaluate_requirement(
+        _logical_req(
+            spec='Implies(note == "a -> b", flagged == True)',
+            requires=("note", "flagged"),
+        ),
+        sut,
+    )
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+
+
 def test_counterexample_replayed_on_declared_logic_says_so():
     """A system exposing only logic() is replayed through it, and the report says so."""
     class LogicOnlySUT(BaseSUT):

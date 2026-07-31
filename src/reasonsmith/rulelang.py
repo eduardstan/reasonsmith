@@ -26,9 +26,6 @@ from __future__ import annotations
 import ast
 from typing import Any
 
-#: Names usable in rule and spec text without being supplied as inputs.
-CONSTANTS: dict[str, Any] = {"True": True, "False": False, "None": None}
-
 _EQUIVALENCE_TOKENS = ("<=>", "<->")
 _IMPLICATION_TOKENS = ("=>", "->", " implies ")
 
@@ -39,10 +36,38 @@ class UnsupportedConstructError(Exception):
     pass
 
 
+def _string_mask(text: str) -> list[bool]:
+    """Mark every character that lies inside a string literal, quotes included."""
+    mask = [False] * len(text)
+    quote = ""
+    i = 0
+    while i < len(text):
+        char = text[i]
+        if quote:
+            mask[i] = True
+            if char == "\\":
+                if i + 1 < len(text):
+                    mask[i + 1] = True
+                i += 2
+                continue
+            if char == quote:
+                quote = ""
+        elif char in ("'", '"'):
+            quote = char
+            mask[i] = True
+        i += 1
+    if quote:
+        raise UnsupportedConstructError(f"Unterminated string literal in {text!r}")
+    return mask
+
+
 def _find_top_level(text: str, token: str, start: int = 0) -> int:
-    """Return the index of `token` outside every parenthesis group, or -1."""
+    """Return the index of `token` outside every parenthesis group and string literal, or -1."""
+    in_string = _string_mask(text)
     depth = 0
     for i in range(start, len(text)):
+        if in_string[i]:
+            continue
         char = text[i]
         if char == "(":
             depth += 1
@@ -67,16 +92,20 @@ def _find_first_top_level(text: str, tokens: tuple[str, ...]) -> tuple[int, str]
 
 def _rewrite_groups(text: str) -> str:
     """Rewrite arrows inside each top-level parenthesis group, leaving the rest untouched."""
+    in_string = _string_mask(text)
     out: list[str] = []
     i = 0
     while i < len(text):
-        if text[i] != "(":
+        if in_string[i] or text[i] != "(":
             out.append(text[i])
             i += 1
             continue
         depth = 0
         j = i
         while j < len(text):
+            if in_string[j]:
+                j += 1
+                continue
             if text[j] == "(":
                 depth += 1
             elif text[j] == ")":
@@ -149,8 +178,6 @@ def eval_expression(node: ast.AST, env: dict[str, Any]) -> Any:
     if isinstance(node, ast.Name):
         if node.id in env:
             return env[node.id]
-        if node.id in CONSTANTS:
-            return CONSTANTS[node.id]
         raise NameError(f"name {node.id!r} is not defined for this decision")
 
     if isinstance(node, ast.UnaryOp):
@@ -267,7 +294,10 @@ def execute_statements(stmts: list[ast.stmt], env: dict[str, Any]) -> None:
             branch = stmt.body if eval_expression(stmt.test, env) else stmt.orelse
             execute_statements(branch, env)
         elif isinstance(stmt, ast.Expr):
-            eval_expression(stmt.value, env)
+            raise UnsupportedConstructError(
+                f"A rule statement must decide something: {ast.unparse(stmt)!r} computes a value "
+                "and discards it. State an input invariant in `constraints` instead."
+            )
         else:
             raise UnsupportedConstructError(
                 f"Unsupported rule statement type: {type(stmt).__name__}"

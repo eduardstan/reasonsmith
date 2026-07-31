@@ -23,7 +23,11 @@ import ast
 from collections.abc import Iterable
 from typing import Any, Optional
 
-from reasonsmith.rulelang import CONSTANTS, execute_statements
+from reasonsmith.rulelang import (
+    UnsupportedConstructError,
+    execute_statements,
+    parse_expression,
+)
 from reasonsmith.sut import BaseSUT
 
 
@@ -40,12 +44,11 @@ def _extract_names(node: ast.AST) -> set[str]:
             if isinstance(root, ast.Name):
                 callees.add(id(root))
 
-    names = set()
-    for child in ast.walk(node):
-        if isinstance(child, ast.Name) and id(child) not in callees:
-            if child.id not in CONSTANTS:
-                names.add(child.id)
-    return names
+    return {
+        child.id
+        for child in ast.walk(node)
+        if isinstance(child, ast.Name) and id(child) not in callees
+    }
 
 
 class RulesAdapter(BaseSUT):
@@ -67,13 +70,17 @@ class RulesAdapter(BaseSUT):
             constraints = [c.strip() for c in constraints.splitlines() if c.strip()]
         self._constraints = list(constraints) if constraints is not None else []
 
-        # Parse rules to discover all variable names
+        # Parse rules and constraints exactly as the proved engine does, to discover variable names
         discovered_vars: set[str] = set()
-        for stmt in self._rules + self._constraints:
+        for rule in self._rules:
             try:
-                tree = ast.parse(stmt, mode="exec")
-                discovered_vars |= _extract_names(tree)
+                discovered_vars |= _extract_names(ast.parse(rule, mode="exec"))
             except SyntaxError:
+                pass
+        for constraint in self._constraints:
+            try:
+                discovered_vars |= _extract_names(parse_expression(constraint))
+            except (SyntaxError, UnsupportedConstructError):
                 pass
 
         if variables is not None:
