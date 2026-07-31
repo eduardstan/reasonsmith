@@ -9,7 +9,9 @@ What a reader must not break:
     inspection.
     Why this matters: Object inspection can falsely guess capabilities based on dummy attributes
     or method names rather than genuine model outputs.
-  - The capability basis must be returned as "declared".
+  - The capability basis stays `"declared"`. This adapter sets no `capability_basis` attribute,
+    which is what `report._unattainable_result` falls back to, and that is correct here: the
+    capabilities came from the author, not from a trace.
     Why this matters: Distinction between declared capabilities and trace-derived capabilities
     must remain explicit in report findings.
 """

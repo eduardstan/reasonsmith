@@ -10,8 +10,10 @@ What a reader must not break:
     Why this matters: A capability represents what the system can emit; a field present in some
     records but omitted in others indicates an operational trace breach, not an unattainable
     requirement.
-  - `capability_basis` must honestly record whether capabilities were explicitly declared or
-    trace-derived (`trace_derived`).
+  - The instance attribute `capability_basis` must honestly record which of the two happened:
+    `"declared"` when the caller passed `declared_capabilities`, `"trace"` when they were derived
+    here. `report._unattainable_result` compares against the literal `"trace"` and treats every
+    other value as declared.
     Why this matters: Reports must explicitly state when capabilities were derived from a single
     sample trace rather than authoritatively declared by system maintainers.
 """
