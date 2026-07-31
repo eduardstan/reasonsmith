@@ -34,9 +34,11 @@ LIMITS = (
     "findings discharge legal duties remains a determination this tool does not make and cannot "
     "make. A requirement reported without a strength was not evaluated or is not applicable, "
     "and no verdict on it should be read from this report. "
-    "Recital and guidance items inform how statutory duties are interpreted but cannot create "
-    "an obligation on its own; interpretive requirements are evaluated for completeness and "
-    "excluded from binding headline counts."
+    "Recital and guidance items inform how statutory duties are interpreted but create no "
+    "obligation of their own; interpretive requirements are evaluated and reported separately, "
+    "and are never folded into the binding headline counts. A requirement reported not "
+    "applicable was excluded because the system's declared regulatory class does not match the "
+    "class the requirement is limited to; this tool never infers that class."
 )
 
 #: Formalisms this build can actually evaluate. `logical` requirements need the
@@ -68,11 +70,15 @@ class RequirementResult:
     """The conformance result for a single requirement.
 
     `strength` is `None` when the requirement was not evaluated at all or is not applicable;
-    see the module docstring. `signals_missing` names required signals missing from the adapter's capability
-    set and is therefore populated only on an unattainable result. Signals in that set but
-    absent from a particular trace are a different finding and land in `details`.
-    `binding` records whether the duty is legally binding (true) or an interpretive recital/guidance (false).
-    `scope` records any regulatory class limit (e.g. 'high-risk').
+    see the module docstring. `signals_missing` names required signals missing from the
+    adapter's capability set and is therefore populated only on an unattainable result. Signals
+    in that set but absent from a particular trace are a different finding and land in
+    `details`.
+
+    `binding` records whether the duty is a legally binding obligation (true) or an
+    interpretive recital/guidance item (false), and `scope` records any regulatory class the
+    duty is limited to (e.g. 'high-risk'). Both are carried through from the requirement so a
+    reader of a single result never has to go back to the pack to know what kind of duty it is.
     """
 
     requirement_id: str
@@ -98,14 +104,19 @@ class RequirementResult:
         for name in ("signals_required", "signals_missing"):
             object.__setattr__(self, name, self._signal_names(name))
 
+        # Not applicable is a statement about the duty's reach, not about the system: nothing
+        # was checked, so nothing may be claimed. A strength or a missing-signal list here
+        # would be a finding smuggled in under a verdict that says none was made.
         if self.verdict == Verdict.NOT_APPLICABLE:
             if self.strength is not None:
                 raise ValueError(
-                    f"{self.requirement_id}: a not_applicable requirement cannot carry evidence strength {self.strength}"
+                    f"{self.requirement_id}: a not_applicable requirement cannot carry "
+                    f"evidence strength {self.strength}"
                 )
             if bool(self.signals_missing):
                 raise ValueError(
-                    f"{self.requirement_id}: a not_applicable requirement cannot have missing signals"
+                    f"{self.requirement_id}: a not_applicable requirement cannot have "
+                    f"missing signals"
                 )
 
         unattainable = self.strength == Strength.UNATTAINABLE
@@ -119,7 +130,10 @@ class RequirementResult:
                 f"{self.requirement_id}: signals_missing is populated exactly when the result "
                 f"is unattainable (strength={self.strength}, missing={self.signals_missing})"
             )
-        if self.strength is None and self.verdict not in (Verdict.INCONCLUSIVE, Verdict.NOT_APPLICABLE):
+        if self.strength is None and self.verdict not in (
+            Verdict.INCONCLUSIVE,
+            Verdict.NOT_APPLICABLE,
+        ):
             raise ValueError(
                 f"{self.requirement_id}: a result with no evidence strength cannot be reported "
                 f"{self.verdict}"
@@ -132,7 +146,12 @@ class RequirementResult:
             )
 
     def _signal_names(self, name: str) -> tuple[str, ...]:
-        """Coerce a signal field to a tuple of names, refusing shapes that would be misread."""
+        """Coerce a signal field to a tuple of names, refusing shapes that would be misread.
+
+        A bare string is iterable, so signals_required="reasons" would become seven
+        single-character signals; a mapping is iterable over its keys, for the same reason
+        the capability sites reject one.
+        """
         value = getattr(self, name)
         if isinstance(value, (str, bytes, Mapping)) or not isinstance(value, Iterable):
             raise TypeError(
@@ -168,6 +187,56 @@ class RequirementResult:
         }
 
 
+#: The report categories, in the order they are rendered. Every result falls in exactly one of
+#: them, which is what lets the counts reconcile against a total instead of merely summing to
+#: something plausible.
+_CATEGORY_LABELS = (
+    ("proved", "proved"),
+    ("probed", "probed"),
+    ("observed", "observed"),
+    ("violated", "violated"),
+    ("inconclusive", "inconclusive"),
+    ("not_evaluated", "not evaluated"),
+    ("unattainable", "unattainable"),
+    ("not_applicable", "not applicable"),
+)
+
+
+def _category_counts(
+    results: list[RequirementResult], prefix: str = ""
+) -> dict[str, int]:
+    """Count one set of results into the categories of `_CATEGORY_LABELS`.
+
+    Binding and interpretive results are counted the same way and reported under different
+    keys, so the two halves cannot drift into meaning different things.
+    """
+
+    def satisfied_at(strength: Strength) -> int:
+        return sum(
+            1 for r in results if r.verdict == Verdict.SATISFIED and r.strength == strength
+        )
+
+    counts = {
+        "proved": satisfied_at(Strength.PROVED),
+        "probed": satisfied_at(Strength.PROBED),
+        "observed": satisfied_at(Strength.OBSERVED),
+        "violated": sum(1 for r in results if r.verdict == Verdict.VIOLATED),
+        "inconclusive": sum(
+            1
+            for r in results
+            if r.verdict == Verdict.INCONCLUSIVE
+            and r.evaluated
+            and r.strength != Strength.UNATTAINABLE
+        ),
+        "not_evaluated": sum(
+            1 for r in results if not r.evaluated and r.verdict != Verdict.NOT_APPLICABLE
+        ),
+        "unattainable": sum(1 for r in results if r.strength == Strength.UNATTAINABLE),
+        "not_applicable": sum(1 for r in results if r.verdict == Verdict.NOT_APPLICABLE),
+    }
+    return {f"{prefix}{key}": value for key, value in counts.items()}
+
+
 @dataclass(frozen=True)
 class ConformanceReport:
     """Report summarizing conformance of a System Under Test against a Pack."""
@@ -180,100 +249,53 @@ class ConformanceReport:
 
     @property
     def counts(self) -> dict[str, int]:
-        """Per-category counts for binding requirements and summary counts for interpretive items.
+        """Per-category counts, split so no single number can mean two things.
 
-        Interpretive requirements are evaluated and reported, but excluded from binding counts.
+        `total` is every requirement reported, binding and interpretive alike — a JSON
+        consumer reading it is never told a shorter pack was run than was. The unprefixed
+        category counts cover the `binding_total` binding requirements only: a recital or a
+        guidance item informs how a statutory duty is read but creates no obligation of its
+        own, so counting one as compliance evidence would overstate what was established.
+        Interpretive results are reported under the `interpretive_` keys, never dropped.
+
+        Each half is an exact partition of its own total, so `binding_total` and
+        `interpretive_total` each reconcile against the eight categories below and sum to
+        `total`. `proved`/`probed`/`observed` count *satisfied* requirements at that strength,
+        so a requirement is never counted as evidence for a property it does not have.
         """
         binding_res = [r for r in self.results if r.binding]
         interp_res = [r for r in self.results if not r.binding]
-
-        def satisfied_at(res_list: list[RequirementResult], strength: Strength) -> int:
-            return sum(
-                1 for r in res_list if r.verdict == Verdict.SATISFIED and r.strength == strength
-            )
-
-        res = {
-            "total": len(binding_res),
-            "proved": satisfied_at(binding_res, Strength.PROVED),
-            "probed": satisfied_at(binding_res, Strength.PROBED),
-            "observed": satisfied_at(binding_res, Strength.OBSERVED),
-            "violated": sum(1 for r in binding_res if r.verdict == Verdict.VIOLATED),
-            "inconclusive": sum(
-                1
-                for r in binding_res
-                if r.verdict == Verdict.INCONCLUSIVE
-                and r.evaluated
-                and r.strength != Strength.UNATTAINABLE
-            ),
-            "not_evaluated": sum(
-                1 for r in binding_res if not r.evaluated and r.verdict != Verdict.NOT_APPLICABLE
-            ),
-            "unattainable": sum(1 for r in binding_res if r.strength == Strength.UNATTAINABLE),
-            "not_applicable": sum(1 for r in binding_res if r.verdict == Verdict.NOT_APPLICABLE),
+        return {
+            "total": len(self.results),
+            "binding_total": len(binding_res),
+            **_category_counts(binding_res),
             "interpretive_total": len(interp_res),
-            "interpretive_satisfied": sum(1 for r in interp_res if r.verdict == Verdict.SATISFIED),
-            "interpretive_violated": sum(1 for r in interp_res if r.verdict == Verdict.VIOLATED),
-            "interpretive_inconclusive": sum(
-                1
-                for r in interp_res
-                if r.verdict == Verdict.INCONCLUSIVE
-                and r.evaluated
-                and r.strength != Strength.UNATTAINABLE
-            ),
-            "interpretive_not_evaluated": sum(
-                1 for r in interp_res if not r.evaluated and r.verdict != Verdict.NOT_APPLICABLE
-            ),
-            "interpretive_unattainable": sum(
-                1 for r in interp_res if r.strength == Strength.UNATTAINABLE
-            ),
-            "interpretive_not_applicable": sum(
-                1 for r in interp_res if r.verdict == Verdict.NOT_APPLICABLE
-            ),
+            **_category_counts(interp_res, "interpretive_"),
         }
-        return res
 
     @property
     def headline(self) -> str:
-        """Headline count line distinguishing binding duties from interpretive recitals/guidance."""
+        """Headline count line, naming each half in words rather than leaving it inferred.
+
+        E.g. '6 requirements · 4 binding: 2 observed, 2 unattainable · 2 interpretive:
+        2 observed'. A reader who sees only the leading number still learns from the following
+        clauses how many of those requirements are duties and how many merely interpret one.
+        """
         counts = self.counts
-        has_binding = counts["total"] > 0
-        has_interp = counts["interpretive_total"] > 0
-
-        parts = []
-        if has_binding or not has_interp:
-            lbl = "binding requirements" if has_interp else "requirements"
-            parts.append(f"{counts['total']} {lbl}")
-            parts += [
-                f"{counts[key]} {label}"
-                for key, label in (
-                    ("proved", "proved"),
-                    ("probed", "probed"),
-                    ("observed", "observed"),
-                    ("violated", "violated"),
-                    ("inconclusive", "inconclusive"),
-                    ("not_evaluated", "not evaluated"),
-                    ("unattainable", "unattainable"),
-                    ("not_applicable", "not applicable"),
-                )
-                if counts[key]
+        parts = [f"{counts['total']} requirements"]
+        for total_key, prefix, noun in (
+            ("binding_total", "", "binding"),
+            ("interpretive_total", "interpretive_", "interpretive"),
+        ):
+            if not counts[total_key]:
+                continue
+            categories = [
+                f"{counts[prefix + key]} {label}"
+                for key, label in _CATEGORY_LABELS
+                if counts[prefix + key]
             ]
-        
-        if has_interp:
-            interp_sub = [
-                f"{counts[key]} {label}"
-                for key, label in (
-                    ("interpretive_satisfied", "satisfied"),
-                    ("interpretive_violated", "violated"),
-                    ("interpretive_inconclusive", "inconclusive"),
-                    ("interpretive_not_evaluated", "not evaluated"),
-                    ("interpretive_unattainable", "unattainable"),
-                    ("interpretive_not_applicable", "not applicable"),
-                )
-                if counts[key]
-            ]
-            interp_str = f": {', '.join(interp_sub)}" if interp_sub else ""
-            parts.append(f"+ {counts['interpretive_total']} interpretive{interp_str}")
-
+            detail = f": {', '.join(categories)}" if categories else ""
+            parts.append(f"{counts[total_key]} {noun}{detail}")
         return " · ".join(parts)
 
     def render_text(self) -> str:
@@ -326,7 +348,18 @@ class ConformanceReport:
 
 
 def analyze_unattainable(req: Requirement, sut: SystemUnderTest) -> tuple[bool, tuple[str, ...]]:
-    """Perform the unattainable analysis for a requirement against a SUT."""
+    """Perform the unattainable analysis for a requirement against a SUT.
+
+    COMPUTED WITHOUT EXECUTING THE SYSTEM (`sut.decisions()` is never called here): the answer
+    is the set difference between the signals the requirement needs and the capability set the
+    SUT adapter supplies. Most adapters require an explicit system declaration. A trace-derived
+    adapter is weaker: its result is limited to that supplied trace rather than stated as a
+    property of the system as built.
+
+    Returns:
+        (is_unattainable, missing_signals) — missing_signals is sorted and never empty when
+        is_unattainable is True.
+    """
     declared = sut.capabilities()
     _validate_capability_collection(declared, f"{type(sut).__name__}.capabilities() must return")
     missing = tuple(sorted(set(req.requires) - set(declared)))
@@ -334,7 +367,12 @@ def analyze_unattainable(req: Requirement, sut: SystemUnderTest) -> tuple[bool, 
 
 
 def _read_trace(sut: SystemUnderTest) -> list[dict[str, Any]]:
-    """Read a SUT's decision trace, refusing a shape that would be read record by record."""
+    """Read a SUT's decision trace, refusing a shape that would be read record by record.
+
+    A system returning one record instead of a list of records yields its key strings, which
+    would otherwise blow up deep inside the signal check with no mention of the system that
+    caused it. Shared by both places a trace is read, so neither can drift from the other.
+    """
     records = list(sut.decisions())
     for rec in records:
         if not isinstance(rec, Mapping):
@@ -348,7 +386,12 @@ def _read_trace(sut: SystemUnderTest) -> list[dict[str, Any]]:
 def _unattainable_result(
     req: Requirement, missing: tuple[str, ...], sut: SystemUnderTest | None = None
 ) -> RequirementResult:
-    """The unattainable result, worded for how the capability set was established."""
+    """The unattainable result, worded for how the capability set was established.
+
+    A system that declares its capabilities is speaking about itself as built. An adapter
+    that infers them from a supplied trace is not: a longer trace could carry the signal, so
+    the result says what it was read from rather than putting a claim in the system's mouth.
+    """
     if getattr(sut, "capability_basis", "declared") == "trace":
         summary = (
             "Unattainable on the evidence supplied: no record in the supplied decision trace "
@@ -381,7 +424,19 @@ def evaluate_requirement(
     records: list[dict[str, Any]] | None = None,
     system_scope: str | None = None,
 ) -> RequirementResult:
-    """Evaluate a single requirement against a SUT."""
+    """Evaluate a single requirement against a SUT.
+
+    A requirement limited to a regulatory class is answered first: if the system's declared
+    class is not that class, the duty does not reach this system and the result is
+    NOT_APPLICABLE with no strength, because nothing about the system was checked. The class
+    is never inferred — an undeclared system is not silently treated as in scope, and the
+    result says which of the two it was.
+
+    If the adapter's capability set does not cover the required signals, returns UNATTAINABLE
+    without executing the SUT. Otherwise `records` is used as the decision trace; when it is
+    None the trace is fetched from the SUT, so callers holding a trace already can avoid
+    re-running the system once per requirement.
+    """
     if system_scope is None:
         system_scope = getattr(sut, "system_scope", getattr(sut, "declared_scope", None))
 
@@ -416,6 +471,8 @@ def evaluate_requirement(
     clause = f"{req.source_document} {req.article_clause}"
 
     if req.formalism not in SUPPORTED_FORMALISMS:
+        # Declaring the signals is not evidence that a temporal or logical property holds,
+        # and there is no monitor or solver in this build to establish one. Say so.
         return RequirementResult(
             requirement_id=req.id,
             source_clause=clause,
@@ -453,7 +510,14 @@ def check_conformance(
     system_name: str = "SUT",
     system_scope: str | None = None,
 ) -> ConformanceReport:
-    """Check conformance of a SUT against all requirements in a Pack."""
+    """Check conformance of a SUT against all requirements in a Pack.
+
+    Applicability and unattainability are resolved for every requirement first, and the
+    decision trace is read at most once — and not at all when nothing in the pack is
+    applicable, attainable and checkable here. That keeps "the unattainable analysis does not
+    run the system" a property of the code rather than of the order the requirements happen to
+    appear in.
+    """
     if system_scope is None:
         system_scope = getattr(sut, "system_scope", getattr(sut, "declared_scope", None))
 
@@ -478,8 +542,13 @@ def check_conformance(
         for req, is_unattainable, _ in eval_plan
     )
 
+    # When nothing needs the trace this stays empty and is never read: the only requirements
+    # left are out of scope, unattainable, or of a formalism no engine here checks.
     records = _read_trace(sut) if needs_trace else []
 
+    # `records` is a list by now, so evaluate_requirement never re-reads the trace; it
+    # re-derives the applicability and unattainable results itself, which is why there is no
+    # branch here.
     results = [
         evaluate_requirement(req, sut, records, system_scope=system_scope)
         for req in pack.requirements

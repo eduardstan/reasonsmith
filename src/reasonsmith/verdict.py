@@ -73,7 +73,13 @@ class Strength(Enum):
 
 
 class Verdict(Enum):
-    """Verdict on whether a requirement is satisfied."""
+    """Verdict on whether a requirement is satisfied.
+
+    NOT_APPLICABLE is a statement about the duty's reach, not about the system: the
+    requirement is limited to a regulatory class the system is not declared to be in, so it
+    was never checked. It is deliberately distinct from INCONCLUSIVE, which says a duty that
+    does reach the system was not resolved.
+    """
 
     SATISFIED = "satisfied"
     VIOLATED = "violated"
@@ -100,9 +106,19 @@ def combine_verdicts(verdicts: Iterable[Verdict | str]) -> Verdict:
     Rules:
       1. If any verdict is VIOLATED, the combined result is VIOLATED.
       2. Else if any verdict is INCONCLUSIVE, the combined result is INCONCLUSIVE.
-      3. Else if all verdicts are NOT_APPLICABLE, the combined result is NOT_APPLICABLE.
-      4. Else if all non-NOT_APPLICABLE verdicts are SATISFIED, the combined result is SATISFIED.
+      3. Else if every verdict is NOT_APPLICABLE, the combined result is NOT_APPLICABLE.
+      4. Else all remaining verdicts are SATISFIED or NOT_APPLICABLE, and the combined
+         result is SATISFIED.
       5. An empty collection returns INCONCLUSIVE.
+
+    Rule 3 stops one out-of-scope sub-property turning the whole into a claim that nothing
+    applies; rule 4 lets the sub-properties that *were* checked carry the verdict.
+
+    Rule 5 is deliberately *not* vacuous truth. Logically an empty conjunction is
+    true, but a conformance verdict is a claim about evidence, and having checked
+    nothing is not evidence that a requirement holds. Returning SATISFIED here
+    would let a run that evaluated no sub-property report as compliant, which is
+    the one failure mode this tool must never have.
     """
     v_list = [Verdict.parse(v) for v in verdicts]
     if not v_list:

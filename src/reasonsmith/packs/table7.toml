@@ -83,7 +83,10 @@ requires = [
     "feature_to_named_concept_mapping",
     "dpia_cross_reference",
 ]
-binding = false
+# The row's printed legal source cites Art. 22 and Rec. 71 together. Art. 22 is directly
+# applicable, so the row is binding; the Article/Recital split is drawn clause by clause in
+# packs/gdpr.toml.
+binding = true
 scope = ""
 
 [[requirement]]

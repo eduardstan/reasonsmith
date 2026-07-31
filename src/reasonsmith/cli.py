@@ -2,11 +2,17 @@
 
 Usage:
     python -m reasonsmith.cli check --system <decisions.jsonl> --pack <pack_name>
-        [--system-name <name>] [--json]
+        [--system-name <name>] [--system-scope <class>] [--json]
 
-Exit codes for `check`: 0 when no requirement is violated or unattainable, 2 when at least
-one is, 1 on a usage or input error. A requirement that was not evaluated is not a finding
-against the system, so it does not change the exit code.
+Exit codes for `check`: 2 when at least one requirement is VIOLATED, 0 otherwise, and 1 on a
+usage or input error.
+
+Only a violation is a breach, so only a violation is non-zero. Unattainable, not applicable
+and not evaluated are findings to read in the report, not verdicts against the system: an
+unattainable requirement says the system as built cannot discharge the duty on the evidence
+supplied, a not-applicable one says the duty is limited to a regulatory class this system was
+not declared to be in, and a not-evaluated one says no engine here checked it. None of the
+three is evidence the system failed a duty, so none of them fails the caller's build.
 """
 
 from __future__ import annotations
@@ -17,15 +23,21 @@ import sys
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import list_packs, load_pack
-from reasonsmith.verdict import Strength, Verdict
+from reasonsmith.verdict import Verdict
 
 
 def main(args: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="reasonsmith",
-        description=(
-            "Audit-grade compliance checking against formal regulation packs. "
-            "check exits 2 when a requirement is violated or unattainable, 0 otherwise."
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Audit-grade compliance checking against formal regulation packs.",
+        epilog=(
+            "exit codes for check:\n"
+            "  0  no requirement is violated. Unattainable, not applicable and not evaluated\n"
+            "     requirements are reported but are not breaches, so they exit 0 too — read\n"
+            "     the report for them.\n"
+            "  2  at least one requirement is violated.\n"
+            "  1  usage or input error (unknown pack, unreadable system log)."
         ),
     )
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")
@@ -52,7 +64,11 @@ def main(args: list[str] | None = None) -> int:
         "--system-scope",
         "--scope",
         default=None,
-        help="Declared regulatory classification/scope of the system (e.g. high-risk)",
+        help=(
+            "Declared regulatory classification of the system (e.g. high-risk). Requirements "
+            "limited to another class, or to any class when this is left undeclared, are "
+            "reported not applicable rather than assumed to apply"
+        ),
     )
     check_parser.add_argument(
         "--json",
@@ -84,12 +100,8 @@ def main(args: list[str] | None = None) -> int:
         else:
             print(report.render_text())
 
-        findings = [
-            r
-            for r in report.results
-            if r.verdict == Verdict.VIOLATED or r.strength == Strength.UNATTAINABLE
-        ]
-        return 2 if findings else 0
+        violations = [r for r in report.results if r.verdict == Verdict.VIOLATED]
+        return 2 if violations else 0
 
     parser.print_help()
     return 1

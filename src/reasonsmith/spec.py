@@ -21,6 +21,9 @@ PACKS_DIR = Path(__file__).parent / "packs"
 #: rejected at load time rather than producing a requirement that cannot be
 #: traced back to its source, and one that adds a field the loader does not read
 #: is rejected too rather than looking like it carries data nothing acts on.
+#: `binding` and `scope` are on this list on purpose, including for externally authored
+#: packs: an unclassified requirement has no safe default (see Requirement), so the loader
+#: refuses the pack by name rather than guessing which kind of duty it is.
 REQUIREMENT_FIELDS = (
     "id",
     "source_document",
@@ -41,9 +44,15 @@ class Requirement:
 
     `requires` names the signals a system must be capable of emitting for this
     requirement to be checkable at all.
-    `binding` indicates if this duty is a legally binding obligation (true) or
-    an interpretive recital/guidance item (false).
-    `scope` records any regulatory class limit (e.g. 'high-risk').
+    `binding` indicates whether this duty is a legally binding obligation (true) or an
+    interpretive recital/guidance item (false). `scope` records any regulatory class the duty
+    is limited to (e.g. 'high-risk'); empty means the duty is not class-limited.
+
+    Neither field has a default, here or in the loader: defaulting a missing `binding` to true
+    would silently promote an unclassified item to a legal obligation, and defaulting it to
+    false would silently demote a statutory duty out of the compliance headline. A pack that
+    has not classified a requirement is a pack that must say so and be fixed, not one this
+    code guesses for.
     """
 
     id: str
@@ -54,8 +63,8 @@ class Requirement:
     formalism: Literal["record", "temporal", "logical"]
     spec: str
     requires: tuple[str, ...]
-    binding: bool = True
-    scope: str = ""
+    binding: bool
+    scope: str
 
     def __post_init__(self) -> None:
         if not isinstance(self.binding, bool):
