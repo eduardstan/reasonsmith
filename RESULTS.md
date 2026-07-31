@@ -44,7 +44,7 @@ Every number in this file is copied from a command's real output. The exact comm
 
 ### Repin Note (2026-07-31)
 
-The measurements below were taken against `nesyarena` commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec`. `nesyarena`'s owner then rewrote its git history to strip AI co-authorship trailers, which gave every commit a new hash: that old commit is no longer reachable from `nesyarena`'s default branch `main`, so `pip install` can no longer resolve it from there and `pyproject.toml` now pins `57720fa212834689692e171882272140f1d1fed7` instead, which is reachable from `main`.
+The measurements below were taken against `nesyarena` commit `fdf0d5eb54c7af181e15b94d3b68d5d6bb7712ec`. `nesyarena`'s owner then rewrote its git history to strip AI co-authorship trailers, which gave every commit a new hash: that old commit is no longer reachable from `nesyarena`'s default branch `main`, so `pip install` can no longer resolve it from there and `pyproject.toml` was repinned to `57720fa212834689692e171882272140f1d1fed7` instead, which is reachable from `main`. (That git pin has since been replaced by the PyPI release — see the PyPI Release Note below for what `pyproject.toml` pins now.)
 
 (The old commit currently survives on the temporary rollback ref `refs/heads/backup/pre-coauthor-strip`, which is expected to be deleted; nothing here relies on it — reconstructibility stands on `main` alone.)
 

@@ -21,8 +21,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       # Same one command a stranger runs from a fresh clone (README, "Quick Start"):
-      # nesyarena is pinned to exact version 0.1.0 on PyPI in pyproject.toml, so this environment and a
-      # local one resolve to the same code. torch is deliberately not installed — see the README.
+      # nesyarena is pinned to exact version 0.1.0 on PyPI in pyproject.toml, so this environment
+      # and a local one resolve to the same code. torch is deliberately not installed — see README.
       - run: pip install -e ".[dev]"
       - run: ruff check .
       - run: pytest --cov=reasonsmith --cov-report=term-missing
