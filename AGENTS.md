@@ -68,6 +68,12 @@ committed page byte-for-byte to that script. Touching the renderer means regener
 `python docs/build_example.py`, the command the page names as its own provenance;
 `.github/workflows/pages.yml` publishes that committed file rather than rendering its own.
 
+`docs/semantics.md` states what each verdict means and what it does not, and every claim in it names
+the test that fails if the claim becomes false. `tests/test_docs_semantics.py` checks that mapping,
+so **renaming or deleting a test breaks the build if that test is named there** — update the
+document in the same commit. It is also where a claim the code cannot support belongs: report the
+gap in the document rather than describing a tool that does not exist.
+
 ## The front door
 
 Before editing the CLI, read the maintenance contracts in `src/reasonsmith/cli.py`'s module

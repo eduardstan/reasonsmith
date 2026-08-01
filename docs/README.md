@@ -6,6 +6,7 @@ Welcome to the documentation directory for `reasonsmith`.
 
 | File | Description |
 |---|---|
+| [`semantics.md`](semantics.md) | What a reasonsmith verdict means: the objects, the property language, one soundness paragraph per engine (`record`, `observed`, `probed`, `proved`) stating what follows and what does not, the strength lattice, and the limits. Every claim names the test that enforces it; `test_docs_semantics.py` holds the document to that map. |
 | [`legal-sources.md`](legal-sources.md) | Retrieval record and exact verbatim statutory text for EU AI Act (Art. 12 & 13), GDPR (Art. 22 & Recital 71), and ECOA / Regulation B (12 CFR 1002.9). Checked by automated tests. |
 | [`authoring-packs.md`](authoring-packs.md) | Authoring guide for requirement packs: the exact `[[requirement]]` field set, `binding`/`scope` semantics, the verbatim-and-traceable rule, and how to validate a pack with `validate-pack`. |
 | [`example-output.md`](example-output.md) | Execution transcripts, stdout pasted unedited, from running `python -m reasonsmith.demo` and `python -m reasonsmith.cli check`. Each block names the command that regenerates it. |

@@ -131,6 +131,31 @@ def test_no_counterexample_in_budget_is_probed_and_every_rendering_carries_the_b
     assert "50 input(s) replayed, seed 7" in html
 
 
+def test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass():
+    """`probed` quantifies over the replayed inputs that produced a decision, and counts the rest.
+
+    An input the system raises on yields no decision the property can be read over. Counting it
+    as a pass would let a system that refuses most of the search space look thoroughly probed, so
+    the budget carries how many inputs produced nothing.
+    """
+
+    class RefusingSUT(HonestSUT):
+        """Raises on any applicant under 25 rather than deciding."""
+
+        def decide(self, case):
+            if case.get("age", 0) < 25:
+                raise ValueError("age below the system's minimum")
+            return super().decide(case)
+
+    res = ProbedEngine.evaluate(_req(), RefusingSUT(), trials=60, seed=5)
+
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROBED
+    budget = res.details[PROBE_BUDGET_KEY]
+    # Some inputs produced no decision, and the count of them is on the result rather than lost.
+    assert 0 < budget["inputs_errored"] < budget["trials"]
+
+
 def test_a_counterexample_that_does_not_reproduce_is_not_evaluated():
     """A candidate that fails once and passes on replay is a defect in the search, not a breach."""
     res = ProbedEngine.evaluate(_req(spec="approved == True", requires=("approved",)), FlakySUT())

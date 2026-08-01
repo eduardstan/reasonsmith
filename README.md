@@ -78,6 +78,8 @@ LIMITS OF THIS REPORT
 
 `observed` is the weakest rung of the strength lattice that can still say a property held: it is read off the trace supplied and claims nothing about decisions outside it. The same log checked against the Table 7 pack still exits 0, because nothing there is a breach: the GDPR Art. 22 and ECOA rows come back observed, the two interpretive rows come back unattainable with their missing signals named, and the two EU AI Act rows come back not applicable against an undeclared regulatory scope — declaring it with `--system-scope high-risk` is what brings them into scope, and that is the run behind the live page above. See [`docs/example-output.md`](docs/example-output.md) for that run and for the full 905-line demo transcript, both stdout pasted unedited.
 
+What each verdict means — what follows from it, under which assumptions, and what it does not tell you — is stated one engine at a time in [`docs/semantics.md`](docs/semantics.md). Every soundness claim there names the test that fails if the claim becomes false.
+
 ## Quick Start
 
 Run the full verification suite and demonstration in one block:
