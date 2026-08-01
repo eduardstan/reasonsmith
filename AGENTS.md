@@ -75,15 +75,11 @@ real system rather than a demonstration fixture: `docs/build_nesyarena_report.py
 and ECOA packs, and `test_nesyarena_report_matches_the_builder` holds the committed file to it
 byte-for-byte. Anything that moves `render_text`'s wording, the nesyarena version or the builder's
 own constants means regenerating with `python docs/build_nesyarena_report.py`. Like
-`docs/index.html`, it names its build command and deliberately carries **no commit hash**: a hash
-embedded in an artifact cannot name the commit containing that artifact, because writing it
-changes the file and so the commit, and naming the preceding builder-bearing commit instead
-asserts something CI's shallow clone cannot check — that exact mistake shipped once and reddened
-all twelve legs. Reproducing the report from the committed builder is the stronger claim because
-it is checked rather than asserted; do not add a hash back. Its adapter declares only signals a provenance
-genuinely emits, so nine pack signals are deliberately undeclared and no regulatory class is
-declared; the resulting unattainable and not-applicable verdicts are the finding, not a gap to
-close.
+`docs/index.html`, it names its build command and deliberately carries no commit hash; reproducibility
+is owned by the byte-for-byte builder test, so do not add a hash back. Its adapter declares only
+signals a provenance genuinely emits, so nine pack signals are deliberately undeclared and no
+regulatory class is declared; the resulting unattainable and not-applicable verdicts are the
+finding, not a gap to close.
 `docs/findings-nesyarena.md` is the written account and is hand-maintained — every number in it
 comes from that report, so regenerating one means rereading the other.
 
