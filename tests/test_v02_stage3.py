@@ -79,6 +79,20 @@ def test_property_holds_for_all_inputs_proved():
     assert res.details["result"] == "unsat"
 
 
+def test_a_logical_boolean_constant_comparison_still_reaches_proved():
+    sut = RulesAdapter(
+        rules=["approved = True"],
+        variables={"approved": "bool"},
+    )
+    req = _logical_req(spec="approved == True", requires=("approved",))
+
+    res = evaluate_requirement(req, sut)
+
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+    assert res.details["result"] == "unsat"
+
+
 def test_property_fails_with_verified_counterexample():
     """A property that fails produces a verified counterexample reproduced on the SUT."""
     rules = [

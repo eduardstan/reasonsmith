@@ -142,10 +142,17 @@ it fits — widening it to accommodate one stubborn duty is how a property langu
 string again. No shipped duty needs one.
 
 Two other degenerate shapes are refused at this same shared parse boundary. A Boolean literal may
-be a comparison operand (`approved == True`) but may not stand alone as a Boolean atom, including
-under `always`, `not`, `and`, `or` or implication
+be a comparison operand in a non-temporal property (`approved == True`) but may not stand alone as a
+Boolean atom, including under `always`, `not`, `and`, `or` or implication
 (`test_the_loader_refuses_boolean_constants_as_atoms`,
-`test_a_boolean_constant_remains_valid_as_a_comparison_operand`). A signal may not occupy both a
+`test_a_boolean_constant_remains_valid_as_a_comparison_operand`). The temporal fragment also
+refuses `==` and `!=` comparisons against Boolean constants in either operand order, because rtamt
+cannot render their Boolean role without misreading them as measured magnitudes. The load error
+names the bare atom spelling to use instead, such as `always(approved)` or
+`always(not approved)`; a requirement constructed directly is not evaluated
+(`test_the_loader_refuses_temporal_boolean_constant_comparisons`,
+`test_a_direct_temporal_boolean_comparison_is_not_evaluated`,
+`test_a_bare_boolean_atom_is_monitored_for_true_and_false_traces`). A signal may not occupy both a
 bare Boolean role and a measured-magnitude role in one property; that contradictory role assignment
 is a load error, and a directly constructed requirement is not evaluated
 (`test_the_loader_refuses_conflicting_boolean_and_magnitude_roles`,
@@ -631,7 +638,8 @@ Two consequences of that report text, followed by a separate package-level termi
 | A formula rtamt cannot parse is not evaluated | `test_unexpressible_formula_reports_not_evaluated` |
 | Bare Boolean atoms use Boolean trace values, false has negative robustness, and unknown kinds are not evaluated | `test_a_false_bare_boolean_atom_is_violated`, `test_a_bare_boolean_atom_without_an_established_kind_is_not_evaluated` |
 | Presence and Boolean truth remain distinct for a recorded `False` value | `test_presence_and_bare_boolean_atoms_keep_distinct_false_semantics`, `test_temporal_presence_agrees_with_record_presence_for_falsy_values` |
-| Boolean literals are refused as atoms but remain valid comparison operands | `test_the_loader_refuses_boolean_constants_as_atoms`, `test_a_boolean_constant_remains_valid_as_a_comparison_operand` |
+| Boolean literals are refused as atoms but remain valid comparison operands in state properties | `test_the_loader_refuses_boolean_constants_as_atoms`, `test_a_boolean_constant_remains_valid_as_a_comparison_operand`, `test_a_logical_boolean_constant_comparison_still_reaches_proved` |
+| Temporal Boolean-constant comparisons are refused in favour of sound bare Boolean atoms | `test_the_loader_refuses_temporal_boolean_constant_comparisons`, `test_a_direct_temporal_boolean_comparison_is_not_evaluated`, `test_a_bare_boolean_atom_is_monitored_for_true_and_false_traces` |
 | A signal cannot occupy bare-Boolean and measured-magnitude roles in one property | `test_the_loader_refuses_conflicting_boolean_and_magnitude_roles`, `test_conflicting_boolean_and_magnitude_roles_are_not_evaluated` |
 | The formula selects flag versus magnitude treatment, and flag values follow the stated conversion | `test_non_finite_flag_counts_as_absent`, `test_temporal_satisfied`, `test_ecoa_thirty_day_notice_violated_by_a_late_notification`, `test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline`, `test_ecoa_accepted_counteroffer_keeps_the_thirty_day_deadline` |
 | A magnitude bound over an unmeasured signal is not evaluated, never scored | `test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent` |

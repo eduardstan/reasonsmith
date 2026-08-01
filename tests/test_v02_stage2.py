@@ -481,6 +481,58 @@ class TestObservedEngine:
         assert result.strength == Strength.OBSERVED
         assert result.details["violation_step_indices"] == [1]
 
+    def test_a_bare_boolean_atom_is_monitored_for_true_and_false_traces(self):
+        sut = BaseSUT({"approved"})
+        req = Requirement(
+            id="temp_bare_boolean",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="temporal",
+            spec="always(approved)",
+            rationale="Approval remains true.",
+            requires=("approved",),
+            binding=True,
+            scope="",
+        )
+
+        satisfied = ObservedEngine.evaluate(
+            req, sut, [{"approved": True}, {"approved": True}]
+        )
+        violated = ObservedEngine.evaluate(
+            req, sut, [{"approved": True}, {"approved": False}]
+        )
+
+        assert satisfied.verdict == Verdict.SATISFIED
+        assert satisfied.strength == Strength.OBSERVED
+        assert violated.verdict == Verdict.VIOLATED
+        assert violated.strength == Strength.OBSERVED
+
+    def test_a_direct_temporal_boolean_comparison_is_not_evaluated(self):
+        sut = BaseSUT({"approved"})
+        req = Requirement(
+            id="temp_boolean_comparison",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="temporal",
+            spec="always(approved == True)",
+            rationale="Approval remains true.",
+            requires=("approved",),
+            binding=True,
+            scope="",
+        )
+
+        result = ObservedEngine.evaluate(
+            req, sut, [{"approved": True}, {"approved": True}]
+        )
+
+        assert result.verdict == Verdict.INCONCLUSIVE
+        assert result.strength is None
+        assert "always(approved)" in result.details["error"]
+
     def test_a_bare_boolean_atom_without_an_established_kind_is_not_evaluated(
         self,
     ):

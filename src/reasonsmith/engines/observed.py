@@ -58,6 +58,7 @@ from reasonsmith.rulelang import (
     bare_boolean_names,
     is_present,
     parse_property,
+    validate_temporal_property,
 )
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
@@ -217,6 +218,7 @@ class ObservedEngine:
 
         try:
             property_node = parse_property(req.spec)
+            validate_temporal_property(property_node)
             boolean_atoms = set(bare_boolean_names(property_node))
         except UnsupportedConstructError as exc:
             return RequirementResult(

@@ -364,6 +364,40 @@ def validate_property(node: ast.AST) -> None:
         )
 
 
+def validate_temporal_property(node: ast.AST) -> None:
+    """Refuse valid state expressions that the temporal fragment cannot render soundly."""
+    for comparison in (item for item in ast.walk(node) if isinstance(item, ast.Compare)):
+        left = comparison.left
+        for operator, right in zip(
+            comparison.ops, comparison.comparators, strict=True
+        ):
+            boolean = None
+            operand = None
+            if isinstance(left, ast.Constant) and isinstance(left.value, bool):
+                boolean = left.value
+                operand = right
+            elif isinstance(right, ast.Constant) and isinstance(right.value, bool):
+                boolean = right.value
+                operand = left
+            if boolean is not None and isinstance(operator, (ast.Eq, ast.NotEq)):
+                rendered = ast.unparse(
+                    ast.Compare(left=left, ops=[operator], comparators=[right])
+                )
+                if isinstance(operand, ast.Name):
+                    positive = boolean == isinstance(operator, ast.Eq)
+                    atom = operand.id if positive else f"not {operand.id}"
+                    raise UnsupportedConstructError(
+                        f"Temporal comparison {rendered!r} against a Boolean constant is "
+                        f"unsupported; write the bare Boolean atom instead, for example "
+                        f"always({atom})"
+                    )
+                raise UnsupportedConstructError(
+                    f"Temporal comparison {rendered!r} against a Boolean constant is "
+                    "unsupported; write the Boolean expression directly as an atom"
+                )
+            left = right
+
+
 def presence_atoms(node: ast.AST) -> tuple[str, ...] | None:
     """The signal names of a property that is a conjunction of `present()` atoms, else None.
 
@@ -527,6 +561,7 @@ def classify_fragment(spec: str) -> str:
     """
     node = parse_property(spec)
     if has_temporal_operator(node):
+        validate_temporal_property(node)
         return "temporal"
     return "record" if presence_atoms(node) is not None else "logical"
 

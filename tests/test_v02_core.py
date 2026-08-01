@@ -1171,6 +1171,38 @@ def test_a_boolean_constant_remains_valid_as_a_comparison_operand(tmp_path):
     assert eval_expression(node, {"signal_a": False}) is False
 
 
+@pytest.mark.parametrize(
+    ("spec", "suggestion"),
+    [
+        pytest.param("always(signal_a == True)", "always(signal_a)", id="equal-true"),
+        pytest.param("always(True == signal_a)", "always(signal_a)", id="true-equal"),
+        pytest.param(
+            "always(signal_a != False)", "always(signal_a)", id="not-equal-false"
+        ),
+        pytest.param("always(False != signal_a)", "always(signal_a)", id="false-not-equal"),
+        pytest.param(
+            "always(signal_a == False)", "always(not signal_a)", id="equal-false"
+        ),
+        pytest.param(
+            "always(False == signal_a)", "always(not signal_a)", id="false-equal"
+        ),
+        pytest.param(
+            "always(signal_a != True)", "always(not signal_a)", id="not-equal-true"
+        ),
+        pytest.param(
+            "always(True != signal_a)", "always(not signal_a)", id="true-not-equal"
+        ),
+    ],
+)
+def test_the_loader_refuses_temporal_boolean_constant_comparisons(
+    tmp_path, spec, suggestion
+):
+    with pytest.raises(ValueError, match="Boolean constant") as exc_info:
+        load_pack(_spec_pack(tmp_path, "temporal", spec))
+
+    assert suggestion in str(exc_info.value)
+
+
 def test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment(tmp_path):
     """Labelling a formula with the wrong fragment is refused, naming the fragment it really is.
 
