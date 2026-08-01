@@ -81,19 +81,20 @@ If you encounter a bug or have a question:
 
 ### Pull-Request Titles and the Squash Merge
 
-reasonsmith **squash-merges** every merged pull request. GitHub collapses the branch's commits and writes the pull-request **title** onto `main` as the commit subject, appending `(#NN)` — the PR number. The individual commits inside the branch never appear in the history.
+reasonsmith normally **squash-merges** pull requests. On that path, GitHub collapses the branch's commits and writes the pull-request **title** onto `main` as the commit subject, appending `(#NN)` — the PR number. The individual branch commits do not appear in the history.
+
+PR #32 is the deliberate exception: it was merged with a merge commit to preserve an outside contributor's authorship after a squash had erased it. If keeping your individual commits in the history matters to you, ask for that in the pull-request description.
 
 That is where the convention is strict, and only there:
 
-- **The title becomes the history**, so it must follow the conventional-commits form below. Reviewers read titles as the permanent record; expect a non-conforming title to be asked to change. There is no automated check that fails your build over a message — the convention is guidance, applied in review.
-- **Branch commits are collapsed on merge**, so keep them tidy and reasonably atomic while you work, but you will not be sent back to rewrite them.
-- **Preserving authorship:** once, a contributor's commits were deliberately re-landed as a merge so their authorship survived the squash (see the `revert:` entry below). If keeping your individual commits in the history matters to you, say so in the pull-request description.
+- **The title becomes the history on the normal squash path**, so it must follow the conventional-commits form below. Reviewers read titles as the permanent record; expect a non-conforming title to be asked to change. There is no automated check that fails your build over a message — the convention is guidance, applied in review.
+- **Branch commits are normally collapsed on merge**, so keep them tidy and reasonably atomic while you work, but you will not be sent back to rewrite them.
 
 ### Commit and Pull-Request Title Form
 
 Titles follow **Conventional Commits**: `<type>(<scope>): <summary>`.
 
-- `type` is the change's kind — one of `feat`, `fix`, `docs`, `chore`, `build`, `revert`, the set this repository actually uses.
+- `type` is the change's kind. Types already present on `main` are `feat`, `fix`, `docs`, `build`, and `revert`; use one when it fits. Other Conventional Commit types are welcome, and on the normal squash path the pull-request title is likewise what lands in history.
 - `scope` is optional and names the part of the codebase the change touches (`engines`, `cli`, `packs`, `report`, `drift`, `reasonsmith`, …). When in doubt, omit it.
 - `summary` is short, imperative, lowercase, and has no trailing period: *add*, *fix*, *document* — not *added* or *Adding*.
 
@@ -104,7 +105,6 @@ One real example of each type, as each reads on `main` today (GitHub appends the
 | `feat` — a new capability | `feat(engines): add active probing for opaque decision systems` | #37 |
 | `fix` — a bug corrected | `fix: depend on nesyarena==0.1.0 from PyPI instead of a git commit pin` | #26 |
 | `docs` — documentation only | `docs: define verifiable verdict semantics` | #38 |
-| `chore` — maintenance, no behaviour change | `chore: repin nesyarena to survive its rewritten history` | — |
 | `build` — packaging, dependencies, CI | `build(reasonsmith): pin nesyarena by commit and run the same install path in CI` | #2 |
 | `revert` — undoes an earlier change | `revert: undo the squash merge of #30 so the contributor commits can land with their authorship` | #31 |
 
