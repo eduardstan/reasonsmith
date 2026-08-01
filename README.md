@@ -114,7 +114,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 | `src/reasonsmith/demo.py` | End-to-end demonstration of all six Table 7 duties (EU AI Act Art. 13 and Art. 12, GDPR Art. 22 clinical, ECOA/Reg B credit, FDA GMLP SaMD, NIST AI RMF continuous monitoring) |
 | `src/reasonsmith/verdict.py` | Core lattice: evidence strength lattice (`unattainable < observed < probed < proved`) and verdict vocabulary |
 | `src/reasonsmith/spec.py` | Core requirement loader & specification structures from `packs/*.toml` |
-| `src/reasonsmith/sut.py` | System-under-test protocol — declared capability set and decision trace interface |
+| `src/reasonsmith/sut.py` | System-under-test protocol — declared capabilities, decision trace, optional replay hook, and exposed logic |
 | `src/reasonsmith/report.py` | Conformance report skeleton, headline builder, static unattainable analysis, and the text/JSON/self-contained-HTML renderers |
 | `src/reasonsmith/rulelang.py` | The whitelisted mini-language rule and specification text is parsed and executed in, shared by the rule adapter and the proved engine |
 | `src/reasonsmith/adapters/` | SUT protocol adapters for JSONL decision logs, Python callables, and rule-based systems that expose their decision logic |

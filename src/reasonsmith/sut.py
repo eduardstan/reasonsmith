@@ -1,7 +1,8 @@
 """System Under Test (SUT) protocol and reference implementations for reasonsmith v0.2.
 
 What this module is for:
-  Defines the `SystemUnderTest` protocol interface (`capabilities()`, `decisions()`, `logic()`) and
+  Defines the required `SystemUnderTest` protocol interface (`capabilities()`, `decisions()`,
+  `logic()`), the optional `decide(case)` replay hook used for active probing, and
   `CAPABILITY_TAXONOMY` categories for black-box models, rule engines, and log traces.
 
 What a reader must not break:
@@ -81,7 +82,12 @@ def _validate_capability_collection(declared: Any, subject: str) -> None:
 
 @runtime_checkable
 class SystemUnderTest(Protocol):
-    """Protocol for a system under test in reasonsmith."""
+    """Required protocol for a system under test in reasonsmith.
+
+    An adapter may additionally expose ``decide(case)``. It stays outside this protocol because
+    replay is optional: logical requirements use it for active probing only when no exposed
+    ``logic()`` is available.
+    """
 
     def capabilities(self) -> set[str]:
         """Return the signal names this adapter supplies for unattainability analysis."""

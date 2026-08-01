@@ -24,8 +24,8 @@ What this module is for:
     packs/          Table 7, EU AI Act, GDPR, and ECOA / Regulation B requirements
 
 What a reader must not break:
-  - Every rung of the lattice has an engine here, and a requirement no engine can evaluate is
-    reported as not evaluated rather than judged by a weaker check.
+  - Every rung of the lattice is reachable through evaluation here, and a requirement no engine
+    can evaluate is reported as not evaluated rather than judged by a weaker check.
     Why this matters: Claiming a higher strength without an engine would launder unverified claims.
   - `probed` never rounds up to `proved`: `engines/probed.py` searches a bounded set of replayed
     inputs, and no counterexample within that budget is not a proof. The budget travels with the
