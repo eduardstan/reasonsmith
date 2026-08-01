@@ -64,14 +64,38 @@ TRACE_ONLY_SIGNALS = [
 
 
 class TestConsoleEntryPoint:
-    def test_pyproject_declares_the_reasonsmith_console_script(self):
+    def test_pyproject_declares_the_reasonsmith_console_script(self, capsys):
         data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
         assert data["project"]["scripts"]["reasonsmith"] == "reasonsmith.cli:main"
 
-    def test_cli_main_returns_an_exit_code_with_no_command(self, capsys):
         assert cli_main([]) == 1
-        captured = capsys.readouterr()
-        assert "usage" in captured.out.lower()
+        assert "usage" in capsys.readouterr().out.lower()
+
+    def test_html_provenance_distinguishes_console_and_module_invocations(
+        self, jsonl_fixture_file: Path, monkeypatch, tmp_path: Path
+    ):
+        module_report = tmp_path / "module.html"
+        command_args = [
+            "check",
+            "--system",
+            str(jsonl_fixture_file),
+            "--pack",
+            "ecoa",
+            "--html",
+            str(module_report),
+        ]
+        assert cli_main(command_args) == 0
+        assert "Command: <code>python -m reasonsmith.cli check" in module_report.read_text(
+            encoding="utf-8"
+        )
+
+        console_report = tmp_path / "console.html"
+        command_args[-1] = str(console_report)
+        monkeypatch.setattr("sys.argv", ["reasonsmith", *command_args])
+        assert cli_main() == 0
+        console_html = console_report.read_text(encoding="utf-8")
+        assert "Command: <code>reasonsmith check" in console_html
+        assert "python -m reasonsmith.cli" not in console_html
 
 
 class TestCapabilityDeclaration:
@@ -237,6 +261,21 @@ class TestCapabilityDeclaration:
         assert rc == 1
         captured = capsys.readouterr()
         assert "capability declaration" in captured.err
+
+        rc = cli_main(
+            [
+                "check",
+                "--system",
+                str(jsonl_fixture_file),
+                "--pack",
+                "ecoa",
+                "--capabilities",
+                "",
+            ]
+        )
+        assert rc == 1
+        captured = capsys.readouterr()
+        assert "capability declaration ''" in captured.err
 
 
 class TestValidatePack:

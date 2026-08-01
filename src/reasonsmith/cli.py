@@ -207,7 +207,7 @@ def main(args: list[str] | None = None) -> int:
             return 1
 
         declared_capabilities = None
-        if parsed.capabilities:
+        if parsed.capabilities is not None:
             try:
                 declared_capabilities = read_capability_declaration(parsed.capabilities)
             except ValueError as exc:
@@ -235,7 +235,11 @@ def main(args: list[str] | None = None) -> int:
 
         if parsed.html:
             cmd_args = args if args is not None else sys.argv[1:]
-            cmd_str = f"python -m reasonsmith.cli {shlex.join(cmd_args)}"
+            if args is not None or __name__ == "__main__":
+                command = ["python", "-m", "reasonsmith.cli", *cmd_args]
+            else:
+                command = [sys.argv[0], *cmd_args]
+            cmd_str = shlex.join(command)
             html_content = report.render_html(command=cmd_str)
             if parsed.html == "-":
                 if parsed.json:
