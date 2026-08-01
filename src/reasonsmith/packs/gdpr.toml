@@ -84,3 +84,19 @@ requires = [
 ]
 binding = false
 scope = ""
+
+[[requirement]]
+id = "gdpr_recital71_error_risk_minimised"
+source_document = "GDPR (Regulation (EU) 2016/679)"
+article_clause = "Recital 71"
+verbatim_text = "In order to ensure fair and transparent processing in respect of the data subject, taking into account the specific circumstances and context in which the personal data are processed, the controller should use appropriate mathematical or statistical procedures for the profiling, implement technical and organisational measures appropriate to ensure, in particular, that factors which result in inaccuracies in personal data are corrected and the risk of errors is minimised, secure personal data in a manner that takes account of the potential risks involved for the interests and rights of the data subject and that prevents, inter alia, discriminatory effects on natural persons on the basis of racial or ethnic origin, political opinion, religion or beliefs, trade union membership, genetic or health status or sexual orientation, or that result in measures having such an effect."
+stakeholder = "affected individual"
+formalism = "temporal"
+spec = "always(scope_statements_declared_deviation <= artifact_logs_decision_margin)"
+requires = [
+    "scope_statements_declared_deviation",
+    "scope_statements_approximation_vs_guarantee",
+    "artifact_logs_decision_margin",
+]
+binding = false
+scope = ""

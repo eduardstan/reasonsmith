@@ -129,6 +129,7 @@ UNDECLARED_SIGNALS = (
 #: Every signal the adapter declares. Each one has a value computed from the system's own run.
 DECLARED_SIGNALS = (
     "artifact_logs_decision_record",
+    "artifact_logs_decision_margin",
     "artifact_logs_event_log",
     "artifact_logs_reason_explanation",
     "provenance_model_version",
@@ -136,6 +137,7 @@ DECLARED_SIGNALS = (
     "scope_statements_local_vs_global",
     "scope_statements_explanation_scope",
     "scope_statements_approximation_vs_guarantee",
+    "scope_statements_declared_deviation",
 )
 
 PACKS = ("gdpr", "eu_ai_act", "ecoa")
@@ -233,6 +235,7 @@ class NesyArenaSUT(BaseSUT):
                         f"value={_fmt(row['value'])} threshold={APPROVE_THRESHOLD} "
                         f"decision={decision}"
                     ),
+                    "artifact_logs_decision_margin": abs(row["value"] - APPROVE_THRESHOLD),
                     "artifact_logs_event_log": (
                         f"seq={seq} instance={row['label']} family={inst.params['family']} "
                         f"depth={inst.params['depth']} proofs={len(row['proofs'])} "
@@ -253,6 +256,7 @@ class NesyArenaSUT(BaseSUT):
                         f"{inst.params['depth']} and no proof beyond that depth"
                     ),
                     "scope_statements_approximation_vs_guarantee": guarantee,
+                    "scope_statements_declared_deviation": deviation,
                 }
             )
         return records
@@ -361,9 +365,10 @@ def render() -> str:
     for sut in systems:
         labels = [label for label, _ in sut.instances]
         for pack_name in PACKS:
+            pack = load_pack(pack_name)
             report = check_conformance(
                 sut,
-                load_pack(pack_name),
+                pack,
                 system_name=f"nesyarena:{sut.name}",
                 system_scope=None,
             )
@@ -382,10 +387,17 @@ def render() -> str:
                 if not indices:
                     continue
                 absent = result.details.get("signals_absent_from_trace", ())
+                # A record duty names the fields the decisions do not carry; a temporal duty
+                # names the property they breach, because every field it reads is present and
+                # it is the value that fails.
+                breach = (
+                    f"carry no {', '.join(absent)}"
+                    if absent
+                    else f"breach `{pack.get_requirement(result.requirement_id).spec}`"
+                )
                 counterexamples.append(
                     f"- `{sut.name}` / `{pack_name}` / `{result.requirement_id}`: "
-                    f"{len(indices)} of {result.details['records_observed']} decisions carry no "
-                    f"{', '.join(absent)} — instances "
+                    f"{len(indices)} of {len(labels)} decisions {breach} — instances "
                     f"{', '.join(labels[i] for i in indices)} (record index "
                     f"{', '.join(str(i) for i in indices)})"
                 )

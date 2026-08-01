@@ -872,21 +872,24 @@ def test_interpretive_requirements_excluded_from_binding_counts_and_recital71():
 
     sut = FullGDPRSUT()
     report = check_conformance(sut, gdpr_pack)
-    assert report.counts["total"] == 4
+    assert report.counts["total"] == 5
     assert report.counts["binding_total"] == 3
     assert report.counts["observed"] == 2
     # The third binding duty is the Article 22 proof duty, and this system exposes no logic()
     # to prove anything about: not evaluated, and never folded into the observed tally.
     assert report.counts["not_evaluated"] == 1
-    assert report.counts["interpretive_total"] == 1
+    assert report.counts["interpretive_total"] == 2
     assert report.counts["interpretive_observed"] == 1
+    # The second recital duty reads a declared deviation over a trace, and one decision is not a
+    # trace a discrete-time monitor can read a sampling period off: not evaluated, never satisfied.
+    assert report.counts["interpretive_not_evaluated"] == 1
     # The recital is satisfied on the trace too, but it never joins the binding tally: the
     # headline says how many statutory duties held, not how many statements of any kind did.
     assert report.counts["observed"] == sum(
         1 for r in report.results if r.binding and r.verdict == Verdict.SATISFIED
     )
     assert "3 binding: 2 observed, 1 not evaluated" in report.headline
-    assert "1 interpretive: 1 observed" in report.headline
+    assert "2 interpretive: 1 observed, 1 not evaluated" in report.headline
 
 
 def test_ai_act_pack_high_risk_declaration_outcomes():
