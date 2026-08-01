@@ -17,6 +17,7 @@ Welcome to the documentation directory for `reasonsmith`.
 
 ## Related Project Artifacts
 
+- **Live site:** the landing page at [reasonsmith.dev](https://reasonsmith.dev) and the self-contained conformance dossier at [reasonsmith.dev/report.html](https://reasonsmith.dev/report.html).
 - [`README.md`](../README.md): Project overview, key findings, quick start, and module index.
 - [`RESULTS.md`](../RESULTS.md): Full empirical measurement suite, test counts, torch environment details, and execution provenance.
 - [`CONTRIBUTING.md`](../CONTRIBUTING.md): Contributor on-ramp, roadmap, coding rules, and concrete open work.

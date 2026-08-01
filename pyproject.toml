@@ -45,6 +45,7 @@ reasonsmith = "reasonsmith.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/eduardstan/reasonsmith"
+Documentation = "https://reasonsmith.dev"
 Repository = "https://github.com/eduardstan/reasonsmith"
 Issues = "https://github.com/eduardstan/reasonsmith/issues"
 

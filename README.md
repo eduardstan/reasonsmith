@@ -4,12 +4,30 @@
 [![Python >= 3.11](https://img.shields.io/badge/python->=3.11-blue.svg)](https://www.python.org/)
 [![MIT licence](https://img.shields.io/github/license/eduardstan/reasonsmith)](https://github.com/eduardstan/reasonsmith/blob/main/LICENSE)
 
-[![Reasonsmith Conformance & Reason-Deletion Visual Report Screenshot](docs/report-preview.png)](https://eduardstan.github.io/reasonsmith/)
+[![Reasonsmith Conformance & Reason-Deletion Visual Report Screenshot](docs/report-preview.png)](https://reasonsmith.dev/)
 
 > [!TIP]
-> **Live Interactive Report:** View the self-contained HTML conformance report live on GitHub Pages: [**eduardstan.github.io/reasonsmith**](https://eduardstan.github.io/reasonsmith/).
+> **Live on the web:** the landing page is at [**reasonsmith.dev**](https://reasonsmith.dev) and the self-contained conformance dossier at [**reasonsmith.dev/report.html**](https://reasonsmith.dev/report.html).
 
-`reasonsmith` turns legal reason-giving duties into machine-checkable evidence records and reason-deletion certificates. Given a decision, the symbolic artifact behind it, and an applicable regulatory duty, it evaluates structural record completeness and attributes dropped reasons by comparing actual engine behavior against ground-truth exact inference.
+## What question does reasonsmith answer?
+
+When a system makes a decision about a person, a regulatory duty often requires the reasons behind it to be recorded — and, on request, given to that person. reasonsmith answers two concrete questions about such a decision:
+
+1. **Is the evidence record complete?** Does it carry every field the duty's formal specification requires?
+2. **Did the explanation engine keep the reasons it was supposed to give?** Or did it drop some on the way out?
+
+Given a decision, the symbolic artifact behind it, and an applicable regulatory duty, reasonsmith evaluates the record's structural completeness, compares actual engine behavior against ground-truth exact inference, and issues reason-deletion certificates that show which legally-owed reasons a system deleted.
+
+## What a verdict is worth
+
+Every verdict carries the strength of the evidence behind it, on one lattice:
+
+- `unattainable` — the system as built cannot emit a signal a duty needs; the missing signals are named. Computed from declared or trace-derived capabilities without running the system.
+- `observed` — read off the decision trace supplied; it claims nothing about decisions outside it.
+- `probed` — a bounded search, never a proof: the engine perturbs the decisions the system has already made, replays each generated input through the system itself, and reports a counterexample within its budget, naming exactly what was searched.
+- `proved` — a solver result: the decision logic the system exposes is checked over every input the declared constraints admit, and a counterexample is executed before it is reported as a violation.
+
+Combining zero verdicts is `inconclusive`, never vacuously `satisfied`. A requirement no engine here can evaluate is reported with no strength, rather than judged by a weaker check. What each verdict means — and does not mean — is stated one engine at a time in [`docs/semantics.md`](docs/semantics.md); every soundness claim there names the test that fails if the claim becomes false.
 
 ## Key Finding: Form Completeness Does Not Imply Reason Fidelity
 
@@ -51,7 +69,7 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
 `reasonsmith` also checks decision logs against formal regulation packs, producing reports whose verdicts carry the strength of the evidence behind them. Run against the committed sample log:
 
 ```sh
-python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline
+reasonsmith check --system docs/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline
 ```
 
 ```text
@@ -76,21 +94,21 @@ LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
 ```
 
-`observed` is the weakest rung of the strength lattice that can still say a property held: it is read off the trace supplied and claims nothing about decisions outside it. The same log checked against the Table 7 pack still exits 0, because nothing there is a breach: the GDPR Art. 22 and ECOA rows come back observed, the two interpretive rows come back unattainable with their missing signals named, and the two EU AI Act rows come back not applicable against an undeclared regulatory scope — declaring it with `--system-scope high-risk` is what brings them into scope, and that is the run behind the live page above. See [`docs/example-output.md`](docs/example-output.md) for that run and for the full 905-line demo transcript, both stdout pasted unedited.
-
-What each verdict means — what follows from it, under which assumptions, and what it does not tell you — is stated one engine at a time in [`docs/semantics.md`](docs/semantics.md). Every soundness claim there names the test that fails if the claim becomes false.
+`observed` is the weakest rung of the strength lattice that can still say a property held: it is read off the trace supplied and claims nothing about decisions outside it. The same log checked against the Table 7 pack still exits 0, because nothing there is a breach: the GDPR Art. 22 and ECOA rows come back observed, the two interpretive rows come back unattainable with their missing signals named, and the two EU AI Act rows come back not applicable against an undeclared regulatory scope — declaring it with `--system-scope high-risk` is what brings them into scope, and that is the run behind the dossier at [reasonsmith.dev/report.html](https://reasonsmith.dev/report.html). See [`docs/example-output.md`](docs/example-output.md) for that run and for the full 905-line demo transcript, both stdout pasted unedited.
 
 ## Quick Start
 
-Run the full verification suite and demonstration in one block:
+The install is from source today; the console command it puts on your PATH is `reasonsmith`, with `python -m reasonsmith.cli` staying available. Run the full verification suite and demonstration in one block:
 
 ```sh
+git clone https://github.com/eduardstan/reasonsmith.git
+cd reasonsmith
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ruff check .
 pytest
 python -m reasonsmith.demo
-python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa
+reasonsmith check --system docs/sample_decisions.jsonl --pack ecoa
 ```
 
 Every command runs from a fresh clone in that order; `docs/sample_decisions.jsonl` is a committed three-record decision trace, so the last line needs no data of your own. `check` exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise — the `ecoa` run above exits 0.
@@ -131,7 +149,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 - **The Emitter (`evidence.py`):** `emit(duty_id, decision_id, fields)` returns a record that is either `COMPLETE` or `INCOMPLETE`. An `INCOMPLETE` record explicitly names the fields it lacks. Nothing is defaulted, inferred, or silently dropped. Keys outside the duty's Table 7 row are rejected, and non-Table 7 data is isolated in `attachments`.
 - **The Reason-Deletion Certificate (`certificate.py`):** Compares the reasons an engine actually used against exact inference ground truth (enumerated via WMC in `nesyarena`). Using deletion probes, it tests whether disabling isolated facts changes engine output. Two independent checks must pass: the deletion probe (every reason live) and the value check against the exact oracle. Reasons that cannot be probed in isolation are reported as uncertified (`INCONCLUSIVE`).
 - **The Conformance Core (`verdict.py`, `report.py`):** A verdict carries the strength of the evidence behind it: `unattainable < observed < probed < proved`. `unattainable` is a set difference over SUT capabilities computed without running the system: a system that cannot emit reasons is reported unattainable on the requirements needing them, with the missing signals named. `observed` evaluates passive decision traces. `probed` actively replays perturbed inputs. `proved` is a solver result. A requirement no engine here can evaluate is reported as not evaluated — no strength and no verdict — rather than judged by a weaker check. Combining zero verdicts is `inconclusive`, never vacuously `satisfied`. Engines exist for three formalisms: `record` (completeness over a decision trace), `temporal` (rtamt monitors), and `logical` (Z3 when the system exposes its logic, replay probing when it exposes only `decide()`).
-- **The Proved Engine (`engines/proved.py`):** `logical` requirements are discharged by Z3 against the decision logic a system exposes through `sut.logic()` — its variables, its rules, and the constraints its inputs are known to obey. Rules are encoded in static single assignment form, so a rule that reassigns a name means what it means when executed. Three things are refused rather than reported: logic or a property using a construct the encoding does not model, a solver result of `unknown` or a timeout, and premises no input can satisfy — an over-constrained model makes `unsat` prove every property alike, so it counts as no evidence, not as proof. When the solver finds a counterexample, that input is executed before anything is reported: `VIOLATED` at strength `proved` is only claimed once the violation reproduces, and the evidence summary names what it reproduced against, since a system exposing only `logic()` can be replayed only through its declared logic and not through itself.
+- **The Proved Engine (`engines/proved.py`):** `logical` requirements are discharged by Z3 against the decision logic a system exposes through `sut.logic()` — its variables, its rules, and the constraints its inputs are known to obey. Rules are encoded in static single assignment form, so a rule that reassigns a name means what it means when executed. Three things are refused rather than reported: logic or a property using a construct the encoding does not model, a solver result of `unknown` or a timeout, and premises no input can satisfy — an over-constrained model makes `unsat` prove every property alike, so it counts as no evidence, not as proof. When the solver finds a counterexample, that input is executed before anything is reported: `VIOLATED` at strength `proved` is only claimed once the violation reproduces, and the evidence summary names what it reproduced against, since a system exposing only `logic()` can be replayed only through its declared logic and not through itself. The GDPR pack ships the first `logical` requirement proved against real statute: `gdpr_art22_1_no_prohibited_decision_for_any_input` asks Z3 whether the exposed rules admit any input on which a decision is solely automated and significantly affecting while no Article 22(2) basis applies and the Article 22(3) route to human intervention is closed. That duty is universal, so a record check over a supplied trace cannot express it; a `proved` verdict here is a statement about the exposed rules over every input the declared constraints admit, and the pack's description says so in full — it is not a determination that the controller has discharged Article 22.
 - **The Probed Engine (`engines/probed.py`):** The rung for a system whose decision logic cannot be inspected. A `logical` requirement against a system that exposes `decide()` but no `logic()` is searched rather than proved: the engine takes the decisions the system has already made, perturbs their fields — over the values the trace shows, the property's own numeric thresholds and their neighbours — and replays each generated input through the system itself. A counterexample is replayed a second time before it is reported, and one that does not reproduce is a defect in the search, so it is reported not evaluated rather than as a violation. No counterexample within the budget is `probed`, never `proved`: the verdict carries what was searched — how many inputs were replayed, the strategy, the seed, and the fields the search could vary — and `RequirementResult` refuses to be constructed without it, so no rendering can drop it. The same seed replays the same inputs in the same order, so a reported budget can be re-derived. Defaults are 200 replayed inputs at seed 0, both configurable.
 - **Binding vs interpretive duties and regulatory scope:** Each requirement records whether it is a legally binding duty or an interpretive recital/guidance item, and any regulatory class it is limited to. The headline names both halves — `6 requirements · 4 binding: 2 observed, 2 unattainable · 2 interpretive: 2 observed` — so an interpretive item is reported without being counted as compliance evidence. A class-limited requirement is checked only against a system declared to be in that class via `--system-scope`; the class is never inferred, so an undeclared system has those requirements reported not applicable. Classes come from one fixed vocabulary — `prohibited`, `high-risk`, `limited-risk`, `minimal-risk`, `general-purpose` — which both a pack's `scope` and a declared `--system-scope` are checked against, after trimming whitespace and lowercasing and with nothing else guessed. A value outside it is a usage error naming what would have been accepted, so a misspelling on either side cannot become a duty that quietly never matches. A class the vocabulary knows but the chosen pack does not target is not an error: those duties are reported not applicable as a declared mismatch.
 - **The CLI (`cli.py`):** Four packs ship — Table 7, EU AI Act, GDPR, ECOA/Reg B — and the CLI runs one against a JSONL decision log. It is installed as the `reasonsmith` command (`pip install -e ".[dev]"`) and stays runnable as `python -m reasonsmith.cli`:
