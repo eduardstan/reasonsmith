@@ -230,6 +230,39 @@ monitor cannot read a sampling period off one sample
 (`test_unexpressible_formula_reports_not_evaluated`); or any record carries no finite real number for
 a variable the formula treats as a magnitude (`test_quantitative_bound_needs_a_measurement`).
 
+### The one shipped duty that reads a value — `gdpr_recital71_error_risk_minimised`
+
+Every other shipped requirement asks whether a field is *present*. This one reads the number a
+system declares about its own approximation and reaches its verdict from that number. It is
+interpretive (`binding = false`): GDPR Recital 71 asks that "the risk of errors is minimised", and a
+recital creates no obligation of its own. It runs on the observed engine, so everything said about
+`observed` above applies unchanged; what follows is what this duty adds.
+
+> **If it reports `satisfied` at strength `observed`, then:** in every record of the supplied trace,
+> the deviation the system declared for that decision (`scope_statements_declared_deviation`) was no
+> larger than the margin it declared between that decision and its own threshold
+> (`artifact_logs_decision_margin`) — so by the system's own numbers, no declared error was large
+> enough to have moved a decision in that trace
+> (`test_a_declared_deviation_below_the_decision_margin_is_satisfied`).
+
+*What it does not tell you.* Nothing about whether the system computes what it claims to compute.
+The deviation is a self-declaration and no engine here verifies it: a system that under-reports its
+own error is not detected, and a system honest enough to report a large one is the only kind this
+duty can flag. Nothing about decisions outside the trace. And nothing about the law — the bound is
+the system's own decision margin, not a figure Recital 71 states, and no number in this duty comes
+from the regulation (`test_the_deviation_duty_is_interpretive_and_not_class_limited`).
+
+> **If it reports `violated` at strength `observed`, then:** at least one record declared a deviation
+> larger than that decision's own margin, and the result names the step. On the system's own numbers
+> that decision could have gone the other way had the system computed what it claims
+> (`test_a_declared_deviation_that_could_have_moved_a_decision_is_violated`).
+
+Silence is not compliance. A system that declares no deviation is `unattainable` on that signal, and
+one whose record carries anything but a finite number where the deviation belongs is not evaluated
+(§2, magnitudes). Neither is ever satisfied
+(`test_an_undeclared_deviation_is_unattainable_never_satisfied`,
+`test_an_unparseable_deviation_is_not_evaluated_never_satisfied`).
+
 ### `probed` — `engines/probed.py`
 
 This is the rung for a system that exposes `decide()` but no `logic()`: there is nothing to reason
@@ -448,6 +481,10 @@ Two consequences of that report text, followed by a separate package-level termi
 | A formula rtamt cannot parse is not evaluated | `test_unexpressible_formula_reports_not_evaluated` |
 | The formula selects flag versus magnitude treatment, and flag values follow the stated conversion | `test_non_finite_flag_counts_as_absent`, `test_temporal_satisfied`, `test_ecoa_thirty_day_notice_violated_by_a_late_notification`, `test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline` |
 | A magnitude bound over an unmeasured signal is not evaluated, never scored | `test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent` |
+| The Recital 71 error duty is satisfied only when every declared deviation is no larger than that decision's own margin | `test_a_declared_deviation_below_the_decision_margin_is_satisfied` |
+| A declared deviation larger than that margin violates it, naming the decision | `test_a_declared_deviation_that_could_have_moved_a_decision_is_violated` |
+| An undeclared or unmeasured deviation is unattainable or not evaluated, never satisfied | `test_an_undeclared_deviation_is_unattainable_never_satisfied`, `test_an_unparseable_deviation_is_not_evaluated_never_satisfied` |
+| The duty that reads a deviation is interpretive and not class-limited | `test_the_deviation_duty_is_interpretive_and_not_class_limited` |
 | `probed satisfied` ⇒ no counterexample among the replayed inputs, and every rendering carries the budget | `test_no_counterexample_in_budget_is_probed_and_every_rendering_carries_the_budget` |
 | A probed result cannot exist without its budget | `test_a_probed_result_cannot_be_constructed_without_its_budget` |
 | The probe plan is re-derivable from its seed | `test_the_same_seed_searches_the_same_space` |

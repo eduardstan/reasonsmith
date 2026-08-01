@@ -84,6 +84,7 @@
 - **Direct EU Cellar XHTML Endpoint (consolidated articles):** `http://publications.europa.eu/resource/cellar/5f2552c2-cc45-11e6-ad7c-01aa75ed71a1.0022.03/DOC_1`
 - **Consolidation / Version Date:** 4 May 2016 (Corrigenda published 2016, 2018, 2021)
 - **Retrieval Date & Time:** 2026-07-31 09:52:25 UTC+2
+- **Re-verification (second paragraph of Recital 71, quoted by `gdpr_recital71_error_risk_minimised`):** 2026-08-01 17:37 UTC. `python -m reasonsmith.drift` fetched the endpoints above and reported `match` for all 12 pack quotations, that requirement included — the quotation is the official text as published, not a paraphrase of it.
 - **Legal Hierarchy Distinction Note:**
   > [!IMPORTANT]
   > **Binding Nature vs. Recital Distinction:**

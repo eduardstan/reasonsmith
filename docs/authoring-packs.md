@@ -84,6 +84,17 @@ would silently demote a statutory duty out of the compliance headline. Defaultin
 `scope` to `""` would leave an unclassified duty reachable for every system. A pack that has not
 classified a requirement is a pack that must say so and be fixed, not one the code guesses for.
 
+## A number in a `spec` is a parameter of the check, never a fact about the law
+
+A `temporal` or `logical` spec can bound a measured quantity, and a statute rarely states the bound.
+Where the clause names one — the 30 and 90 days of 12 CFR 1002.9(a)(1) — the quotation carries it and
+the spec repeats it. Where it does not, the threshold is the pack author's, and writing one into a
+requirement quoting a statute presents an invented figure as the regulation's. Prefer a bound the
+record itself supplies: `gdpr_recital71_error_risk_minimised` compares a declared deviation against
+the decision's own margin (`always(scope_statements_declared_deviation <=
+artifact_logs_decision_margin)`), so the duty needs no invented number at all. If a constant is
+unavoidable, say in the pack description what it is, what its default is, and why it was chosen.
+
 ## Verbatim text must be traceable to the print
 
 `verbatim_text` is quoted in reports, so it must be a character-faithful quotation of the official

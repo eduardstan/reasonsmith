@@ -28,11 +28,13 @@ enumeration at the depth each generator itself records. Nothing was chosen after
 **The decision.** Each provenance aggregates the proofs of one instance and the value is
 thresholded at `0.5` into approve/deny. The threshold was fixed before the run and not moved.
 
-**The record.** Eight signals, each computed from that system's own inference on that instance:
-the decision record, an event-log entry, the per-decision reason, the model version, the
-constraint set (the program's ground rules), the local-vs-global scope statement, the
-explanation-scope statement, and the approximation-vs-guarantee statement carrying the measured
-deviation from the semantics the system claims.
+**The record.** Ten signals, each computed from that system's own inference on that instance:
+the decision record, the decision's margin from the approve threshold, an event-log entry, the
+per-decision reason, the model version, the constraint set (the program's ground rules), the
+local-vs-global scope statement, the explanation-scope statement, the approximation-vs-guarantee
+statement carrying the measured deviation from the semantics the system claims, and that deviation
+as a number. The last two of those are read by the duty added after this document's first finding
+(below); the first run carried eight signals and no duty read the deviation at all.
 
 Nine further pack signals were **not** declared, because the system genuinely cannot emit them —
 `provenance_active_exceptions` (definite Horn programs have no defeater mechanism),
@@ -48,16 +50,21 @@ a measurement harness, not an AI system placed on the market in an Annex III use
 
 ## The headline
 
-55 results — 5 systems × 11 requirements across the three packs:
+60 results — 5 systems × 12 requirements across the three packs:
 
 | outcome | count |
 | --- | ---: |
-| satisfied, at strength `observed` | 17 |
-| violated, at strength `observed` | 3 |
+| satisfied, at strength `observed` | 20 |
+| violated, at strength `observed` | 5 |
 | inconclusive, `unattainable` | 15 |
 | not applicable (no class declared) | 20 |
 | satisfied at `probed` | 0 |
 | satisfied at `proved` | 0 |
+
+Three of the five violations are the missing-reason finding below, which the first run of this
+battery already produced against 11 requirements. The other two are the twelfth requirement, added
+after that run to read the declared deviation rather than the field that explains it — see
+[what changed](#what-changed-since-this-finding), under finding 1.
 
 ## The violation
 
@@ -86,13 +93,13 @@ explanation, not the outcome.
 
 This is the most important thing in this run.
 
-| system | max abs. deviation from its claimed semantics | instances deviating | decisions differing from `exact-wmc` | conformance verdicts |
-| --- | ---: | ---: | ---: | --- |
-| `exact-wmc` | 0.000000 | 0/16 | 0/16 | all checkable duties satisfied |
-| `add-mult(clamped)` | 0.347356 | 8/16 | 0/16 | 3 violated |
-| `top-1-proofs` | 0.470679 | 8/16 | **8/16** | all checkable duties satisfied |
-| `top-3-proofs` | 0.097273 | 4/16 | 0/16 | all checkable duties satisfied |
-| `min-max-prob` | 0.357000 | **16/16** | 4/16 | all checkable duties satisfied |
+| system | max abs. deviation from its claimed semantics | instances deviating | decisions differing from `exact-wmc` | verdicts when this was written | verdicts now |
+| --- | ---: | ---: | ---: | --- | --- |
+| `exact-wmc` | 0.000000 | 0/16 | 0/16 | all checkable duties satisfied | all checkable duties satisfied |
+| `add-mult(clamped)` | 0.347356 | 8/16 | 0/16 | 3 violated | 3 violated |
+| `top-1-proofs` | 0.470679 | 8/16 | **8/16** | all checkable duties satisfied | **1 violated** |
+| `top-3-proofs` | 0.097273 | 4/16 | 0/16 | all checkable duties satisfied | all checkable duties satisfied |
+| `min-max-prob` | 0.357000 | **16/16** | 4/16 | all checkable duties satisfied | **1 violated** |
 
 `top-1-proofs` returns a different decision from the exact semantics on **half the battery** —
 eight instances approved by the semantics the system claims to implement are denied by the
@@ -111,6 +118,57 @@ it**.
 
 An adopter should read the satisfied rows here as exactly this: *the record has the fields*. Not:
 *the system computes what it says it computes*.
+
+#### What changed since this finding
+
+The finding above is left as it was written, because it is the reason the duty below exists. What
+follows is what the current run does differently.
+
+`gdpr_recital71_error_risk_minimised` is a twelfth requirement, interpretive, quoting the second
+paragraph of GDPR Recital 71 — *"the controller should use appropriate mathematical or statistical
+procedures for the profiling, implement technical and organisational measures appropriate to ensure
+... that the risk of errors is minimised"*. It is not class-limited, so unlike EU AI Act Article
+13(2) it reaches a system that declares no regulatory class. Its property is
+
+```text
+always(scope_statements_declared_deviation <= artifact_logs_decision_margin)
+```
+
+— the deviation a system declares about its own approximation, against the distance between that
+decision and its own threshold. No number in it is invented: the bound is the system's own margin,
+so the duty fails exactly when a system's *declared* error is large enough that the decision could
+have gone the other way had the system computed what it claims.
+
+Against this battery:
+
+| system | max declared deviation | decisions where the declared deviation exceeds the margin | verdict |
+| --- | ---: | ---: | --- |
+| `exact-wmc` | 0.000000 | 0/16 | satisfied |
+| `add-mult(clamped)` | 0.347356 | 0/16 | satisfied |
+| `top-1-proofs` | 0.470679 | **8/16** | **violated** |
+| `top-3-proofs` | 0.097273 | 0/16 | satisfied |
+| `min-max-prob` | 0.357000 | **5/16** | **violated** |
+
+The two systems the finding names are the two the duty flags, and the exact oracle is untouched:
+its declared deviation is `0.000000` on every instance, and `0.0 <= margin` holds even where the
+margin is zero. `add-mult(clamped)` and `top-3-proofs` stay satisfied on this duty and are right to
+— both deviate, neither ever declares a deviation large enough to have moved the decision it was
+attached to, which is the whole content of the check. `min-max-prob` breaches on five decisions
+where the four it actually flips are a subset: a declared deviation can exceed the margin without
+having flipped the decision, and the duty reports the risk, not the flip.
+
+What has **not** changed, and what an adopter must still read the same way:
+
+- The duty reads a **self-declaration**. Nothing in reasonsmith verifies the number. A system that
+  silently under-reports its own error passes; a system honest enough to report a large one is the
+  only kind this duty can flag. It rewards the measurement, not the accuracy.
+- Silence is still not compliance, but it is not a violation either: a system that declares no
+  deviation is `unattainable` on the signal and one that declares an unmeasured statement is not
+  evaluated. Neither is `satisfied`, and neither is a finding about the system's accuracy.
+- Finding 5 below now carries twice the weight: this duty is checkable here only because nesyarena
+  ships the exact oracle beside the approximate provenance. A deployed neuro-symbolic system would
+  come back `unattainable`, and that is the honest outcome rather than a gap in the pack.
+- Every other satisfied row in this report still means only *the record has the fields*.
 
 ### 2. The top two rungs of the evidence lattice were unreachable
 
@@ -160,6 +218,9 @@ inside a high-risk system", which is what a provenance library actually is.
 `approximation: value deviates from the distribution semantics oracle it claims by +0.347356 on
 this input` — because nesyarena ships the exact WMC oracle beside the approximate provenance and
 the builder computes the difference for every instance.
+
+The duty added since — `gdpr_recital71_error_risk_minimised`, above — stands on that same property,
+so this caveat is now load-bearing for a verdict rather than only for a field.
 
 The measured approximate provenances would not, standing alone, have such an oracle at inference
 time. They could honestly state *approximation*; they could not state *by how much*. Do not read
