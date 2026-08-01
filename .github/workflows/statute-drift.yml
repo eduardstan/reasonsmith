@@ -52,8 +52,9 @@ jobs:
           body = (
               "The monthly statute drift check re-fetched the official sources and found "
               "requirements whose `verbatim_text` no longer matches. A `differ` finding means the "
-              "quoted text has moved in the law; `could-not-verify` means the source could not be "
-              "reached at all. The packs are never edited automatically.\n\n"
+              "quote does not occur in the extracted passage after whitespace collapsing; "
+              "`could-not-verify` means the source was unreachable or its registered passage "
+              "could not be extracted. The packs are never edited automatically.\n\n"
               "<details>\n<summary>Full report</summary>\n\n```\n"
               + data["report"]
               + "\n```\n</details>"
