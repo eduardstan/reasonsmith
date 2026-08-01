@@ -597,7 +597,7 @@ ART22_VARIABLES = {
     "artifact_logs_significant_effect": "bool",
     "artifact_logs_human_intervention_route": "bool",
     "provenance_basis_contract": "bool",
-    "provenance_basis_member_state_law": "bool",
+    "provenance_basis_union_or_member_state_law": "bool",
     "provenance_basis_explicit_consent": "bool",
     "provenance_basis_present": "bool",
 }
@@ -606,7 +606,7 @@ ART22_VARIABLES = {
 #: present, and that opens the Article 22(3) route wherever point (a) or (c) is the basis.
 ART22_CONFORMING_RULES = [
     "provenance_basis_present = provenance_basis_contract "
-    "or provenance_basis_member_state_law or provenance_basis_explicit_consent",
+    "or provenance_basis_union_or_member_state_law or provenance_basis_explicit_consent",
     "artifact_logs_solely_automated = "
     "not (artifact_logs_significant_effect and not provenance_basis_present)",
     "artifact_logs_human_intervention_route = "
@@ -661,7 +661,7 @@ def test_gdpr_art22_violation_reports_a_counterexample_that_reproduces():
         counterexample[basis]
         for basis in (
             "provenance_basis_contract",
-            "provenance_basis_member_state_law",
+            "provenance_basis_union_or_member_state_law",
             "provenance_basis_explicit_consent",
         )
     )

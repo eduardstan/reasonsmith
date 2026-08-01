@@ -40,7 +40,7 @@ stakeholder = "affected individual"
 formalism = "logical"
 spec = """\
 Implies(artifact_logs_solely_automated and artifact_logs_significant_effect, \
-(provenance_basis_contract or provenance_basis_member_state_law or provenance_basis_explicit_consent) \
+(provenance_basis_contract or provenance_basis_union_or_member_state_law or provenance_basis_explicit_consent) \
 and Implies(provenance_basis_contract or provenance_basis_explicit_consent, \
 artifact_logs_human_intervention_route))"""
 requires = [
@@ -48,7 +48,7 @@ requires = [
     "artifact_logs_significant_effect",
     "artifact_logs_human_intervention_route",
     "provenance_basis_contract",
-    "provenance_basis_member_state_law",
+    "provenance_basis_union_or_member_state_law",
     "provenance_basis_explicit_consent",
 ]
 binding = true
