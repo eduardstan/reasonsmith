@@ -40,9 +40,14 @@ Release Note", records how that was verified; the repo publishes no tag).
 In v0.2 the first rule becomes structural. A verdict carries the strength of the evidence behind it
 (`verdict.py`), and `RequirementResult.__post_init__` refuses to construct a result that claims more
 than it has — including `strength=None` for "no engine here evaluated this", which is deliberately
-not a strength on the lattice. Two consequences worth knowing before editing `report.py`: combining
-zero verdicts is `inconclusive`, never vacuously `satisfied`, and `SUPPORTED_FORMALISMS` is the list
-of formalisms an engine actually exists for — widen it when the engine lands, not before.
+not a strength on the lattice. Three consequences worth knowing before editing `report.py`: combining
+zero verdicts is `inconclusive`, never vacuously `satisfied`; `SUPPORTED_FORMALISMS` is the list
+of formalisms an engine actually exists for — widen it when the engine lands, not before; and a
+`probed` result cannot be constructed without the search budget that produced it
+(`PROBE_BUDGET_KEY` / `PROBE_BUDGET_FIELDS`), so the bound travels with the verdict into every
+rendering instead of being a rendering convention. Which engine a `logical` requirement reaches is
+decided by what the system exposes: `logic()` gets Z3, `decide()` alone gets the replay search in
+`engines/probed.py`.
 
 `src/reasonsmith/packs/*.toml` are derived, not authored. The EU AI Act, GDPR and ECOA packs quote
 `docs/legal-sources.md`, which is the retrieval record for the official statutory text and the one

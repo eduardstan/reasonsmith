@@ -50,6 +50,27 @@ LIMITS = (
 #: Formalisms this build can actually evaluate.
 SUPPORTED_FORMALISMS = ("record", "temporal", "logical")
 
+#: Where a probed result carries the search that produced it, and the fields that search must
+#: name. A probed verdict is a statement about a bounded search — how many inputs were replayed,
+#: how they were generated and from which seed — so a result that does not carry them cannot be
+#: constructed at all (see `RequirementResult.__post_init__`), rather than being rendered without
+#: them and read as if the property had been established for every input.
+PROBE_BUDGET_KEY = "probe_budget"
+PROBE_BUDGET_FIELDS = ("trials", "strategy", "seed", "input_space")
+
+
+def _budget_line(budget: Mapping[str, Any]) -> str:
+    """One line naming what a probed search covered, shared by every rendering of it."""
+    space = budget.get("input_space")
+    if isinstance(space, Mapping):
+        fields = ", ".join(f"{name} ({count} values)" for name, count in sorted(space.items()))
+    else:
+        fields = str(space)
+    return (
+        f"{budget['trials']} input(s) replayed, seed {budget['seed']}, "
+        f"input space: {fields or 'no field varied'}. Strategy: {budget['strategy']}"
+    )
+
 
 def _is_present(value: Any) -> bool:
     """True when a trace value carries something, not merely a key.
@@ -120,6 +141,25 @@ class RequirementResult:
                 raise ValueError(
                     f"{self.requirement_id}: a not_applicable requirement cannot have "
                     f"missing signals"
+                )
+
+        # Probed is not proved, and the only thing that keeps the two apart on the page is the
+        # budget: the number of inputs replayed, how they were generated and the seed that
+        # generated them. Refusing the result here rather than at render time is what makes it
+        # impossible to publish a probed verdict in any format without what was searched.
+        if self.strength == Strength.PROBED:
+            budget = self.details.get(PROBE_BUDGET_KEY)
+            if not isinstance(budget, Mapping):
+                raise ValueError(
+                    f"{self.requirement_id}: a probed result must carry its search budget in "
+                    f"details[{PROBE_BUDGET_KEY!r}]; no counterexample found is a claim about a "
+                    f"bounded search, and a reader who cannot see the bound cannot read it"
+                )
+            missing_fields = [f for f in PROBE_BUDGET_FIELDS if f not in budget]
+            if missing_fields:
+                raise ValueError(
+                    f"{self.requirement_id}: the probe budget must name "
+                    f"{', '.join(PROBE_BUDGET_FIELDS)}; missing {', '.join(missing_fields)}"
                 )
 
         unattainable = self.strength == Strength.UNATTAINABLE
@@ -407,6 +447,9 @@ class ConformanceReport:
                 lines.append(f"    ABSENT FROM TRACE: {', '.join(absent)}")
             if r.evidence_summary:
                 lines.append(f"    summary: {r.evidence_summary}")
+            budget = r.details.get(PROBE_BUDGET_KEY)
+            if budget:
+                lines.append(f"    probe budget: {_budget_line(budget)}")
         lines.extend(["", "LIMITS OF THIS REPORT", f"  {self.limits}"])
         return "\n".join(lines)
 
@@ -625,15 +668,29 @@ class ConformanceReport:
                     "</div>"
                 )
 
+            probe_budget = r.details.get(PROBE_BUDGET_KEY)
+            if probe_budget:
+                details_html += (
+                    '<div class="callout-box callout-probe">'
+                    "<strong>PROBED — What Was Searched:</strong><br>"
+                    f"{html.escape(_budget_line(probe_budget))}"
+                    '<div class="callout-note">A bounded search, not a proof: the property is '
+                    "unchecked outside the inputs named here.</div>"
+                    "</div>"
+                )
+
             counterexample = r.details.get("counterexample")
             if counterexample and r.verdict == Verdict.VIOLATED:
                 ce_str = ", ".join(
                     f"{html.escape(str(k))}: {html.escape(str(v))}"
                     for k, v in counterexample.items()
                 )
+                # A counterexample the solver derived and one a replay found are both concrete
+                # inputs, and neither may be worded as the other: `probed` did not prove anything.
+                kind = "Replayed" if r.strength == Strength.PROBED else "Formal"
                 details_html += (
                     '<div class="callout-box callout-violated">'
-                    "<strong>VIOLATED — Formal Counterexample Input:</strong><br>"
+                    f"<strong>VIOLATED — {kind} Counterexample Input:</strong><br>"
                     f"<code>{ce_str}</code>"
                     "</div>"
                 )
@@ -1016,6 +1073,7 @@ class ConformanceReport:
     .callout-box {{ margin-top: 1rem; padding: 1rem; border-radius: 6px; font-size: 0.85rem; }}
     .callout-unattainable {{ background: #fffbeb; border: 1px dashed #fde68a; color: #78350f; }}
     .callout-violated {{ background: #fef2f2; border: 1px solid #fca5a5; color: #7f1d1d; }}
+    .callout-probe {{ background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; }}
     .callout-note {{ font-size: 0.75rem; margin-top: 0.5rem; color: #92400e; font-style: italic; }}
 
     .witness-table {{
@@ -1303,6 +1361,15 @@ def evaluate_requirement(
         from reasonsmith.engines.observed import ObservedEngine
         return ObservedEngine.evaluate(req, sut, records or [])
     elif req.formalism == "logical":
+        # A system that exposes its decision logic gets the strongest engine there is a basis
+        # for. One that exposes only `decide()` has nothing to reason over, and probing it is
+        # the difference between a verdict and no verdict at all — but never a proof. A system
+        # exposing neither goes to the proved engine, which reports that as no evidence.
+        logic_func = getattr(sut, "logic", None)
+        exposes_logic = callable(logic_func) and logic_func() is not None
+        if not exposes_logic and callable(getattr(sut, "decide", None)):
+            from reasonsmith.engines.probed import ProbedEngine
+            return ProbedEngine.evaluate(req, sut, records)
         from reasonsmith.engines.proved import ProvedEngine
         return ProvedEngine.evaluate(req, sut, records)
 

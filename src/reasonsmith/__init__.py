@@ -18,15 +18,20 @@ What this module is for:
     report.py       the unattainable analysis and the conformance report
     rulelang.py     the whitelisted mini-language rules and properties are parsed and run in
     adapters/       JSONL decision-log, Python-callable and rule-based-system adapters
-    engines/        record completeness, rtamt temporal monitors and the Z3 proved engine
+    engines/        record completeness, rtamt temporal monitors, the replay probed engine
+                    and the Z3 proved engine
     cli.py          checks a JSONL decision log against a requirement pack
     packs/          Table 7, EU AI Act, GDPR, and ECOA / Regulation B requirements
 
 What a reader must not break:
-  - Every rung of the lattice except `probed` is implemented here; `probed` needs an engine that
-    does not exist yet, and a requirement whose formalism no engine covers is reported as not
-    evaluated rather than judged by a weaker check.
+  - Every rung of the lattice has an engine here, and a requirement no engine can evaluate is
+    reported as not evaluated rather than judged by a weaker check.
     Why this matters: Claiming a higher strength without an engine would launder unverified claims.
+  - `probed` never rounds up to `proved`: `engines/probed.py` searches a bounded set of replayed
+    inputs, and no counterexample within that budget is not a proof. The budget travels with the
+    verdict — `RequirementResult` refuses to construct a probed result that does not carry it.
+    Why this matters: a bounded search read as a guarantee is the overclaim the lattice exists to
+    prevent, and a budget a reader cannot see is a bound that may as well not exist.
   - `proved` is claimed only on what the solver actually established: `engines/proved.py` refuses
     an unmodelled construct, an `unknown` or timed-out solver result, and premises no input can
     satisfy, and it replays a counterexample before reporting a violation.
