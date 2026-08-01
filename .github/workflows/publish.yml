@@ -40,6 +40,10 @@ jobs:
     name: Upload release to PyPI
     needs: test-build
     runs-on: ubuntu-latest
+    # Before first use, the project owner must register this workflow as a Trusted Publisher in
+    # PyPI's reasonsmith Publishing settings: owner eduardstan, repository reasonsmith, workflow
+    # publish.yml, environment pypi. Repository changes cannot perform or verify that account-side
+    # setup; until it is registered, the first publish attempt will fail by design.
     environment:
       name: pypi
       url: https://pypi.org/p/reasonsmith
