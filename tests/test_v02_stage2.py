@@ -21,7 +21,7 @@ from reasonsmith.adapters import CallableAdapter, JSONLAdapter
 from reasonsmith.cli import main as cli_main
 from reasonsmith.engines.observed import ObservedEngine
 from reasonsmith.engines.record import RecordEngine
-from reasonsmith.report import check_conformance
+from reasonsmith.report import check_conformance, evaluate_requirement
 from reasonsmith.spec import Requirement, list_packs, load_pack
 from reasonsmith.sut import CAPABILITY_TAXONOMY, BaseSUT
 from reasonsmith.verdict import Strength, Verdict
@@ -255,6 +255,42 @@ class TestCallableAdapter:
         )
         with pytest.raises(TypeError, match="not callable"):
             sut.decide({"case": 1})
+
+
+def test_record_and_temporal_formalisms_route_through_report():
+    sut = BaseSUT({"signal_a", "signal_b"})
+    records = [
+        {"signal_a": True, "signal_b": True},
+        {"signal_a": False, "signal_b": False},
+    ]
+
+    def requirement(formalism: str, spec: str) -> Requirement:
+        return Requirement(
+            id=f"route_{formalism}",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism=formalism,
+            spec=spec,
+            requires=("signal_a", "signal_b"),
+            binding=True,
+            scope="",
+        )
+
+    record = evaluate_requirement(
+        requirement("record", "not valid temporal syntax !@#$"), sut, records
+    )
+    temporal = evaluate_requirement(
+        requirement("temporal", "always((signal_a >= 0.5) -> (signal_b >= 0.5))"),
+        sut,
+        records,
+    )
+
+    assert record.verdict == Verdict.SATISFIED
+    assert record.details == {"records_observed": 2}
+    assert temporal.verdict == Verdict.SATISFIED
+    assert "evaluation_scores" in temporal.details
 
 
 class TestRecordEngine:

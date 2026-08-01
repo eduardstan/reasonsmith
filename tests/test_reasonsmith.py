@@ -1,7 +1,7 @@
 """The claims this package makes, as checks.
 
-Nothing here asserts wording, branding or presentation. Where a check needs a disclosure to be
-present it asserts that the module's own constant appears, not what that constant says.
+Nothing here asserts branding or presentation. Disclosure checks normally assert that the module's
+constant travels with its artifact; the compliance-boundary test pins the constant's semantics.
 """
 
 import json
@@ -182,6 +182,11 @@ def test_certificate_carries_its_limits():
     from reasonsmith import certificate
 
     assert certificate.LIMITS in certify_case(credit_case(), ReferenceAdapter(TopK(1))).render()
+
+
+def test_certificate_limits_exclude_compliance_certification():
+    assert "not a compliance guarantee and is not legal advice" in certificate.LIMITS
+    assert "does not certify the engine on any other input" in certificate.LIMITS
 
 
 # ----------------------------------------- what the probe cannot certify ----

@@ -224,6 +224,43 @@ def test_the_same_seed_searches_the_same_space():
     assert first[: len(records)] == records
 
 
+def test_probe_plan_deduplicates_seed_records_and_obeys_trial_cap():
+    records = [{"x": 1}, {"x": 1}, {"x": 2}, {"x": 3}]
+    req = _req(spec="x == x", requires=("x",))
+
+    assert plan_inputs(req, records, trials=2, seed=0) == [{"x": 1}, {"x": 2}]
+
+
+def test_probe_candidate_pools_and_budget_counts_are_exact():
+    records = [
+        {"flag": True, "number": 2, "text": "x", "fixed": {"nested": 1}},
+        {"flag": False, "number": 4, "text": "y", "fixed": {"nested": 2}},
+    ]
+    req = _req(spec="number - 10 == number - 10", requires=("number",))
+    pools = probed._pools(req, records)
+
+    assert set(pools) == {"flag", "number", "text"}
+    assert set(pools["flag"]) == {True, False}
+    assert set(pools["number"]) == {-4, -2, 0, 1, 2, 3, 4, 5, 8, 9, 10, 11}
+    assert set(pools["text"]) == {"", "x", "y"}
+
+    class EchoSUT(OpaqueSUT):
+        def __init__(self):
+            super().__init__(trace=records)
+
+        def decide(self, case):
+            return dict(case)
+
+    result = ProbedEngine.evaluate(req, EchoSUT(), trials=20, seed=3)
+
+    assert result.verdict == Verdict.SATISFIED
+    assert result.details[PROBE_BUDGET_KEY]["input_space"] == {
+        "flag": 2,
+        "number": 12,
+        "text": 3,
+    }
+
+
 def test_the_engine_replays_exactly_the_planned_inputs():
     """What the budget counts is what the system was actually run on."""
     seen = []

@@ -35,7 +35,8 @@ Release Note", records how that was verified; the repo publishes no tag).
 - No emitted record, certificate or measurement may present itself as complete when it is not, and
   every one carries its own limits. See the module docstrings in `evidence.py` and `certificate.py`
   for why each check exists before changing one.
-- No check asserts branding, wording or presentation.
+- No check asserts branding or presentation. Limits tests pin semantic boundary clauses, not full
+  prose.
 
 In v0.2 the first rule becomes structural. A verdict carries the strength of the evidence behind it
 (`verdict.py`), and `RequirementResult.__post_init__` refuses to construct a result that claims more

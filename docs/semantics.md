@@ -15,8 +15,15 @@ Where this document and the code disagree, the code is right and this document h
 **Requirement** — `spec.py`, `Requirement`. A frozen record of one duty, carrying exactly the ten
 fields of `REQUIREMENT_FIELDS` and no others: `id`, `source_document`, `article_clause`,
 `verbatim_text`, `stakeholder`, `formalism`, `spec`, `requires`, `binding`, `scope`. `formalism` is
-one of `record`, `temporal`, `logical`, and decides which engine answers it. `requires` is the
-non-empty set of signal names a system must be able to emit for the duty to be checkable at all.
+one of `record`, `temporal`, `logical`, and selects an engine family. `record` routes to
+`RecordEngine`; `temporal` routes to `ObservedEngine`
+(`test_record_and_temporal_formalisms_route_through_report`). For `logical`,
+`report.evaluate_requirement` routes a non-`None` `logic()` result to `ProvedEngine`, a `None`
+result plus callable `decide()` to `ProbedEngine`, and neither interface to `ProvedEngine`, which
+reports no evidence (`test_property_holds_for_all_inputs_proved`,
+`test_an_opaque_system_reaches_probed_through_the_report`,
+`test_system_without_logic_reported_not_evaluated`). `requires` is the non-empty set of signal names
+a system must be able to emit for the duty to be checkable at all.
 `binding` separates a statutory obligation from an interpretive recital. `scope` is a regulatory
 class from `REGULATORY_CLASSES`, or empty for a duty that is not class-limited. A pack that omits a
 field, adds one, or leaves one blank is refused at load time rather than loaded with a guess
@@ -33,8 +40,9 @@ outside the protocol because replay is optional. Three plain instance attributes
 protocol are also semantic inputs. `evaluate_requirement` and `check_conformance` in `report.py`
 select `system_scope`, falling back to `declared_scope`, to decide applicability
 (`test_declared_scope_attribute_is_the_applicability_fallback`,
-`test_the_two_scope_gates_never_disagree`). `_unattainable_result` reads `capability_basis` to decide
-whether a missing signal describes the system as built or only the supplied trace
+`test_system_scope_precedes_a_conflicting_declared_scope`,
+`test_the_two_scope_gates_never_disagree`). `_unattainable_result` reads `capability_basis` to
+decide whether a missing signal describes the system as built or only the supplied trace
 (`test_unattainable_from_a_trace_does_not_speak_for_the_system`,
 `test_declared_capabilities_word_the_finding_as_about_the_system`).
 
@@ -158,16 +166,17 @@ Three tested checks hold the two sides together:
    (`test_division_is_true_division_on_both_sides`); `%` follows Python's floor semantics for a
    negative divisor, where Z3's `mod` is non-negative
    (`test_modulo_follows_python_semantics_for_any_divisor`).
-3. **Every proof is cross-checked at runtime.** Before any verdict is read off the solver, the Z3
-   encoding is run against the rulelang interpreter on the witness the solver chose for the
-   premises. A disagreement is reported not evaluated
+3. **Every proof is cross-checked at runtime on one witness.** Before any verdict is read off the
+   solver, the Z3 encoding is run against the rulelang interpreter on the witness the solver chose
+   for the premises. A disagreement on that witness is reported not evaluated
    (`test_encoding_disagreeing_with_the_interpreter_is_not_a_proof`).
 
 **The gap, stated plainly:** point 3 checks *one* witness, and points 1–2 check named constructs. No
 test establishes that the two implementations agree on every input, and none establishes that their
 accepted construct sets are equal as sets. The runtime cross-check is what catches a divergence
-before it is reported as a proof; it is not a proof of equivalence, and `engines/proved.py` says so
-in its own module docstring.
+on that witness before it is reported as a proof. Agreement there does not establish agreement on
+another admitted valuation and is not a proof of equivalence; `engines/proved.py` says so in its own
+module docstring.
 
 ---
 
@@ -230,12 +239,17 @@ over, so the engine searches.
 > `test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass`,
 > `test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass`).
 
-*The domain, exactly.* `plan_inputs` replays the recorded decisions first, unmodified, then perturbs
-a randomly chosen recorded decision by replacing one or two fields with values drawn from that
-field's candidate pool: the values the trace shows for that field, the numeric literals of the
-property, and their immediate neighbours. A field whose values are of a kind the engine cannot vary
-is left out of the space entirely. The budget's `input_space` maps each varied field to the number of
-candidate values for that field; it does not enumerate the inputs. Given the same `req.spec`,
+*The domain, exactly.* `plan_inputs` offers recorded decisions in supplied order and unmodified,
+deduplicates identical records, and stops when the plan reaches `trials`; later recorded decisions
+are therefore omitted when the cap is reached
+(`test_probe_plan_deduplicates_seed_records_and_obeys_trial_cap`). If capacity remains, it chooses a
+recorded decision and replaces one or two fields with values from per-field candidate pools. A field
+with any Boolean observation gets `{True, False}`. A field whose observations are all numeric gets,
+for every observed value *v*, `{v, v+1, v-1, -v, 0, v*2}`, and for every numeric literal *L* in the
+property, `{L, L+1, L-1}`. A field whose observations are all strings gets the observed strings plus
+`""`. Every other field is excluded from the varied space and remains as it was in the selected
+record (`test_probe_candidate_pools_and_budget_counts_are_exact`). The budget's `input_space` maps
+each varied field to its candidate count; it does not enumerate inputs. Given the same `req.spec`,
 records, trials, and recorded seed, the plan is re-derived
 (`test_the_same_seed_searches_the_same_space`), and the inputs the budget counts are the inputs the
 system was actually run on (`test_the_engine_replays_exactly_the_planned_inputs`).
@@ -394,17 +408,19 @@ Two consequences of that report text, followed by a separate package-level termi
 
 - reasonsmith does not determine whether a legal duty is discharged. It assesses capability
   information and trace evidence against formal specifications
-  (`test_observed_verdict_states_what_it_does_not_cover`).
+  (`test_report_limits_exclude_legal_determination_and_scope_inference`).
 - reasonsmith does not infer a system's regulatory class. An undeclared system is neither placed in
-  scope nor cleared of a class-limited duty (`test_the_two_scope_gates_never_disagree`, and a
-  misspelled class is refused rather than read as out-of-scope,
-  `test_a_scope_outside_the_vocabulary_is_refused`).
+  scope nor cleared of a class-limited duty
+  (`test_report_limits_exclude_legal_determination_and_scope_inference`,
+  `test_the_two_scope_gates_never_disagree`). A misspelled class is refused rather than read as
+  out-of-scope (`test_a_scope_outside_the_vocabulary_is_refused`).
 - Separately, the package emits a **reason-deletion certificate**, a measured artifact about which
   reasons an approximate engine dropped. It does not issue a **compliance certification**. The
   artifact detects a dropped reason and carries its separate limits
-  (`test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_carries_its_limits`); a
-  conformance report carries no narrative it did not measure
-  (`test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure`).
+  (`test_a_perturbed_engine_that_drops_a_reason_fails`,
+  `test_certificate_limits_exclude_compliance_certification`,
+  `test_certificate_carries_its_limits`); a conformance report carries no narrative it did not
+  measure (`test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure`).
 
 ---
 
@@ -415,6 +431,8 @@ Two consequences of that report text, followed by a separate package-level termi
 | `record satisfied` ⇒ every required signal present in every record of the supplied trace | `test_record_engine_satisfied` |
 | A record verdict is a claim about the trace and says so | `test_observed_verdict_states_what_it_does_not_cover` |
 | A record duty's `spec` string is never evaluated | `test_the_record_engine_reads_requires_not_spec` |
+| `record` and `temporal` route to their respective engine families | `test_record_and_temporal_formalisms_route_through_report` |
+| `logical` routes to proved with exposed logic, probed with only `decide()`, and no evidence with neither | `test_property_holds_for_all_inputs_proved`, `test_an_opaque_system_reaches_probed_through_the_report`, `test_system_without_logic_reported_not_evaluated` |
 | An absent or blank signal in an observed record is a violation, naming it | `test_record_engine_violated_on_blank_field`, `test_a_declared_signal_absent_from_the_trace_is_a_violation` |
 | Presence means non-empty, not merely keyed | `test_a_present_but_empty_signal_does_not_count_as_evidence`, `test_a_falsy_but_real_signal_value_counts` |
 | An empty trace is not evaluated, never satisfied | `test_an_empty_trace_is_not_evidence` |
@@ -426,6 +444,8 @@ Two consequences of that report text, followed by a separate package-level termi
 | `probed satisfied` ⇒ no counterexample among the replayed inputs, and every rendering carries the budget | `test_no_counterexample_in_budget_is_probed_and_every_rendering_carries_the_budget` |
 | A probed result cannot exist without its budget | `test_a_probed_result_cannot_be_constructed_without_its_budget` |
 | The probe plan is re-derivable from its seed | `test_the_same_seed_searches_the_same_space` |
+| Seed records are deduplicated in order and capped by `trials` | `test_probe_plan_deduplicates_seed_records_and_obeys_trial_cap` |
+| Boolean, numeric and string candidate pools, excluded fields and budget counts follow the stated rules | `test_probe_candidate_pools_and_budget_counts_are_exact` |
 | The budget counts the inputs the system was actually run on | `test_the_engine_replays_exactly_the_planned_inputs` |
 | Probed never rounds up to proved, in any count, headline or rendering | `test_probed_never_rounds_up_to_proved` |
 | An input whose `decide()` or property evaluation raises is counted, not read as a pass | `test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass`, `test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass` |
@@ -437,7 +457,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | Vacuous premises are not a proof | `test_unsatisfiable_premises_are_not_a_proof` |
 | Solver `unknown` or timeout is not evaluated | `test_solver_timeout_reported_not_evaluated` |
 | An unmodelled construct is not evaluated, and pack text is never executed | `test_unsupported_construct_reported_not_evaluated`, `test_pack_text_is_never_executed_as_python` |
-| A proof is cross-checked against the reference interpreter before it is read | `test_encoding_disagreeing_with_the_interpreter_is_not_a_proof`, `test_rules_undefined_on_the_witness_are_named_as_such` |
+| A proof is cross-checked against the reference interpreter on one premise witness before it is read | `test_encoding_disagreeing_with_the_interpreter_is_not_a_proof`, `test_rules_undefined_on_the_witness_are_named_as_such` |
 | Named statement cases are modelled or refused on both sides, and `/` and `%` agree in the named cases | `test_bare_expression_rules_are_refused_by_both_sides`, `test_nested_and_augmented_statements_are_modelled_or_refused_by_both_sides`, `test_division_is_true_division_on_both_sides`, `test_modulo_follows_python_semantics_for_any_divisor` |
 | Arrow rewriting preserves the property | `test_arrow_rewriting_respects_parentheses_and_precedence`, `test_arrow_rewriting_leaves_string_literals_alone` |
 | A proof over reals names the rational/float64 gap | `test_a_proof_over_reals_says_it_is_a_proof_over_the_rationals` |
@@ -454,12 +474,12 @@ Two consequences of that report text, followed by a separate package-level termi
 | The unattainable analysis never executes the system | `test_unattainable_analysis_no_execution`, `test_check_conformance_never_executes_a_system_it_cannot_check` |
 | A result cannot claim more than its evidence, and a raw string cannot slip past the guards | `test_result_cannot_claim_more_than_its_evidence`, `test_a_string_verdict_or_strength_is_parsed_not_trusted` |
 | A capability set is signal names and nothing else | `test_base_sut_rejects_a_bare_capability_string`, `test_base_sut_rejects_a_capability_map`, `test_unattainable_analysis_rejects_a_capability_map` |
-| Applicability reads `system_scope`, falling back to the `declared_scope` attribute | `test_declared_scope_attribute_is_the_applicability_fallback`, `test_the_two_scope_gates_never_disagree` |
+| Applicability prefers `system_scope`, falling back to `declared_scope` only when absent | `test_system_scope_precedes_a_conflicting_declared_scope`, `test_declared_scope_attribute_is_the_applicability_fallback`, `test_the_two_scope_gates_never_disagree` |
 | Capability basis decides whether unattainability speaks about the system or its trace | `test_unattainable_from_a_trace_does_not_speak_for_the_system`, `test_declared_capabilities_word_the_finding_as_about_the_system` |
 | A malformed trace names the system that produced it | `test_a_trace_of_the_wrong_shape_names_the_system` |
 | A pack's requirement fields are exact and non-blank | `test_loader_rejects_missing_field`, `test_loader_rejects_an_unknown_field`, `test_loader_rejects_blank_and_duplicate_fields`, `test_requirement_needs_at_least_one_signal` |
-| The regulatory class is never inferred, and a misspelling is refused rather than read as out-of-scope | `test_the_two_scope_gates_never_disagree`, `test_a_scope_outside_the_vocabulary_is_refused`, `test_limits_cover_both_ways_a_requirement_becomes_not_applicable` |
-| A conformance report states that it is not a compliance guarantee | `test_observed_verdict_states_what_it_does_not_cover` |
-| A reason-deletion certificate detects a dropped reason and carries its own non-compliance limits | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_carries_its_limits` |
+| Report limits exclude legal-duty determination and regulatory-class inference | `test_report_limits_exclude_legal_determination_and_scope_inference`, `test_limits_cover_both_ways_a_requirement_becomes_not_applicable` |
+| A misspelled regulatory class is refused rather than read as out-of-scope | `test_a_scope_outside_the_vocabulary_is_refused` |
+| A reason-deletion certificate detects a dropped reason and excludes compliance certification beyond its measured input | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_limits_exclude_compliance_certification`, `test_certificate_carries_its_limits` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |
