@@ -106,21 +106,21 @@ LIMITS OF THIS REPORT
 pip install reasonsmith
 ```
 
-2. Run the shipped demonstration:
+2. Audit your own decision log against a regulation pack:
+
+```sh
+reasonsmith check --system decisions.jsonl --pack gdpr --html report.html
+```
+
+`check` runs one of the four shipped packs (Table 7, EU AI Act, GDPR, ECOA/Reg B) against your JSONL decision log, printing the report as text, JSON (`--json`), or a self-contained HTML report (`--html FILE`). It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise.
+
+3. Run the shipped demonstration:
 
 ```sh
 python -m reasonsmith.demo
 ```
 
 The demonstration runs on frozen synthetic data included in the package. It needs no input file or source checkout and prints the complete demonstration, including the `NOT PRODUCED` reasoning and `LIMITS` sections.
-
-3. Audit your own decision log against a regulation pack:
-
-```sh
-reasonsmith check --system /path/to/your-decisions.jsonl --pack gdpr --html report.html
-```
-
-`check` runs one of the four shipped packs (Table 7, EU AI Act, GDPR, ECOA/Reg B) against your JSONL decision log, printing the report as text, JSON (`--json`), or a self-contained HTML report (`--html FILE`). It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise.
 
 Contributors and developers install from source instead, running the full verification suite and demonstration from the checkout:
 
