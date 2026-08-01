@@ -115,5 +115,6 @@ What gets checked is behaviour, not style, so a good pull request is mostly a ma
 
 - **One change per pull request**, with the intent stated in one sentence up front.
 - **Tests that would fail if the change were reverted.** If the change genuinely needs no test, say why.
-- **For anything touching quoted statute or Table 7 wording:** name the official source and say why the quote is character-for-character correct — this is the project's one non-negotiable (Standing Rule #1 above). The source must land in `docs/legal-sources.md`, where the verbatim-quote tests and the monthly `statute-drift` workflow hold it.
+- **For anything touching quoted statute:** name the official source recorded in `docs/legal-sources.md` and say why the quote is character-for-character correct. The verbatim-quote tests and the monthly `statute-drift` workflow hold statutory text to that retrieval record.
+- **For anything touching Table 7 wording:** say how you checked it against the paper transcription in `src/reasonsmith/table7.toml`. The paper is the authority, and the transcription must remain character-for-character faithful to it.
 - **The template's four prompts** — what changed, why, how it was verified, and statute — are exactly these points. Fill them in and the pull request is done.
