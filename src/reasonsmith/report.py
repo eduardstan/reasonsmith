@@ -26,7 +26,7 @@ import subprocess
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from reasonsmith.spec import Pack, Requirement, normalize_scope
 from reasonsmith.sut import SystemUnderTest, _validate_capability_collection
@@ -57,6 +57,7 @@ SUPPORTED_FORMALISMS = ("record", "temporal", "logical")
 #: them and read as if the property had been established for every input.
 PROBE_BUDGET_KEY = "probe_budget"
 PROBE_BUDGET_FIELDS = ("trials", "strategy", "seed", "input_space")
+_UNREAD = object()
 
 
 def _budget_line(budget: Mapping[str, Any]) -> str:
@@ -1246,6 +1247,24 @@ def _read_trace(sut: SystemUnderTest) -> list[dict[str, Any]]:
     return records
 
 
+class _EvaluationResources:
+    def __init__(self, sut: SystemUnderTest):
+        self.sut = sut
+        self._records: object = _UNREAD
+        self._logic_data: Any = _UNREAD
+
+    def trace(self) -> list[dict[str, Any]]:
+        if self._records is _UNREAD:
+            self._records = _read_trace(self.sut)
+        return cast(list[dict[str, Any]], self._records)
+
+    def logic(self) -> Any:
+        if self._logic_data is _UNREAD:
+            logic_func = getattr(self.sut, "logic", None)
+            self._logic_data = logic_func() if callable(logic_func) else None
+        return self._logic_data
+
+
 def _unattainable_result(
     req: Requirement, missing: tuple[str, ...], sut: SystemUnderTest | None = None
 ) -> RequirementResult:
@@ -1286,6 +1305,8 @@ def evaluate_requirement(
     sut: SystemUnderTest,
     records: list[dict[str, Any]] | None = None,
     system_scope: str | None = None,
+    *,
+    _resources: _EvaluationResources | None = None,
 ) -> RequirementResult:
     """Evaluate a single requirement against a SUT.
 
@@ -1302,6 +1323,8 @@ def evaluate_requirement(
     None the trace is fetched from the SUT, so callers holding a trace already can avoid
     re-running the system once per requirement.
     """
+    resources = _resources or _EvaluationResources(sut)
+
     if system_scope is None:
         system_scope = getattr(sut, "system_scope", getattr(sut, "declared_scope", None))
 
@@ -1352,7 +1375,7 @@ def evaluate_requirement(
         )
 
     if req.formalism in ("record", "temporal") and records is None:
-        records = _read_trace(sut)
+        records = resources.trace()
 
     if req.formalism == "record":
         from reasonsmith.engines.record import RecordEngine
@@ -1365,13 +1388,13 @@ def evaluate_requirement(
         # for. One that exposes only `decide()` has nothing to reason over, and probing it is
         # the difference between a verdict and no verdict at all — but never a proof. A system
         # exposing neither goes to the proved engine, which reports that as no evidence.
-        logic_func = getattr(sut, "logic", None)
-        exposes_logic = callable(logic_func) and logic_func() is not None
-        if not exposes_logic and callable(getattr(sut, "decide", None)):
+        logic_data = resources.logic()
+        if logic_data is None and callable(getattr(sut, "decide", None)):
             from reasonsmith.engines.probed import ProbedEngine
-            return ProbedEngine.evaluate(req, sut, records)
+            trace = records if records is not None else resources.trace()
+            return ProbedEngine.evaluate(req, sut, trace)
         from reasonsmith.engines.proved import ProvedEngine
-        return ProvedEngine.evaluate(req, sut, records)
+        return ProvedEngine.evaluate(req, sut, records, logic_data=logic_data)
 
     raise NotImplementedError(
         f"{req.formalism!r} is listed in SUPPORTED_FORMALISMS but no engine here evaluates it. "
@@ -1410,21 +1433,15 @@ def check_conformance(
         else:
             eval_plan.append((req, True, *analyze_unattainable(req, sut)))
 
-    needs_trace = any(
-        applicable and not is_unattainable and req.formalism in ("record", "temporal")
-        for req, applicable, is_unattainable, _ in eval_plan
-    )
-
-    # When nothing needs the trace this stays empty and is never read: the only requirements
-    # left are out of scope, unattainable, or of a formalism no engine here checks.
-    records = _read_trace(sut) if needs_trace else []
-
-    # `records` is a list by now, so evaluate_requirement never re-reads the trace; it
-    # re-derives the applicability and unattainable results itself, which is why there is no
-    # branch here.
+    resources = _EvaluationResources(sut)
     results = [
-        evaluate_requirement(req, sut, records, system_scope=system_scope)
-        for req in pack.requirements
+        evaluate_requirement(
+            req,
+            sut,
+            system_scope=system_scope,
+            _resources=resources,
+        )
+        for req, _, _, _ in eval_plan
     ]
     return ConformanceReport(
         pack_id=pack.id,

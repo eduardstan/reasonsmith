@@ -17,9 +17,10 @@ from reasonsmith.report import (
     PROBE_BUDGET_KEY,
     ConformanceReport,
     RequirementResult,
+    check_conformance,
     evaluate_requirement,
 )
-from reasonsmith.spec import Requirement
+from reasonsmith.spec import Pack, Requirement
 from reasonsmith.sut import BaseSUT
 from reasonsmith.verdict import Strength, Verdict
 
@@ -250,3 +251,22 @@ def test_an_opaque_system_reaches_probed_through_the_report():
     assert violated.verdict == Verdict.VIOLATED
     assert violated.strength == Strength.PROBED
     assert violated.details["counterexample"]["age"] > 65
+
+
+def test_conformance_shares_one_trace_across_probed_requirements():
+    class CountingTraceSUT(HonestSUT):
+        def __init__(self):
+            super().__init__()
+            self.trace_reads = 0
+
+        def decisions(self):
+            self.trace_reads += 1
+            return super().decisions()
+
+    sut = CountingTraceSUT()
+    pack = Pack("p", "P", "", (_req("r1"), _req("r2")))
+
+    report = check_conformance(sut, pack)
+
+    assert sut.trace_reads == 1
+    assert all(result.strength == Strength.PROBED for result in report.results)

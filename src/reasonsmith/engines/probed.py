@@ -212,7 +212,7 @@ class ProbedEngine:
                 {"engine": "probed", "reason": "property_not_expressible", "error": str(exc)},
             )
 
-        trace = list(records) if records else list(sut.decisions())
+        trace = list(records) if records is not None else list(sut.decisions())
         for rec in trace:
             if not isinstance(rec, Mapping):
                 return not_evaluated(

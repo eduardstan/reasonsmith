@@ -225,6 +225,26 @@ def test_conformance_report_rendering_proved_agrees():
     assert "VIOLATED — Formal Counterexample Input" in html
 
 
+def test_conformance_acquires_logic_once_for_all_proved_requirements():
+    class CountingRulesAdapter(RulesAdapter):
+        def __init__(self):
+            super().__init__(rules=["approved = True"], variables={"approved": "bool"})
+            self.logic_reads = 0
+
+        def logic(self):
+            self.logic_reads += 1
+            return super().logic()
+
+    sut = CountingRulesAdapter()
+    req1 = _logical_req(req_id="r1", spec="approved == True", requires=("approved",))
+    req2 = _logical_req(req_id="r2", spec="approved == True", requires=("approved",))
+
+    report = check_conformance(sut, Pack("p", "P", "", (req1, req2)))
+
+    assert sut.logic_reads == 1
+    assert all(result.strength == Strength.PROVED for result in report.results)
+
+
 def test_reassignment_is_executed_in_order_not_treated_as_a_contradiction():
     """A rule that reassigns a name means what it means when executed, not `x == x + 10`."""
     rules = ["score = base", "score = score + 10", "approved = score >= 50"]

@@ -65,6 +65,7 @@ REAL_ARITHMETIC_LIMIT = (
     "system, so this holds over the rationals and not over the arithmetic the system runs. A "
     "property that depends on rounding can be proved here and still fail in execution."
 )
+_UNSET_LOGIC = object()
 
 
 def _declare(name: str, var_types: dict[str, str], suffix: str = "") -> Any:
@@ -433,7 +434,10 @@ def _check_encoding_against_interpreter(
 
 
 def _verify_counterexample(
-    sut: SystemUnderTest, req: Requirement, ce_inputs: dict[str, Any]
+    sut: SystemUnderTest,
+    req: Requirement,
+    ce_inputs: dict[str, Any],
+    logic_data: Any,
 ) -> tuple[bool, str]:
     """Verify that feeding a solver counterexample to the SUT actually reproduces the violation."""
     try:
@@ -443,7 +447,6 @@ def _verify_counterexample(
         else:
             from reasonsmith.adapters.rules import RulesAdapter
 
-            logic_data = sut.logic()
             if not isinstance(logic_data, dict) or "rules" not in logic_data:
                 return (
                     False,
@@ -483,6 +486,8 @@ class ProvedEngine:
         sut: SystemUnderTest,
         records: Optional[list[dict[str, Any]]] = None,
         timeout_ms: int = 5000,
+        *,
+        logic_data: Any = _UNSET_LOGIC,
     ) -> RequirementResult:
         clause = f"{req.source_document} {req.article_clause}"
 
@@ -499,8 +504,9 @@ class ProvedEngine:
                 scope=req.scope,
             )
 
-        logic_func = getattr(sut, "logic", None)
-        logic_data = logic_func() if callable(logic_func) else None
+        if logic_data is _UNSET_LOGIC:
+            logic_func = getattr(sut, "logic", None)
+            logic_data = logic_func() if callable(logic_func) else None
 
         if logic_data is None:
             return not_evaluated(
@@ -627,7 +633,7 @@ class ProvedEngine:
 
         if check_res == z3.sat:
             ce_inputs = _model_inputs(scope, solver.model())
-            reproduced, verif_msg = _verify_counterexample(sut, req, ce_inputs)
+            reproduced, verif_msg = _verify_counterexample(sut, req, ce_inputs, logic_data)
             if reproduced:
                 return RequirementResult(
                     requirement_id=req.id,
