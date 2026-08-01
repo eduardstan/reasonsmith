@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import ast
 import random
-from collections.abc import Mapping
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Optional
 
 from reasonsmith.report import PROBE_BUDGET_KEY, RequirementResult
@@ -54,11 +54,109 @@ DEFAULT_SEED = 0
 
 #: What the search does, named on every result it produces.
 STRATEGY = (
-    "seeded random perturbation of the decisions in the trace: each replayed input is one "
-    "recorded decision with one or two fields replaced by a value drawn from that field's "
-    "candidate pool (the values the trace shows for it, the numeric literals of the property, "
-    "and their immediate neighbours)"
+    "the recorded decisions are replayed first unmodified; remaining inputs use seeded random "
+    "perturbation of one recorded decision, replacing one or two fields with values drawn from "
+    "that field's candidate pool (the values the trace shows for it, the numeric literals of "
+    "the property, and their immediate neighbours)"
 )
+
+
+def _require_kind(kind: str, expected: str, node: ast.AST) -> None:
+    if kind not in (expected, "unknown"):
+        raise UnsupportedConstructError(
+            f"{ast.unparse(node)!r} has type {kind}, expected {expected}"
+        )
+
+
+def _expression_kind(node: ast.AST) -> str:
+    if isinstance(node, ast.Expression):
+        return _expression_kind(node.body)
+
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, bool):
+            return "boolean"
+        if isinstance(node.value, (int, float)):
+            return "number"
+        if isinstance(node.value, str):
+            return "string"
+        raise UnsupportedConstructError(
+            f"Unsupported constant type {type(node.value).__name__}: {node.value!r}"
+        )
+
+    if isinstance(node, ast.Name):
+        return "unknown"
+
+    if isinstance(node, ast.UnaryOp):
+        operand_kind = _expression_kind(node.operand)
+        if isinstance(node.op, ast.Not):
+            _require_kind(operand_kind, "boolean", node.operand)
+            return "boolean"
+        if isinstance(node.op, (ast.USub, ast.UAdd)):
+            _require_kind(operand_kind, "number", node.operand)
+            return "number"
+        raise UnsupportedConstructError(f"Unsupported unary operator: {type(node.op).__name__}")
+
+    if isinstance(node, ast.BinOp):
+        left_kind = _expression_kind(node.left)
+        right_kind = _expression_kind(node.right)
+        if not isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod)):
+            raise UnsupportedConstructError(
+                f"Unsupported binary operator: {type(node.op).__name__}"
+            )
+        _require_kind(left_kind, "number", node.left)
+        _require_kind(right_kind, "number", node.right)
+        return "number"
+
+    if isinstance(node, ast.BoolOp):
+        kinds = [_expression_kind(value) for value in node.values]
+        if not isinstance(node.op, (ast.And, ast.Or)):
+            raise UnsupportedConstructError(
+                f"Unsupported boolean operator: {type(node.op).__name__}"
+            )
+        for value, kind in zip(node.values, kinds, strict=True):
+            _require_kind(kind, "boolean", value)
+        return "boolean"
+
+    if isinstance(node, ast.Compare):
+        _expression_kind(node.left)
+        for operator, comparator in zip(node.ops, node.comparators, strict=True):
+            _expression_kind(comparator)
+            if not isinstance(operator, (ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE)):
+                raise UnsupportedConstructError(
+                    f"Unsupported comparison: {type(operator).__name__}"
+                )
+        return "boolean"
+
+    if isinstance(node, ast.Call):
+        name = node.func.id if isinstance(node.func, ast.Name) else ""
+        if node.keywords:
+            raise UnsupportedConstructError(
+                f"Keyword arguments are unsupported: {ast.unparse(node)!r}"
+            )
+        kinds = [_expression_kind(argument) for argument in node.args]
+        if name in ("implies", "Implies"):
+            if len(kinds) != 2:
+                raise UnsupportedConstructError(f"{name} expects 2 argument(s), got {len(kinds)}")
+            for argument, kind in zip(node.args, kinds, strict=True):
+                _require_kind(kind, "boolean", argument)
+            return "boolean"
+        if name in ("abs", "min", "max"):
+            expected = 1 if name == "abs" else 2
+            if len(kinds) != expected:
+                raise UnsupportedConstructError(
+                    f"{name} expects {expected} argument(s), got {len(kinds)}"
+                )
+            for argument, kind in zip(node.args, kinds, strict=True):
+                _require_kind(kind, "number", argument)
+            return "number"
+        raise UnsupportedConstructError(f"Unsupported function call: {ast.unparse(node)!r}")
+
+    raise UnsupportedConstructError(f"Unsupported language construct: {type(node).__name__}")
+
+
+def _validate_property(node: ast.Expression, spec: str) -> None:
+    if _expression_kind(node) != "boolean":
+        raise UnsupportedConstructError(f"Requirement spec {spec!r} is not a boolean property")
 
 
 def _spec_numbers(spec: str) -> set[float]:
@@ -180,6 +278,8 @@ class ProbedEngine:
         records: Optional[list[dict[str, Any]]] = None,
         trials: int = DEFAULT_TRIALS,
         seed: int = DEFAULT_SEED,
+        *,
+        trace_provider: Callable[[], Iterable[dict[str, Any]]] | None = None,
     ) -> RequirementResult:
         clause = f"{req.source_document} {req.article_clause}"
 
@@ -206,13 +306,40 @@ class ProbedEngine:
 
         try:
             spec_ast = parse_expression(req.spec)
+            _validate_property(spec_ast, req.spec)
         except (SyntaxError, UnsupportedConstructError) as exc:
             return not_evaluated(
                 f"Not evaluated: property {req.spec!r} is not expressible for this engine: {exc}",
                 {"engine": "probed", "reason": "property_not_expressible", "error": str(exc)},
             )
 
-        trace = list(records) if records is not None else list(sut.decisions())
+        if trials <= 0:
+            return not_evaluated(
+                f"Not evaluated: the probe trial budget must be positive; got {trials}, so the "
+                "search was not run.",
+                {
+                    "engine": "probed",
+                    "reason": "invalid_trial_budget",
+                    "trials_requested": trials,
+                },
+            )
+
+        try:
+            if records is not None:
+                trace = list(records)
+            else:
+                provider = trace_provider or sut.decisions
+                trace = list(provider())
+        except Exception as exc:
+            return not_evaluated(
+                "Not evaluated: the decision trace could not be acquired, so there was no "
+                f"search space to probe. {type(exc).__name__}: {exc}",
+                {
+                    "engine": "probed",
+                    "reason": "trace_acquisition_failed",
+                    "error": f"{type(exc).__name__}: {exc}",
+                },
+            )
         for rec in trace:
             if not isinstance(rec, Mapping):
                 return not_evaluated(
@@ -223,16 +350,35 @@ class ProbedEngine:
                 )
         trace = [dict(rec) for rec in trace]
 
-        plan = plan_inputs(req, trace, trials=trials, seed=seed)
+        try:
+            plan = plan_inputs(req, trace, trials=trials, seed=seed)
+            pools = _pools(req, trace)
+            input_space = {field: len(values) for field, values in pools.items()}
+        except Exception as exc:
+            return not_evaluated(
+                "Not evaluated: the probe input plan could not be built, so no input was "
+                f"replayed. {type(exc).__name__}: {exc}",
+                {
+                    "engine": "probed",
+                    "reason": "input_planning_failed",
+                    "error": f"{type(exc).__name__}: {exc}",
+                },
+            )
         if not plan:
             return not_evaluated(
-                "Not evaluated: the search could not run — the decision trace holds no decision "
-                "to generate inputs around, so nothing was perturbed and nothing was replayed.",
-                {"engine": "probed", "reason": "no_seed_decisions", "records_observed": len(trace)},
+                "Not evaluated: the search could not run — "
+                + (
+                    "the decision trace holds no decision to generate inputs around"
+                    if not trace
+                    else "the input planner produced no replayable input"
+                )
+                + ", so nothing was perturbed and nothing was replayed.",
+                {
+                    "engine": "probed",
+                    "reason": "no_seed_decisions" if not trace else "no_inputs_planned",
+                    "records_observed": len(trace),
+                },
             )
-
-        pools = _pools(req, trace)
-        input_space = {field: len(values) for field, values in pools.items()}
 
         def budget(replayed: int, errored: int) -> dict[str, Any]:
             return {
@@ -246,13 +392,19 @@ class ProbedEngine:
             }
 
         def holds(record: dict[str, Any]) -> bool:
-            return bool(eval_expression(spec_ast, dict(record)))
+            result = eval_expression(spec_ast, dict(record))
+            if not isinstance(result, bool):
+                raise UnsupportedConstructError(
+                    f"Requirement spec {req.spec!r} is not a boolean property"
+                )
+            return result
 
         errored = 0
         first_error = ""
         for index, case in enumerate(plan):
+            case_snapshot = dict(case)
             try:
-                record = _as_record(case, decide(case))
+                record = _as_record(case_snapshot, decide(dict(case_snapshot)))
                 satisfied = holds(record)
             except Exception as exc:  # the system, or the property, has nothing to say here
                 errored += 1
@@ -265,7 +417,7 @@ class ProbedEngine:
             # Verify before reporting: a candidate that does not fail a second time is a defect in
             # this search, not a finding about the system.
             try:
-                replay = _as_record(case, decide(case))
+                replay = _as_record(case_snapshot, decide(dict(case_snapshot)))
                 reproduced = not holds(replay)
                 replay_note = ""
             except Exception as exc:
@@ -274,14 +426,15 @@ class ProbedEngine:
 
             if not reproduced:
                 return not_evaluated(
-                    f"Not evaluated: input {case} failed property {req.spec!r} once but did not "
+                    f"Not evaluated: input {case_snapshot} failed property {req.spec!r} once "
+                    "but did not "
                     f"reproduce when replayed against the system's own decide().{replay_note} A "
                     "counterexample that does not reproduce is a defect in this search, not a "
                     "violation, and is never reported as one.",
                     {
                         "engine": "probed",
                         "reason": "counterexample_did_not_reproduce",
-                        "unverified_counterexample": case,
+                        "unverified_counterexample": case_snapshot,
                         PROBE_BUDGET_KEY: budget(index + 1, errored),
                     },
                 )
@@ -293,13 +446,14 @@ class ProbedEngine:
                 strength=Strength.PROBED,
                 signals_required=tuple(req.requires),
                 evidence_summary=(
-                    f"Violated under active perturbation: replaying input {case} through the "
-                    f"system's own decide() produced a decision that fails {req.spec!r}, and the "
+                    f"Violated under active perturbation: replaying input {case_snapshot} "
+                    "through the system's own decide() produced a decision that fails "
+                    f"{req.spec!r}, and the "
                     "counterexample reproduced when replayed a second time."
                 ),
                 details={
                     "engine": "probed",
-                    "counterexample": case,
+                    "counterexample": case_snapshot,
                     "counterexample_decision": record,
                     "verification": (
                         "Counterexample replayed against the system's own decide() and failed the "

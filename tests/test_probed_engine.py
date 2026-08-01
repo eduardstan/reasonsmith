@@ -12,7 +12,8 @@ import json
 
 import pytest
 
-from reasonsmith.engines.probed import DEFAULT_TRIALS, ProbedEngine, plan_inputs
+from reasonsmith.engines import probed
+from reasonsmith.engines.probed import DEFAULT_TRIALS, STRATEGY, ProbedEngine, plan_inputs
 from reasonsmith.report import (
     PROBE_BUDGET_KEY,
     ConformanceReport,
@@ -194,7 +195,7 @@ def test_the_engine_replays_exactly_the_planned_inputs():
 
 
 def test_a_probed_result_cannot_be_constructed_without_its_budget():
-    """The budget is a construction-time invariant, not a rendering convention."""
+    """The budget invariant is enforced at construction and every rendering boundary."""
     base = {
         "requirement_id": "r1",
         "source_clause": "Doc Art. 1",
@@ -216,6 +217,12 @@ def test_a_probed_result_cannot_be_constructed_without_its_budget():
         },
     )
     assert ok.strength == Strength.PROBED
+
+    del ok.details[PROBE_BUDGET_KEY]
+    report = ConformanceReport(pack_id="p", system_name="s", results=(ok,))
+    for render in (ok.to_dict, report.render_text, report.to_json, report.render_html):
+        with pytest.raises(ValueError, match="must carry its search budget"):
+            render()
 
 
 def test_probed_never_rounds_up_to_proved():
@@ -270,3 +277,106 @@ def test_conformance_shares_one_trace_across_probed_requirements():
 
     assert sut.trace_reads == 1
     assert all(result.strength == Strength.PROBED for result in report.results)
+
+
+def test_trace_and_planning_failures_are_not_evaluated(monkeypatch):
+    class BrokenTraceSUT(HonestSUT):
+        def __init__(self):
+            super().__init__()
+            self.trace_reads = 0
+
+        def decisions(self):
+            self.trace_reads += 1
+            raise RuntimeError("trace service unavailable")
+
+    direct = ProbedEngine.evaluate(_req(), BrokenTraceSUT())
+    assert direct.verdict == Verdict.INCONCLUSIVE
+    assert direct.strength is None
+    assert direct.details["reason"] == "trace_acquisition_failed"
+    assert "trace service unavailable" in direct.evidence_summary
+
+    routed_sut = BrokenTraceSUT()
+    routed = check_conformance(
+        routed_sut,
+        Pack("p", "P", "", (_req("r1"), _req("r2"))),
+    )
+    assert all(result.details["reason"] == "trace_acquisition_failed" for result in routed.results)
+    assert routed_sut.trace_reads == 1
+
+    def fail_plan(*args, **kwargs):
+        raise RuntimeError("planner unavailable")
+
+    monkeypatch.setattr(probed, "plan_inputs", fail_plan)
+    planning = ProbedEngine.evaluate(_req(), HonestSUT())
+    assert planning.verdict == Verdict.INCONCLUSIVE
+    assert planning.strength is None
+    assert planning.details["reason"] == "input_planning_failed"
+    assert "planner unavailable" in planning.evidence_summary
+
+
+def test_nonpositive_trial_budget_is_not_confused_with_an_empty_trace():
+    result = ProbedEngine.evaluate(_req(), HonestSUT(), trials=0)
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "invalid_trial_budget"
+    assert result.details["trials_requested"] == 0
+
+
+@pytest.mark.parametrize(
+    ("spec", "refusal"),
+    [
+        ("True or unsupported(income)", "unsupported function call"),
+        ("income + 1", "not a boolean property"),
+    ],
+)
+def test_the_complete_property_must_be_expressible_and_boolean(spec, refusal):
+    class SearchTrackingSUT(HonestSUT):
+        def __init__(self):
+            super().__init__()
+            self.replays = 0
+
+        def decide(self, case):
+            self.replays += 1
+            return super().decide(case)
+
+    sut = SearchTrackingSUT()
+    result = ProbedEngine.evaluate(_req(spec=spec), sut)
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "property_not_expressible"
+    assert refusal in result.evidence_summary.lower()
+    assert sut.replays == 0
+
+
+def test_mutating_decide_receives_fresh_replay_inputs_and_cannot_change_the_witness():
+    class MutatingSUT(OpaqueSUT):
+        def __init__(self):
+            super().__init__()
+            self.received = []
+
+        def decide(self, case):
+            self.received.append(dict(case))
+            case["income"] = -1
+            return {**case, "approved": False}
+
+    sut = MutatingSUT()
+    result = ProbedEngine.evaluate(
+        _req(spec="approved == True", requires=("approved",)),
+        sut,
+        trials=1,
+    )
+
+    assert result.verdict == Verdict.VIOLATED
+    assert sut.received == [dict(TRACE[0]), dict(TRACE[0])]
+    assert result.details["counterexample"] == TRACE[0]
+
+
+def test_recorded_strategy_distinguishes_seed_replays_from_perturbations():
+    result = ProbedEngine.evaluate(_req(), HonestSUT(), trials=10)
+    strategy = result.details[PROBE_BUDGET_KEY]["strategy"]
+
+    assert strategy == STRATEGY
+    assert "first unmodified" in strategy
+    assert "remaining inputs" in strategy

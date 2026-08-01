@@ -148,20 +148,7 @@ class RequirementResult:
         # budget: the number of inputs replayed, how they were generated and the seed that
         # generated them. Refusing the result here rather than at render time is what makes it
         # impossible to publish a probed verdict in any format without what was searched.
-        if self.strength == Strength.PROBED:
-            budget = self.details.get(PROBE_BUDGET_KEY)
-            if not isinstance(budget, Mapping):
-                raise ValueError(
-                    f"{self.requirement_id}: a probed result must carry its search budget in "
-                    f"details[{PROBE_BUDGET_KEY!r}]; no counterexample found is a claim about a "
-                    f"bounded search, and a reader who cannot see the bound cannot read it"
-                )
-            missing_fields = [f for f in PROBE_BUDGET_FIELDS if f not in budget]
-            if missing_fields:
-                raise ValueError(
-                    f"{self.requirement_id}: the probe budget must name "
-                    f"{', '.join(PROBE_BUDGET_FIELDS)}; missing {', '.join(missing_fields)}"
-                )
+        self._validate_probe_budget()
 
         unattainable = self.strength == Strength.UNATTAINABLE
         if unattainable and self.verdict != Verdict.INCONCLUSIVE:
@@ -211,12 +198,30 @@ class RequirementResult:
             )
         return names
 
+    def _validate_probe_budget(self) -> None:
+        if self.strength != Strength.PROBED:
+            return
+        budget = self.details.get(PROBE_BUDGET_KEY)
+        if not isinstance(budget, Mapping):
+            raise ValueError(
+                f"{self.requirement_id}: a probed result must carry its search budget in "
+                f"details[{PROBE_BUDGET_KEY!r}]; no counterexample found is a claim about a "
+                f"bounded search, and a reader who cannot see the bound cannot read it"
+            )
+        missing_fields = [field for field in PROBE_BUDGET_FIELDS if field not in budget]
+        if missing_fields:
+            raise ValueError(
+                f"{self.requirement_id}: the probe budget must name "
+                f"{', '.join(PROBE_BUDGET_FIELDS)}; missing {', '.join(missing_fields)}"
+            )
+
     @property
     def evaluated(self) -> bool:
         """False when no evidence of any strength was gathered for this requirement."""
         return self.strength is not None
 
     def to_dict(self) -> dict:
+        self._validate_probe_budget()
         return {
             "requirement_id": self.requirement_id,
             "source_clause": self.source_clause,
@@ -383,6 +388,8 @@ class ConformanceReport:
         `total`. `proved`/`probed`/`observed` count *satisfied* requirements at that strength,
         so a requirement is never counted as evidence for a property it does not have.
         """
+        for result in self.results:
+            result._validate_probe_budget()
         binding_res = [r for r in self.results if r.binding]
         interp_res = [r for r in self.results if not r.binding]
         return {
@@ -430,6 +437,7 @@ class ConformanceReport:
             "REQUIREMENT FINDINGS:",
         ]
         for r in self.results:
+            r._validate_probe_budget()
             if r.verdict == Verdict.NOT_APPLICABLE:
                 tier = "NOT APPLICABLE"
             else:
@@ -527,6 +535,7 @@ class ConformanceReport:
 
         req_html_blocks = []
         for r in self.results:
+            r._validate_probe_budget()
             req_id = html.escape(r.requirement_id)
             source = html.escape(r.source_clause)
             summary = html.escape(r.evidence_summary)
@@ -1251,11 +1260,18 @@ class _EvaluationResources:
     def __init__(self, sut: SystemUnderTest):
         self.sut = sut
         self._records: object = _UNREAD
+        self._trace_error: Exception | None = None
         self._logic_data: Any = _UNREAD
 
     def trace(self) -> list[dict[str, Any]]:
         if self._records is _UNREAD:
-            self._records = _read_trace(self.sut)
+            try:
+                self._records = _read_trace(self.sut)
+            except Exception as exc:
+                self._trace_error = exc
+                self._records = None
+        if self._trace_error is not None:
+            raise self._trace_error
         return cast(list[dict[str, Any]], self._records)
 
     def logic(self) -> Any:
@@ -1391,8 +1407,12 @@ def evaluate_requirement(
         logic_data = resources.logic()
         if logic_data is None and callable(getattr(sut, "decide", None)):
             from reasonsmith.engines.probed import ProbedEngine
-            trace = records if records is not None else resources.trace()
-            return ProbedEngine.evaluate(req, sut, trace)
+            return ProbedEngine.evaluate(
+                req,
+                sut,
+                records,
+                trace_provider=resources.trace if records is None else None,
+            )
         from reasonsmith.engines.proved import ProvedEngine
         return ProvedEngine.evaluate(req, sut, records, logic_data=logic_data)
 
