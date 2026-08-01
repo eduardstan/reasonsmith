@@ -96,6 +96,7 @@ class _Scope:
         self.inputs: dict[str, Any] = {}
         self.uses_real_arithmetic = False
         self._versions: dict[str, int] = {}
+        self._definitely_assigned: set[str] = set()
 
     def note_sort(self, expr: Any) -> Any:
         """Record that the encoding reached the Real sort, and return `expr` unchanged."""
@@ -117,17 +118,19 @@ class _Scope:
         self._versions[name] = version
         const = self.note_sort(_declare(name, self.var_types, f"#{version}"))
         self.current[name] = const
+        self._definitely_assigned.add(name)
         return const
 
-    def is_assigned(self, name: str) -> bool:
-        """True when the encoded rules write to `name`, rather than reading it as a free input."""
-        return name in self._versions
+    def is_definitely_assigned(self, name: str) -> bool:
+        """True when every encoded path writes `name` before the property is evaluated."""
+        return name in self._definitely_assigned
 
-    def snapshot(self) -> dict[str, Any]:
-        return dict(self.current)
+    def snapshot(self) -> tuple[dict[str, Any], set[str]]:
+        return dict(self.current), set(self._definitely_assigned)
 
-    def restore(self, snapshot: dict[str, Any]) -> None:
-        self.current = dict(snapshot)
+    def restore(self, snapshot: tuple[dict[str, Any], set[str]]) -> None:
+        self.current = dict(snapshot[0])
+        self._definitely_assigned = set(snapshot[1])
 
 
 def _to_real(expr: Any) -> Any:
@@ -203,10 +206,11 @@ def _present_to_z3(node: ast.Call, scope: _Scope) -> Any:
             f"{PRESENCE_CALL}() takes one signal name: {ast.unparse(node)!r}"
         )
     name = node.args[0].id
-    if not scope.is_assigned(name):
+    if not scope.is_definitely_assigned(name):
         raise UnsupportedConstructError(
-            f"{PRESENCE_CALL}({name}) cannot be proved: the declared rules never assign {name!r}, "
-            "so the exposed logic does not establish that a decision carries it"
+            f"{PRESENCE_CALL}({name}) cannot be proved: the declared rules do not assign "
+            f"{name!r} on every path, so the exposed logic does not establish that every "
+            "decision carries it"
         )
     const = scope.read(name)
     if const.sort() == z3.StringSort():
@@ -382,9 +386,11 @@ def _encode_block(stmts: list[ast.stmt], scope: _Scope, solver: z3.Solver) -> No
             else_state = scope.snapshot()
 
             scope.restore(before)
-            for name in sorted(set(then_state) | set(else_state)):
-                then_val = then_state[name] if name in then_state else scope.read(name)
-                else_val = else_state[name] if name in else_state else scope.read(name)
+            then_current, then_assigned = then_state
+            else_current, else_assigned = else_state
+            for name in sorted(set(then_current) | set(else_current)):
+                then_val = then_current[name] if name in then_current else scope.read(name)
+                else_val = else_current[name] if name in else_current else scope.read(name)
                 if z3.eq(then_val, else_val):
                     scope.current[name] = then_val
                     continue
@@ -396,6 +402,7 @@ def _encode_block(stmts: list[ast.stmt], scope: _Scope, solver: z3.Solver) -> No
                     solver,
                     f"Branch on {ast.unparse(stmt.test)!r}",
                 )
+            scope._definitely_assigned = then_assigned & else_assigned
 
         elif isinstance(stmt, ast.Expr):
             raise UnsupportedConstructError(

@@ -1126,6 +1126,16 @@ def test_the_loader_refuses_prose_where_a_property_belongs(tmp_path):
         load_pack(_spec_pack(tmp_path, "record", "not a property !@#$"))
 
 
+def test_the_loader_refuses_quoted_prose_as_a_non_boolean_property(tmp_path):
+    with pytest.raises(ValueError, match="is not a boolean property"):
+        load_pack(_spec_pack(tmp_path, "logical", "'Record check'"))
+
+
+def test_the_loader_refuses_arithmetic_as_a_non_boolean_property(tmp_path):
+    with pytest.raises(ValueError, match="is not a boolean property"):
+        load_pack(_spec_pack(tmp_path, "logical", "1 + 2"))
+
+
 def test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment(tmp_path):
     """Labelling a formula with the wrong fragment is refused, naming the fragment it really is.
 

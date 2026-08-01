@@ -233,36 +233,54 @@ def parse_property(text: str) -> ast.Expression:
     return node
 
 
-def validate_property(node: ast.AST) -> None:
-    """Walk a parsed property and raise on the first construct this language does not have."""
+def _require_kind(kind: str, expected: str, node: ast.AST) -> None:
+    if kind not in (expected, "unknown"):
+        raise UnsupportedConstructError(
+            f"{ast.unparse(node)!r} has type {kind}, expected {expected}"
+        )
+
+
+def expression_kind(node: ast.AST) -> str:
+    """Return the language-level kind of an expression, checking its typed positions."""
     if isinstance(node, ast.Expression):
-        validate_property(node.body)
-        return
+        return expression_kind(node.body)
 
     if isinstance(node, ast.Constant):
-        if node.value is None or isinstance(node.value, (bool, int, float, str)):
-            return
+        if isinstance(node.value, bool):
+            return "boolean"
+        if isinstance(node.value, (int, float)):
+            return "number"
+        if isinstance(node.value, str):
+            return "string"
+        if node.value is None:
+            return "none"
         raise UnsupportedConstructError(
             f"Unsupported constant type {type(node.value).__name__}: {node.value!r}"
         )
 
     if isinstance(node, ast.Name):
-        return
+        return "unknown"
 
     if isinstance(node, ast.UnaryOp):
-        if not isinstance(node.op, (ast.Not, ast.USub, ast.UAdd)):
-            raise UnsupportedConstructError(f"Unsupported unary operator: {type(node.op).__name__}")
-        validate_property(node.operand)
-        return
+        operand_kind = expression_kind(node.operand)
+        if isinstance(node.op, ast.Not):
+            _require_kind(operand_kind, "boolean", node.operand)
+            return "boolean"
+        if isinstance(node.op, (ast.USub, ast.UAdd)):
+            _require_kind(operand_kind, "number", node.operand)
+            return "number"
+        raise UnsupportedConstructError(f"Unsupported unary operator: {type(node.op).__name__}")
 
     if isinstance(node, ast.BinOp):
         if not isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod)):
             raise UnsupportedConstructError(
                 f"Unsupported binary operator: {type(node.op).__name__}"
             )
-        validate_property(node.left)
-        validate_property(node.right)
-        return
+        left_kind = expression_kind(node.left)
+        right_kind = expression_kind(node.right)
+        _require_kind(left_kind, "number", node.left)
+        _require_kind(right_kind, "number", node.right)
+        return "number"
 
     if isinstance(node, ast.BoolOp):
         if not isinstance(node.op, (ast.And, ast.Or)):
@@ -270,17 +288,17 @@ def validate_property(node: ast.AST) -> None:
                 f"Unsupported boolean operator: {type(node.op).__name__}"
             )
         for value in node.values:
-            validate_property(value)
-        return
+            _require_kind(expression_kind(value), "boolean", value)
+        return "boolean"
 
     if isinstance(node, ast.Compare):
         for op in node.ops:
             if not isinstance(op, (ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE)):
                 raise UnsupportedConstructError(f"Unsupported comparison: {type(op).__name__}")
-        validate_property(node.left)
+        expression_kind(node.left)
         for comparator in node.comparators:
-            validate_property(comparator)
-        return
+            expression_kind(comparator)
+        return "boolean"
 
     if isinstance(node, ast.Call):
         if node.keywords:
@@ -295,14 +313,14 @@ def validate_property(node: ast.AST) -> None:
                 raise UnsupportedConstructError(
                     f"{PRESENCE_CALL}() takes one signal name: {ast.unparse(node)!r}"
                 )
-            return
+            return "boolean"
         if name in TEMPORAL_OPERATORS:
             if len(node.args) != 1:
                 raise UnsupportedConstructError(
                     f"{name} takes one operand, got {len(node.args)}: {ast.unparse(node)!r}"
                 )
-            validate_property(node.args[0])
-            return
+            _require_kind(expression_kind(node.args[0]), "boolean", node.args[0])
+            return "boolean"
         arity = VALUE_CALLS.get(name)
         if arity is None:
             raise UnsupportedConstructError(f"Unsupported function call: {ast.unparse(node)!r}")
@@ -310,11 +328,22 @@ def validate_property(node: ast.AST) -> None:
             raise UnsupportedConstructError(
                 f"{name} expects {arity} argument(s), got {len(node.args)}"
             )
-        for argument in node.args:
-            validate_property(argument)
-        return
+        kinds = [expression_kind(argument) for argument in node.args]
+        expected_kind = "boolean" if name in ("implies", "Implies") else "number"
+        for argument, kind in zip(node.args, kinds, strict=True):
+            _require_kind(kind, expected_kind, argument)
+        return expected_kind
 
     raise UnsupportedConstructError(f"Unsupported language construct: {type(node).__name__}")
+
+
+def validate_property(node: ast.AST) -> None:
+    """Refuse a parsed expression that is not a Boolean property in this language."""
+    kind = expression_kind(node)
+    if kind not in ("boolean", "unknown"):
+        raise UnsupportedConstructError(
+            f"Requirement spec {ast.unparse(node)!r} is not a boolean property"
+        )
 
 
 def presence_atoms(node: ast.AST) -> tuple[str, ...] | None:

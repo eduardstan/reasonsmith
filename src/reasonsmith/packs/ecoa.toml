@@ -19,7 +19,7 @@ verbatim_text = """A creditor shall notify an applicant of action taken within:
 (iv) 90 days after notifying the applicant of a counteroffer if the applicant does not expressly accept or use the credit offered."""
 stakeholder = "affected individual"
 formalism = "temporal"
-spec = "always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or (present(artifact_logs_counteroffer_not_accepted) and (artifact_logs_notification_latency_days <= 90))))"
+spec = "always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))"
 rationale = """Every decision the log records was notified within the deadline its own paragraph sets: 30 days \
 under (i)-(iii), or 90 days where the record says the applicant did not accept a counteroffer, which is the \
 only case (iv) reaches. Both numbers are the clause's own; neither is this pack's."""

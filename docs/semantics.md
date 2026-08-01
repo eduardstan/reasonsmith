@@ -100,7 +100,11 @@ record engine's per-signal diagnostics (`test_the_loader_refuses_a_spec_that_is_
 
 Text that is not in the language at all — prose such as `"Record check"`, or `"not a property !@#$"`
 — is a load error naming what was found, not a spec that quietly goes unread
-(`test_the_loader_refuses_prose_where_a_property_belongs`).
+(`test_the_loader_refuses_prose_where_a_property_belongs`). A well-formed expression that is
+definitely not Boolean is also refused at load time: that includes a quoted prose value and a bare
+arithmetic expression (`test_the_loader_refuses_quoted_prose_as_a_non_boolean_property`,
+`test_the_loader_refuses_arithmetic_as_a_non_boolean_property`). A bare signal remains valid
+because its kind is unknown until a system supplies a value and it may be Boolean.
 
 **What this replaced, and why it mattered.** `spec` used to mean two unrelated things. For
 `temporal` and `logical` it was a formula the engine evaluated; for `record` it was English prose
@@ -122,10 +126,14 @@ expression: there is no such question about a computed value.
 ### `temporal` — Signal Temporal Logic, monitored by rtamt
 
 `ObservedEngine` renders the property in rtamt's syntax with `to_stl` and hands that to
-`rtamt.StlDiscreteTimeSpecification`. The only rewrite is `present(x)` → `(x >= 0.5)`, which is the
-presence idiom this monitor already reads as a flag rather than a magnitude, so the two spellings
-ask the monitor the same question. A formula rtamt cannot parse is reported not evaluated rather
-than guessed at (`test_unexpressible_formula_reports_not_evaluated`).
+`rtamt.StlDiscreteTimeSpecification`. Each `present(x)` becomes a comparison over its own synthetic
+flag, whose time series is 1.0 exactly where `rulelang.is_present` says the record carries `x` and
+0.0 otherwise. The synthetic flag is never a magnitude. An explicit `x >= 0.5` remains the separate
+flag predicate described below; it is not rewritten into presence. This makes `0` and `False`
+present to both the temporal and record engines
+(`test_temporal_presence_agrees_with_record_presence_for_falsy_values`). A formula rtamt cannot
+parse is reported not evaluated rather than guessed at
+(`test_unexpressible_formula_reports_not_evaluated`).
 
 The temporal fragment is narrower than rtamt's own syntax on purpose: `TEMPORAL_OPERATORS` holds the
 prefix call forms a Python parser accepts, so rtamt's infix `until` and `since` are not in this
@@ -472,16 +480,22 @@ and a logged decision carries none — the ladder reports the `proved` verdict a
 read for that duty. That is not a contradiction the tool resolves; it is a system misdescribing
 itself to its auditor, which §3 already says reasonsmith does not detect.
 
-### Two things the presence atom cannot be proved about
+### When the presence atom cannot be proved
 
-`ProvedEngine` refuses `present(x)` in two cases, and each refusal drops the duty to the strongest
-engine that *can* answer rather than losing its verdict:
+`ProvedEngine` refuses `present(x)` unless the declared rules definitely assign `x`: every path
+through the rules must write it. Each refusal drops the duty to the strongest engine that *can*
+answer rather than losing its verdict:
 
 - **`x` is a free input of the rules** — read, never written. Proving a property about the solver's
   free constant would say the record carries `x` because this encoding declared a constant called
   `x`, which is a fact about the encoding
   (`test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`).
-- Nothing else. In particular, **a string is not refused**: `present()` over a string encodes as
+- **Only some branches assign `x`.** An assignment in an `if` without an assignment on the other
+  path does not establish that every decision carries it
+  (`test_presence_is_not_proved_when_only_one_branch_assigns_the_signal`).
+
+The signal's sort is not itself a reason for refusal. In particular, **a string is not refused**:
+`present()` over a string encodes as
   "not in the language of blanks" over `BLANK_CHARACTERS`, which is exactly the set `str.strip()`
   removes, so the solver and `is_present` agree on every string rather than approximately
   (`test_the_solvers_blank_string_is_pythons_blank_string`). A system whose rules can write a blank
@@ -584,20 +598,21 @@ Two consequences of that report text, followed by a separate package-level termi
 | A record duty is discharged by the property in its `spec`, not by its `requires` | `test_the_record_engine_evaluates_its_spec` |
 | `record` and `temporal` route to their respective engine families | `test_record_and_temporal_formalisms_route_through_report` |
 | `logical` routes to proved with exposed logic, probed with only `decide()`, and no evidence with neither | `test_property_holds_for_all_inputs_proved`, `test_an_opaque_system_reaches_probed_through_the_report`, `test_system_without_logic_reported_not_evaluated` |
-| One property language: the loader classifies the fragment and refuses a mismatch, prose included | `test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment`, `test_the_loader_refuses_prose_where_a_property_belongs` |
+| One property language: the loader classifies the fragment and refuses a mismatch, prose and definitely non-Boolean roots included | `test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment`, `test_the_loader_refuses_prose_where_a_property_belongs`, `test_the_loader_refuses_quoted_prose_as_a_non_boolean_property`, `test_the_loader_refuses_arithmetic_as_a_non_boolean_property` |
 | A signal the property reads must be gated by `requires` | `test_the_loader_refuses_a_spec_reading_an_ungated_signal` |
 | The same presence property is observed off a trace, probed against `decide()`, and proved against `logic()` | `test_a_record_duty_reaches_proved_when_the_system_exposes_its_logic`, `test_a_record_duty_reaches_probed_when_the_system_can_only_be_re_run` |
 | The ladder takes the strongest evidence produced, not the strongest engine available | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can` |
+| A presence proof requires the rules to assign the signal on every path | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`, `test_presence_is_not_proved_when_only_one_branch_assigns_the_signal` |
 | A temporal duty never rises above observed | `test_a_temporal_duty_never_rises_above_observed` |
 | The solver's blank string is Python's blank string, so a provable blank reason is a violation | `test_the_solvers_blank_string_is_pythons_blank_string`, `test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose` |
 | An absent or blank signal in an observed record is a violation, naming it | `test_record_engine_violated_on_blank_field`, `test_a_declared_signal_absent_from_the_trace_is_a_violation` |
-| Presence means non-empty, not merely keyed | `test_a_present_but_empty_signal_does_not_count_as_evidence`, `test_a_falsy_but_real_signal_value_counts` |
+| Presence means non-empty, not merely keyed, in every engine | `test_a_present_but_empty_signal_does_not_count_as_evidence`, `test_a_falsy_but_real_signal_value_counts`, `test_temporal_presence_agrees_with_record_presence_for_falsy_values` |
 | An empty trace is not evaluated, never satisfied | `test_an_empty_trace_is_not_evidence` |
 | `observed satisfied` ⇒ non-negative STL robustness at every step of the supplied trace | `test_temporal_satisfied` |
 | A temporal violation names the record positions that breached | `test_temporal_violated_returns_offending_segment` |
 | A trace too short to monitor is not evaluated, and the trace is blamed, not the formula | `test_trace_too_short_names_the_trace_not_the_formula` |
 | A formula rtamt cannot parse is not evaluated | `test_unexpressible_formula_reports_not_evaluated` |
-| The formula selects flag versus magnitude treatment, and flag values follow the stated conversion | `test_non_finite_flag_counts_as_absent`, `test_temporal_satisfied`, `test_ecoa_thirty_day_notice_violated_by_a_late_notification`, `test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline` |
+| The formula selects flag versus magnitude treatment, and flag values follow the stated conversion | `test_non_finite_flag_counts_as_absent`, `test_temporal_satisfied`, `test_ecoa_thirty_day_notice_violated_by_a_late_notification`, `test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline`, `test_ecoa_accepted_counteroffer_keeps_the_thirty_day_deadline` |
 | A magnitude bound over an unmeasured signal is not evaluated, never scored | `test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent` |
 | The Recital 71 error duty is satisfied only when every declared deviation is no larger than that decision's own margin, including the known exact-tie boundary | `test_a_declared_deviation_below_the_decision_margin_is_satisfied`, `test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied` |
 | A declared deviation larger than that margin violates it, naming the decision | `test_a_declared_deviation_that_could_have_moved_a_decision_is_violated` |

@@ -297,6 +297,37 @@ def test_record_and_temporal_formalisms_route_through_report():
     assert "evaluation_scores" in temporal.details
 
 
+@pytest.mark.parametrize(
+    "value",
+    [pytest.param(0, id="zero"), pytest.param(False, id="false")],
+)
+def test_temporal_presence_agrees_with_record_presence_for_falsy_values(value):
+    sut = BaseSUT({"signal_a"})
+    records = [{"signal_a": value}, {"signal_a": value}]
+    fields = {
+        "source_document": "Doc",
+        "article_clause": "Art 1",
+        "verbatim_text": "Quote",
+        "stakeholder": "deployer",
+        "rationale": "A value was recorded.",
+        "requires": ("signal_a",),
+        "binding": True,
+        "scope": "",
+    }
+    record = Requirement(
+        id="record_presence", formalism="record", spec="present(signal_a)", **fields
+    )
+    temporal = Requirement(
+        id="temporal_presence",
+        formalism="temporal",
+        spec="always(present(signal_a))",
+        **fields,
+    )
+
+    assert RecordEngine.evaluate(record, sut, records).verdict == Verdict.SATISFIED
+    assert ObservedEngine.evaluate(temporal, sut, records).verdict == Verdict.SATISFIED
+
+
 class TestRecordEngine:
     """Tests for RecordEngine completeness verification."""
 
@@ -606,6 +637,26 @@ class TestRequirementsMeasureTheirDuty:
         result = ObservedEngine.evaluate(req, sut, late)
         assert result.verdict == Verdict.VIOLATED
         assert result.details["violation_step_indices"] == [1]
+
+    def test_ecoa_accepted_counteroffer_keeps_the_thirty_day_deadline(self):
+        req = load_pack("ecoa").get_requirement("ecoa_reg_b_1002_9_a_1_timing_of_notice")
+        sut = BaseSUT(set(req.requires))
+        records = [
+            {
+                "artifact_logs_decision_record": {"id": "dec-1"},
+                "artifact_logs_counteroffer_not_accepted": False,
+                "artifact_logs_notification_latency_days": 90,
+            },
+            {
+                "artifact_logs_decision_record": {"id": "dec-2"},
+                "artifact_logs_counteroffer_not_accepted": False,
+                "artifact_logs_notification_latency_days": 90,
+            },
+        ]
+
+        result = ObservedEngine.evaluate(req, sut, records)
+        assert result.verdict == Verdict.VIOLATED
+        assert result.details["violation_step_indices"] == [0, 1]
 
     @pytest.mark.parametrize(
         "unmeasured_latency",

@@ -848,6 +848,21 @@ def test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can():
     assert result.strength == Strength.PROBED
 
 
+def test_presence_is_not_proved_when_only_one_branch_assigns_the_signal():
+    req = _record_req("present(artifact_logs_event_log)", ("artifact_logs_event_log",))
+    sut = RulesAdapter(
+        rules=["if condition:\n    artifact_logs_event_log = 1"],
+        variables={"condition": "bool", "artifact_logs_event_log": "int"},
+        declared_capabilities={"artifact_logs_event_log"},
+        test_inputs=[{"condition": True}, {"condition": False}],
+    )
+    assert "artifact_logs_event_log" not in sut.decide({"condition": False})
+
+    result = evaluate_requirement(req, sut)
+    assert result.verdict == Verdict.VIOLATED
+    assert result.strength == Strength.PROBED
+
+
 def test_a_temporal_duty_never_rises_above_observed():
     """No engine in this build reasons about a formula quantified over a trace.
 

@@ -46,9 +46,9 @@ from typing import Any, Optional
 
 from reasonsmith.report import PROBE_BUDGET_KEY, RequirementResult
 from reasonsmith.rulelang import (
-    PRESENCE_CALL,
     UnsupportedConstructError,
     eval_expression,
+    expression_kind,
     parse_expression,
     parse_property,
 )
@@ -73,112 +73,6 @@ STRATEGY = (
     "that field's candidate pool (the values the trace shows for it, the numeric literals of "
     "the property, and their immediate neighbours)"
 )
-
-
-def _require_kind(kind: str, expected: str, node: ast.AST) -> None:
-    if kind not in (expected, "unknown"):
-        raise UnsupportedConstructError(
-            f"{ast.unparse(node)!r} has type {kind}, expected {expected}"
-        )
-
-
-def _expression_kind(node: ast.AST) -> str:
-    if isinstance(node, ast.Expression):
-        return _expression_kind(node.body)
-
-    if isinstance(node, ast.Constant):
-        if isinstance(node.value, bool):
-            return "boolean"
-        if isinstance(node.value, (int, float)):
-            return "number"
-        if isinstance(node.value, str):
-            return "string"
-        raise UnsupportedConstructError(
-            f"Unsupported constant type {type(node.value).__name__}: {node.value!r}"
-        )
-
-    if isinstance(node, ast.Name):
-        return "unknown"
-
-    if isinstance(node, ast.UnaryOp):
-        operand_kind = _expression_kind(node.operand)
-        if isinstance(node.op, ast.Not):
-            _require_kind(operand_kind, "boolean", node.operand)
-            return "boolean"
-        if isinstance(node.op, (ast.USub, ast.UAdd)):
-            _require_kind(operand_kind, "number", node.operand)
-            return "number"
-        raise UnsupportedConstructError(f"Unsupported unary operator: {type(node.op).__name__}")
-
-    if isinstance(node, ast.BinOp):
-        left_kind = _expression_kind(node.left)
-        right_kind = _expression_kind(node.right)
-        if not isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod)):
-            raise UnsupportedConstructError(
-                f"Unsupported binary operator: {type(node.op).__name__}"
-            )
-        _require_kind(left_kind, "number", node.left)
-        _require_kind(right_kind, "number", node.right)
-        return "number"
-
-    if isinstance(node, ast.BoolOp):
-        kinds = [_expression_kind(value) for value in node.values]
-        if not isinstance(node.op, (ast.And, ast.Or)):
-            raise UnsupportedConstructError(
-                f"Unsupported boolean operator: {type(node.op).__name__}"
-            )
-        for value, kind in zip(node.values, kinds, strict=True):
-            _require_kind(kind, "boolean", value)
-        return "boolean"
-
-    if isinstance(node, ast.Compare):
-        _expression_kind(node.left)
-        for operator, comparator in zip(node.ops, node.comparators, strict=True):
-            _expression_kind(comparator)
-            if not isinstance(operator, (ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE)):
-                raise UnsupportedConstructError(
-                    f"Unsupported comparison: {type(operator).__name__}"
-                )
-        return "boolean"
-
-    if isinstance(node, ast.Call):
-        name = node.func.id if isinstance(node.func, ast.Name) else ""
-        if node.keywords:
-            raise UnsupportedConstructError(
-                f"Keyword arguments are unsupported: {ast.unparse(node)!r}"
-            )
-        if name == PRESENCE_CALL:
-            # A question about the record, not about the value: whatever kind the field holds,
-            # the answer is a Boolean, and an absent field is the answer this atom exists for.
-            if len(node.args) != 1 or not isinstance(node.args[0], ast.Name):
-                raise UnsupportedConstructError(
-                    f"{PRESENCE_CALL}() takes one signal name: {ast.unparse(node)!r}"
-                )
-            return "boolean"
-        kinds = [_expression_kind(argument) for argument in node.args]
-        if name in ("implies", "Implies"):
-            if len(kinds) != 2:
-                raise UnsupportedConstructError(f"{name} expects 2 argument(s), got {len(kinds)}")
-            for argument, kind in zip(node.args, kinds, strict=True):
-                _require_kind(kind, "boolean", argument)
-            return "boolean"
-        if name in ("abs", "min", "max"):
-            expected = 1 if name == "abs" else 2
-            if len(kinds) != expected:
-                raise UnsupportedConstructError(
-                    f"{name} expects {expected} argument(s), got {len(kinds)}"
-                )
-            for argument, kind in zip(node.args, kinds, strict=True):
-                _require_kind(kind, "number", argument)
-            return "number"
-        raise UnsupportedConstructError(f"Unsupported function call: {ast.unparse(node)!r}")
-
-    raise UnsupportedConstructError(f"Unsupported language construct: {type(node).__name__}")
-
-
-def _validate_property(node: ast.Expression, spec: str) -> None:
-    if _expression_kind(node) not in ("boolean", "unknown"):
-        raise UnsupportedConstructError(f"Requirement spec {spec!r} is not a boolean property")
 
 
 def _value_kind(value: Any) -> str:
@@ -246,7 +140,7 @@ def _trace_operand_kind(
         origins = ((node.id, kind),) if kind != "unknown" else ()
         return kind, origins
     if isinstance(node, ast.Constant):
-        return _expression_kind(node), ()
+        return expression_kind(node), ()
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
         kind, origins = _trace_operand_kind(node.operand, field_kinds)
         if kind not in ("number", "unknown") and origins:
@@ -298,7 +192,7 @@ def _trace_operand_kind(
                 else "number"
             )
             return kind, origins
-    return _expression_kind(node), ()
+    return expression_kind(node), ()
 
 
 def _validate_trace_kinds(node: ast.Expression, field_kinds: Mapping[str, str]) -> None:
@@ -577,7 +471,6 @@ class ProbedEngine:
 
         try:
             spec_ast = parse_property(req.spec)
-            _validate_property(spec_ast, req.spec)
         except (SyntaxError, UnsupportedConstructError) as exc:
             return not_evaluated(
                 f"Not evaluated: property {req.spec!r} is not expressible for this engine: {exc}",

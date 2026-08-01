@@ -3,8 +3,9 @@
 What this module is for:
   Evaluates temporal properties (`formalism = "temporal"`) over decision traces using an rtamt
   discrete-time STL monitor. The property is written in the shared language of `rulelang.py`;
-  `to_stl` renders it in rtamt's syntax, which today means turning each `present(x)` atom into the
-  flag test `x >= 0.5` this monitor already reads that way.
+  `to_stl` renders it in rtamt's syntax. Each `present(x)` atom reaches rtamt through a synthetic
+  flag whose trace is computed with `rulelang.is_present`, so presence has the same meaning here
+  as it does in the record, replay and proof engines.
 
 What a reader must not break:
   - If rtamt cannot express a formula or trace is shorter than `MINIMUM_TRACE_LENGTH`, report
@@ -47,8 +48,8 @@ if "typing.io" not in sys.modules and not hasattr(typing, "io"):
 
 import rtamt
 
-from reasonsmith.report import RequirementResult, _is_present
-from reasonsmith.rulelang import PRESENCE_CALL
+from reasonsmith.report import RequirementResult
+from reasonsmith.rulelang import PRESENCE_CALL, is_present
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
@@ -67,22 +68,38 @@ _IDENT = r"[a-zA-Z_][a-zA-Z0-9_]*"
 _OPERAND = rf"(?:{_NUMBER}|{_IDENT})"
 _COMPARISON = re.compile(rf"({_OPERAND})\s*(<=|>=|<|>|==|!=)\s*({_OPERAND})")
 
-#: `present(x)` as it reaches this engine. rtamt has no such atom, so the one presence idiom this
-#: monitor already understands — a comparison against `PRESENCE_THRESHOLD` — is what it becomes.
-#: The rewrite is textual and runs before anything else reads the formula, so `_magnitude_vars`,
-#: the variable scan and rtamt itself all see one text.
 _PRESENCE_CALL = re.compile(rf"\b{PRESENCE_CALL}\s*\(\s*({_IDENT})\s*\)")
+_SYNTHETIC_PRESENCE_PREFIX = "__reasonsmith_present_"
+
+
+def _render_stl(
+    spec: str, reserved_names: set[str] | None = None
+) -> tuple[str, dict[str, str]]:
+    """Render a property for rtamt and map each synthetic presence flag to its signal."""
+    used = set(re.findall(rf"\b{_IDENT}\b", spec)) | set(reserved_names or ())
+    presence_signals: dict[str, str] = {}
+    next_index = 0
+
+    def replace(match: re.Match[str]) -> str:
+        nonlocal next_index
+        while f"{_SYNTHETIC_PRESENCE_PREFIX}{next_index}" in used:
+            next_index += 1
+        synthetic = f"{_SYNTHETIC_PRESENCE_PREFIX}{next_index}"
+        next_index += 1
+        used.add(synthetic)
+        presence_signals[synthetic] = match.group(1)
+        return f"({synthetic} >= {PRESENCE_THRESHOLD})"
+
+    return _PRESENCE_CALL.sub(replace, spec), presence_signals
 
 
 def to_stl(spec: str) -> str:
-    """A requirement's property as rtamt syntax: `present(x)` becomes the flag test on `x`.
+    """Return a requirement property in rtamt syntax.
 
-    The two are the same question. `engines/observed.py` already treats `x >= 0.5` as "does the
-    record carry anything for x", so a presence atom does not need a new encoding here — it needs
-    the existing one spelled out, which is what makes `present()` writable in a temporal formula
-    at all.
+    The synthetic flag named in the returned text is populated by `ObservedEngine`; callers that
+    only need the rendered formula can use this public view without depending on that mapping.
     """
-    return _PRESENCE_CALL.sub(rf"(\1 >= {PRESENCE_THRESHOLD})", spec)
+    return _render_stl(spec)[0]
 
 
 def _is_real_number(value: Any) -> bool:
@@ -189,10 +206,7 @@ class ObservedEngine:
                 scope=req.scope,
             )
 
-        # The formula in rtamt's own syntax. Everything below reads this text rather than
-        # `req.spec`, so a `present()` atom is a flag test to the monitor, to the magnitude
-        # analysis and to the variable scan alike.
-        stl_text = to_stl(req.spec)
+        stl_text, presence_signals = _render_stl(req.spec, set(req.requires))
 
         # Extract variable names from formula or req.requires
         var_names = set(req.requires)
@@ -205,11 +219,18 @@ class ObservedEngine:
         formula_vars = found_vars - keywords
         spec_vars = formula_vars | var_names
         magnitude_vars = _magnitude_vars(stl_text)
+        magnitude_vars.difference_update(presence_signals)
 
         # Build dataset for rtamt
         time_series: dict[str, list[float]] = {"time": list(range(len(records)))}
         unmeasured: dict[str, int] = {}
         for var in spec_vars:
+            if var in presence_signals:
+                source = presence_signals[var]
+                time_series[var] = [
+                    1.0 if is_present(rec.get(source)) else 0.0 for rec in records
+                ]
+                continue
             values: list[float] = []
             not_measured = 0
             for rec in records:
@@ -224,7 +245,7 @@ class ObservedEngine:
                     values.append(1.0 if val else 0.0)
                 elif isinstance(val, (int, float)):
                     values.append(float(val) if math.isfinite(val) else 0.0)
-                elif _is_present(val):
+                elif is_present(val):
                     # Categorical: carries something, so it counts as present
                     values.append(1.0)
                 else:
