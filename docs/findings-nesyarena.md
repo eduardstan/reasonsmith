@@ -33,8 +33,9 @@ the decision record, the decision's margin from the approve threshold, an event-
 per-decision reason, the model version, the constraint set (the program's ground rules), the
 local-vs-global scope statement, the explanation-scope statement, the approximation-vs-guarantee
 statement carrying the measured deviation from the semantics the system claims, and that deviation
-as a number. The last two of those are read by the duty added after this document's first finding
-(below); the first run carried eight signals and no duty read the deviation at all.
+as a number. The decision margin and numeric deviation are the two signals added for the duty below;
+its property compares them, and its capability declaration also requires the existing approximation
+statement. The first run carried eight signals and no duty read the deviation at all.
 
 Nine further pack signals were **not** declared, because the system genuinely cannot emit them —
 `provenance_active_exceptions` (definite Horn programs have no defeater mechanism),
@@ -93,13 +94,13 @@ explanation, not the outcome.
 
 This is the most important thing in this run.
 
-| system | max abs. deviation from its claimed semantics | instances deviating | decisions differing from `exact-wmc` | verdicts when this was written | verdicts now |
-| --- | ---: | ---: | ---: | --- | --- |
-| `exact-wmc` | 0.000000 | 0/16 | 0/16 | all checkable duties satisfied | all checkable duties satisfied |
-| `add-mult(clamped)` | 0.347356 | 8/16 | 0/16 | 3 violated | 3 violated |
-| `top-1-proofs` | 0.470679 | 8/16 | **8/16** | all checkable duties satisfied | **1 violated** |
-| `top-3-proofs` | 0.097273 | 4/16 | 0/16 | all checkable duties satisfied | all checkable duties satisfied |
-| `min-max-prob` | 0.357000 | **16/16** | 4/16 | all checkable duties satisfied | **1 violated** |
+| system | max abs. deviation from its claimed semantics | instances deviating | decisions differing from `exact-wmc` | conformance verdicts |
+| --- | ---: | ---: | ---: | --- |
+| `exact-wmc` | 0.000000 | 0/16 | 0/16 | all checkable duties satisfied |
+| `add-mult(clamped)` | 0.347356 | 8/16 | 0/16 | 3 violated |
+| `top-1-proofs` | 0.470679 | 8/16 | **8/16** | all checkable duties satisfied |
+| `top-3-proofs` | 0.097273 | 4/16 | 0/16 | all checkable duties satisfied |
+| `min-max-prob` | 0.357000 | **16/16** | 4/16 | all checkable duties satisfied |
 
 `top-1-proofs` returns a different decision from the exact semantics on **half the battery** —
 eight instances approved by the semantics the system claims to implement are denied by the
