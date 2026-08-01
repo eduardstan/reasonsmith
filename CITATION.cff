@@ -1,7 +1,5 @@
 # CITATION.cff — Citation File Format 1.2.0.
-# The software entry is the release this repository is currently on; the preferred-citation is the
-# JAIR paper this work continues, transcribed from src/reasonsmith/table7.toml and AGENTS.md.
-# Fields not established by something in this repository are left out (no DOI, volume or issue).
+# The preferred citation is the JAIR reference record supplied by the paper first author.
 cff-version: 1.2.0
 message: "If you use reasonsmith, please cite it and the paper it continues."
 type: software
@@ -19,9 +17,14 @@ preferred-citation:
     - family-names: "Stan"
       given-names: "Ionel Eduard"
     - family-names: "Sciavicco"
+      given-names: "Guido"
     - family-names: "Napoletano"
+      given-names: "Paolo"
   title: "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
   journal: "Journal of Artificial Intelligence Research"
+  volume: 86
+  number: 36
   year: 2026
   month: 7
-  pages: "36:22"
+  pages: 60
+  doi: "10.1613/jair.1.22096"
