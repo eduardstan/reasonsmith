@@ -14,8 +14,9 @@ python -m reasonsmith.cli validate-pack my_pack.toml
 reasonsmith validate-pack my_pack.toml
 ```
 
-`validate-pack` prints what the pack contains and exits 0. A pack the loader refuses makes it
-exit 1, naming the file and the `[[requirement]]` at fault.
+`validate-pack` accepts one or more pack names or paths, prints what each pack contains, and exits
+0. It stops at the first pack the loader refuses and exits 1, naming the file and, when a
+`[[requirement]]` is at fault, its block and id.
 
 ## Structure
 
@@ -77,9 +78,11 @@ classified a requirement is a pack that must say so and be fixed, not one the co
 
 ## Verbatim text must be traceable to the print
 
-`verbatim_text` is quoted in reports and checked against the law, so it must be a character-faithful
-quotation of the official statutory text — never a paraphrase. `docs/legal-sources.md` is the
-retrieval record for the official text behind the shipped packs and the worked example: a new pack
-that quotes a statute should record the same way, so a reviewer can verify the quotation against
-the print. A requirement with a blank source document, clause or quotation is malformed rather
-than merely incomplete, because it cannot be checked against the print at all.
+`verbatim_text` is quoted in reports, so it must be a character-faithful quotation of the official
+statutory text — never a paraphrase. `docs/legal-sources.md` is the retrieval record for the official
+text behind the shipped packs and the worked example, and the shipped packs have tests that compare
+their quotations with that record. A new pack that quotes a statute should record its source the
+same way so a reviewer can verify the quotation against the print; `validate-pack` checks that the
+field is nonblank, not that it matches an external source. A requirement with a blank source
+document, clause or quotation is malformed rather than merely incomplete, because it cannot be
+checked against the print at all.

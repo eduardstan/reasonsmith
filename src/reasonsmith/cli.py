@@ -1,7 +1,7 @@
 """Command-line interface for reasonsmith v0.2.
 
 What this module is for:
-  Provides the CLI entry point (`reasonsmith`, also runnable as `reasonsmith.cli`) to run
+  Provides the CLI entry point (`reasonsmith`, also runnable as `python -m reasonsmith.cli`) to run
   conformance checks on SUT decision logs against formal regulation packs (e.g. `ecoa`,
   `eu_ai_act`, `gdpr`, `table7`), and to validate a requirement pack.
 

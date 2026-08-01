@@ -65,15 +65,9 @@ committed page byte-for-byte to that script. Touching the renderer means regener
 
 ## The front door
 
-The CLI installs as `reasonsmith` via `[project.scripts]` and must stay runnable as
-`python -m reasonsmith.cli`: the committed docs transcripts and the demo use the module form,
-which `tests/conftest.py` keeps importable from `src`. `check` and `validate-pack` go through the
-same pack loader, so a pack that passes `validate-pack` is exactly a pack `check` can load — never
-give the front door a second, looser idea of a valid pack. `--capabilities <file>` is the only way
-a CLI run claims declared capabilities: without it the adapter derives them from the trace and the
-report says so, and an empty declaration file declares nothing, which is distinct from having no
-declaration at all. The cli.py docstring records why each of these is load-bearing, and
-`docs/authoring-packs.md` holds the pack-authoring rules for a stranger.
+Before editing the CLI, read the maintenance contracts in `src/reasonsmith/cli.py`'s module
+docstring. README, "The CLI", owns user-facing usage, and `docs/authoring-packs.md` owns the
+pack-authoring rules.
 
 ## Maintaining this file
 
