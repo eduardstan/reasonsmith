@@ -7,6 +7,7 @@ Welcome to the documentation directory for `reasonsmith`.
 | File | Description |
 |---|---|
 | [`legal-sources.md`](legal-sources.md) | Retrieval record and exact verbatim statutory text for EU AI Act (Art. 12 & 13), GDPR (Art. 22 & Recital 71), and ECOA / Regulation B (12 CFR 1002.9). Checked by automated tests. |
+| [`authoring-packs.md`](authoring-packs.md) | Authoring guide for requirement packs: the exact `[[requirement]]` field set, `binding`/`scope` semantics, the verbatim-and-traceable rule, and how to validate a pack with `validate-pack`. |
 | [`example-output.md`](example-output.md) | Execution transcripts, stdout pasted unedited, from running `python -m reasonsmith.demo` and `python -m reasonsmith.cli check`. Each block names the command that regenerates it. |
 | [`sample_decisions.jsonl`](sample_decisions.jsonl) | Committed three-record decision trace from a credit-scoring pipeline, so the CLI commands in the README and in `example-output.md` run from a fresh clone with no data of your own. |
 | [`index.html`](index.html) | Generated, not hand-maintained: the self-contained HTML report for `sample_decisions.jsonl` against the Table 7 pack, declared into the high-risk class, with the demonstration's key finding beside it. Regenerate it with `python docs/build_example.py`, which is the command the page names as its own provenance. |
