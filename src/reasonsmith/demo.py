@@ -394,97 +394,106 @@ def stability_demo() -> str:
 #: does not ask for the section carries neither its markup nor its rules.
 _KEY_FINDING_CSS = """
   .key-finding-section {
-    margin: 1.5rem;
-    border: 1px solid var(--color-slate-200);
-    border-radius: 10px;
-    background: #ffffff;
+    margin: var(--space-l);
+    margin-top: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
     overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   }
   .key-finding-banner {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #ffffff;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 2px solid #3b82f6;
+    background: var(--ink);
+    color: var(--surface);
+    padding: var(--space-m) var(--space-l);
+    border-bottom: 4px solid var(--accent);
   }
   .kf-badge {
     display: inline-block;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    background: #ef4444;
-    color: #ffffff;
-    padding: 0.15rem 0.5rem;
+    background: var(--accent);
+    color: var(--surface);
+    padding: 0.2rem 0.5rem;
     border-radius: 4px;
-    margin-bottom: 0.35rem;
+    margin-bottom: var(--space-2xs);
   }
   .kf-title {
-    font-size: 1.25rem;
+    font-size: var(--step-2);
     font-weight: 800;
-    line-height: 1.3;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
   }
   .kf-subtitle {
-    font-size: 0.9rem;
-    color: #94a3b8;
-    margin-top: 0.25rem;
+    font-size: var(--step--1);
+    color: oklch(80% 0.01 260);
+    margin-top: var(--space-2xs);
+    max-width: 70ch;
+    text-wrap: pretty;
   }
   .key-finding-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    padding: 1.25rem;
-    background: #f8fafc;
+    gap: var(--space-m);
+    padding: var(--space-m);
+    background: var(--neutral-soft);
   }
   @media (max-width: 768px) {
     .key-finding-grid { grid-template-columns: 1fr; }
   }
   .kf-card {
-    border-radius: 8px;
-    border: 1px solid var(--color-slate-200);
-    background: #ffffff;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--surface);
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
   .kf-card-record {
-    border-top: 4px solid #059669;
+    border-top: 4px solid var(--ok);
   }
   .kf-card-cert {
-    border-top: 4px solid #dc2626;
+    border-top: 4px solid var(--accent);
   }
   .kf-card-header {
-    padding: 0.85rem 1rem;
-    background: #f1f5f9;
-    border-bottom: 1px solid var(--color-slate-200);
+    padding: var(--space-xs) var(--space-s);
+    background: var(--neutral-soft);
+    border-bottom: 1px solid var(--line);
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
   .kf-card-title {
-    font-size: 0.95rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
     font-weight: 700;
-    color: var(--color-slate-800);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-muted);
   }
   .kf-card-body {
-    padding: 1rem;
-    font-size: 0.85rem;
+    padding: var(--space-s);
+    font-size: var(--step--1);
     flex: 1;
   }
   .kf-meta-line {
     margin-bottom: 0.35rem;
-    color: var(--color-slate-700);
+    color: var(--ink-muted);
   }
   .kf-subhead {
+    font-family: var(--font-mono);
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--color-slate-600);
-    margin-top: 0.85rem;
-    margin-bottom: 0.4rem;
-    padding-top: 0.5rem;
-    border-top: 1px dashed var(--color-slate-200);
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    margin-top: var(--space-s);
+    margin-bottom: var(--space-2xs);
+    padding-top: var(--space-2xs);
+    border-top: 1px dashed var(--line);
   }
   .kf-field-list, .kf-reason-list {
     list-style: none;
@@ -493,69 +502,97 @@ _KEY_FINDING_CSS = """
   }
   .kf-field-list li {
     margin-bottom: 0.35rem;
-    line-height: 1.4;
+    line-height: 1.5;
     font-size: 0.8rem;
   }
   .check-icon {
-    color: #059669;
+    color: var(--ok);
     font-weight: 800;
     margin-right: 0.25rem;
   }
   .kf-values-bar {
     display: flex;
-    gap: 0.75rem;
-    background: #f8fafc;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    background: var(--surface);
     padding: 0.4rem 0.6rem;
     border-radius: 4px;
-    border: 1px solid var(--color-slate-200);
-    margin: 0.5rem 0;
+    border: 1px solid var(--line);
+    margin: var(--space-2xs) 0;
     font-family: var(--font-mono);
     font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
   }
   .kf-gap {
-    color: #dc2626;
+    color: var(--accent);
     font-weight: 700;
   }
   .kf-reason-list li {
-    padding: 0.25rem 0.4rem;
+    position: relative;
+    padding: 0.3rem 0.45rem;
     border-radius: 4px;
     margin-bottom: 0.3rem;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     display: flex;
     align-items: center;
     gap: 0.4rem;
   }
   .reason-live {
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    color: #065f46;
+    background: var(--ok-soft);
+    border: 1px solid var(--ok-line);
+    color: var(--ok);
   }
   .reason-deleted {
-    background: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #991b1b;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    color: var(--accent-deep);
+  }
+  .reason-deleted::after {
+    content: "";
+    position: absolute;
+    left: 0.3rem;
+    right: 0.3rem;
+    top: 50%;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  .reason-deleted.struck::after {
+    transform: scaleX(1);
+    transition: transform 0.45s var(--ease-snap);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reason-deleted::after { transform: scaleX(1); }
+    .reason-deleted.struck::after { transition: none; }
+  }
+  @media print {
+    .reason-deleted::after { transform: scaleX(1) !important; }
   }
   .reason-tag {
     font-family: var(--font-mono);
-    font-size: 0.7rem;
-    font-weight: 800;
-    padding: 0.05rem 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.08rem 0.35rem;
     border-radius: 3px;
     text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
   }
   .tag-live {
-    background: #059669;
-    color: #ffffff;
+    background: var(--ok);
+    color: var(--surface);
   }
   .tag-deleted {
-    background: #dc2626;
-    color: #ffffff;
+    background: var(--accent);
+    color: var(--surface);
   }
   .reason-score {
     font-family: var(--font-mono);
     font-size: 0.72rem;
-    color: var(--color-slate-600);
+    color: var(--ink-faint);
     margin-left: auto;
+    font-variant-numeric: tabular-nums;
   }
 """
 
@@ -691,7 +728,7 @@ def render_key_finding_html() -> str:
             </div>
             <div class="kf-subhead">
               Reason Audit ({reasons_found} found &middot;
-              <strong style="color: #dc2626">{reasons_deleted} deleted</strong>):
+              <strong style="color: var(--accent)">{reasons_deleted} deleted</strong>):
             </div>
             <ul class="kf-reason-list">
               {cert_reasons_str}
