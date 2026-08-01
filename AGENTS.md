@@ -17,8 +17,9 @@ value is that a lawyer can check it against the print.
 
 nesyarena supplies the ground-program IR, bounded proof enumeration, the exact WMC oracle and the
 adapter protocol. Depend on it; do not reimplement any of those. `pyproject.toml` pins
-`nesyarena==0.1.0` from PyPI — `pip install -e ".[dev]"` in a venv is the single install path, and
-`.github/workflows/ci.yml` uses that same one. Never point it at a sibling checkout, tag, or a
+`nesyarena==0.1.0` from PyPI — `pip install reasonsmith` is the user install, and
+`pip install -e ".[dev]"` in a venv is the contributor install, the one CI
+(`.github/workflows/ci.yml`) runs. Never point it at a sibling checkout, tag, or a
 branch: the measured numbers must stay reconstructible. `torch` is
 deliberately not a declared dependency of *this* package (see README, "Dependencies & PyPI") but
 has been installed and measured in a separate environment — see [RESULTS.md](RESULTS.md) for the
@@ -95,13 +96,12 @@ gap in the document rather than describing a tool that does not exist.
 
 The live home is `https://reasonsmith.dev` (landing) with the conformance dossier at
 `https://reasonsmith.dev/report.html`; the old `eduardstan.github.io/reasonsmith` Pages URL is
-superseded and nothing should reintroduce it. The package is installed from source today: the
-`reasonsmith` console entry point is real, but the package is not yet published to PyPI, so do not
-write `pip install reasonsmith` in this repo until it actually is — the README's install block is
-the authoritative form, and adding the PyPI line later is the one-line replacement of its four
-source-install lines. The two forbidden strings appear here deliberately: this paragraph is the
-statement of the rule, and a rule that cannot name what it forbids is not a rule — any
-repository-wide check for either string must exclude this file.
+superseded and nothing should reintroduce it. `reasonsmith` 0.2.0 is published on PyPI:
+`pip install reasonsmith` is the user install the README's Quick Start leads with, and
+`pip install -e ".[dev]"` in a venv is the contributor install the README keeps below it
+for running the suite from a checkout. The forbidden string appears here deliberately:
+this paragraph is the statement of the rule, and a rule that cannot name what it forbids
+is not a rule — any repository-wide check for it must exclude this file.
 
 ## The front door
 
