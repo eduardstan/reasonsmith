@@ -14,8 +14,13 @@ from reasonsmith.adapters.rules import RulesAdapter
 from reasonsmith.engines import proved
 from reasonsmith.engines.proved import ProvedEngine
 from reasonsmith.report import check_conformance, evaluate_requirement
-from reasonsmith.rulelang import UnsupportedConstructError, preprocess_spec
-from reasonsmith.spec import Pack, Requirement
+from reasonsmith.rulelang import (
+    UnsupportedConstructError,
+    eval_expression,
+    parse_expression,
+    preprocess_spec,
+)
+from reasonsmith.spec import Pack, Requirement, load_pack
 from reasonsmith.sut import BaseSUT
 from reasonsmith.verdict import Strength, Verdict
 
@@ -577,3 +582,137 @@ def test_counterexample_replayed_on_declared_logic_says_so():
     assert res.verdict == Verdict.VIOLATED
     assert "declared logic from sut.logic()" in res.evidence_summary
     assert "exposes no decide()" in res.evidence_summary
+
+
+# --------------------------------------------------------------------------------------
+# GDPR Article 22 — the first `logical` duty in a shipped pack, exercised on statute.
+#
+# The systems below are small on purpose. What matters is that the property comes from
+# `src/reasonsmith/packs/gdpr.toml` unchanged, not from a spec written to suit the test.
+# --------------------------------------------------------------------------------------
+
+#: Every signal the Article 22 proof duty reasons over, at the sort the rules use.
+ART22_VARIABLES = {
+    "artifact_logs_solely_automated": "bool",
+    "artifact_logs_significant_effect": "bool",
+    "artifact_logs_human_intervention_route": "bool",
+    "provenance_basis_contract": "bool",
+    "provenance_basis_member_state_law": "bool",
+    "provenance_basis_explicit_consent": "bool",
+    "provenance_basis_present": "bool",
+}
+
+#: A router that will not decide alone where the decision bites and no Article 22(2) basis is
+#: present, and that opens the Article 22(3) route wherever point (a) or (c) is the basis.
+ART22_CONFORMING_RULES = [
+    "provenance_basis_present = provenance_basis_contract "
+    "or provenance_basis_member_state_law or provenance_basis_explicit_consent",
+    "artifact_logs_solely_automated = "
+    "not (artifact_logs_significant_effect and not provenance_basis_present)",
+    "artifact_logs_human_intervention_route = "
+    "provenance_basis_contract or provenance_basis_explicit_consent",
+]
+
+#: The same router with Article 22(3) implemented and Article 22(1) not: it always decides
+#: alone, so a significant decision with no basis at all is reachable.
+ART22_VIOLATING_RULES = [
+    "artifact_logs_solely_automated = True",
+    "artifact_logs_human_intervention_route = "
+    "provenance_basis_contract or provenance_basis_explicit_consent",
+]
+
+ART22_REQUIREMENT_ID = "gdpr_art22_1_no_prohibited_decision_for_any_input"
+
+
+def _art22_requirement() -> Requirement:
+    return load_pack("gdpr").get_requirement(ART22_REQUIREMENT_ID)
+
+
+def _art22_system(rules: list[str]) -> RulesAdapter:
+    return RulesAdapter(rules=rules, variables=ART22_VARIABLES, constraints=[])
+
+
+def test_gdpr_art22_holds_for_every_input_is_proved():
+    """The shipped Article 22 duty reaches `proved` on a system whose rules cannot breach it."""
+    req = _art22_requirement()
+    assert req.formalism == "logical"
+
+    res = evaluate_requirement(req, _art22_system(ART22_CONFORMING_RULES))
+
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROVED
+    assert res.details["result"] == "unsat"
+    # No real arithmetic is involved, so the rational/float64 limit does not attach here.
+    assert "limits" not in res.details
+
+
+def test_gdpr_art22_violation_reports_a_counterexample_that_reproduces():
+    """A system missing the Article 22(2) gate is violated; the input is reported and replays."""
+    req = _art22_requirement()
+    sut = _art22_system(ART22_VIOLATING_RULES)
+
+    res = evaluate_requirement(req, sut)
+
+    assert res.verdict == Verdict.VIOLATED
+    assert res.strength == Strength.PROVED
+    counterexample = res.details["counterexample"]
+    assert counterexample["artifact_logs_significant_effect"] is True
+    assert not any(
+        counterexample[basis]
+        for basis in (
+            "provenance_basis_contract",
+            "provenance_basis_member_state_law",
+            "provenance_basis_explicit_consent",
+        )
+    )
+
+    # Replayed through the system's own decide(), the same input fails the same property.
+    decision = sut.decide(counterexample)
+    assert decision["artifact_logs_solely_automated"] is True
+    assert eval_expression(parse_expression(req.spec), dict(decision)) is False
+    assert "the system's own decide()" in res.evidence_summary
+
+
+def test_gdpr_art22_without_exposed_logic_is_not_evaluated_never_satisfied():
+    """A system that can emit every signal but exposes no logic proves nothing, and says so."""
+    class OpaqueSUT(BaseSUT):
+        def logic(self):
+            return None
+
+    req = _art22_requirement()
+    res = evaluate_requirement(req, OpaqueSUT(declared_capabilities=set(req.requires)))
+
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+    assert "no decision logic exposed" in res.evidence_summary
+
+
+def test_gdpr_art22_record_duties_are_untouched_by_the_proof_duty():
+    """The two Article 22 record duties still read `requires` off a trace, exactly as before."""
+    pack = load_pack("gdpr")
+    trace = [
+        {
+            "artifact_logs_decision_record": {"id": "dec-1"},
+            "provenance_active_exceptions": ["none"],
+            "scope_statements_local_vs_global": "local",
+        }
+    ]
+
+    class RecordSUT(BaseSUT):
+        def decisions(self):
+            return trace
+
+    sut = RecordSUT(declared_capabilities={s for r in pack.requirements for s in r.requires})
+
+    for req_id, signals in (
+        ("gdpr_art22_1_automated_decision_prohibition",
+         ("artifact_logs_decision_record", "provenance_active_exceptions")),
+        ("gdpr_art22_3_safeguards_human_intervention",
+         ("artifact_logs_decision_record", "scope_statements_local_vs_global")),
+    ):
+        req = pack.get_requirement(req_id)
+        assert req.formalism == "record"
+        assert req.requires == signals
+        res = evaluate_requirement(req, sut)
+        assert res.verdict == Verdict.SATISFIED, req_id
+        assert res.strength == Strength.OBSERVED, req_id

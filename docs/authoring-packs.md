@@ -65,8 +65,16 @@ when it does not.
 | `scope` | The regulatory class the duty is limited to, from the fixed vocabulary `prohibited`, `high-risk`, `limited-risk`, `minimal-risk`, `general-purpose`; `""` means the duty is not class-limited. |
 
 Signal names conventionally start with the Section 6.3 taxonomy prefixes (`provenance_`,
-`artifact_logs_`, `stability_signals_`, `scope_statements_`), but nothing enforces that: a name
-outside the taxonomy is allowed and simply never supplied by an adapter that does not emit it.
+`artifact_logs_`, `stability_signals_`, `scope_statements_`). The loader enforces nothing here: a
+name outside the taxonomy is allowed and simply never supplied by an adapter that does not emit it.
+The packs shipped in this repository are held to the prefixes by
+`test_pack_loads_and_validates`, so a signal added to one of them must carry a taxonomy prefix —
+including the free names a `logical` requirement's `spec` reads.
+
+For a `logical` requirement the `spec` is not documentation: it is the property the solver proves,
+written in the rulelang of `src/reasonsmith/rulelang.py`, and every name in it is resolved against
+the decision record the system's rules produce. So the names in `spec`, the names in `requires` and
+the names the system's `logic()` declares are one vocabulary, not three.
 
 ## binding and scope have no default
 

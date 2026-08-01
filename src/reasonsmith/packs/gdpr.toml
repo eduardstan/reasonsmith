@@ -1,7 +1,15 @@
 [pack]
 id = "gdpr"
 title = "GDPR (Regulation (EU) 2016/679): Article 22 & Recital 71"
-description = "Requirements for automated individual decision-making, profiling safeguards, and explanations."
+description = """Requirements for automated individual decision-making, profiling safeguards, and explanations. \
+One duty here is `logical`: `gdpr_art22_1_no_prohibited_decision_for_any_input` asks the proof engine whether the \
+decision rules a system exposes through `logic()` admit any input at all on which the decision is solely automated \
+and significantly affecting while no Article 22(2) basis is present, or while the Article 22(3) route to human \
+intervention is closed under point (a) or (c). A `proved` verdict there is a statement about those exposed rules over \
+every input the declared constraints admit. It is not a determination that the controller has discharged Article 22, \
+and reasonsmith makes no such determination: the rules are taken as describing the system, whether the recorded \
+inputs are true of a real decision is outside what any engine here checks, and Article 22 reaches organisational \
+facts no decision rule carries."""
 
 [source]
 document = "Regulation (EU) 2016/679 of the European Parliament and of the Council (GDPR)"
@@ -19,6 +27,29 @@ spec = "Decisions producing legal/significant effects record decision logic and 
 requires = [
     "artifact_logs_decision_record",
     "provenance_active_exceptions",
+]
+binding = true
+scope = ""
+
+[[requirement]]
+id = "gdpr_art22_1_no_prohibited_decision_for_any_input"
+source_document = "GDPR (Regulation (EU) 2016/679)"
+article_clause = "Article 22(1)"
+verbatim_text = "The data subject shall have the right not to be subject to a decision based solely on automated processing, including profiling, which produces legal effects concerning him or her or similarly significantly affects him or her."
+stakeholder = "affected individual"
+formalism = "logical"
+spec = """\
+Implies(artifact_logs_solely_automated and artifact_logs_significant_effect, \
+(provenance_basis_contract or provenance_basis_member_state_law or provenance_basis_explicit_consent) \
+and Implies(provenance_basis_contract or provenance_basis_explicit_consent, \
+artifact_logs_human_intervention_route))"""
+requires = [
+    "artifact_logs_solely_automated",
+    "artifact_logs_significant_effect",
+    "artifact_logs_human_intervention_route",
+    "provenance_basis_contract",
+    "provenance_basis_member_state_law",
+    "provenance_basis_explicit_consent",
 ]
 binding = true
 scope = ""
