@@ -69,6 +69,19 @@ committed page byte-for-byte to that script. Touching the renderer means regener
 `python docs/build_example.py`, the command the page names as its own provenance;
 `.github/workflows/pages.yml` publishes that committed file rather than rendering its own.
 
+`docs/nesyarena-conformance-report.md` is the third generated document, and the only run against a
+real system rather than a demonstration fixture: `docs/build_nesyarena_report.py` drives the five
+`nesyarena.suts.registry()` provenances over generated ground programs against the GDPR, EU AI Act
+and ECOA packs, and `test_nesyarena_report_matches_the_builder` holds the committed file to it
+byte-for-byte. Anything that moves `render_text`'s wording, the nesyarena version or the builder's
+own constants means regenerating with `python docs/build_nesyarena_report.py` and moving
+`SOURCE_COMMIT` with it — it is a literal, not a `git rev-parse`, because the report is committed
+into the tree it describes. Its adapter declares only signals a provenance genuinely emits, so
+nine pack signals are deliberately undeclared and no regulatory class is declared; the resulting
+unattainable and not-applicable verdicts are the finding, not a gap to close.
+`docs/findings-nesyarena.md` is the written account and is hand-maintained — every number in it
+comes from that report, so regenerating one means rereading the other.
+
 `docs/semantics.md` states what each verdict means and what it does not, and every claim in it names
 the test that fails if the claim becomes false. `tests/test_docs_semantics.py` checks that mapping,
 so **renaming or deleting a test breaks the build if that test is named there** — update the
