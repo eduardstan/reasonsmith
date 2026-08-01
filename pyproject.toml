@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "reasonsmith"
 version = "0.2.0"
-description = "Audit-grade evidence records and reason-deletion certificates for symbolic decisions"
+description = "evidence records and reason-deletion certificates for decision systems"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
