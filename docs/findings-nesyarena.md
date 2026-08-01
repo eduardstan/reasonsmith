@@ -95,7 +95,7 @@ This is the most important thing in this run.
 | `min-max-prob` | 0.357000 | **16/16** | 4/16 | all checkable duties satisfied |
 
 `top-1-proofs` returns a different decision from the exact semantics on **half the battery** —
-eight applicants approved by the semantics the system claims to implement are denied by the
+eight instances approved by the semantics the system claims to implement are denied by the
 system that claims it. `min-max-prob` deviates on every single instance and flips four decisions
 the other way, approving four that the claimed semantics deny. reasonsmith reported both as
 `satisfied` at strength `observed` on every duty it could check, with verdicts identical to the
@@ -159,7 +159,7 @@ inside a high-risk system", which is what a provenance library actually is.
 `scope_statements_approximation_vs_guarantee` carries a *measured* deviation — e.g.
 `approximation: value deviates from the distribution semantics oracle it claims by +0.347356 on
 this input` — because nesyarena ships the exact WMC oracle beside the approximate provenance and
-`Provenance.error()` computes the difference on every call.
+the builder computes the difference for every instance.
 
 The measured approximate provenances would not, standing alone, have such an oracle at inference
 time. They could honestly state *approximation*; they could not state *by how much*. Do not read
