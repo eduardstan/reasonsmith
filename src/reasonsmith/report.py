@@ -33,7 +33,7 @@ from __future__ import annotations
 import json
 import subprocess
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, cast
 
@@ -1485,6 +1485,7 @@ class _EvaluationResources:
         self._records: object = _UNREAD
         self._trace_error: Exception | None = None
         self._logic_data: Any = _UNREAD
+        self._logic_error: Exception | None = None
 
     def trace(self) -> list[dict[str, Any]]:
         if self._records is _UNREAD:
@@ -1500,7 +1501,13 @@ class _EvaluationResources:
     def logic(self) -> Any:
         if self._logic_data is _UNREAD:
             logic_func = getattr(self.sut, "logic", None)
-            self._logic_data = logic_func() if callable(logic_func) else None
+            try:
+                self._logic_data = logic_func() if callable(logic_func) else None
+            except Exception as exc:
+                self._logic_error = exc
+                self._logic_data = None
+        if self._logic_error is not None:
+            raise self._logic_error
         return self._logic_data
 
 
@@ -1625,13 +1632,66 @@ def evaluate_requirement(
     # next rung down is the strongest evidence this run actually has. The order comes from the
     # lattice rather than from the order `_engine_ladder` appended, so a rung added there cannot
     # be tried out of turn.
-    first: RequirementResult | None = None
+    #
+    # When nothing established anything, the strongest engine's not-evaluated result is reported,
+    # so the reader is told how the best available engine fell short. The one exception is a proof
+    # rung that never had any logic to reason over: that says nothing about this evaluation, so a
+    # lower rung's account of the evidence the system did supply displaces it.
+    fallback: RequirementResult | None = None
     for _strength, run in sorted(candidates, key=lambda rung: rung[0], reverse=True):
         result = run()
         if result.strength is not None:
             return result
-        first = first or result
-    return cast(RequirementResult, first)
+        if fallback is None or fallback.details.get("result") == _NO_LOGIC_TO_REASON_OVER:
+            fallback = result
+    return cast(RequirementResult, fallback)
+
+
+#: Tags a proof-rung result produced without any logic to reason over — `logic()` absent, returning
+#: None, or raising. Such a result is not an account of this evaluation, only of an interface that
+#: was never there, so `evaluate_requirement` lets a lower rung's not-evaluated result displace it.
+_NO_LOGIC_TO_REASON_OVER = "no_logic_to_reason_over"
+
+
+def _run_proof_rung(
+    req: Requirement,
+    sut: SystemUnderTest,
+    records: list[dict[str, Any]] | None,
+    resources: _EvaluationResources,
+) -> RequirementResult:
+    """The proof rung, with a broken `logic()` reported rather than raised.
+
+    `logic()` is an optional interface, and one that raises has established nothing — which is
+    what `strength=None` means. Letting the exception out would take the whole evaluation down
+    with it, so a duty whose trace the record engine could have read would lose a verdict it had
+    the evidence for. A malformed *trace* is deliberately not treated this way: that is the
+    system's own decision log coming back the wrong shape, and it still raises and names the
+    system.
+    """
+    from reasonsmith.engines.proved import ProvedEngine
+
+    try:
+        logic_data = resources.logic()
+    except Exception as exc:
+        return RequirementResult(
+            requirement_id=req.id,
+            source_clause=f"{req.source_document} {req.article_clause}",
+            verdict=Verdict.INCONCLUSIVE,
+            strength=None,
+            signals_required=tuple(req.requires),
+            evidence_summary=(
+                f"Not evaluated: reading the system's decision logic failed — "
+                f"{type(sut).__name__}.logic() raised {type(exc).__name__}: {exc}. "
+                "Nothing was proved about this requirement."
+            ),
+            details={"result": _NO_LOGIC_TO_REASON_OVER},
+            binding=req.binding,
+            scope=req.scope,
+        )
+    result = ProvedEngine.evaluate(req, sut, records, logic_data=logic_data)
+    if logic_data is None:
+        return replace(result, details={**result.details, "result": _NO_LOGIC_TO_REASON_OVER})
+    return result
 
 
 def _engine_ladder(
@@ -1649,6 +1709,11 @@ def _engine_ladder(
     `logic()` is `proved`. Which rung a duty reaches is therefore a fact about the system, not
     about which word a pack author typed.
 
+    Building the ladder never *executes* the system: both optional rungs are selected from the
+    callable surface alone, `logic` exactly as `decide` already was. Calling `logic()` here to
+    decide whether the proof rung belongs would let a system whose `logic()` raises abort a duty
+    the record engine could have answered from its trace.
+
     Temporal properties reach only the observed engine. The solver and the replay search both
     reason about one decision at a time and have nothing to say about a formula quantified over
     the trace; there is no temporal engine above `observed` in this build, and inventing a rung
@@ -1657,16 +1722,8 @@ def _engine_ladder(
     ladder: list[tuple[Strength, Any]] = []
 
     if req.formalism in STATE_FRAGMENTS:
-        if resources.logic() is not None:
-            from reasonsmith.engines.proved import ProvedEngine
-            ladder.append(
-                (
-                    Strength.PROVED,
-                    lambda: ProvedEngine.evaluate(
-                        req, sut, records, logic_data=resources.logic()
-                    ),
-                )
-            )
+        if callable(getattr(sut, "logic", None)):
+            ladder.append((Strength.PROVED, lambda: _run_proof_rung(req, sut, records, resources)))
         if callable(getattr(sut, "decide", None)):
             from reasonsmith.engines.probed import ProbedEngine
             ladder.append(

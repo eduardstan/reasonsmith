@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 import z3
 
+from reasonsmith import report as report_module
 from reasonsmith.adapters.rules import RulesAdapter
 from reasonsmith.engines import proved
 from reasonsmith.engines.proved import ProvedEngine
@@ -875,6 +876,80 @@ def test_presence_is_not_proved_when_only_one_branch_assigns_the_signal():
     result = evaluate_requirement(req, sut)
     assert result.verdict == Verdict.VIOLATED
     assert result.strength == Strength.PROBED
+
+
+class _BrokenLogicSUT(BaseSUT):
+    """A system whose optional `logic()` is present but broken, and whose trace is fine."""
+
+    def __init__(self):
+        super().__init__({"artifact_logs_reason_explanation"})
+        self.logic_calls = 0
+
+    def decisions(self):
+        return [{"artifact_logs_reason_explanation": "approved on score"}]
+
+    def logic(self):
+        self.logic_calls += 1
+        raise RuntimeError("logic export is broken")
+
+
+def test_a_record_duty_survives_a_system_whose_logic_raises():
+    """A broken optional interface must not cost a duty the evidence it does have.
+
+    `logic()` raising establishes nothing, which is what `strength=None` means, so the search
+    continues to the rung that can answer. Before the ladder read the callable surface instead
+    of invoking it, this duty lost its verdict to an interface it never needed.
+    """
+    req = _record_req(
+        "present(artifact_logs_reason_explanation)", ("artifact_logs_reason_explanation",)
+    )
+    sut = _BrokenLogicSUT()
+
+    result = evaluate_requirement(req, sut)
+
+    assert result.verdict == Verdict.SATISFIED
+    assert result.strength == Strength.OBSERVED
+    assert sut.logic_calls == 1
+
+
+def test_a_logical_duty_names_the_logic_failure_rather_than_propagating_it():
+    req = _logical_req(
+        spec="present(artifact_logs_reason_explanation)",
+        requires=("artifact_logs_reason_explanation",),
+    )
+    sut = _BrokenLogicSUT()
+
+    result = evaluate_requirement(req, sut)
+
+    assert result.strength is None
+    assert "RuntimeError" in result.evidence_summary
+    assert "logic export is broken" in result.evidence_summary
+
+
+def test_building_the_ladder_never_executes_the_system():
+    """Selecting a rung is a question about the surface, never a call into the system."""
+    req = _record_req(
+        "present(artifact_logs_reason_explanation)", ("artifact_logs_reason_explanation",)
+    )
+    sut = _BrokenLogicSUT()
+    resources = report_module._EvaluationResources(sut)
+
+    ladder = report_module._engine_ladder(req, sut, None, resources)
+
+    assert sut.logic_calls == 0
+    assert [strength for strength, _ in ladder] == [Strength.PROVED, Strength.OBSERVED]
+
+
+def test_a_raising_logic_is_attempted_once_per_evaluation():
+    """The failure is cached like the trace's: the second reader gets it, not a second call."""
+    sut = _BrokenLogicSUT()
+    resources = report_module._EvaluationResources(sut)
+
+    for _ in range(2):
+        with pytest.raises(RuntimeError):
+            resources.logic()
+
+    assert sut.logic_calls == 1
 
 
 def test_a_temporal_duty_never_rises_above_observed():

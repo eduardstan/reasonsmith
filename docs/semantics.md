@@ -489,7 +489,19 @@ typed. It was the second of those before this section existed, which is substant
 lands on the strongest rung that actually produced evidence
 (`test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`). When no engine produced
 any, the strongest engine's not-evaluated result is what is reported, so the reader is told which
-interface was missing (`test_system_without_logic_reported_not_evaluated`).
+interface was missing (`test_system_without_logic_reported_not_evaluated`) — except for a proof
+rung that never had any logic to reason over, which says nothing about the evaluation and yields
+to a lower rung's account of the evidence the system did supply
+(`test_an_empty_trace_is_not_evidence`). An engine whose
+interface *raises* is treated the same way as one that returns no evidence: a `logic()` that
+throws establishes nothing, so the failure is named in a `strength=None` result and the duty
+still lands on the strongest rung that did produce evidence
+(`test_a_record_duty_survives_a_system_whose_logic_raises`,
+`test_a_logical_duty_names_the_logic_failure_rather_than_propagating_it`). Selecting the rungs
+never executes the system: both optional rungs are read off the callable surface
+(`test_building_the_ladder_never_executes_the_system`). A malformed *trace* is deliberately not
+absorbed this way — that is the system's own decision log coming back the wrong shape, and it
+still raises and names the system (`test_a_trace_of_the_wrong_shape_names_the_system`).
 
 **A temporal duty never rises above `observed`** (`test_a_temporal_duty_never_rises_above_observed`).
 The solver and the replay search both reason about one decision at a time and have nothing to say
@@ -626,6 +638,9 @@ Two consequences of that report text, followed by a separate package-level termi
 | A signal the property reads must be gated by `requires` | `test_the_loader_refuses_a_spec_reading_an_ungated_signal` |
 | The same presence property is observed off a trace, probed against `decide()`, and proved against `logic()` | `test_a_record_duty_reaches_proved_when_the_system_exposes_its_logic`, `test_a_record_duty_reaches_probed_when_the_system_can_only_be_re_run` |
 | The ladder takes the strongest evidence produced, not the strongest engine available | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can` |
+| An engine whose interface raises establishes nothing, and the duty still lands on the rung that answered | `test_a_record_duty_survives_a_system_whose_logic_raises`, `test_a_logical_duty_names_the_logic_failure_rather_than_propagating_it`, `test_a_raising_logic_is_attempted_once_per_evaluation` |
+| Building the ladder reads the callable surface and never executes the system | `test_building_the_ladder_never_executes_the_system` |
+| A malformed trace still raises and names the system | `test_a_trace_of_the_wrong_shape_names_the_system` |
 | A presence proof requires the rules to assign the signal on every path | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`, `test_presence_is_not_proved_when_only_one_branch_assigns_the_signal` |
 | A temporal duty never rises above observed | `test_a_temporal_duty_never_rises_above_observed` |
 | The solver's blank string is Python's blank string, so a provable blank reason is a violation | `test_the_solvers_blank_string_is_pythons_blank_string`, `test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose` |
