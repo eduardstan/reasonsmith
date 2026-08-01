@@ -9,6 +9,7 @@ fixture fetcher for the network, so the suite never touches the live sources.
 
 import json
 from datetime import datetime, timezone
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -253,3 +254,21 @@ class TestReport:
         out = tmp_path / "drift-report.json"
         assert drift.main(["--report", str(out)]) == 1
         assert json.loads(out.read_text(encoding="utf-8"))["has_drift"] is True
+
+    def test_main_reports_invalid_utf8_as_could_not_verify(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(
+            drift.urllib.request,
+            "urlopen",
+            lambda request, timeout: BytesIO(b"\xff"),
+        )
+        out = tmp_path / "drift-report.json"
+
+        assert drift.main(["--report", str(out)]) == 1
+
+        report = json.loads(out.read_text(encoding="utf-8"))
+        assert report["counts"] == {
+            "match": 0,
+            "differ": 0,
+            "could-not-verify": STATUTORY_REQUIREMENT_COUNT,
+        }
+        assert any("could not decode" in finding["note"] for finding in report["findings"])

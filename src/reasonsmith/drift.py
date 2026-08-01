@@ -213,8 +213,9 @@ def fetch_source(source: SourceDocument, *, timeout: float = DEFAULT_TIMEOUT,
                  max_bytes: int = DEFAULT_MAX_BYTES) -> str:
     """Fetch a recorded source document as text.
 
-    Raises `DriftFetchError` on any failure -- a connection error, an HTTP error, or a document
-    larger than `max_bytes`, which would mean the endpoint is no longer serving the same thing.
+    Raises `DriftFetchError` on any failure -- a connection error, an HTTP error, invalid UTF-8, or
+    a document larger than `max_bytes`, which would mean the endpoint is no longer serving the same
+    thing.
     """
     request = urllib.request.Request(
         source.url,
@@ -227,7 +228,10 @@ def fetch_source(source: SourceDocument, *, timeout: float = DEFAULT_TIMEOUT,
         raise DriftFetchError(f"could not fetch {source.url}: {exc}") from exc
     if len(data) > max_bytes:
         raise DriftFetchError(f"{source.url} exceeded the {max_bytes}-byte size guard")
-    return data.decode("utf-8")
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise DriftFetchError(f"could not decode {source.url} as UTF-8: {exc}") from exc
 
 
 @dataclass(frozen=True)
