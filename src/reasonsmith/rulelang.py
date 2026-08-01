@@ -392,6 +392,41 @@ def signal_names(node: ast.AST) -> tuple[str, ...]:
     )
 
 
+def bare_boolean_names(node: ast.AST) -> tuple[str, ...]:
+    """Signal names used directly where the property language requires a Boolean value."""
+    names: set[str] = set()
+
+    def visit(current: ast.AST, boolean_position: bool = False) -> None:
+        if isinstance(current, ast.Expression):
+            visit(current.body, True)
+        elif isinstance(current, ast.Name):
+            if boolean_position:
+                names.add(current.id)
+        elif isinstance(current, ast.UnaryOp):
+            visit(current.operand, isinstance(current.op, ast.Not))
+        elif isinstance(current, ast.BinOp):
+            visit(current.left)
+            visit(current.right)
+        elif isinstance(current, ast.BoolOp):
+            for value in current.values:
+                visit(value, True)
+        elif isinstance(current, ast.Compare):
+            visit(current.left)
+            for comparator in current.comparators:
+                visit(comparator)
+        elif isinstance(current, ast.Call):
+            name = current.func.id if isinstance(current.func, ast.Name) else ""
+            if name in TEMPORAL_OPERATORS or name in ("implies", "Implies"):
+                for argument in current.args:
+                    visit(argument, True)
+            elif name != PRESENCE_CALL:
+                for argument in current.args:
+                    visit(argument)
+
+    visit(node)
+    return tuple(sorted(names))
+
+
 def has_temporal_operator(node: ast.AST) -> bool:
     """True when a property reaches across records with one of `TEMPORAL_OPERATORS`."""
     return any(

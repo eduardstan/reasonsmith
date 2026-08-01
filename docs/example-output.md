@@ -3,11 +3,11 @@
 Every block below is stdout pasted unedited from a real run, not a hand-written illustration of
 what the tool would print. Regenerate any block by running the command shown above it.
 
-- **Captured at:** commit `8b4c72042443dfdb116c851d67f6dc3884392665` (branch
-  `fm/rs-land-contributor-demos`), where the demo transcript was regenerated over the four Table 7
-  demos added on that branch; the two CLI blocks are unchanged from commit
-  `ea4bf3711abbd6922dcf4f1448cb177807bbe3d6` (branch `fm/rs-readable-repo`) and reproduce at both
-  commits
+- **Capture provenance:** the demo transcript was captured at commit
+  `8b4c72042443dfdb116c851d67f6dc3884392665` (branch `fm/rs-land-contributor-demos`), where it was
+  regenerated over the four Table 7 demos added on that branch. The CLI blocks were regenerated
+  from the commands below for the property-language change; `test_committed_transcripts_are_the_real_stdout`
+  re-runs all three commands and holds every committed block to its real stdout.
 - **Environment:** Python 3.12.9, Linux, `nesyarena` at the commit `pyproject.toml` pinned when
   these transcripts were captured (`57720fa212834689692e171882272140f1d1fed7`); re-run since
   against the PyPI release `nesyarena==0.1.0` now pinned, byte-for-byte identical

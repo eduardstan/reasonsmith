@@ -150,9 +150,16 @@ Two things about the encoding are this project's own and are load-bearing:
   `0.5 <= var`) is the one comparison pattern treated as a flag instead of requiring a measured
   magnitude. For such a variable, Boolean values become 1.0/0.0, any other present non-numeric
   value becomes 1.0, an absent or non-finite value becomes 0.0, and a finite numeric value remains
-  that number. Every other comparison — any other constant, 0.5 under any other operator, or a
-  variable against a variable — makes both sides magnitudes, and a record that carries no finite
-  real number for a magnitude makes the whole requirement not evaluated rather than scored 0.0
+  that number. A signal used directly as a bare Boolean atom must carry `True` or `False` in every
+  record; true becomes 1.0 and false becomes -1.0 so false has negative robustness and is a breach
+  (`test_a_false_bare_boolean_atom_is_violated`). If the trace does not establish that Boolean
+  kind, the property is not evaluated (`test_a_bare_boolean_atom_without_an_established_kind_is_not_evaluated`).
+  This truth reading is distinct from presence: `present(x)` is true when a record carries `False`,
+  while the bare atom `x` is false
+  (`test_presence_and_bare_boolean_atoms_keep_distinct_false_semantics`). Every other comparison —
+  any other constant, 0.5 under any other operator, or a variable against a variable — makes both
+  sides magnitudes, and a record that carries no finite real number for a magnitude makes the whole
+  requirement not evaluated rather than scored 0.0
   (`test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent`,
   `test_temporal_satisfied`,
   `test_ecoa_thirty_day_notice_violated_by_a_late_notification`,
@@ -612,6 +619,8 @@ Two consequences of that report text, followed by a separate package-level termi
 | A temporal violation names the record positions that breached | `test_temporal_violated_returns_offending_segment` |
 | A trace too short to monitor is not evaluated, and the trace is blamed, not the formula | `test_trace_too_short_names_the_trace_not_the_formula` |
 | A formula rtamt cannot parse is not evaluated | `test_unexpressible_formula_reports_not_evaluated` |
+| Bare Boolean atoms use Boolean trace values, false has negative robustness, and unknown kinds are not evaluated | `test_a_false_bare_boolean_atom_is_violated`, `test_a_bare_boolean_atom_without_an_established_kind_is_not_evaluated` |
+| Presence and Boolean truth remain distinct for a recorded `False` value | `test_presence_and_bare_boolean_atoms_keep_distinct_false_semantics`, `test_temporal_presence_agrees_with_record_presence_for_falsy_values` |
 | The formula selects flag versus magnitude treatment, and flag values follow the stated conversion | `test_non_finite_flag_counts_as_absent`, `test_temporal_satisfied`, `test_ecoa_thirty_day_notice_violated_by_a_late_notification`, `test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline`, `test_ecoa_accepted_counteroffer_keeps_the_thirty_day_deadline` |
 | A magnitude bound over an unmeasured signal is not evaluated, never scored | `test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent` |
 | The Recital 71 error duty is satisfied only when every declared deviation is no larger than that decision's own margin, including the known exact-tie boundary | `test_a_declared_deviation_below_the_decision_margin_is_satisfied`, `test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied` |

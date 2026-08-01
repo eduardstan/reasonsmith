@@ -459,6 +459,75 @@ class TestObservedEngine:
         assert result.verdict == Verdict.SATISFIED
         assert result.strength == Strength.OBSERVED
 
+    def test_a_false_bare_boolean_atom_is_violated(self):
+        sut = BaseSUT({"signal_a"})
+        req = Requirement(
+            id="temp_bare_false",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="temporal",
+            spec="always(signal_a)",
+            rationale="The signal remains true.",
+            requires=("signal_a",),
+            binding=True,
+            scope="",
+        )
+        records = [{"signal_a": True}, {"signal_a": False}]
+
+        result = ObservedEngine.evaluate(req, sut, records)
+        assert result.verdict == Verdict.VIOLATED
+        assert result.strength == Strength.OBSERVED
+        assert result.details["violation_step_indices"] == [1]
+
+    def test_a_bare_boolean_atom_without_an_established_kind_is_not_evaluated(
+        self,
+    ):
+        sut = BaseSUT({"signal_a"})
+        req = Requirement(
+            id="temp_bare_unknown",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="temporal",
+            spec="always(signal_a)",
+            rationale="The signal remains true.",
+            requires=("signal_a",),
+            binding=True,
+            scope="",
+        )
+
+        result = ObservedEngine.evaluate(
+            req, sut, [{"signal_a": "yes"}, {"signal_a": "no"}]
+        )
+        assert result.verdict == Verdict.INCONCLUSIVE
+        assert result.strength is None
+        assert result.details["signals_without_boolean_trace_kind"] == {"signal_a": 2}
+
+    def test_presence_and_bare_boolean_atoms_keep_distinct_false_semantics(self):
+        sut = BaseSUT({"signal_a"})
+        records = [{"signal_a": False}, {"signal_a": False}]
+        fields = {
+            "source_document": "Doc",
+            "article_clause": "Art 1",
+            "verbatim_text": "Quote",
+            "stakeholder": "deployer",
+            "formalism": "temporal",
+            "rationale": "The trace carries the required Boolean evidence.",
+            "requires": ("signal_a",),
+            "binding": True,
+            "scope": "",
+        }
+        presence = Requirement(
+            id="temp_present_false", spec="always(present(signal_a))", **fields
+        )
+        truth = Requirement(id="temp_bare_false", spec="always(signal_a)", **fields)
+
+        assert ObservedEngine.evaluate(presence, sut, records).verdict == Verdict.SATISFIED
+        assert ObservedEngine.evaluate(truth, sut, records).verdict == Verdict.VIOLATED
+
     def test_temporal_violated_returns_offending_segment(self):
         sut = BaseSUT({"signal_a", "signal_b"})
         req = Requirement(

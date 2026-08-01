@@ -12,15 +12,17 @@ What a reader must not break:
     `NOT EVALUATED` (`verdict=INCONCLUSIVE`, `strength=None`), NEVER `satisfied`.
     Why this matters: STL monitors require sufficient trace points to establish time bounds; an
     unsupported formula or insufficient trace length cannot prove a temporal property.
-  - Signal types (flag vs. magnitude) must be read from the formula itself, never from what the
-    trace happened to contain. Asking `var >= 0.5` (or `0.5 <= var`) is the one way a pack asks
-    for a flag rather than a measured magnitude. For such a variable, Booleans become 1.0/0.0,
-    other present non-numeric values become 1.0, absent or non-finite values become 0.0, and
-    finite numbers remain numeric. Every other comparison — against any other constant, against
-    0.5 under any other operator, or against another variable — is a magnitude on both sides:
-    every record must carry a real number for it, and a record that carries none — absent, blank,
-    a bool, the string "45", or a non-finite float — is reported as NOT EVALUATED rather than
-    scored.
+  - Flag and magnitude roles must be read from the formula itself, never from what the trace
+    happened to contain. Asking `var >= 0.5` (or `0.5 <= var`) is the one way a pack asks for a
+    flag rather than a measured magnitude. A bare Boolean atom is a third role: the formula places
+    it in a Boolean position, and every record must establish that role with `True` or `False`.
+    False becomes -1.0 so its robustness is a breach. For an explicit flag, Booleans remain
+    1.0/0.0, other present non-numeric values become 1.0, absent or non-finite values become 0.0,
+    and finite numbers remain numeric. Every other comparison — against any other constant,
+    against 0.5 under any other operator, or against another variable — is a magnitude on both
+    sides: every record must carry a real number for it, and a record that carries none — absent,
+    blank, a bool, the string "45", or a non-finite float — is reported as NOT EVALUATED rather
+    than scored.
     Why this matters: Coercing those to 0.0 or 1.0 would let a 45-day notice, or a notice nobody
     ever sent, pass a `<= 30` deadline; NaN would too, since every robustness comparison against it
     is False. `json.loads` reads bare `NaN`/`Infinity` by default, so a producer that serialises a
@@ -49,13 +51,19 @@ if "typing.io" not in sys.modules and not hasattr(typing, "io"):
 import rtamt
 
 from reasonsmith.report import RequirementResult
-from reasonsmith.rulelang import PRESENCE_CALL, is_present
+from reasonsmith.rulelang import (
+    PRESENCE_CALL,
+    UnsupportedConstructError,
+    bare_boolean_names,
+    is_present,
+    parse_property,
+)
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
 
-#: The threshold a pack uses to ask whether a signal is present at all. Everything else a
-#: variable is compared against is a quantity, and a quantity has to be measured.
+#: The threshold a pack uses to read a signal as a flag. Everything else a variable is compared
+#: against is a quantity, and a quantity has to be measured.
 PRESENCE_THRESHOLD = 0.5
 
 #: rtamt's offline discrete-time evaluator reads the sampling period off the trace, so a
@@ -155,7 +163,7 @@ def _number(token: str) -> float | None:
 def _magnitude_vars(spec: str) -> set[str]:
     """The spec variables the formula treats as measured quantities.
 
-    Every variable in a comparison is a quantity unless that comparison is the presence test
+    Every variable in a comparison is a quantity unless that comparison is the flag test
     `var >= 0.5`. Bounding a variable at 0.5 under any other operator, or against another
     variable, is a bound on a quantity — `drift <= 0.5` and `latency <= deadline` both have to
     be measured, and reading them as flags would score an unmeasured record 0.0 and let it pass
@@ -167,8 +175,8 @@ def _magnitude_vars(spec: str) -> set[str]:
             if _number(token) is not None:
                 continue
             bound = _number(other)
-            is_presence = bound == PRESENCE_THRESHOLD and operator == (">=" if on_left else "<=")
-            if not is_presence:
+            is_flag = bound == PRESENCE_THRESHOLD and operator == (">=" if on_left else "<=")
+            if not is_flag:
                 magnitude.add(token)
     return magnitude
 
@@ -206,6 +214,24 @@ class ObservedEngine:
                 scope=req.scope,
             )
 
+        try:
+            boolean_atoms = set(bare_boolean_names(parse_property(req.spec)))
+        except UnsupportedConstructError as exc:
+            return RequirementResult(
+                requirement_id=req.id,
+                source_clause=clause,
+                verdict=Verdict.INCONCLUSIVE,
+                strength=None,
+                signals_required=tuple(req.requires),
+                evidence_summary=(
+                    "Not evaluated: rtamt cannot express or parse temporal property "
+                    f"{req.spec!r}: {exc}"
+                ),
+                details={"error": str(exc)},
+                binding=req.binding,
+                scope=req.scope,
+            )
+
         stl_text, presence_signals = _render_stl(req.spec, set(req.requires))
 
         # Extract variable names from formula or req.requires
@@ -224,6 +250,7 @@ class ObservedEngine:
         # Build dataset for rtamt
         time_series: dict[str, list[float]] = {"time": list(range(len(records)))}
         unmeasured: dict[str, int] = {}
+        non_boolean_atoms: dict[str, int] = {}
         for var in spec_vars:
             if var in presence_signals:
                 source = presence_signals[var]
@@ -241,6 +268,12 @@ class ObservedEngine:
                     else:
                         not_measured += 1
                         values.append(0.0)
+                elif var in boolean_atoms:
+                    if isinstance(val, bool):
+                        values.append(1.0 if val else -1.0)
+                    else:
+                        not_measured += 1
+                        values.append(0.0)
                 elif isinstance(val, bool):
                     values.append(1.0 if val else 0.0)
                 elif isinstance(val, (int, float)):
@@ -251,8 +284,36 @@ class ObservedEngine:
                 else:
                     values.append(0.0)
             if not_measured:
-                unmeasured[var] = not_measured
+                if var in boolean_atoms and var not in magnitude_vars:
+                    non_boolean_atoms[var] = not_measured
+                else:
+                    unmeasured[var] = not_measured
             time_series[var] = values
+
+        if non_boolean_atoms:
+            gaps = ", ".join(
+                f"{var} in {count} of {len(records)} decision(s)"
+                for var, count in sorted(non_boolean_atoms.items())
+            )
+            return RequirementResult(
+                requirement_id=req.id,
+                source_clause=clause,
+                verdict=Verdict.INCONCLUSIVE,
+                strength=None,
+                signals_required=tuple(req.requires),
+                evidence_summary=(
+                    f"Not evaluated: {req.spec!r} uses a bare Boolean atom whose kind the trace "
+                    f"does not establish — no Boolean value for {gaps}. Every record must carry "
+                    "True or False for a bare Boolean atom before the monitor can score it."
+                ),
+                details={
+                    "signals_without_boolean_trace_kind": dict(
+                        sorted(non_boolean_atoms.items())
+                    )
+                },
+                binding=req.binding,
+                scope=req.scope,
+            )
 
         if unmeasured:
             gaps = ", ".join(
