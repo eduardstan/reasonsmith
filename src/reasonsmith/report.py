@@ -67,9 +67,15 @@ def _budget_line(budget: Mapping[str, Any]) -> str:
         fields = ", ".join(f"{name} ({count} values)" for name, count in sorted(space.items()))
     else:
         fields = str(space)
+    unestablished = budget.get("property_kinds_unestablished", ())
+    kind_limit = (
+        f" Property field kind(s) not established by trace: {', '.join(unestablished)}."
+        if unestablished
+        else ""
+    )
     return (
         f"{budget['trials']} input(s) replayed, seed {budget['seed']}, "
-        f"input space: {fields or 'no field varied'}. Strategy: {budget['strategy']}"
+        f"input space: {fields or 'no field varied'}. Strategy: {budget['strategy']}{kind_limit}"
     )
 
 

@@ -32,6 +32,7 @@ What a reader must not break:
 from __future__ import annotations
 
 import ast
+import copy
 import random
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Optional
@@ -155,8 +156,180 @@ def _expression_kind(node: ast.AST) -> str:
 
 
 def _validate_property(node: ast.Expression, spec: str) -> None:
-    if _expression_kind(node) != "boolean":
+    if _expression_kind(node) not in ("boolean", "unknown"):
         raise UnsupportedConstructError(f"Requirement spec {spec!r} is not a boolean property")
+
+
+def _value_kind(value: Any) -> str:
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, (int, float)):
+        return "number"
+    if isinstance(value, str):
+        return "string"
+    return "unknown"
+
+
+def _property_names(node: ast.AST) -> tuple[str, ...]:
+    function_nodes = {
+        id(call.func)
+        for call in ast.walk(node)
+        if isinstance(call, ast.Call) and isinstance(call.func, ast.Name)
+    }
+    return tuple(
+        sorted(
+            {
+                name.id
+                for name in ast.walk(node)
+                if isinstance(name, ast.Name) and id(name) not in function_nodes
+            }
+        )
+    )
+
+
+def _trace_field_kinds(
+    node: ast.AST, records: list[dict[str, Any]]
+) -> tuple[dict[str, str], tuple[str, ...]]:
+    established: dict[str, str] = {}
+    unestablished = []
+    for name in _property_names(node):
+        observed = {_value_kind(record[name]) for record in records if name in record}
+        if len(observed) == 1 and "unknown" not in observed:
+            established[name] = observed.pop()
+        else:
+            unestablished.append(name)
+    return established, tuple(unestablished)
+
+
+def _operand_kind(node: ast.AST, field_kinds: Mapping[str, str]) -> str:
+    if isinstance(node, ast.Name):
+        return field_kinds.get(node.id, "unknown")
+    return _expression_kind(node)
+
+
+def _validate_trace_kinds(node: ast.Expression, field_kinds: Mapping[str, str]) -> None:
+    boolean_positions: list[ast.AST] = []
+    if isinstance(node.body, ast.Name):
+        boolean_positions.append(node.body)
+    for current in ast.walk(node):
+        if isinstance(current, ast.UnaryOp) and isinstance(current.op, ast.Not):
+            boolean_positions.append(current.operand)
+        elif isinstance(current, ast.BoolOp):
+            boolean_positions.extend(current.values)
+        elif isinstance(current, ast.Call):
+            name = current.func.id if isinstance(current.func, ast.Name) else ""
+            if name in ("implies", "Implies"):
+                boolean_positions.extend(current.args)
+
+    for position in boolean_positions:
+        if not isinstance(position, ast.Name):
+            continue
+        kind = field_kinds.get(position.id, "unknown")
+        if kind not in ("boolean", "unknown"):
+            raise UnsupportedConstructError(
+                f"Field {position.id!r} is used in Boolean position, but the trace establishes "
+                f"its kind as {kind}"
+            )
+
+    for comparison in (item for item in ast.walk(node) if isinstance(item, ast.Compare)):
+        left = comparison.left
+        left_kind = _operand_kind(left, field_kinds)
+        for operator, right in zip(comparison.ops, comparison.comparators, strict=True):
+            right_kind = _operand_kind(right, field_kinds)
+            known = left_kind != "unknown" and right_kind != "unknown"
+            ordered = isinstance(operator, (ast.Lt, ast.LtE, ast.Gt, ast.GtE))
+            compatible = left_kind == right_kind and (
+                not ordered or left_kind in ("number", "string")
+            )
+            if known and not compatible:
+                operator_text = {
+                    ast.Eq: "==",
+                    ast.NotEq: "!=",
+                    ast.Lt: "<",
+                    ast.LtE: "<=",
+                    ast.Gt: ">",
+                    ast.GtE: ">=",
+                }[type(operator)]
+                raise UnsupportedConstructError(
+                    f"Comparison {ast.unparse(left)!r} {operator_text} "
+                    f"{ast.unparse(right)!r} has incompatible established kinds "
+                    f"{left_kind} and {right_kind}"
+                )
+            left = right
+            left_kind = right_kind
+
+
+def _shared_mutable_path(
+    original: Any,
+    cloned: Any,
+    path: str = "input",
+    seen: Optional[set[tuple[int, int]]] = None,
+) -> str | None:
+    if isinstance(original, (type(None), bool, int, float, complex, str, bytes)):
+        return None
+    if seen is None:
+        seen = set()
+    pair = (id(original), id(cloned))
+    if pair in seen:
+        return None
+    seen.add(pair)
+    if isinstance(original, Mapping) and isinstance(cloned, Mapping):
+        if original is cloned:
+            return path
+        for key, value in original.items():
+            if key in cloned:
+                cloned_key = next((candidate for candidate in cloned if candidate == key), key)
+                shared_key = _shared_mutable_path(
+                    key, cloned_key, f"{path}.key[{key!r}]", seen
+                )
+                if shared_key:
+                    return shared_key
+                shared = _shared_mutable_path(value, cloned[key], f"{path}[{key!r}]", seen)
+                if shared:
+                    return shared
+        return None
+    if isinstance(original, (list, tuple)) and isinstance(cloned, (list, tuple)):
+        if isinstance(original, list) and original is cloned:
+            return path
+        for index, (value, copied) in enumerate(zip(original, cloned, strict=True)):
+            shared = _shared_mutable_path(value, copied, f"{path}[{index}]", seen)
+            if shared:
+                return shared
+        return None
+    if isinstance(original, (set, frozenset)) and isinstance(cloned, (set, frozenset)):
+        if isinstance(original, set) and original is cloned:
+            return path
+        for value in original:
+            for copied in cloned:
+                if value is copied:
+                    shared = _shared_mutable_path(value, copied, f"{path}{{{value!r}}}", seen)
+                    if shared:
+                        return shared
+        return None
+    if hasattr(original, "__dict__") and hasattr(cloned, "__dict__"):
+        return _shared_mutable_path(vars(original), vars(cloned), f"{path}.__dict__", seen)
+    slots = getattr(type(original), "__slots__", ())
+    if isinstance(slots, str):
+        slots = (slots,)
+    for slot in slots:
+        if hasattr(original, slot) and hasattr(cloned, slot):
+            shared = _shared_mutable_path(
+                getattr(original, slot),
+                getattr(cloned, slot),
+                f"{path}.{slot}",
+                seen,
+            )
+            if shared:
+                return shared
+    return path if original is cloned else None
+
+
+def _clone_case(case: dict[str, Any]) -> dict[str, Any]:
+    cloned = copy.deepcopy(case)
+    shared = _shared_mutable_path(case, cloned)
+    if shared:
+        raise TypeError(f"deep copy retained a shared mutable value at {shared}")
+    return cloned
 
 
 def _spec_numbers(spec: str) -> set[float]:
@@ -350,6 +523,27 @@ class ProbedEngine:
                 )
         trace = [dict(rec) for rec in trace]
 
+        field_kinds, unestablished_kinds = _trace_field_kinds(spec_ast, trace)
+        try:
+            _validate_trace_kinds(spec_ast, field_kinds)
+        except UnsupportedConstructError as exc:
+            return not_evaluated(
+                f"Not evaluated: property {req.spec!r} is not expressible for this engine: {exc}",
+                {
+                    "engine": "probed",
+                    "reason": "property_not_expressible",
+                    "error": str(exc),
+                },
+            )
+
+        kind_limit = ""
+        if unestablished_kinds:
+            kind_limit = (
+                " Trace did not establish kinds for property field(s) "
+                f"{', '.join(unestablished_kinds)}; validation remained permissive for those "
+                "fields."
+            )
+
         try:
             plan = plan_inputs(req, trace, trials=trials, seed=seed)
             pools = _pools(req, trace)
@@ -389,6 +583,7 @@ class ProbedEngine:
                 "seed_decisions": len(trace),
                 "input_space": input_space,
                 "inputs_errored": errored,
+                "property_kinds_unestablished": list(unestablished_kinds),
             }
 
         def holds(record: dict[str, Any]) -> bool:
@@ -402,9 +597,22 @@ class ProbedEngine:
         errored = 0
         first_error = ""
         for index, case in enumerate(plan):
-            case_snapshot = dict(case)
             try:
-                record = _as_record(case_snapshot, decide(dict(case_snapshot)))
+                case_snapshot = _clone_case(case)
+                first_input = _clone_case(case_snapshot)
+            except Exception as exc:
+                return not_evaluated(
+                    "Not evaluated: a probe input could not be cloned safely, so it was not "
+                    f"replayed. {type(exc).__name__}: {exc}.{kind_limit}",
+                    {
+                        "engine": "probed",
+                        "reason": "input_clone_failed",
+                        "error": f"{type(exc).__name__}: {exc}",
+                        PROBE_BUDGET_KEY: budget(index, errored),
+                    },
+                )
+            try:
+                record = _as_record(case_snapshot, decide(first_input))
                 satisfied = holds(record)
             except Exception as exc:  # the system, or the property, has nothing to say here
                 errored += 1
@@ -417,7 +625,21 @@ class ProbedEngine:
             # Verify before reporting: a candidate that does not fail a second time is a defect in
             # this search, not a finding about the system.
             try:
-                replay = _as_record(case_snapshot, decide(dict(case_snapshot)))
+                verification_input = _clone_case(case_snapshot)
+            except Exception as exc:
+                return not_evaluated(
+                    "Not evaluated: the counterexample input could not be cloned safely for "
+                    f"verification. {type(exc).__name__}: {exc}.{kind_limit}",
+                    {
+                        "engine": "probed",
+                        "reason": "input_clone_failed",
+                        "error": f"{type(exc).__name__}: {exc}",
+                        "unverified_counterexample": case_snapshot,
+                        PROBE_BUDGET_KEY: budget(index + 1, errored),
+                    },
+                )
+            try:
+                replay = _as_record(case_snapshot, decide(verification_input))
                 reproduced = not holds(replay)
                 replay_note = ""
             except Exception as exc:
@@ -430,7 +652,7 @@ class ProbedEngine:
                     "but did not "
                     f"reproduce when replayed against the system's own decide().{replay_note} A "
                     "counterexample that does not reproduce is a defect in this search, not a "
-                    "violation, and is never reported as one.",
+                    f"violation, and is never reported as one.{kind_limit}",
                     {
                         "engine": "probed",
                         "reason": "counterexample_did_not_reproduce",
@@ -449,7 +671,7 @@ class ProbedEngine:
                     f"Violated under active perturbation: replaying input {case_snapshot} "
                     "through the system's own decide() produced a decision that fails "
                     f"{req.spec!r}, and the "
-                    "counterexample reproduced when replayed a second time."
+                    f"counterexample reproduced when replayed a second time.{kind_limit}"
                 ),
                 details={
                     "engine": "probed",
@@ -469,7 +691,7 @@ class ProbedEngine:
             return not_evaluated(
                 f"Not evaluated: the search could not run — every one of the {len(plan)} replayed "
                 f"inputs raised rather than producing a decision this property could be read "
-                f"over. First failure: {first_error}",
+                f"over. First failure: {first_error}.{kind_limit}",
                 {
                     "engine": "probed",
                     "reason": "every_replay_failed",
@@ -489,7 +711,7 @@ class ProbedEngine:
                 f"through the system's own decide() (seed {seed}, generated by perturbing "
                 f"{len(trace)} recorded decision(s) over {len(input_space)} field(s)). This is a "
                 "bounded search, not a proof: the property is unchecked outside the inputs this "
-                "budget names."
+                f"budget names.{kind_limit}"
             ),
             details={
                 "engine": "probed",

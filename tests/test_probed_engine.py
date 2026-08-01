@@ -328,6 +328,7 @@ def test_nonpositive_trial_budget_is_not_confused_with_an_empty_trace():
     [
         ("True or unsupported(income)", "unsupported function call"),
         ("income + 1", "not a boolean property"),
+        ("True < 1", "incompatible established kinds boolean and number"),
     ],
 )
 def test_the_complete_property_must_be_expressible_and_boolean(spec, refusal):
@@ -350,15 +351,25 @@ def test_the_complete_property_must_be_expressible_and_boolean(spec, refusal):
     assert sut.replays == 0
 
 
-def test_mutating_decide_receives_fresh_replay_inputs_and_cannot_change_the_witness():
+def test_nested_mutation_cannot_change_the_verification_input_or_witness():
     class MutatingSUT(OpaqueSUT):
         def __init__(self):
-            super().__init__()
-            self.received = []
+            super().__init__(
+                trace=(
+                    {
+                        "income": 30000,
+                        "age": 70,
+                        "approved": True,
+                        "reason": "seed",
+                        "profile": {"age": 70},
+                    },
+                )
+            )
+            self.received_ages = []
 
         def decide(self, case):
-            self.received.append(dict(case))
-            case["income"] = -1
+            self.received_ages.append(case["profile"]["age"])
+            case["profile"]["age"] = -1
             return {**case, "approved": False}
 
     sut = MutatingSUT()
@@ -369,8 +380,77 @@ def test_mutating_decide_receives_fresh_replay_inputs_and_cannot_change_the_witn
     )
 
     assert result.verdict == Verdict.VIOLATED
-    assert sut.received == [dict(TRACE[0]), dict(TRACE[0])]
-    assert result.details["counterexample"] == TRACE[0]
+    assert sut.received_ages == [70, 70]
+    assert result.details["counterexample"]["profile"]["age"] == 70
+
+
+def test_uncloneable_probe_input_is_not_evaluated():
+    class Uncloneable:
+        def __deepcopy__(self, memo):
+            raise RuntimeError("cannot clone token")
+
+    class UncloneableSUT(OpaqueSUT):
+        def __init__(self):
+            super().__init__(trace=({"approved": True, "token": Uncloneable()},))
+            self.replays = 0
+
+        def decide(self, case):
+            self.replays += 1
+            return case
+
+    sut = UncloneableSUT()
+    result = ProbedEngine.evaluate(
+        _req(spec="approved == True", requires=("approved",)),
+        sut,
+        trials=1,
+    )
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "input_clone_failed"
+    assert "cannot clone token" in result.evidence_summary
+    assert sut.replays == 0
+
+
+def test_trace_established_numeric_name_is_refused_in_boolean_position():
+    class SearchTrackingSUT(HonestSUT):
+        def __init__(self):
+            super().__init__()
+            self.replays = 0
+
+        def decide(self, case):
+            self.replays += 1
+            return super().decide(case)
+
+    sut = SearchTrackingSUT()
+    result = ProbedEngine.evaluate(_req(spec="not income", requires=("income",)), sut)
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "property_not_expressible"
+    assert "income" in result.evidence_summary
+    assert "number" in result.evidence_summary
+    assert sut.replays == 0
+
+
+def test_unestablished_property_kind_remains_permissive_and_is_disclosed():
+    class AddsRiskScoreSUT(OpaqueSUT):
+        def decide(self, case):
+            return {**case, "risk_score": 1}
+
+    result = ProbedEngine.evaluate(
+        _req(spec="risk_score >= 0", requires=("risk_score",)),
+        AddsRiskScoreSUT(),
+        trials=5,
+    )
+
+    assert result.verdict == Verdict.SATISFIED
+    assert result.strength == Strength.PROBED
+    budget = result.details[PROBE_BUDGET_KEY]
+    assert budget["property_kinds_unestablished"] == ["risk_score"]
+    assert "risk_score" in result.evidence_summary
+    report = ConformanceReport(pack_id="p", system_name="s", results=(result,))
+    assert "Property field kind(s) not established by trace: risk_score" in report.render_text()
 
 
 def test_recorded_strategy_distinguishes_seed_replays_from_perturbations():
