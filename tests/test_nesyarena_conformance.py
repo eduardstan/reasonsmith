@@ -9,19 +9,23 @@ What a reader must not break:
   - Compare verbatim. Normalising or matching on substrings would let a stale report pass, which
     is the one failure this test exists to catch. Anything that moves the output — a wording
     change in `report.render_text`, a different nesyarena version, a moved threshold — must be
-    followed by regenerating the report and moving `SOURCE_COMMIT` with it.
+    followed by regenerating the report.
   - The builder is loaded from its path rather than re-composed here: `docs/` is not an import
     package, and a second copy of the composition would let the test and the committed file
     agree with each other while both disagree with the script the report names.
+  - This is the whole provenance check, and it deliberately asserts nothing about a commit hash.
+    An earlier version of this file also checked that a `SOURCE_COMMIT` literal in the builder
+    named a commit containing that builder. That check cannot hold: writing the hash into the
+    artifact changes the file and therefore the commit, so the self-reference never closes, and
+    naming the preceding commit instead is unverifiable in the shallow clone CI checks out.
+    Reproducing the report from the committed builder is the stronger claim anyway, because it
+    is checked rather than asserted. Do not add a hash back.
 """
 
 from __future__ import annotations
 
 import importlib.util
-import subprocess
 from pathlib import Path
-
-import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "docs" / "nesyarena-conformance-report.md"
@@ -42,37 +46,3 @@ builder = _load_builder()
 def test_nesyarena_report_matches_the_builder():
     """The committed report is what the command it names writes, byte-for-byte."""
     assert REPORT.read_text(encoding="utf-8") == builder.render()
-
-
-def test_builder_names_the_commit_that_produced_the_report():
-    """A provenance line naming nothing checkable is not provenance."""
-    assert len(builder.SOURCE_COMMIT) == 40
-    assert all(c in "0123456789abcdef" for c in builder.SOURCE_COMMIT)
-    assert builder.SOURCE_COMMIT in REPORT.read_text(encoding="utf-8")
-
-    try:
-        checkout = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            cwd=ROOT,
-            capture_output=True,
-            check=False,
-            text=True,
-        )
-    except FileNotFoundError:
-        pytest.skip("git is unavailable")
-    if checkout.returncode != 0 or Path(checkout.stdout.strip()).resolve() != ROOT:
-        pytest.skip("not running in a git checkout")
-
-    builder_at_commit = subprocess.run(
-        [
-            "git",
-            "cat-file",
-            "-e",
-            f"{builder.SOURCE_COMMIT}:docs/build_nesyarena_report.py",
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        check=False,
-        text=True,
-    )
-    assert builder_at_commit.returncode == 0, builder_at_commit.stderr
