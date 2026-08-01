@@ -111,11 +111,16 @@ Two things about the encoding are this project's own and are load-bearing:
   the trace supplied them. A temporal bound counts decisions, not seconds. A violation at step *t*
   is the record at position *t* (`test_temporal_violated_returns_offending_segment`).
 - **Flags and magnitudes are read off the formula, never off the trace.** `var >= 0.5` (or
-  `0.5 <= var`) is the one way a pack asks whether a signal is *present*: that variable keeps the
-  1.0/0.0 encoding. Every other comparison — any other constant, 0.5 under any other operator, or a
+  `0.5 <= var`) is the one comparison pattern treated as a flag instead of requiring a measured
+  magnitude. For such a variable, Boolean values become 1.0/0.0, any other present non-numeric
+  value becomes 1.0, an absent or non-finite value becomes 0.0, and a finite numeric value remains
+  that number. Every other comparison — any other constant, 0.5 under any other operator, or a
   variable against a variable — makes both sides magnitudes, and a record that carries no finite
   real number for a magnitude makes the whole requirement not evaluated rather than scored 0.0
-  (`test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent`).
+  (`test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent`,
+  `test_temporal_satisfied`,
+  `test_ecoa_thirty_day_notice_violated_by_a_late_notification`,
+  `test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline`).
 
 ### `logical` — the rulelang mini-language
 
@@ -249,8 +254,8 @@ for every observed value *v*, `{v, v+1, v-1, -v, 0, v*2}`, and for every numeric
 property, `{L, L+1, L-1}`. A field whose observations are all strings gets the observed strings plus
 `""`. Every other field is excluded from the varied space and remains as it was in the selected
 record (`test_probe_candidate_pools_and_budget_counts_are_exact`). The budget's `input_space` maps
-each varied field to its candidate count; it does not enumerate inputs. Given the same `req.spec`,
-records, trials, and recorded seed, the plan is re-derived
+each field eligible for variation to its candidate count; it does not enumerate inputs. Given the
+same `req.spec`, records, trials, and recorded seed, the plan is re-derived
 (`test_the_same_seed_searches_the_same_space`), and the inputs the budget counts are the inputs the
 system was actually run on (`test_the_engine_replays_exactly_the_planned_inputs`).
 
@@ -380,13 +385,14 @@ plausible (`test_counts_reconcile_against_both_totals`). They differ in what a r
 | **unattainable — declared basis** | The signals the duty needs are outside the system's declared capability set. Computed as a set difference, *without executing the system*. | Change the system. |
 | **unattainable — trace basis** | No record in the supplied trace carries the required signals; the adapter derived its capability set from that trace. This does not establish that the system cannot emit them. | Supply a longer trace or an explicit capability declaration. Change the system only if further evidence confirms the signals are absent. |
 | **not evaluated** | The duty reaches the system, the system can emit the signals, and no engine here established anything: an empty trace, an unparseable formula, a solver timeout, an unmodelled construct. `strength=None`, which is deliberately not a rung on the lattice. | Fix the evidence or the specification and re-run. This is a gap in the audit, not a finding about the system. |
-| **violated** | An engine produced a witness: a record, a trace step, or an input that fails the property. | Fix the system. This is the only outcome that fails a `check` run. |
+| **violated** | An engine produced a witness: a record, a trace step, or an input that fails the property. | Fix the system. Of these four report outcomes, this is the only one that fails a `check` run. |
 
 Collapsing any two of them loses that instruction. "Unattainable" read as "violated" sends someone to
 fix a system that is behaving as designed; "not evaluated" read as "satisfied" is the single overclaim
 this tool exists to prevent; "not applicable" read as "satisfied" clears a duty nobody checked.
 
-The operational consequence is in the exit code: only a violation exits non-zero. Unattainable
+The operational consequence is in the exit code: among completed reports, only a violation exits
+non-zero. Unattainable
 (`test_cli_exits_zero_when_findings_are_unattainable`), not applicable
 (`test_cli_exits_zero_when_every_requirement_is_not_applicable`) and not evaluated are findings to
 read in the report, not breaches; a violation exits 2 (`test_cli_exits_nonzero_on_a_violation`).
@@ -440,6 +446,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | A temporal violation names the record positions that breached | `test_temporal_violated_returns_offending_segment` |
 | A trace too short to monitor is not evaluated, and the trace is blamed, not the formula | `test_trace_too_short_names_the_trace_not_the_formula` |
 | A formula rtamt cannot parse is not evaluated | `test_unexpressible_formula_reports_not_evaluated` |
+| The formula selects flag versus magnitude treatment, and flag values follow the stated conversion | `test_non_finite_flag_counts_as_absent`, `test_temporal_satisfied`, `test_ecoa_thirty_day_notice_violated_by_a_late_notification`, `test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline` |
 | A magnitude bound over an unmeasured signal is not evaluated, never scored | `test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent` |
 | `probed satisfied` ⇒ no counterexample among the replayed inputs, and every rendering carries the budget | `test_no_counterexample_in_budget_is_probed_and_every_rendering_carries_the_budget` |
 | A probed result cannot exist without its budget | `test_a_probed_result_cannot_be_constructed_without_its_budget` |

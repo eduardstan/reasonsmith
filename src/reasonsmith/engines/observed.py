@@ -11,12 +11,13 @@ What a reader must not break:
     unsupported formula or insufficient trace length cannot prove a temporal property.
   - Signal types (flag vs. magnitude) must be read from the formula itself, never from what the
     trace happened to contain. Asking `var >= 0.5` (or `0.5 <= var`) is the one way a pack asks
-    whether a signal is present at all: that variable is a flag and keeps the 1.0/0.0 encoding, so
-    an absent one still fails the check that asks for it. Every other comparison — against any
-    other constant, against 0.5 under any other operator, or against another variable — is a
-    magnitude on both sides: every record must carry a real number for it, and a record that
-    carries none — absent, blank, a bool, the string "45", or a non-finite float — is reported as
-    NOT EVALUATED rather than scored.
+    for a flag rather than a measured magnitude. For such a variable, Booleans become 1.0/0.0,
+    other present non-numeric values become 1.0, absent or non-finite values become 0.0, and
+    finite numbers remain numeric. Every other comparison — against any other constant, against
+    0.5 under any other operator, or against another variable — is a magnitude on both sides:
+    every record must carry a real number for it, and a record that carries none — absent, blank,
+    a bool, the string "45", or a non-finite float — is reported as NOT EVALUATED rather than
+    scored.
     Why this matters: Coercing those to 0.0 or 1.0 would let a 45-day notice, or a notice nobody
     ever sent, pass a `<= 30` deadline; NaN would too, since every robustness comparison against it
     is False. `json.loads` reads bare `NaN`/`Infinity` by default, so a producer that serialises a

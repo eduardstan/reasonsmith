@@ -10,6 +10,8 @@ import pytest
 
 from reasonsmith.report import (
     LIMITS as REPORT_LIMITS,
+)
+from reasonsmith.report import (
     ConformanceReport,
     RequirementResult,
     analyze_unattainable,
