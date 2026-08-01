@@ -1,8 +1,12 @@
 """Proved engine for reasonsmith v0.2.
 
 What this module is for:
-  Evaluates logical requirements (`formalism = "logical"`) over decision systems that expose
-  their decision logic via `sut.logic()`, using the Z3 SMT solver.
+  Evaluates state properties — `formalism = "logical"` and `formalism = "record"` alike — over
+  decision systems that expose their decision logic via `sut.logic()`, using the Z3 SMT solver.
+  A record-keeping duty written as `present(reason)` is a property of one decision like any
+  other, so a system that exposes rules always assigning `reason` can have it *proved* rather
+  than merely observed on the decisions it chose to log; see `_present_to_z3` for the three
+  cases where that would be an overclaim and is refused instead.
 
 What a reader must not break:
   - Solver outcomes of `unknown`, solver timeouts, or logic containing unsupported constructs MUST
@@ -47,11 +51,13 @@ import z3
 
 from reasonsmith.report import RequirementResult
 from reasonsmith.rulelang import (
+    PRESENCE_CALL,
     UnsupportedConstructError,
     assignment_target,
     eval_expression,
     execute_statements,
     parse_expression,
+    parse_property,
 )
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
@@ -113,6 +119,10 @@ class _Scope:
         self.current[name] = const
         return const
 
+    def is_assigned(self, name: str) -> bool:
+        """True when the encoded rules write to `name`, rather than reading it as a free input."""
+        return name in self._versions
+
     def snapshot(self) -> dict[str, Any]:
         return dict(self.current)
 
@@ -152,6 +162,56 @@ def _z3_promote(a: Any, b: Any) -> tuple[Any, Any]:
         if a.is_int() and b.is_real():
             return z3.ToReal(a), b
     return a, b
+
+
+#: Exactly the characters Python's `str.strip()` removes, which is exactly the set for which
+#: `str.isspace()` is true. `rulelang.is_present` calls a string absent when stripping it leaves
+#: nothing, so this list is what makes the solver's notion of a blank string the same notion —
+#: `test_the_solvers_blank_string_is_pythons_blank_string` enumerates the codepoint space and
+#: fails if the two ever diverge. Widening or narrowing it by hand breaks that agreement.
+BLANK_CHARACTERS = tuple(chr(code) for code in range(0x110000) if chr(code).isspace())
+
+
+def _blank_string_re() -> Any:
+    """The Z3 regular language of strings `is_present` calls absent: blanks, `""` included."""
+    return z3.Star(z3.Union(*[z3.Re(z3.StringVal(char)) for char in BLANK_CHARACTERS]))
+
+
+def _present_to_z3(node: ast.Call, scope: _Scope) -> Any:
+    """Encode `present(signal)` against the declared rules, or refuse it.
+
+    `present(x)` asks whether a decision carries a value for `x`, in the `rulelang.is_present`
+    sense the record engine and the replay search both use. The exposed logic can answer that for
+    a name its own rules assign — every execution of those rules writes that name — and the
+    encoding is per sort:
+
+    - **bool, int, real** — every value of the sort is a value a record carries. `is_present` says
+      so too: `0` and `False` are present, and only `None` and blanks are not.
+    - **string** — present means non-blank, and `""` is not the only blank string. The encoding is
+      "not in the language of blanks" over `BLANK_CHARACTERS`, which is exactly the set
+      `str.strip()` removes, so the solver and `is_present` agree on every string rather than
+      approximately.
+
+    A **free input** is refused. The rules read it and never write it, so proving anything about
+    the solver's free constant would say the record carries `x` because this encoding declared a
+    constant called `x` — a fact about the encoding, not about the system. The refusal is an
+    `UnsupportedConstructError`, so the requirement falls to the strongest engine that *can*
+    discharge it (`report._engine_ladder`) rather than losing its verdict altogether.
+    """
+    if len(node.args) != 1 or not isinstance(node.args[0], ast.Name):
+        raise UnsupportedConstructError(
+            f"{PRESENCE_CALL}() takes one signal name: {ast.unparse(node)!r}"
+        )
+    name = node.args[0].id
+    if not scope.is_assigned(name):
+        raise UnsupportedConstructError(
+            f"{PRESENCE_CALL}({name}) cannot be proved: the declared rules never assign {name!r}, "
+            "so the exposed logic does not establish that a decision carries it"
+        )
+    const = scope.read(name)
+    if const.sort() == z3.StringSort():
+        return z3.Not(z3.InRe(const, _blank_string_re()))
+    return z3.BoolVal(True)
 
 
 def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
@@ -241,6 +301,9 @@ def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
             raise UnsupportedConstructError(
                 f"Keyword arguments are unsupported: {ast.unparse(node)!r}"
             )
+
+        if func_name == PRESENCE_CALL:
+            return _present_to_z3(node, scope)
 
         if func_name in ("implies", "Implies"):
             if len(node.args) != 2:
@@ -379,7 +442,7 @@ def _extract_model_value(val: Any) -> Any:
 
 def _eval_python_spec(spec_text: str, record: dict[str, Any]) -> bool:
     """Evaluate requirement specification expression over a decision record."""
-    return bool(eval_expression(parse_expression(spec_text), dict(record)))
+    return bool(eval_expression(parse_property(spec_text), dict(record)))
 
 
 def _model_inputs(scope: _Scope, model: z3.ModelRef) -> dict[str, Any]:
@@ -542,7 +605,7 @@ class ProvedEngine:
                 _encode_block(ast.parse(r_text, mode="exec").body, scope, solver)
 
             spec_z3 = _as_bool(
-                _ast_to_z3(parse_expression(req.spec), scope),
+                _ast_to_z3(parse_property(req.spec), scope),
                 f"Requirement spec {req.spec!r}",
             )
 

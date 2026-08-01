@@ -23,7 +23,8 @@ article_clause = "Article 22(1)"
 verbatim_text = "The data subject shall have the right not to be subject to a decision based solely on automated processing, including profiling, which produces legal effects concerning him or her or similarly significantly affects him or her."
 stakeholder = "affected individual"
 formalism = "record"
-spec = "Decisions producing legal/significant effects record decision logic and provenance."
+spec = "present(artifact_logs_decision_record) and present(provenance_active_exceptions)"
+rationale = "Decisions producing legal/significant effects record decision logic and provenance."
 requires = [
     "artifact_logs_decision_record",
     "provenance_active_exceptions",
@@ -43,6 +44,10 @@ Implies(artifact_logs_solely_automated and artifact_logs_significant_effect, \
 (provenance_basis_contract or provenance_basis_union_or_member_state_law or provenance_basis_explicit_consent) \
 and Implies(provenance_basis_contract or provenance_basis_explicit_consent, \
 artifact_logs_human_intervention_route))"""
+rationale = """No input admits a decision that is solely automated and significantly affecting unless one of the \
+Article 22(2) bases is present, and where that basis is point (a) or (c) the Article 22(3) route to human \
+intervention is open. This is a property of the decision rules, not a determination that the controller has \
+discharged Article 22 — see the pack description for what a `proved` verdict here does and does not claim."""
 requires = [
     "artifact_logs_solely_automated",
     "artifact_logs_significant_effect",
@@ -61,7 +66,8 @@ article_clause = "Article 22(3)"
 verbatim_text = "In the cases referred to in points (a) and (c) of paragraph 2, the data controller shall implement suitable measures to safeguard the data subject's rights and freedoms and legitimate interests, at least the right to obtain human intervention on the part of the controller, to express his or her point of view and to contest the decision."
 stakeholder = "affected individual"
 formalism = "record"
-spec = "Safeguards providing contestation endpoints and human review pathways."
+spec = "present(artifact_logs_decision_record) and present(scope_statements_local_vs_global)"
+rationale = "Safeguards providing contestation endpoints and human review pathways."
 requires = [
     "artifact_logs_decision_record",
     "scope_statements_local_vs_global",
@@ -76,7 +82,11 @@ article_clause = "Recital 71"
 verbatim_text = "In any case, such processing should be subject to suitable safeguards, which should include specific information to the data subject and the right to obtain human intervention, to express his or her point of view, to obtain an explanation of the decision reached after such assessment and to challenge the decision."
 stakeholder = "affected individual"
 formalism = "record"
-spec = "Per-decision explanation and logic scope for data subjects."
+spec = """\
+present(artifact_logs_reason_explanation) and \
+present(scope_statements_explanation_scope) and \
+present(provenance_model_version)"""
+rationale = "Per-decision explanation and logic scope for data subjects."
 requires = [
     "artifact_logs_reason_explanation",
     "scope_statements_explanation_scope",
@@ -93,6 +103,10 @@ verbatim_text = "In order to ensure fair and transparent processing in respect o
 stakeholder = "affected individual"
 formalism = "temporal"
 spec = "always(scope_statements_declared_deviation <= artifact_logs_decision_margin)"
+rationale = """In every decision, the approximation error the system declares for itself is no larger than that \
+decision's own margin from its threshold: an error big enough to have moved the decision is not an error that has \
+been minimised. The bound is the system's own margin, deliberately, so no number in this duty is an invented \
+threshold presented as the Recital's."""
 requires = [
     "scope_statements_declared_deviation",
     "scope_statements_approximation_vs_guarantee",

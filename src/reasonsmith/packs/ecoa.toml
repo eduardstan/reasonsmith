@@ -19,7 +19,10 @@ verbatim_text = """A creditor shall notify an applicant of action taken within:
 (iv) 90 days after notifying the applicant of a counteroffer if the applicant does not expressly accept or use the credit offered."""
 stakeholder = "affected individual"
 formalism = "temporal"
-spec = "always((artifact_logs_decision_record >= 0.5) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))"
+spec = "always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or (present(artifact_logs_counteroffer_not_accepted) and (artifact_logs_notification_latency_days <= 90))))"
+rationale = """Every decision the log records was notified within the deadline its own paragraph sets: 30 days \
+under (i)-(iii), or 90 days where the record says the applicant did not accept a counteroffer, which is the \
+only case (iv) reaches. Both numbers are the clause's own; neither is this pack's."""
 requires = [
     "artifact_logs_decision_record",
     "artifact_logs_notification_latency_days",
@@ -36,7 +39,11 @@ verbatim_text = """A notification given to an applicant when adverse action is t
 (i) A statement of specific reasons for the action taken;"""
 stakeholder = "affected individual"
 formalism = "record"
-spec = "Written statement of reasons retaining decision record and model provenance."
+spec = """\
+present(artifact_logs_reason_explanation) and \
+present(artifact_logs_decision_record) and \
+present(provenance_model_version)"""
+rationale = "Written statement of reasons retaining decision record and model provenance."
 requires = [
     "artifact_logs_reason_explanation",
     "artifact_logs_decision_record",
@@ -52,7 +59,11 @@ article_clause = "12 CFR 1002.9(b)(2)"
 verbatim_text = "The statement of reasons for adverse action required by paragraph (a)(2)(i) of this section must be specific and indicate the principal reason(s) for the adverse action."
 stakeholder = "affected individual"
 formalism = "record"
-spec = "Specific principal reasons provided for adverse decisions."
+spec = """\
+present(artifact_logs_reason_explanation) and \
+present(provenance_model_version) and \
+present(scope_statements_local_vs_global)"""
+rationale = "Specific principal reasons provided for adverse decisions."
 requires = [
     "artifact_logs_reason_explanation",
     "provenance_model_version",

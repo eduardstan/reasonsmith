@@ -2,7 +2,9 @@
 
 What this module is for:
   Evaluates temporal properties (`formalism = "temporal"`) over decision traces using an rtamt
-  discrete-time STL monitor.
+  discrete-time STL monitor. The property is written in the shared language of `rulelang.py`;
+  `to_stl` renders it in rtamt's syntax, which today means turning each `present(x)` atom into the
+  flag test `x >= 0.5` this monitor already reads that way.
 
 What a reader must not break:
   - If rtamt cannot express a formula or trace is shorter than `MINIMUM_TRACE_LENGTH`, report
@@ -46,6 +48,7 @@ if "typing.io" not in sys.modules and not hasattr(typing, "io"):
 import rtamt
 
 from reasonsmith.report import RequirementResult, _is_present
+from reasonsmith.rulelang import PRESENCE_CALL
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
@@ -63,6 +66,23 @@ _NUMBER = r"-?\d+(?:\.\d+)?"
 _IDENT = r"[a-zA-Z_][a-zA-Z0-9_]*"
 _OPERAND = rf"(?:{_NUMBER}|{_IDENT})"
 _COMPARISON = re.compile(rf"({_OPERAND})\s*(<=|>=|<|>|==|!=)\s*({_OPERAND})")
+
+#: `present(x)` as it reaches this engine. rtamt has no such atom, so the one presence idiom this
+#: monitor already understands — a comparison against `PRESENCE_THRESHOLD` — is what it becomes.
+#: The rewrite is textual and runs before anything else reads the formula, so `_magnitude_vars`,
+#: the variable scan and rtamt itself all see one text.
+_PRESENCE_CALL = re.compile(rf"\b{PRESENCE_CALL}\s*\(\s*({_IDENT})\s*\)")
+
+
+def to_stl(spec: str) -> str:
+    """A requirement's property as rtamt syntax: `present(x)` becomes the flag test on `x`.
+
+    The two are the same question. `engines/observed.py` already treats `x >= 0.5` as "does the
+    record carry anything for x", so a presence atom does not need a new encoding here — it needs
+    the existing one spelled out, which is what makes `present()` writable in a temporal formula
+    at all.
+    """
+    return _PRESENCE_CALL.sub(rf"(\1 >= {PRESENCE_THRESHOLD})", spec)
 
 
 def _is_real_number(value: Any) -> bool:
@@ -169,17 +189,22 @@ class ObservedEngine:
                 scope=req.scope,
             )
 
+        # The formula in rtamt's own syntax. Everything below reads this text rather than
+        # `req.spec`, so a `present()` atom is a flag test to the monitor, to the magnitude
+        # analysis and to the variable scan alike.
+        stl_text = to_stl(req.spec)
+
         # Extract variable names from formula or req.requires
         var_names = set(req.requires)
         # Also extract identifiers from spec formula
-        found_vars = set(re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", req.spec))
+        found_vars = set(re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", stl_text))
         keywords = {
             "always", "eventually", "until", "then", "implies", "and", "or", "not",
             "true", "false", "historically", "once", "since", "rise", "fall", "prev"
         }
         formula_vars = found_vars - keywords
         spec_vars = formula_vars | var_names
-        magnitude_vars = _magnitude_vars(req.spec)
+        magnitude_vars = _magnitude_vars(stl_text)
 
         # Build dataset for rtamt
         time_series: dict[str, list[float]] = {"time": list(range(len(records)))}
@@ -232,8 +257,8 @@ class ObservedEngine:
         # Construct rtamt STL specification
         try:
             spec_name = f"spec_{req.id.replace('-', '_')}"
-            res = _monitor(req.spec, spec_name, spec_vars, time_series)
-            always_body = _always_body(req.spec)
+            res = _monitor(stl_text, spec_name, spec_vars, time_series)
+            always_body = _always_body(stl_text)
             violation_res = (
                 _monitor(always_body, f"{spec_name}_body", spec_vars, time_series)
                 if always_body is not None

@@ -15,7 +15,8 @@ article_clause = "Article 12(1)"
 verbatim_text = "High-risk AI systems shall technically allow for the automatic recording of events (logs) over the lifetime of the system."
 stakeholder = "regulator"
 formalism = "record"
-spec = "Automatic lifetime event logs retaining decision events."
+spec = "present(artifact_logs_event_log) and present(provenance_model_version)"
+rationale = "Automatic lifetime event logs retaining decision events."
 requires = [
     "artifact_logs_event_log",
     "provenance_model_version",
@@ -33,7 +34,8 @@ verbatim_text = """In order to ensure a level of traceability of the functioning
    (c) monitoring the operation of high-risk AI systems referred to in Article 26(5)."""
 stakeholder = "regulator"
 formalism = "record"
-spec = "Every decision carries an event log entry identifying the model version that produced it."
+spec = "present(artifact_logs_event_log) and present(provenance_model_version)"
+rationale = "Every decision carries an event log entry identifying the model version that produced it."
 requires = [
     "artifact_logs_event_log",
     "provenance_model_version",
@@ -48,7 +50,11 @@ article_clause = "Article 13(1)"
 verbatim_text = "High-risk AI systems shall be designed and developed in such a way as to ensure that their operation is sufficiently transparent to enable deployers to interpret a system’s output and use it appropriately. An appropriate type and degree of transparency shall be ensured with a view to achieving compliance with the relevant obligations of the provider and deployer set out in Section 3."
 stakeholder = "deployer"
 formalism = "record"
-spec = "Decision output accompanied by explanation scope and model provenance for deployers."
+spec = """\
+present(scope_statements_explanation_scope) and \
+present(artifact_logs_reason_explanation) and \
+present(provenance_model_version)"""
+rationale = "Decision output accompanied by explanation scope and model provenance for deployers."
 requires = [
     "scope_statements_explanation_scope",
     "artifact_logs_reason_explanation",
@@ -64,7 +70,8 @@ article_clause = "Article 13(2)"
 verbatim_text = "High-risk AI systems shall be accompanied by instructions for use in an appropriate digital format or otherwise that include concise, complete, correct and clear information that is relevant, accessible and comprehensible to deployers."
 stakeholder = "deployer"
 formalism = "record"
-spec = "Instructions for use and performance bounds accessible to deployers."
+spec = "present(scope_statements_approximation_vs_guarantee) and present(provenance_constraint_set)"
+rationale = "Instructions for use and performance bounds accessible to deployers."
 requires = [
     "scope_statements_approximation_vs_guarantee",
     "provenance_constraint_set",

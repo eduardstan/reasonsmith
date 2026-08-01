@@ -18,6 +18,7 @@ from reasonsmith.report import (
     check_conformance,
     evaluate_requirement,
 )
+from reasonsmith.rulelang import classify_fragment
 from reasonsmith.spec import (
     PACKS_DIR,
     REGULATORY_CLASSES,
@@ -48,7 +49,8 @@ def _requirement(**overrides) -> Requirement:
         "verbatim_text": "quoted text",
         "stakeholder": "deployer",
         "formalism": "record",
-        "spec": "a spec",
+        "spec": "present(signal_a)",
+        "rationale": "Why this duty exists, in English.",
         "requires": ("signal_a",),
         "binding": True,
         "scope": "",
@@ -235,7 +237,7 @@ def test_pack_source_metadata_matches_transcription():
 @pytest.mark.parametrize(
     "field_name",
     ["id", "source_document", "article_clause", "verbatim_text", "stakeholder", "formalism",
-     "spec", "requires", "binding", "scope"],
+     "spec", "rationale", "requires", "binding", "scope"],
 )
 def test_loader_rejects_missing_field(tmp_path, field_name):
     """A requirement missing any field is a malformed pack, not a partial one."""
@@ -246,7 +248,8 @@ def test_loader_rejects_missing_field(tmp_path, field_name):
         "verbatim_text": '"quoted"',
         "stakeholder": '"deployer"',
         "formalism": '"record"',
-        "spec": '"a spec"',
+        "spec": '"present(signal_a)"',
+        "rationale": '"Why this duty exists."',
         "requires": '["signal_a"]',
         "binding": 'true',
         "scope": '""',
@@ -267,7 +270,8 @@ def test_loader_rejects_requires_as_bare_string(tmp_path):
     body = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "quoted"\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = "per_decision_reason_string"\nbinding = true\nscope = ""\n'
+        'spec = "present(per_decision_reason_string)"\nrationale = "Why."\n'
+        'requires = "per_decision_reason_string"\nbinding = true\nscope = ""\n'
     )
     with pytest.raises(ValueError, match="must be an array of signal names"):
         load_pack(_write_pack(tmp_path, body))
@@ -278,7 +282,8 @@ def test_loader_rejects_blank_and_duplicate_fields(tmp_path):
     base = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = {verbatim}\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = {requires}\nbinding = true\nscope = ""\n'
+        'spec = "present(a)"\nrationale = "Why."\nrequires = {requires}\n'
+        'binding = true\nscope = ""\n'
     )
     with pytest.raises(ValueError, match="verbatim_text.*non-empty"):
         load_pack(_write_pack(tmp_path, base.format(verbatim='"   "', requires='["a"]')))
@@ -300,7 +305,7 @@ def test_loader_rejects_empty_pack_and_bad_formalism(tmp_path):
     body = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "vibes"\n'
-        'spec = "a spec"\nrequires = ["a"]\nbinding = true\nscope = ""\n'
+        'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\nscope = ""\n'
     )
     with pytest.raises(ValueError, match="Invalid formalism"):
         load_pack(_write_pack(tmp_path, body))
@@ -311,9 +316,9 @@ def test_loader_error_names_the_offending_block(tmp_path):
     good = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = ["a"]\nbinding = true\nscope = ""\n'
+        'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\nscope = ""\n'
     )
-    bad = good.replace('id = "r1"', 'id = "r2"').replace('spec = "a spec"\n', "")
+    bad = good.replace('id = "r1"', 'id = "r2"').replace('spec = "present(a)"\n', "")
     with pytest.raises(ValueError, match=r"custom\.toml \[\[requirement\]\] #2 \('r2'\)"):
         load_pack(_write_pack(tmp_path, good + "\n" + bad))
 
@@ -323,7 +328,7 @@ def test_loader_rejects_an_unknown_field(tmp_path):
     good = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = ["a"]\nbinding = true\nscope = ""\n'
+        'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\nscope = ""\n'
     )
     with pytest.raises(ValueError, match=r"custom\.toml.*unknown field\(s\): stakeholders"):
         load_pack(_write_pack(tmp_path, good + 'stakeholders = "deployer"\n'))
@@ -598,7 +603,9 @@ def test_a_declared_signal_absent_from_the_trace_is_a_violation():
         def decisions(self):
             return [{"signal_a": "x", "signal_b": "y"}, {"signal_a": "x"}]
 
-    req = _requirement(requires=("signal_a", "signal_b"))
+    req = _requirement(
+        spec="present(signal_a) and present(signal_b)", requires=("signal_a", "signal_b")
+    )
     result = evaluate_requirement(req, SilentSUT({"signal_a", "signal_b"}))
     assert result.verdict == Verdict.VIOLATED
     assert result.strength == Strength.OBSERVED
@@ -1009,7 +1016,8 @@ def test_a_pack_scope_outside_the_vocabulary_is_refused_at_load(tmp_path):
     body = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = ["a"]\nbinding = true\nscope = "hihg-risk"\n'
+        'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\n'
+        'scope = "hihg-risk"\n'
     )
     with pytest.raises(ValueError, match=r"'r1'.*'scope'.*not a known regulatory class"):
         load_pack(_write_pack(tmp_path, body))
@@ -1028,7 +1036,8 @@ def test_a_blank_scope_is_a_typo_not_an_absent_class(tmp_path):
     body = (
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
-        'spec = "a spec"\nrequires = ["a"]\nbinding = true\nscope = "   "\n'
+        'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\n'
+        'scope = "   "\n'
     )
     with pytest.raises(ValueError, match=r"'r1'.*'scope'.*not a known regulatory class"):
         load_pack(_write_pack(tmp_path, body))
@@ -1087,3 +1096,80 @@ def test_system_scope_precedes_a_conflicting_declared_scope():
     assert report.system_scope == "limited-risk"
     assert all(result.verdict == Verdict.NOT_APPLICABLE for result in report.results)
     assert direct.verdict == Verdict.NOT_APPLICABLE
+
+
+# --------------------------------------------------------------------------------------
+# One property language: `formalism` names a fragment, and the loader checks it
+# --------------------------------------------------------------------------------------
+
+
+def _spec_pack(tmp_path: Path, formalism: str, spec: str, requires: str = '["signal_a"]') -> Path:
+    body = (
+        '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
+        'verbatim_text = "q"\nstakeholder = "deployer"\n'
+        f'formalism = "{formalism}"\nspec = {spec!r}\nrationale = "Why."\n'
+        f"requires = {requires}\nbinding = true\nscope = \"\"\n"
+    )
+    return _write_pack(tmp_path, body)
+
+
+def test_the_loader_refuses_prose_where_a_property_belongs(tmp_path):
+    """`spec` is executable, so English in it is a load error rather than a string nothing reads.
+
+    This was the defect the field's two meanings hid: a record duty's `spec` used to be prose no
+    engine parsed, so nothing could tell prose from a property, and a formula written there would
+    have gone unread just as quietly.
+    """
+    with pytest.raises(ValueError, match="is not a property in this language"):
+        load_pack(_spec_pack(tmp_path, "record", "Record check."))
+    with pytest.raises(ValueError, match="English belongs in `rationale`"):
+        load_pack(_spec_pack(tmp_path, "record", "not a property !@#$"))
+
+
+def test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment(tmp_path):
+    """Labelling a formula with the wrong fragment is refused, naming the fragment it really is.
+
+    An STL formula declared `record` used to load clean and be answered by a presence check
+    nobody wrote — a silent downgrade. The match is exact rather than compatible: a presence
+    conjunction is also a well-formed `logical` property, and accepting it as one would lose the
+    record engine's per-signal diagnostics for nothing.
+    """
+    with pytest.raises(ValueError, match=r"declares formalism 'record'.*is a 'temporal' property"):
+        load_pack(_spec_pack(tmp_path, "record", "always(present(signal_a))"))
+    with pytest.raises(ValueError, match=r"declares formalism 'temporal'.*is a 'record' property"):
+        load_pack(_spec_pack(tmp_path, "temporal", "present(signal_a)"))
+    with pytest.raises(ValueError, match=r"declares formalism 'logical'.*is a 'record' property"):
+        load_pack(_spec_pack(tmp_path, "logical", "present(signal_a)"))
+    with pytest.raises(ValueError, match=r"declares formalism 'record'.*is a 'logical' property"):
+        load_pack(_spec_pack(tmp_path, "record", "signal_a >= 1"))
+
+    for formalism, spec in (
+        ("record", "present(signal_a)"),
+        ("temporal", "always(present(signal_a))"),
+        ("logical", "signal_a >= 1"),
+    ):
+        assert load_pack(_spec_pack(tmp_path, formalism, spec)).requirements[0].spec == spec
+
+
+def test_the_loader_refuses_a_spec_reading_an_ungated_signal(tmp_path):
+    """A signal the property reads but `requires` does not gate is unattainability's blind spot."""
+    with pytest.raises(ValueError, match="reads signal.*not named in 'requires': signal_b"):
+        load_pack(
+            _spec_pack(tmp_path, "record", "present(signal_a) and present(signal_b)")
+        )
+    ok = _spec_pack(
+        tmp_path,
+        "record",
+        "present(signal_a) and present(signal_b)",
+        requires='["signal_a", "signal_b"]',
+    )
+    assert load_pack(ok).requirements[0].requires == ("signal_a", "signal_b")
+
+
+def test_every_shipped_duty_is_a_formula_and_carries_its_english(tmp_path):
+    """No shipped pack keeps prose in `spec`, and every one of them explains itself in words."""
+    for name in list_packs():
+        for req in load_pack(name).requirements:
+            assert classify_fragment(req.spec) == req.formalism, f"{name}/{req.id}"
+            assert req.rationale.strip(), f"{name}/{req.id} has no rationale"
+            assert req.rationale != req.spec, f"{name}/{req.id} rationale merely repeats the spec"

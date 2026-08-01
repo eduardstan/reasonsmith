@@ -124,7 +124,8 @@ class TestJSONLAdapter:
             verbatim_text="Quote",
             stakeholder="deployer",
             formalism="record",
-            spec="Record check",
+            spec="present(artifact_logs_reason_explanation)",
+            rationale="Why this duty exists, in English.",
             requires=("artifact_logs_reason_explanation",),
             binding=True,
             scope="",
@@ -147,7 +148,8 @@ class TestJSONLAdapter:
             verbatim_text="Quote",
             stakeholder="deployer",
             formalism="record",
-            spec="Record check",
+            spec="present(scope_statements_explanation_scope)",
+            rationale="Why this duty exists, in English.",
             requires=("scope_statements_explanation_scope",),
             binding=True,
             scope="",
@@ -175,7 +177,8 @@ class TestJSONLAdapter:
             verbatim_text="Quote",
             stakeholder="deployer",
             formalism="record",
-            spec="Record check",
+            spec="present(scope_statements_explanation_scope)",
+            rationale="Why this duty exists, in English.",
             requires=("scope_statements_explanation_scope",),
             binding=True,
             scope="",
@@ -273,13 +276,14 @@ def test_record_and_temporal_formalisms_route_through_report():
             stakeholder="deployer",
             formalism=formalism,
             spec=spec,
+            rationale="Why this duty exists, in English.",
             requires=("signal_a", "signal_b"),
             binding=True,
             scope="",
         )
 
     record = evaluate_requirement(
-        requirement("record", "not valid temporal syntax !@#$"), sut, records
+        requirement("record", "present(signal_a) and present(signal_b)"), sut, records
     )
     temporal = evaluate_requirement(
         requirement("temporal", "always((signal_a >= 0.5) -> (signal_b >= 0.5))"),
@@ -305,7 +309,8 @@ class TestRecordEngine:
             verbatim_text="Quote",
             stakeholder="deployer",
             formalism="record",
-            spec="Record check",
+            spec="present(provenance_model_version) and present(artifact_logs_event_log)",
+            rationale="Why this duty exists, in English.",
             requires=("provenance_model_version", "artifact_logs_event_log"),
             binding=True,
             scope="",
@@ -327,7 +332,8 @@ class TestRecordEngine:
             verbatim_text="Quote",
             stakeholder="deployer",
             formalism="record",
-            spec="Record check",
+            spec="present(provenance_model_version) and present(artifact_logs_reason_explanation)",
+            rationale="Why this duty exists, in English.",
             requires=("provenance_model_version", "artifact_logs_reason_explanation"),
             binding=True,
             scope="",
@@ -338,12 +344,16 @@ class TestRecordEngine:
         assert result.strength == Strength.OBSERVED
         assert "artifact_logs_reason_explanation" in result.details["signals_absent_from_trace"]
 
-    def test_the_record_engine_reads_requires_not_spec(self, jsonl_fixture_file: Path):
-        """A `record` duty is discharged by its `requires` list; its `spec` is never evaluated.
+    def test_the_record_engine_evaluates_its_spec(self, jsonl_fixture_file: Path):
+        """A `record` duty is discharged by the property in its `spec`, not by its `requires`.
 
-        The shipped record requirements carry free prose in `spec` ("Record check"), which no
-        parser would accept. A reader has to know that string is documentation rather than the
-        property being checked, or they will read a record verdict as a claim about it.
+        `spec` used to be free prose for a record duty and no engine read it, so two requirements
+        differing only in that field produced the identical verdict and a reader who took a record
+        verdict as a claim about the `spec` text was reading something nothing checked. It is now
+        a formula in one language with the other fragments, and this test is what says so: the
+        signals the engine looks for are the `present()` atoms the property names, and a `spec`
+        this engine cannot walk as a conjunction of them is not evaluated rather than answered
+        from `requires`.
         """
         sut = JSONLAdapter(jsonl_fixture_file)
         records = list(sut.decisions())
@@ -358,6 +368,7 @@ class TestRecordEngine:
                     stakeholder="deployer",
                     formalism="record",
                     spec=spec,
+                    rationale="Why this duty exists, in English.",
                     requires=("provenance_model_version", "artifact_logs_event_log"),
                     binding=True,
                     scope="",
@@ -366,17 +377,29 @@ class TestRecordEngine:
                 records,
             )
 
-        prose = result_for("Record check")
-        # A property that is false on every record, and one that no parser would accept at all.
-        false_property = result_for("provenance_model_version == 'never this version'")
-        unparseable = result_for("not a property !@#$")
+        both = result_for("present(provenance_model_version) and present(artifact_logs_event_log)")
+        assert both.verdict == Verdict.SATISFIED
+        assert both.strength == Strength.OBSERVED
 
-        assert prose.verdict == Verdict.SATISFIED
-        assert prose.strength == Strength.OBSERVED
-        for other in (false_property, unparseable):
-            assert other.verdict == prose.verdict
-            assert other.strength == prose.strength
-            assert other.evidence_summary == prose.evidence_summary
+        # The property, not the `requires` list, decides which signals are looked for: this one
+        # names a signal the trace does not carry, and `requires` cannot make it satisfied.
+        narrower = result_for("present(stability_signals_perturbation_sensitivity)")
+        assert narrower.verdict == Verdict.VIOLATED
+        assert narrower.details["signals_absent_from_trace"] == [
+            "stability_signals_perturbation_sensitivity"
+        ]
+
+        # Prose, a state property that is not a presence conjunction, and text no parser accepts
+        # are each not evaluated — never answered from `requires` as if the spec were absent.
+        for spec in (
+            "Record check",
+            "provenance_model_version == 'never this version'",
+            "not a property !@#$",
+        ):
+            unreadable = result_for(spec)
+            assert unreadable.verdict == Verdict.INCONCLUSIVE, spec
+            assert unreadable.strength is None, spec
+            assert "Not evaluated" in unreadable.evidence_summary, spec
 
 
 class TestObservedEngine:
@@ -392,6 +415,7 @@ class TestObservedEngine:
             stakeholder="deployer",
             formalism="temporal",
             spec="always((signal_a >= 0.5) -> (signal_b >= 0.5))",
+            rationale="Why this duty exists, in English.",
             requires=("signal_a", "signal_b"),
             binding=True,
             scope="",
@@ -414,6 +438,7 @@ class TestObservedEngine:
             stakeholder="deployer",
             formalism="temporal",
             spec="(signal_a >= 0.5) -> (signal_b >= 0.5)",
+            rationale="Why this duty exists, in English.",
             requires=("signal_a", "signal_b"),
             binding=True,
             scope="",
@@ -445,6 +470,7 @@ class TestObservedEngine:
             stakeholder="deployer",
             formalism="temporal",
             spec="always(signal_a >= 0.5)",
+            rationale="Why this duty exists, in English.",
             requires=("signal_a",),
             binding=True,
             scope="",
@@ -467,6 +493,7 @@ class TestObservedEngine:
             stakeholder="deployer",
             formalism="temporal",
             spec="always(signal_a >= 0.5)",
+            rationale="Why this duty exists, in English.",
             requires=("signal_a",),
             binding=True,
             scope="",
@@ -500,6 +527,7 @@ class TestObservedEngine:
             stakeholder="deployer",
             formalism="temporal",
             spec=spec,
+            rationale="Why this duty exists, in English.",
             requires=("signal_a", "signal_b"),
             binding=True,
             scope="",
@@ -519,6 +547,7 @@ class TestObservedEngine:
             stakeholder="deployer",
             formalism="temporal",
             spec="invalid syntax !@#$%",
+            rationale="Why this duty exists, in English.",
             requires=("signal_a",),
             binding=True,
             scope="",

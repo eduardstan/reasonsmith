@@ -47,9 +47,19 @@ zero verdicts is `inconclusive`, never vacuously `satisfied`; `SUPPORTED_FORMALI
 of formalisms an engine actually exists for — widen it when the engine lands, not before; and a
 `probed` result cannot be constructed without the search budget that produced it
 (`PROBE_BUDGET_KEY` / `PROBE_BUDGET_FIELDS`), so the bound travels with the verdict into every
-rendering instead of being a rendering convention. Which engine a `logical` requirement reaches is
-decided by what the system exposes: `logic()` gets Z3, `decide()` alone gets the replay search in
-`engines/probed.py`.
+rendering instead of being a rendering convention.
+
+Which engine a requirement reaches is decided by what the system exposes — for *every* fragment,
+not just `logical`, since the property-language unification. `rulelang.py` is the one property
+language: every `spec` is a formula in it (presence atoms `present(signal)`, comparisons,
+connectives, temporal operators), `formalism` names which fragment the formula belongs to,
+`load_pack` classifies the spec and refuses a mismatch or prose, and the English lives in the
+required `rationale` field. `report._engine_ladder` then collects every engine the fragment *and*
+the exposed surface allow and takes the strongest evidence produced: `logic()` gets Z3, `decide()`
+gets the replay search, a trace gets the record or observed engine, and temporal never rises above
+`observed` because no engine here reasons over a trace-wide formula. Read `docs/semantics.md` §2
+and §3.5 before editing any of it — they state the rule, the two `present()` encodings, and the one
+case the ladder does not resolve (exposed logic disagreeing with the trace).
 
 `src/reasonsmith/packs/*.toml` are derived, not authored. The EU AI Act, GDPR and ECOA packs quote
 `docs/legal-sources.md`, which is the retrieval record for the official statutory text and the one

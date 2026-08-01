@@ -37,18 +37,19 @@ source_document = "Statute name"
 article_clause = "Exact clause citation"
 verbatim_text = """Exact text of the clause"""
 stakeholder = "affected individual"
-formalism = "record"          # one of: record, temporal, logical
-spec = "The property the engine checks"
+formalism = "record"          # which fragment of the property language `spec` is written in
+spec = "present(signal_a) and present(signal_b)"
+rationale = "What the duty asks, in English."
 requires = ["signal_a", "signal_b"]
 binding = true                # true = legal obligation, false = interpretive recital/guidance
 scope = "high-risk"           # or "" for a duty that is not class-limited
 ```
 
 A `[[requirement]]` block carries **exactly** these fields: `id`, `source_document`,
-`article_clause`, `verbatim_text`, `stakeholder`, `formalism`, `spec`, `requires`, `binding`,
-`scope`. Omitting one, or adding a field nothing reads, is a load-time error — an omitted field
-would break source traceability, and an unread field would look like data the codebase acts on
-when it does not.
+`article_clause`, `verbatim_text`, `stakeholder`, `formalism`, `spec`, `rationale`, `requires`,
+`binding`, `scope`. Omitting one, or adding a field nothing reads, is a load-time error — an
+omitted field would break source traceability, and an unread field would look like data the
+codebase acts on when it does not.
 
 ## What each field is for
 
@@ -58,8 +59,9 @@ when it does not.
 | `source_document`, `article_clause` | The statute and clause the duty comes from. Together they are the citation a finding is reported against. |
 | `verbatim_text` | The exact words of the clause, quoted for the report. |
 | `stakeholder` | Whose interest the duty protects. |
-| `formalism` | Which engine class checks it: `record` (completeness over a decision trace), `temporal` (rtamt monitors), `logical` (Z3 proof). A formalism no engine covers is reported not evaluated, never judged by a weaker check. |
-| `spec` | The property the engine evaluates for this requirement. |
+| `formalism` | Which **fragment** of the property language `spec` is written in: `record` (a conjunction of `present(signal)` atoms), `temporal` (anything using a temporal operator), `logical` (any other property of one decision record). It says what the property *is*; it does not decide which engine answers it. The loader parses `spec`, works out the fragment and refuses a mismatch. |
+| `spec` | The property, as a formula. Never prose — see "One property language" below. |
+| `rationale` | What the duty asks, in English, for a human reading the pack. Nothing derives a verdict from its wording. |
 | `requires` | The signal names the system must be capable of emitting for the requirement to be checkable at all. A system missing one is reported unattainable on the missing signal, without being run. |
 | `binding` | Whether this duty is a legally binding obligation (`true`) or an interpretive recital/guidance item (`false`). |
 | `scope` | The regulatory class the duty is limited to, from the fixed vocabulary `prohibited`, `high-risk`, `limited-risk`, `minimal-risk`, `general-purpose`; `""` means the duty is not class-limited. |
@@ -71,10 +73,34 @@ The packs shipped in this repository are held to the prefixes by
 `test_pack_loads_and_validates`, so a signal added to one of them must carry a taxonomy prefix —
 including the free names a `logical` requirement's `spec` reads.
 
-For a `logical` requirement the `spec` is not documentation: it is the property the solver proves,
-written in the rulelang of `src/reasonsmith/rulelang.py`, and every name in it is resolved against
-the decision record the system's rules produce. So the names in `spec`, the names in `requires` and
-the names the system's `logic()` declares are one vocabulary, not three.
+## One property language
+
+Every `spec`, in every fragment, is a formula in the language of `src/reasonsmith/rulelang.py`:
+presence atoms (`present(signal)`), comparisons over signal values, boolean connectives and arrows,
+the temporal operators, and the rulelang calls `implies`, `abs`, `min`, `max`. Every name in it is
+resolved against the decision record the system produces, so the names in `spec`, the names in
+`requires` and the names the system's `logic()` declares are one vocabulary, not three — and the
+loader refuses a `spec` reading a signal `requires` does not gate.
+
+Two load-time checks make `formalism` mean something:
+
+- **The spec must be in the language.** Prose in `spec` is a load error. It used to be the norm for
+  a `record` duty — nothing parsed that field, so prose and an STL formula sat three lines apart in
+  packs and a reader could not tell which was checked.
+- **The declared fragment must be the one the formula belongs to**, exactly. An STL formula labelled
+  `record` is refused rather than silently answered by a presence check nobody wrote. The match is
+  exact and not merely compatible: a presence conjunction is also a well-formed `logical` property,
+  and accepting it as one would cost the record engine's per-signal, per-record diagnostics.
+
+**The fragment does not pick the engine.** How strongly a duty can be discharged is a fact about the
+system under test, not about the pack: `report._engine_ladder` collects every engine the fragment
+and the system's exposed surface allow, and takes the strongest evidence produced. A presence
+property is `observed` against a trace, `probed` against a system exposing `decide()`, and `proved`
+against one exposing `logic()`. `docs/semantics.md` §3.5 states the rule and its limits.
+
+If a duty cannot be written in this language, that is a finding to record in `docs/semantics.md` —
+not a reason to widen the language until it fits. Widening it to accommodate one stubborn duty is
+how a property language becomes an untyped string again.
 
 ## binding and scope have no default
 

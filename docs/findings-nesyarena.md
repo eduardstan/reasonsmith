@@ -186,13 +186,31 @@ emit none of them, because five are facts about a controller's legal basis or ab
 human-intervention route and one is about the effect a decision has on a person. The ECOA temporal
 duty needs a notification latency the system has no concept of. The new GDPR temporal duty is
 checkable and produces `observed` verdicts; temporal monitoring does not reach either of the top two
-rungs.
+rungs, and no engine in this build reasons about a formula quantified over a trace
+(`docs/semantics.md` §3.5).
 
-The generalisation is uncomfortable and worth stating plainly: **for any system that knows only
-its own inference, the strongest evidence reasonsmith's shipped packs can produce is `observed`.**
-The proved and probed engines exist and are tested, but reaching them requires a pack whose
-logical properties are about the inference itself rather than about the organisation deploying
-it. No such pack ships.
+That leaves the fifteen `record` duties, and there is a second cause behind them that this finding
+originally mistook for the first. When this run was first made, a `record` duty could never exceed
+`observed` for *any* system: `formalism` both named the property and picked the engine, so a human
+typing `record` in a TOML file capped the rung regardless of what the system exposed. That defect
+is fixed — a presence property is now discharged by the strongest engine the system's exposed
+surface allows, and the same property reaches `proved` against exposed `logic()`. **Re-running the
+builder after the fix changes nothing in this report.** The counts above are unmoved, and that is
+the correct answer rather than a leftover of the defect: `NesyArenaSUT` implements `decisions()`
+and nothing else, so there is no `decide()` to replay a perturbed input through and no `logic()` to
+reason over. The record duties stay `observed` because a bare trace is all the evidence this system
+offers, which is what `observed` means.
+
+Giving the adapter a `decide()` would move the number and would be dishonest: the probe engine
+perturbs *record fields*, and this system's inputs are a ground program and its fact
+probabilities, not the strings and floats its records carry. A `decide()` that accepted a perturbed
+record and answered from the unperturbed instance would report a search that never searched.
+
+The generalisation is uncomfortable and worth stating plainly: **for any system that exposes only a
+decision trace, the strongest evidence reasonsmith can produce is `observed`, whatever the pack
+asks.** The proved and probed engines exist and are tested, and after the dispatch fix a record
+duty can reach either — but only against a system that can be re-run or reasoned over. nesyarena's
+provenances, as adapted here, are neither.
 
 ### 3. ECOA reached a system it has no business reaching
 

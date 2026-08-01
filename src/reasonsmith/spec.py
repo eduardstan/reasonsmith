@@ -12,6 +12,16 @@ What a reader must not break:
   - Verbatim text and statutory citations loaded from packs must strictly match source documents
     (`docs/legal-sources.md`).
     Why this matters: Ensures requirement packs stay legally faithful to official statutory texts.
+  - `spec` is a formula in the one property language of `rulelang.py`, `rationale` is the English,
+    and `formalism` names which fragment of that language the formula belongs to. The loader parses
+    `spec`, classifies it, and refuses a declared fragment that is not the one it found.
+    Why this matters: `formalism` used to be a label nothing checked, so prose could sit in `spec`
+    under `formalism = "record"` and an STL formula could be labelled `record` and silently
+    downgraded. The check is what makes the field mean something.
+  - Every signal name a `spec` reads must appear in `requires`.
+    Why this matters: `requires` is the capability gate that decides whether a duty is attainable
+    at all. A name in the formula that is not gated is a signal no unattainability analysis ever
+    asks for — usually a typo, and always a property evaluated against a field nothing promised.
 """
 
 from __future__ import annotations
@@ -20,6 +30,13 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
+
+from reasonsmith.rulelang import (
+    UnsupportedConstructError,
+    classify_fragment,
+    parse_property,
+    signal_names,
+)
 
 VALID_FORMALISMS = ("record", "temporal", "logical")
 PACKS_DIR = Path(__file__).parent / "packs"
@@ -39,6 +56,7 @@ REQUIREMENT_FIELDS = (
     "stakeholder",
     "formalism",
     "spec",
+    "rationale",
     "requires",
     "binding",
     "scope",
@@ -100,12 +118,18 @@ def normalize_scope(value: Any, what: str = "regulatory class") -> str:
 class Requirement:
     """A single regulatory or governance requirement with signal dependencies.
 
-    `requires` names the signals a system must be capable of emitting for this
-    requirement to be checkable at all.
+    `spec` is the property, written in the one language of `rulelang.py`; `formalism` names which
+    fragment of that language it belongs to; `rationale` is the English explanation of the duty,
+    and no verdict is derived from its wording. `requires` names the signals a system must be
+    capable of emitting for this requirement to be checkable at all.
     `binding` indicates whether this duty is a legally binding obligation (true) or an
     interpretive recital/guidance item (false). `scope` records any regulatory class the duty
     is limited to; empty means the duty is not class-limited, and anything else must be a
     member of `REGULATORY_CLASSES`.
+
+    The fragment and signal-name checks live in `load_pack`, not here: a test that hands an
+    engine a deliberately unparseable property is checking what that engine does with one, and
+    refusing to construct it would test nothing.
 
     Neither field has a default, here or in the loader: defaulting a missing `binding` to true
     would silently promote an unclassified item to a legal obligation, and defaulting it to
@@ -121,6 +145,7 @@ class Requirement:
     stakeholder: str
     formalism: Literal["record", "temporal", "logical"]
     spec: str
+    rationale: str
     requires: tuple[str, ...]
     binding: bool
     scope: str
@@ -143,6 +168,7 @@ class Requirement:
         # is malformed rather than merely incomplete.
         text_fields = (
             "id", "source_document", "article_clause", "verbatim_text", "stakeholder", "spec",
+            "rationale",
         )
         for name in text_fields:
             value = getattr(self, name)
@@ -171,6 +197,7 @@ class Requirement:
             "stakeholder": self.stakeholder,
             "formalism": self.formalism,
             "spec": self.spec,
+            "rationale": self.rationale,
             "requires": list(self.requires),
             "binding": self.binding,
             "scope": self.scope,
@@ -211,6 +238,38 @@ class Pack:
             "requirements": [r.to_dict() for r in self.requirements],
             "source_metadata": dict(self.source_metadata),
         }
+
+
+def _check_spec(req: Requirement, where: str) -> None:
+    """Refuse a spec that is not in the language, or not in the fragment the pack declared.
+
+    Both halves are load-time errors rather than run-time surprises. A spec labelled with the
+    wrong fragment used to be a silent downgrade: an STL formula written under
+    `formalism = "record"` was never parsed by anything, and the duty was answered by a presence
+    check nobody asked for. Naming the fragment the formula actually belongs to is the whole
+    repair, so the message says which one it is.
+    """
+    try:
+        node = parse_property(req.spec)
+        found = classify_fragment(req.spec)
+    except UnsupportedConstructError as exc:
+        raise ValueError(f"{where}: field 'spec': {exc}") from exc
+
+    if found != req.formalism:
+        raise ValueError(
+            f"{where}: declares formalism {req.formalism!r} but its spec is a {found!r} property. "
+            f"Either declare {found!r}, or write a {req.formalism!r} property. The fragments are: "
+            "'record' — a conjunction of present(signal) atoms; 'temporal' — anything using a "
+            "temporal operator; 'logical' — any other property of a single decision record."
+        )
+
+    unrequired = sorted(set(signal_names(node)) - set(req.requires))
+    if unrequired:
+        raise ValueError(
+            f"{where}: field 'spec' reads signal(s) not named in 'requires': "
+            f"{', '.join(unrequired)}. `requires` is the capability gate that decides whether "
+            "this duty is attainable, so a signal the property reads must be listed there."
+        )
 
 
 def load_pack(name_or_path: str | Path) -> Pack:
@@ -280,12 +339,14 @@ def load_pack(name_or_path: str | Path) -> Pack:
                 stakeholder=rdata["stakeholder"],
                 formalism=rdata["formalism"],
                 spec=rdata["spec"],
+                rationale=rdata["rationale"],
                 requires=tuple(rdata["requires"]),
                 binding=rdata["binding"],
                 scope=rdata["scope"],
             )
         except ValueError as exc:
             raise ValueError(f"{where}: {exc}") from exc
+        _check_spec(req, where)
         reqs.append(req)
 
     return Pack(

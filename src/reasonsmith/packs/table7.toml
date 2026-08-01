@@ -42,7 +42,14 @@ article_clause = "Art. 13"
 verbatim_text = "Transparency and information to deployers"
 stakeholder = "deployer"
 formalism = "record"
-spec = "Technical documentation and minimal evidence retainment for transparency duties."
+spec = """\
+present(model_and_data_version_ids) and \
+present(extraction_timestamp) and \
+present(dataset_snapshot_hash) and \
+present(fidelity_coverage_metrics) and \
+present(explanation_scope) and \
+present(linkage_from_decision_to_artifact)"""
+rationale = "Technical documentation and minimal evidence retainment for transparency duties."
 requires = [
     "model_and_data_version_ids",
     "extraction_timestamp",
@@ -61,7 +68,8 @@ article_clause = "Art. 12"
 verbatim_text = "Record–keeping (event logging)"
 stakeholder = "regulator"
 formalism = "record"
-spec = "Automatic event logs and retention schedules for high-risk AI system record-keeping."
+spec = "present(automatic_event_logs) and present(retention_schedule) and present(signer)"
+rationale = "Automatic event logs and retention schedules for high-risk AI system record-keeping."
 requires = [
     "automatic_event_logs",
     "retention_schedule",
@@ -77,7 +85,11 @@ article_clause = "Art. 22 (and Rec. 71)"
 verbatim_text = "Automated decisions: “meaningful information about the logic involved”"
 stakeholder = "affected individual"
 formalism = "record"
-spec = "Per-decision reason strings and concept mappings for automated decision explanations."
+spec = """\
+present(per_decision_reason_string) and \
+present(feature_to_named_concept_mapping) and \
+present(dpia_cross_reference)"""
+rationale = "Per-decision reason strings and concept mappings for automated decision explanations."
 requires = [
     "per_decision_reason_string",
     "feature_to_named_concept_mapping",
@@ -96,7 +108,13 @@ article_clause = "12 CFR 1002.9"
 verbatim_text = "Adverse action reasons in credit decisions"
 stakeholder = "affected individual"
 formalism = "record"
-spec = "Stored reason codes and score factors for credit adverse action notices."
+spec = """\
+present(stored_reasons_per_decision) and \
+present(model_version) and \
+present(score_factors) and \
+present(audit_ids) and \
+present(retention_for_regulatory_lookback)"""
+rationale = "Stored reason codes and score factors for credit adverse action notices."
 requires = [
     "stored_reasons_per_decision",
     "model_version",
@@ -114,7 +132,8 @@ article_clause = "agency transparency guidance"
 verbatim_text = "Good ML Practice/transparency for SaMD"
 stakeholder = "regulator"
 formalism = "record"
-spec = "Design history links and verification logs for Software as a Medical Device."
+spec = "present(design_history_links) and present(verification_logs) and present(change_control)"
+rationale = "Design history links and verification logs for Software as a Medical Device."
 requires = [
     "design_history_links",
     "verification_logs",
@@ -130,7 +149,12 @@ article_clause = "1.0"
 verbatim_text = "Risk evidence and continuous monitoring"
 stakeholder = "deployer"
 formalism = "record"
-spec = "Continuous monitoring logs and metric thresholds for risk governance."
+spec = """\
+present(continuous_monitoring_logs) and \
+present(metric_thresholds_and_alerts) and \
+present(reviews_and_sign_offs) and \
+present(incident_tickets)"""
+rationale = "Continuous monitoring logs and metric thresholds for risk governance."
 requires = [
     "continuous_monitoring_logs",
     "metric_thresholds_and_alerts",

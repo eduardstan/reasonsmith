@@ -12,18 +12,19 @@ Where this document and the code disagree, the code is right and this document h
 
 ## 1. The objects
 
-**Requirement** — `spec.py`, `Requirement`. A frozen record of one duty, carrying exactly the ten
+**Requirement** — `spec.py`, `Requirement`. A frozen record of one duty, carrying exactly the eleven
 fields of `REQUIREMENT_FIELDS` and no others: `id`, `source_document`, `article_clause`,
-`verbatim_text`, `stakeholder`, `formalism`, `spec`, `requires`, `binding`, `scope`. `formalism` is
-one of `record`, `temporal`, `logical`, and selects an engine family. `record` routes to
-`RecordEngine`; `temporal` routes to `ObservedEngine`
-(`test_record_and_temporal_formalisms_route_through_report`). For `logical`,
-`report.evaluate_requirement` routes a non-`None` `logic()` result to `ProvedEngine`, a `None`
-result plus callable `decide()` to `ProbedEngine`, and neither interface to `ProvedEngine`, which
-reports no evidence (`test_property_holds_for_all_inputs_proved`,
-`test_an_opaque_system_reaches_probed_through_the_report`,
-`test_system_without_logic_reported_not_evaluated`). `requires` is the non-empty set of signal names
-a system must be able to emit for the duty to be checkable at all.
+`verbatim_text`, `stakeholder`, `formalism`, `spec`, `rationale`, `requires`, `binding`, `scope`.
+
+`spec` is the property, written in the one language of §2. `rationale` is the English explanation of
+the duty; it is carried on the requirement and in `to_dict()`, and **no verdict is derived from its
+wording** — it is the field prose belongs in, which is why `spec` no longer has to hold any.
+`formalism` names which *fragment* of that one language the property belongs to, and the pack loader
+parses `spec`, classifies it and refuses a declared fragment that is not the one it found
+(`test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment`). It does **not**, by itself,
+decide which engine answers the duty — see §3.5. `requires` is the non-empty set of signal names a
+system must be able to emit for the duty to be checkable at all, and every signal the property reads
+must appear in it (`test_the_loader_refuses_a_spec_reading_an_ungated_signal`).
 `binding` separates a statutory obligation from an interpretive recital. `scope` is a regulatory
 class from `REGULATORY_CLASSES`, or empty for a duty that is not class-limited. A pack that omits a
 field, adds one, or leaves one blank is refused at load time rather than loaded with a guess
@@ -88,22 +89,49 @@ constructed at all without the search budget that produced it
 
 ## 2. The property language
 
-There are three formalisms and they do **not** share one language.
+There is **one** property language, in `rulelang.py`, and `formalism` names which fragment of it a
+requirement's `spec` belongs to. The three fragments are decided by the shape of the formula, not by
+the word a pack author typed: `classify_fragment` returns `temporal` when the formula uses a
+temporal operator, `record` when it is a conjunction of `present(signal)` atoms and nothing else,
+and `logical` for every other well-formed property of a single decision record. The loader demands
+an **exact** match against the declared `formalism` — a presence conjunction is also a well-formed
+`logical` property, and a lenient check would let one be declared `logical` and silently lose the
+record engine's per-signal diagnostics (`test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment`).
 
-### `record` — the `spec` string is not evaluated
+Text that is not in the language at all — prose such as `"Record check"`, or `"not a property !@#$"`
+— is a load error naming what was found, not a spec that quietly goes unread
+(`test_the_loader_refuses_prose_where_a_property_belongs`).
 
-`RecordEngine` reads `requires` and nothing else. The `spec` field of a record requirement is
-documentation: the shipped packs carry free prose there (`"Record check"`), which no parser would
-accept. Two record requirements identical but for their `spec` — one prose, one a property false on
-every record, one unparseable — produce the identical verdict, strength and summary
-(`test_the_record_engine_reads_requires_not_spec`). A reader who takes a record verdict as a claim
-about the `spec` text is reading something the tool never checked.
+**What this replaced, and why it mattered.** `spec` used to mean two unrelated things. For
+`temporal` and `logical` it was a formula the engine evaluated; for `record` it was English prose
+that no engine read, so a reader met prose and an STL formula in the same field three lines apart,
+and `formalism` was doing two jobs under one name — saying what the property *is*, and deciding
+which engine was allowed to discharge it. Fifteen of eighteen shipped duties were labelled `record`
+and could therefore never exceed `observed`, whatever the system under test exposed. The English
+moved to `rationale`, the property became executable, and engine selection became the search in
+§3.5.
 
-### `temporal` — Signal Temporal Logic, parsed by rtamt
+### `present(signal)` — the presence atom
 
-`ObservedEngine` hands `req.spec` to `rtamt.StlDiscreteTimeSpecification`. The accepted syntax is
-rtamt's, not this project's; a formula rtamt cannot parse is reported not evaluated rather than
-guessed at (`test_unexpressible_formula_reports_not_evaluated`).
+`present(x)` asks whether a decision record carries a value for `x`, in the `_is_present` sense of
+§1: not missing, not `None`, not a blank string, not an empty collection. It is the one atom every
+engine answers, and they answer it the same way because there is one definition
+(`rulelang.is_present`) rather than one per engine. Its argument is a signal name, never an
+expression: there is no such question about a computed value.
+
+### `temporal` — Signal Temporal Logic, monitored by rtamt
+
+`ObservedEngine` renders the property in rtamt's syntax with `to_stl` and hands that to
+`rtamt.StlDiscreteTimeSpecification`. The only rewrite is `present(x)` → `(x >= 0.5)`, which is the
+presence idiom this monitor already reads as a flag rather than a magnitude, so the two spellings
+ask the monitor the same question. A formula rtamt cannot parse is reported not evaluated rather
+than guessed at (`test_unexpressible_formula_reports_not_evaluated`).
+
+The temporal fragment is narrower than rtamt's own syntax on purpose: `TEMPORAL_OPERATORS` holds the
+prefix call forms a Python parser accepts, so rtamt's infix `until` and `since` are not in this
+language. A pack needing one is a finding to record here, not a reason to widen the language until
+it fits — widening it to accommodate one stubborn duty is how a property language becomes an untyped
+string again. No shipped duty needs one.
 
 Two things about the encoding are this project's own and are load-bearing:
 
@@ -138,7 +166,8 @@ never calls `eval`, `exec` or `compile`; the whitelist is the interpreter itself
 | Binary | `+`, `-`, `*`, `/`, `%` |
 | Boolean | `and`, `or` |
 | Comparison | `==`, `!=`, `<`, `<=`, `>`, `>=`, including chained |
-| Calls | `implies(a, b)` / `Implies(a, b)`, `abs(x)`, `min(a, b)`, `max(a, b)` — no keyword arguments |
+| Calls | `implies(a, b)` / `Implies(a, b)`, `abs(x)`, `min(a, b)`, `max(a, b)`, `present(signal)` — no keyword arguments |
+| Temporal | `always`, `eventually`, `once`, `historically`, `next`, `prev`, `rise`, `fall`, each over one operand |
 | Arrows | `<=>` and `<->` rewrite to `==`; `=>`, `->` and ` implies ` rewrite to `Implies(...)` |
 
 Arrow rewriting is textual and happens before parsing. It respects parentheses and string literals,
@@ -190,14 +219,29 @@ module docstring.
 ### `record` — `engines/record.py`
 
 > **If the record engine reports `satisfied` at strength `observed`, then:** for every record in the
-> trace it was given, every signal named in `requires` carried a present value, in the `_is_present`
-> sense of §1. The domain is exactly those records.
+> trace it was given, every signal named by a `present()` atom of `req.spec` carried a present
+> value, in the `_is_present` sense of §1. The domain is exactly those records.
+
+The signals looked for are the property's, not the `requires` list's. `requires` is the capability
+gate that decides whether the duty is attainable at all; the formula is what is checked
+(`test_the_record_engine_evaluates_its_spec`). The two agree in the shipped packs because the loader
+refuses a property reading a signal `requires` does not name, but they are different questions and a
+verdict answers only the second.
+
+The conjunction is walked directly rather than scored by the rtamt monitor, and that is a soundness
+choice about *diagnostics* rather than about the verdict: robustness is one number for the whole
+formula and cannot say which conjunct failed, so routing presence through it to make two engines
+look alike would cost exactly the naming this engine exists for.
+
+A `spec` this engine cannot walk as a conjunction of presence atoms is reported not evaluated, never
+answered from `requires` as though the property were absent
+(`test_the_record_engine_evaluates_its_spec`).
 
 *What it does not tell you.* Nothing about the correctness, truthfulness or usefulness of those
 values — presence is not correctness. A reason field containing `"n/a"` is present. Nothing about
 decisions outside the supplied trace; the evidence summary says so in the result itself
-(`test_observed_verdict_states_what_it_does_not_cover`). Nothing about `req.spec`, which this engine
-does not read (§2). And the trace is a sample chosen by whoever produced it.
+(`test_observed_verdict_states_what_it_does_not_cover`). And the trace is a sample chosen by whoever
+produced it.
 
 > **If it reports `violated` at strength `observed`, then:** at least one record in the trace carried
 > no present value for at least one required signal, and the result names which signals and which
@@ -388,6 +432,64 @@ honest.
 
 ---
 
+## 3.5. Which engine answers a duty
+
+`report._engine_ladder` collects every engine that could discharge the requirement and
+`evaluate_requirement` takes the strongest evidence any of them produced. Two things decide the
+list, and the requirement supplies only one of them:
+
+- **The fragment** says what kind of property this is. `record` and `logical` are `STATE_FRAGMENTS`
+  — properties of a single decision record — so an engine that reasons about one decision at a time
+  can discharge them. `temporal` is not.
+- **The system's exposed surface** says what can be reasoned over. A non-`None` `logic()` admits
+  `ProvedEngine`; a callable `decide()` admits `ProbedEngine`; a trace admits `RecordEngine` for a
+  presence property and `ObservedEngine` for a temporal one.
+
+So the same presence property is `observed` against a trace and `proved` against exposed `logic()`
+(`test_a_record_duty_reaches_proved_when_the_system_exposes_its_logic`), and `probed` against a
+system that can only be re-run (`test_a_record_duty_reaches_probed_when_the_system_can_only_be_re_run`).
+Which rung a duty reaches is a fact about the system under test, not about which word a pack author
+typed. It was the second of those before this section existed, which is substantially why
+`docs/findings-nesyarena.md` reports zero results at `probed` and zero at `proved`.
+
+**The ladder searches for evidence, not for an engine.** An engine that came back with
+`strength=None` established nothing, so the search continues to the next rung down and the duty
+lands on the strongest rung that actually produced evidence
+(`test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`). When no engine produced
+any, the strongest engine's not-evaluated result is what is reported, so the reader is told which
+interface was missing (`test_system_without_logic_reported_not_evaluated`).
+
+**A temporal duty never rises above `observed`** (`test_a_temporal_duty_never_rises_above_observed`).
+The solver and the replay search both reason about one decision at a time and have nothing to say
+about a formula quantified over a trace. There is no temporal engine above `observed` in this build,
+and a rung for a claim no engine established would be the overclaim this package exists to refuse.
+
+**What selection does not change.** Nothing here alters the lattice or what any verdict means; §3 is
+unchanged by it. A `proved` verdict is still a claim about the logic the system exposed, and an
+`observed` one still a claim about the trace it supplied. **The consequence worth stating plainly:**
+where a system's exposed logic and its trace disagree — the rules prove a reason is always written,
+and a logged decision carries none — the ladder reports the `proved` verdict and the trace is never
+read for that duty. That is not a contradiction the tool resolves; it is a system misdescribing
+itself to its auditor, which §3 already says reasonsmith does not detect.
+
+### Two things the presence atom cannot be proved about
+
+`ProvedEngine` refuses `present(x)` in two cases, and each refusal drops the duty to the strongest
+engine that *can* answer rather than losing its verdict:
+
+- **`x` is a free input of the rules** — read, never written. Proving a property about the solver's
+  free constant would say the record carries `x` because this encoding declared a constant called
+  `x`, which is a fact about the encoding
+  (`test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`).
+- Nothing else. In particular, **a string is not refused**: `present()` over a string encodes as
+  "not in the language of blanks" over `BLANK_CHARACTERS`, which is exactly the set `str.strip()`
+  removes, so the solver and `is_present` agree on every string rather than approximately
+  (`test_the_solvers_blank_string_is_pythons_blank_string`). A system whose rules can write a blank
+  reason is therefore proved to *violate* the duty, not proved to satisfy it
+  (`test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose`).
+
+---
+
 ## 4. The lattice
 
 `unattainable < observed < probed < proved`, a strict total order
@@ -479,9 +581,15 @@ Two consequences of that report text, followed by a separate package-level termi
 |---|---|
 | `record satisfied` ⇒ every required signal present in every record of the supplied trace | `test_record_engine_satisfied` |
 | A record verdict is a claim about the trace and says so | `test_observed_verdict_states_what_it_does_not_cover` |
-| A record duty's `spec` string is never evaluated | `test_the_record_engine_reads_requires_not_spec` |
+| A record duty is discharged by the property in its `spec`, not by its `requires` | `test_the_record_engine_evaluates_its_spec` |
 | `record` and `temporal` route to their respective engine families | `test_record_and_temporal_formalisms_route_through_report` |
 | `logical` routes to proved with exposed logic, probed with only `decide()`, and no evidence with neither | `test_property_holds_for_all_inputs_proved`, `test_an_opaque_system_reaches_probed_through_the_report`, `test_system_without_logic_reported_not_evaluated` |
+| One property language: the loader classifies the fragment and refuses a mismatch, prose included | `test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment`, `test_the_loader_refuses_prose_where_a_property_belongs` |
+| A signal the property reads must be gated by `requires` | `test_the_loader_refuses_a_spec_reading_an_ungated_signal` |
+| The same presence property is observed off a trace, probed against `decide()`, and proved against `logic()` | `test_a_record_duty_reaches_proved_when_the_system_exposes_its_logic`, `test_a_record_duty_reaches_probed_when_the_system_can_only_be_re_run` |
+| The ladder takes the strongest evidence produced, not the strongest engine available | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can` |
+| A temporal duty never rises above observed | `test_a_temporal_duty_never_rises_above_observed` |
+| The solver's blank string is Python's blank string, so a provable blank reason is a violation | `test_the_solvers_blank_string_is_pythons_blank_string`, `test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose` |
 | An absent or blank signal in an observed record is a violation, naming it | `test_record_engine_violated_on_blank_field`, `test_a_declared_signal_absent_from_the_trace_is_a_violation` |
 | Presence means non-empty, not merely keyed | `test_a_present_but_empty_signal_does_not_count_as_evidence`, `test_a_falsy_but_real_signal_value_counts` |
 | An empty trace is not evaluated, never satisfied | `test_an_empty_trace_is_not_evidence` |

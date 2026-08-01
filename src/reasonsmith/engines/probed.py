@@ -1,11 +1,15 @@
 """Probed engine for reasonsmith v0.2.
 
 What this module is for:
-  Evaluates logical requirements (`formalism = "logical"`) against a system that exposes no
-  decision logic to reason over but does expose `decide()` — the opaque system the `proved`
-  engine cannot reach and the `observed` engine can only watch. It searches for a
-  counterexample by perturbing the inputs of the decisions the system already made and
+  Evaluates state properties — `formalism = "logical"` and `formalism = "record"` alike — against
+  a system that exposes no decision logic to reason over but does expose `decide()`: the opaque
+  system the `proved` engine cannot reach and the `observed` engine can only watch. It searches
+  for a counterexample by perturbing the inputs of the decisions the system already made and
   replaying them through `decide()`.
+
+  A record-keeping duty is a state property like any other once it is written as a formula, so a
+  system that can be re-run reaches this rung for one: `present(reason)` is checked against the
+  decisions the search generates, not only against the decisions the system happened to log.
 
 What a reader must not break:
   - Probed never rounds up to proved. "No counterexample within the budget" is a statement about
@@ -41,7 +45,13 @@ from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Optional
 
 from reasonsmith.report import PROBE_BUDGET_KEY, RequirementResult
-from reasonsmith.rulelang import UnsupportedConstructError, eval_expression, parse_expression
+from reasonsmith.rulelang import (
+    PRESENCE_CALL,
+    UnsupportedConstructError,
+    eval_expression,
+    parse_expression,
+    parse_property,
+)
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
@@ -137,6 +147,14 @@ def _expression_kind(node: ast.AST) -> str:
             raise UnsupportedConstructError(
                 f"Keyword arguments are unsupported: {ast.unparse(node)!r}"
             )
+        if name == PRESENCE_CALL:
+            # A question about the record, not about the value: whatever kind the field holds,
+            # the answer is a Boolean, and an absent field is the answer this atom exists for.
+            if len(node.args) != 1 or not isinstance(node.args[0], ast.Name):
+                raise UnsupportedConstructError(
+                    f"{PRESENCE_CALL}() takes one signal name: {ast.unparse(node)!r}"
+                )
+            return "boolean"
         kinds = [_expression_kind(argument) for argument in node.args]
         if name in ("implies", "Implies"):
             if len(kinds) != 2:
@@ -558,7 +576,7 @@ class ProbedEngine:
             )
 
         try:
-            spec_ast = parse_expression(req.spec)
+            spec_ast = parse_property(req.spec)
             _validate_property(spec_ast, req.spec)
         except (SyntaxError, UnsupportedConstructError) as exc:
             return not_evaluated(
