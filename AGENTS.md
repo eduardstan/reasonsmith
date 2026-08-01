@@ -59,12 +59,13 @@ quoted text character-for-character, both halves of the legal source, and the pa
 evidence-field keys as the signal names. Do not rename a signal to something tidier — that test is
 the only thing keeping the pack attached to the paper.
 
-One duty reads a declared *value* rather than a declared field: `gdpr_recital71_error_risk_minimised`
-compares `scope_statements_declared_deviation` against `artifact_logs_decision_margin`, so a system's
-own declared approximation error fails the duty exactly when it is large enough to have moved that
-decision. The bound is the system's own margin on purpose — no threshold in a shipped pack may be a
-number invented for it and presented as the regulation's. What the verdict does and does not claim is
-in `docs/semantics.md` §3; why it exists is finding 1 of `docs/findings-nesyarena.md`.
+The first shipped duty whose verdict comes from a value a system declares about its own approximation
+error is `gdpr_recital71_error_risk_minimised`. It compares
+`scope_statements_declared_deviation` against `artifact_logs_decision_margin`, so a nonzero declared
+error fails when it is larger than the decision's own margin. The bound is the system's own margin
+on purpose — no threshold in a shipped pack may be a number invented for it and presented as the
+regulation's. What the verdict does and does not claim is in `docs/semantics.md` §3; why it exists is
+finding 1 of `docs/findings-nesyarena.md`.
 
 `docs/example-output.md` is derived too. `tests/test_docs_example_output.py` re-runs every command
 block in it and compares stdout byte-for-byte, and cross-checks the header's line count and

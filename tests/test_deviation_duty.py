@@ -1,12 +1,12 @@
 """Tests for the duty that reads a declared deviation instead of a declared field.
 
 What this module is for:
-  `gdpr_recital71_error_risk_minimised` is the one shipped requirement whose verdict comes from
-  the *value* a system declares about its own approximation, not from the presence of a statement
-  about it. These tests hold that duty to what `docs/semantics.md` says it claims: it is satisfied
-  only when every declared deviation is smaller than the decision's own margin, it is violated when
-  a declared deviation is large enough to have moved a decision, and it is never satisfied when the
-  deviation is absent, undeclared or not a number.
+  `gdpr_recital71_error_risk_minimised` is the first shipped requirement whose verdict comes from
+  a *value* a system declares about its own approximation error, not from the presence of a
+  statement about it. These tests hold that duty to what `docs/semantics.md` says it claims: it is
+  satisfied only when every declared deviation is no larger than the decision's own margin, it is
+  violated when a declared deviation is larger than that margin, and it is never satisfied when
+  the deviation is absent, undeclared or not a number.
 
 What a reader must not break:
   - The requirement is loaded from the shipped pack, never re-written here. A test that authored

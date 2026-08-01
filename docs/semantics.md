@@ -230,13 +230,13 @@ monitor cannot read a sampling period off one sample
 (`test_unexpressible_formula_reports_not_evaluated`); or any record carries no finite real number for
 a variable the formula treats as a magnitude (`test_quantitative_bound_needs_a_measurement`).
 
-### The one shipped duty that reads a value — `gdpr_recital71_error_risk_minimised`
+### The first shipped duty that reads a declared approximation error — `gdpr_recital71_error_risk_minimised`
 
-Every other shipped requirement asks whether a field is *present*. This one reads the number a
-system declares about its own approximation and reaches its verdict from that number. It is
-interpretive (`binding = false`): GDPR Recital 71 asks that "the risk of errors is minimised", and a
-recital creates no obligation of its own. It runs on the observed engine, so everything said about
-`observed` above applies unchanged; what follows is what this duty adds.
+This is the first shipped duty whose verdict comes from a value a system declares about its own
+approximation error. It is interpretive (`binding = false`): GDPR Recital 71 asks that "the risk of
+errors is minimised", and a recital creates no obligation of its own. It runs on the observed
+engine, so everything said about `observed` above applies unchanged; what follows is what this duty
+adds.
 
 > **If it reports `satisfied` at strength `observed`, then:** in every record of the supplied trace,
 > the deviation the system declared for that decision (`scope_statements_declared_deviation`) was no
