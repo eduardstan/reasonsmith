@@ -18,7 +18,10 @@ What a reader must not break:
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "docs" / "nesyarena-conformance-report.md"
@@ -46,3 +49,30 @@ def test_builder_names_the_commit_that_produced_the_report():
     assert len(builder.SOURCE_COMMIT) == 40
     assert all(c in "0123456789abcdef" for c in builder.SOURCE_COMMIT)
     assert builder.SOURCE_COMMIT in REPORT.read_text(encoding="utf-8")
+
+    try:
+        checkout = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=ROOT,
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+    except FileNotFoundError:
+        pytest.skip("git is unavailable")
+    if checkout.returncode != 0 or Path(checkout.stdout.strip()).resolve() != ROOT:
+        pytest.skip("not running in a git checkout")
+
+    builder_at_commit = subprocess.run(
+        [
+            "git",
+            "cat-file",
+            "-e",
+            f"{builder.SOURCE_COMMIT}:docs/build_nesyarena_report.py",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    assert builder_at_commit.returncode == 0, builder_at_commit.stderr

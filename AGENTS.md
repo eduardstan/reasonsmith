@@ -75,10 +75,12 @@ real system rather than a demonstration fixture: `docs/build_nesyarena_report.py
 and ECOA packs, and `test_nesyarena_report_matches_the_builder` holds the committed file to it
 byte-for-byte. Anything that moves `render_text`'s wording, the nesyarena version or the builder's
 own constants means regenerating with `python docs/build_nesyarena_report.py` and moving
-`SOURCE_COMMIT` with it — it is a literal, not a `git rev-parse`, because the report is committed
-into the tree it describes. Its adapter declares only signals a provenance genuinely emits, so
-nine pack signals are deliberately undeclared and no regulatory class is declared; the resulting
-unattainable and not-applicable verdicts are the finding, not a gap to close.
+`SOURCE_COMMIT` with it — it is a literal naming the preceding commit that contains the builder,
+not a `git rev-parse`, because the generated report follows that builder-bearing commit and must
+remain byte-for-byte stable on later checkouts. Its adapter declares only signals a provenance
+genuinely emits, so nine pack signals are deliberately undeclared and no regulatory class is
+declared; the resulting unattainable and not-applicable verdicts are the finding, not a gap to
+close.
 `docs/findings-nesyarena.md` is the written account and is hand-maintained — every number in it
 comes from that report, so regenerating one means rereading the other.
 

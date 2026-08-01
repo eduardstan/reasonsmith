@@ -67,13 +67,13 @@ binding) and `gdpr_recital71_meaningful_explanation` (interpretive) — on the s
 its 16 decisions carry no reason at all. The counterexamples are instances `G1-P4-L2-c0`,
 `G1-P4-L2-c1`, `G1-P4-L3-c0` and `G1-P4-L3-c1` (record indices 8–11).
 
-This is not a bug in the adapter and it is not a contrived input. On those four instances the raw
-proof sum exceeds 1, the clamp saturates the value at exactly `1.000000`, and
-`AddMult.grad` returns zero for every input fact — nesyarena's source calls this the *gradient
-blackout*, and it models Scallop's `diffaddmultprob`. The system made a decision and then reported
-that no fact influenced it. Under the reason rule fixed before the run — *the input facts the
-system's own gradient gives non-zero influence, with their weights* — there is nothing to write,
-so the record carries an empty reason and reasonsmith says so.
+This is not a bug in the adapter and it is not a contrived input. On those four instances naive
+add-mult proof enumeration over-counts overlapping proofs, the raw proof sum exceeds 1, the clamp
+saturates the value at exactly `1.000000`, and `AddMult.grad` returns zero for every input fact —
+nesyarena's source calls this the *gradient blackout*. The system made a decision and then
+reported that no fact influenced it. Under the reason rule fixed before the run — *the input
+facts the system's own gradient gives non-zero influence, with their weights* — there is nothing
+to write, so the record carries an empty reason and reasonsmith says so.
 
 Note what did **not** happen: over-counting moved no decision. `add-mult(clamped)` deviates from
 the distribution semantics it claims on 8 of 16 instances, by as much as `+0.347356`, and still
@@ -161,11 +161,11 @@ inside a high-risk system", which is what a provenance library actually is.
 this input` — because nesyarena ships the exact WMC oracle beside the approximate provenance and
 `Provenance.error()` computes the difference on every call.
 
-A deployed Scallop, ProbLog top-k or NTP system has no such oracle at inference time. It could
-honestly state *approximation*; it could not state *by how much*. Do not read this run as evidence
-that a production neuro-symbolic system can emit that field with a number in it. Where the tool
-looks strongest here, it is standing on a property of the research harness rather than of a
-deployable one.
+The measured approximate provenances would not, standing alone, have such an oracle at inference
+time. They could honestly state *approximation*; they could not state *by how much*. Do not read
+this run as evidence that a production neuro-symbolic system can emit that field with a number in
+it. Where the tool looks strongest here, it is standing on a property of the research harness
+rather than of a deployable one.
 
 ### 6. The reason rule decided the only violation in the run
 
