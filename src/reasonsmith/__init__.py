@@ -21,6 +21,7 @@ What this module is for:
     engines/        record completeness, rtamt temporal monitors, the replay probed engine
                     and the Z3 proved engine
     cli.py          checks a JSONL decision log against a requirement pack
+    drift.py        re-fetches the official statutory sources and re-verifies the pack quotes
     packs/          Table 7, EU AI Act, GDPR, and ECOA / Regulation B requirements
 
 What a reader must not break:
