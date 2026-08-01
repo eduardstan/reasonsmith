@@ -66,14 +66,55 @@ Extending an engine, rather than adding another demo, is now the concrete, high-
 ## Reporting Issues
 
 If you encounter a bug or have a question:
-1. Check existing issues and discussions to see if it has already been discussed.
-2. Ask questions in [GitHub Discussions](https://github.com/eduardstan/reasonsmith/discussions); report bugs and request features as [GitHub Issues](https://github.com/eduardstan/reasonsmith/issues).
-3. Provide clear reproduction steps, expected vs. actual behaviour, and details about your environment.
+1. **Questions go to [GitHub Discussions](https://github.com/eduardstan/reasonsmith/discussions)**; issues are for bugs and pack proposals.
+2. Check existing issues to see if it has already been discussed.
+3. Pick a template from `.github/ISSUE_TEMPLATE/` — GitHub offers them automatically when you open an issue. **Bug report** asks for the exact command you ran and the output you saw; **Pack proposal** is how a new regulation pack gets started (which regulation, which official source, which duty). A proposal is the fastest way to go from interested reader to contributor.
+4. Provide clear reproduction steps, expected vs. actual behaviour, and details about your environment.
 
 ## Submitting Pull Requests
 
 1. Create a focused topic branch (`git checkout -b my-feature-branch`).
 2. Implement your change with tests.
 3. Verify that `ruff check .`, `pytest`, and `python -m reasonsmith.demo` pass.
-4. Open a Pull Request targeting `main` describing your changes and referencing any open issue it addresses (e.g., `Fixes #123`).
+4. Open a Pull Request targeting `main`, referencing any open issue it addresses (e.g., `Fixes #123`). The template in `.github/PULL_REQUEST_TEMPLATE.md` is shown automatically and takes about fifteen seconds to fill in.
 5. **No AI co-author trailers:** Do not include automated co-author trailers in commit messages.
+
+### Pull-Request Titles and the Squash Merge
+
+reasonsmith **squash-merges** every merged pull request. GitHub collapses the branch's commits and writes the pull-request **title** onto `main` as the commit subject, appending `(#NN)` — the PR number. The individual commits inside the branch never appear in the history.
+
+That is where the convention is strict, and only there:
+
+- **The title becomes the history**, so it must follow the conventional-commits form below. Reviewers read titles as the permanent record; expect a non-conforming title to be asked to change. There is no automated check that fails your build over a message — the convention is guidance, applied in review.
+- **Branch commits are collapsed on merge**, so keep them tidy and reasonably atomic while you work, but you will not be sent back to rewrite them.
+- **Preserving authorship:** once, a contributor's commits were deliberately re-landed as a merge so their authorship survived the squash (see the `revert:` entry below). If keeping your individual commits in the history matters to you, say so in the pull-request description.
+
+### Commit and Pull-Request Title Form
+
+Titles follow **Conventional Commits**: `<type>(<scope>): <summary>`.
+
+- `type` is the change's kind — one of `feat`, `fix`, `docs`, `chore`, `build`, `revert`, the set this repository actually uses.
+- `scope` is optional and names the part of the codebase the change touches (`engines`, `cli`, `packs`, `report`, `drift`, `reasonsmith`, …). When in doubt, omit it.
+- `summary` is short, imperative, lowercase, and has no trailing period: *add*, *fix*, *document* — not *added* or *Adding*.
+
+One real example of each type, as each reads on `main` today (GitHub appends the `(#NN)` on merge):
+
+| Type | Example | PR |
+|---|---|---|
+| `feat` — a new capability | `feat(engines): add active probing for opaque decision systems` | #37 |
+| `fix` — a bug corrected | `fix: depend on nesyarena==0.1.0 from PyPI instead of a git commit pin` | #26 |
+| `docs` — documentation only | `docs: define verifiable verdict semantics` | #38 |
+| `chore` — maintenance, no behaviour change | `chore: repin nesyarena to survive its rewritten history` | — |
+| `build` — packaging, dependencies, CI | `build(reasonsmith): pin nesyarena by commit and run the same install path in CI` | #2 |
+| `revert` — undoes an earlier change | `revert: undo the squash merge of #30 so the contributor commits can land with their authorship` | #31 |
+
+Put issue references (`Fixes #123`) in the pull-request **description**, not the title — the description closes the issue on merge, and the title would otherwise carry the reference into the commit subject.
+
+### What a Good Pull Request Contains
+
+What gets checked is behaviour, not style, so a good pull request is mostly a matter of making the change reviewable:
+
+- **One change per pull request**, with the intent stated in one sentence up front.
+- **Tests that would fail if the change were reverted.** If the change genuinely needs no test, say why.
+- **For anything touching quoted statute or Table 7 wording:** name the official source and say why the quote is character-for-character correct — this is the project's one non-negotiable (Standing Rule #1 above). The source must land in `docs/legal-sources.md`, where the verbatim-quote tests and the monthly `statute-drift` workflow hold it.
+- **The template's four prompts** — what changed, why, how it was verified, and statute — are exactly these points. Fill them in and the pull request is done.

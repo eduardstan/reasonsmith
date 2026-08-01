@@ -1,0 +1,33 @@
+name: Bug report
+description: Something misbehaves — a command, a report, a verdict. Tell us what you ran and what you saw.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Fill in the three fields below; the command and the output are what make the bug reproducible.
+  - type: textarea
+    id: expectation
+    attributes:
+      label: What did you expect, and what happened?
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Command you ran
+      description: The exact command, from a fresh `pip install -e ".[dev]"`.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output you saw
+      description: Paste the relevant output, error, or traceback. If a report or certificate is involved, note which file and its verdict fields.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Python version, OS, and the reasonsmith version or commit, if you know it.
