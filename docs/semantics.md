@@ -241,9 +241,9 @@ adds.
 > **If it reports `satisfied` at strength `observed`, then:** in every record of the supplied trace,
 > the deviation the system declared for that decision (`scope_statements_declared_deviation`) was no
 > larger than the margin it declared between that decision and its own threshold
-> (`artifact_logs_decision_margin`) — so by the system's own numbers, no declared error was large
-> enough to have moved a decision in that trace
-> (`test_a_declared_deviation_below_the_decision_margin_is_satisfied`).
+> (`artifact_logs_decision_margin`)
+> (`test_a_declared_deviation_below_the_decision_margin_is_satisfied`,
+> `test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied`).
 
 *What it does not tell you.* Nothing about whether the system computes what it claims to compute.
 The deviation is a self-declaration and no engine here verifies it: a system that under-reports its
@@ -251,6 +251,16 @@ own error is not detected, and a system honest enough to report a large one is t
 duty can flag. Nothing about decisions outside the trace. And nothing about the law — the bound is
 the system's own decision margin, not a figure Recital 71 states, and no number in this duty comes
 from the regulation (`test_the_deviation_duty_is_interpretive_and_not_class_limited`).
+
+Nor does `satisfied` exclude a decision that turns on an exact boundary tie. Where deviation and
+margin are equal, robustness is zero: rtamt's quantitative semantics score `<` and `<=` alike at
+that boundary, and the observed engine treats only negative robustness as a breach. In the
+threshold-facing case the claimed oracle value sits exactly on the decision threshold, but whether
+the decision would have differed depends on the system's own tie-break, which this record does not
+carry. This duty therefore reports an exact tie satisfied and does not detect a decision that turns
+on one. Closing that gap would require signed evidence and a strict-boundary reading the shared
+observed engine does not have; no engine was changed here
+(`test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied`).
 
 > **If it reports `violated` at strength `observed`, then:** at least one record declared a deviation
 > larger than that decision's own margin, and the result names the step. On the system's own numbers
@@ -481,7 +491,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | A formula rtamt cannot parse is not evaluated | `test_unexpressible_formula_reports_not_evaluated` |
 | The formula selects flag versus magnitude treatment, and flag values follow the stated conversion | `test_non_finite_flag_counts_as_absent`, `test_temporal_satisfied`, `test_ecoa_thirty_day_notice_violated_by_a_late_notification`, `test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline` |
 | A magnitude bound over an unmeasured signal is not evaluated, never scored | `test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent` |
-| The Recital 71 error duty is satisfied only when every declared deviation is no larger than that decision's own margin | `test_a_declared_deviation_below_the_decision_margin_is_satisfied` |
+| The Recital 71 error duty is satisfied only when every declared deviation is no larger than that decision's own margin, including the known exact-tie boundary | `test_a_declared_deviation_below_the_decision_margin_is_satisfied`, `test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied` |
 | A declared deviation larger than that margin violates it, naming the decision | `test_a_declared_deviation_that_could_have_moved_a_decision_is_violated` |
 | An undeclared or unmeasured deviation is unattainable or not evaluated, never satisfied | `test_an_undeclared_deviation_is_unattainable_never_satisfied`, `test_an_unparseable_deviation_is_not_evaluated_never_satisfied` |
 | The duty that reads a deviation is interpretive and not class-limited | `test_the_deviation_duty_is_interpretive_and_not_class_limited` |

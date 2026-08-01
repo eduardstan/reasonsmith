@@ -64,8 +64,9 @@ error is `gdpr_recital71_error_risk_minimised`. It compares
 `scope_statements_declared_deviation` against `artifact_logs_decision_margin`, so a nonzero declared
 error fails when it is larger than the decision's own margin. The bound is the system's own margin
 on purpose — no threshold in a shipped pack may be a number invented for it and presented as the
-regulation's. What the verdict does and does not claim is in `docs/semantics.md` §3; why it exists is
-finding 1 of `docs/findings-nesyarena.md`.
+regulation's. Exact equality is a checked limit, not a breach: rtamt gives it zero robustness and
+the observed engine breaches only on negative robustness. What the verdict does and does not claim
+is in `docs/semantics.md` §3; why it exists is finding 1 of `docs/findings-nesyarena.md`.
 
 `docs/example-output.md` is derived too. `tests/test_docs_example_output.py` re-runs every command
 block in it and compares stdout byte-for-byte, and cross-checks the header's line count and

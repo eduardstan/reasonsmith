@@ -69,6 +69,16 @@ def test_a_declared_deviation_below_the_decision_margin_is_satisfied():
     assert result.strength == Strength.OBSERVED
 
 
+def test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied():
+    """Pin the observed engine's known exact-tie limit rather than endorse that boundary."""
+    req = requirement()
+    sut = BaseSUT(set(req.requires))
+    records = [record(0.01, 0.4), record(0.1, 0.1)]
+    result = ObservedEngine.evaluate(req, sut, records)
+    assert result.verdict == Verdict.SATISFIED
+    assert result.strength == Strength.OBSERVED
+
+
 def test_a_declared_deviation_that_could_have_moved_a_decision_is_violated():
     """The number the system declares about itself is read, and it decides the verdict."""
     req = requirement()

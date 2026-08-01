@@ -163,6 +163,9 @@ What has **not** changed, and what an adopter must still read the same way:
 - Silence is still not compliance, but it is not a violation either: a system that declares no
   deviation is `unattainable` on the signal and one that declares an unmeasured statement is not
   evaluated. Neither is `satisfied`, and neither is a finding about the system's accuracy.
+- An exact equality is a checked limit: rtamt gives it zero robustness, so the observed engine
+  reports it satisfied and cannot detect a decision that turns on an exact threshold tie without
+  signed evidence and the system's own tie-break.
 - Finding 5 below now carries twice the weight: this duty is checkable here only because nesyarena
   ships the exact oracle beside the approximate provenance. A deployed neuro-symbolic system would
   come back `unattainable`, and that is the honest outcome rather than a gap in the pack.
