@@ -9,8 +9,8 @@ What this module is for:
   The pipeline per requirement is: fetch the recorded source document once per document, extract
   the passage its `article_clause` names, normalize both the quote and the passage, and test the
   quote as a substring of the passage. A drift finding names the pack, the requirement, the clause,
-  the source URL and both strings. An unreachable source -- a network failure, a document that no
-  longer exists, or a passage the document no longer carries -- is `could-not-verify`, never a pass.
+  the source URL and both strings. An unreachable source, or a document that no longer carries the
+  registered passage, is `could-not-verify`, never a pass.
 
 What a reader must not break:
   - Only whitespace collapsing is allowed when comparing: `" ".join(text.split())`. The official
@@ -51,8 +51,22 @@ STATUTORY_PACKS = ("eu_ai_act", "gdpr", "ecoa")
 #: Elements that carry no text and no end tag even in well-formed XHTML/XML, so the passage
 #: extractor must not count them when tracking element nesting depth.
 VOID_ELEMENTS = frozenset(
-    {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source",
-     "track", "wbr"}
+    {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
 )
 
 #: Default network guardrails for the live fetch.
@@ -207,13 +221,15 @@ def extract_passage(source_text: str, *, selector: str | None) -> str | None:
 
 
 class DriftFetchError(RuntimeError):
-    """The official source could not be retrieved at all."""
+    """The official source could not be safely resolved, retrieved, or decoded."""
 
 
 def _fetch_url(url: str, *, timeout: float, max_bytes: int) -> str:
     request = urllib.request.Request(
         url,
-        headers={"User-Agent": "reasonsmith-statute-drift/0.2 (+https://github.com/eduardstan/reasonsmith)"},
+        headers={
+            "User-Agent": "reasonsmith-statute-drift/0.2 (+https://github.com/eduardstan/reasonsmith)"
+        },
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -246,8 +262,9 @@ def _current_ecfr_url(source: SourceDocument, *, timeout: float, max_bytes: int)
     return f"{prefix}/full/{issue_date}/{suffix}"
 
 
-def fetch_source(source: SourceDocument, *, timeout: float = DEFAULT_TIMEOUT,
-                 max_bytes: int = DEFAULT_MAX_BYTES) -> str:
+def fetch_source(
+    source: SourceDocument, *, timeout: float = DEFAULT_TIMEOUT, max_bytes: int = DEFAULT_MAX_BYTES
+) -> str:
     """Fetch the live version of a recorded source document as text.
 
     The eCFR versioner requires a published issue date, so its current date is resolved from

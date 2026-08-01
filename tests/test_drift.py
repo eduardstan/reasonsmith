@@ -47,7 +47,7 @@ def fixture_fetcher(source: drift.SourceDocument) -> str:
 def _minimal_pack(tmp_path, *, clause: str, verbatim: str) -> str:
     pack_file = tmp_path / "drift_test.toml"
     pack_file.write_text(
-        f'''[pack]
+        f"""[pack]
 id = "drift_test"
 title = "Drift check test pack"
 description = "Temporary pack used to exercise the drift checker off the recorded fixtures."
@@ -67,7 +67,7 @@ spec = "Test."
 requires = ["artifact_logs_event_log"]
 binding = true
 scope = ""
-''',
+""",
         encoding="utf-8",
     )
     return str(pack_file)
@@ -161,8 +161,11 @@ class TestFetchSource:
 class TestCheckStatuteDrift:
     def test_all_statutory_quotes_match_the_recorded_sources(self):
         report = check_statute_drift(fixture_fetcher)
-        assert report.counts == {"match": STATUTORY_REQUIREMENT_COUNT, "differ": 0,
-                                 "could-not-verify": 0}
+        assert report.counts == {
+            "match": STATUTORY_REQUIREMENT_COUNT,
+            "differ": 0,
+            "could-not-verify": 0,
+        }
         assert not report.has_drift
 
     def test_a_modified_quote_is_a_differ_naming_both_strings(self, tmp_path):

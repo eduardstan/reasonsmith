@@ -25,8 +25,9 @@ jobs:
           python-version: "3.12"
       # Same one command a stranger runs from a fresh clone (README, "Quick Start").
       - run: pip install -e ".[dev]"
-      # Exits 1 when any quote differs or any source is unreachable, and always writes
-      # drift-report.json before doing so, so the issue step below can read the findings.
+      # Exits 1 when any quote differs, any source is unreachable, or a registered passage can no
+      # longer be extracted, and always writes drift-report.json before doing so, so the issue step
+      # below can read the findings.
       - name: Re-fetch official sources and compare pack quotes
         run: python -m reasonsmith.drift --report drift-report.json
       - name: Open or update the drift issue
