@@ -1045,3 +1045,17 @@ def test_the_two_scope_gates_never_disagree(pack_name, declared_scope):
             bool(req.scope) and normalize_scope(req.scope) != normalize_scope(declared_scope)
         ), req.id
 
+
+def test_declared_scope_attribute_is_the_applicability_fallback():
+    """`declared_scope` decides applicability when `system_scope` is absent."""
+    sut = FullCapabilitySUT()
+    del sut.system_scope
+    sut.declared_scope = "high-risk"
+    pack = load_pack("eu_ai_act")
+
+    report = check_conformance(sut, pack)
+    direct = evaluate_requirement(pack.requirements[0], sut)
+
+    assert report.system_scope == "high-risk"
+    assert all(result.verdict != Verdict.NOT_APPLICABLE for result in report.results)
+    assert direct.verdict != Verdict.NOT_APPLICABLE

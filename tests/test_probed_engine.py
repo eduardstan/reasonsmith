@@ -156,6 +156,25 @@ def test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass():
     assert 0 < budget["inputs_errored"] < budget["trials"]
 
 
+def test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass():
+    """A decision can exist while the property is undefined; that input is still errored."""
+
+    class EchoSUT(OpaqueSUT):
+        def __init__(self):
+            super().__init__(trace=({"denominator": 0}, {"denominator": 1}))
+
+        def decide(self, case):
+            return dict(case)
+
+    req = _req(spec="1 / denominator == 1 / denominator", requires=("denominator",))
+    res = ProbedEngine.evaluate(req, EchoSUT(), trials=20, seed=5)
+
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.PROBED
+    budget = res.details[PROBE_BUDGET_KEY]
+    assert 0 < budget["inputs_errored"] < budget["trials"]
+
+
 def test_a_counterexample_that_does_not_reproduce_is_not_evaluated():
     """A candidate that fails once and passes on replay is a defect in the search, not a breach."""
     res = ProbedEngine.evaluate(_req(spec="approved == True", requires=("approved",)), FlakySUT())

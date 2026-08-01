@@ -29,8 +29,14 @@ be unreachable.
 
 **System under test** — `sut.py`, `SystemUnderTest`. A protocol with three methods —
 `capabilities()`, `decisions()`, `logic()` — and one optional method, `decide(case)`, deliberately
-outside the protocol because replay is optional. reasonsmith never introspects a system beyond
-these.
+outside the protocol because replay is optional. Three plain instance attributes outside that
+protocol are also semantic inputs. `evaluate_requirement` and `check_conformance` in `report.py`
+select `system_scope`, falling back to `declared_scope`, to decide applicability
+(`test_declared_scope_attribute_is_the_applicability_fallback`,
+`test_the_two_scope_gates_never_disagree`). `_unattainable_result` reads `capability_basis` to decide
+whether a missing signal describes the system as built or only the supplied trace
+(`test_unattainable_from_a_trace_does_not_speak_for_the_system`,
+`test_declared_capabilities_word_the_finding_as_about_the_system`).
 
 **Capability declaration** — the return of `capabilities()`: a collection of the signal names the
 system can emit, and nothing else. A bare string and a mapping are both refused at every site a
@@ -141,14 +147,16 @@ language, and their agreement is a soundness obligation, not an implementation d
 encoder models a statement the interpreter drops, or the two disagree on an operator, the solver
 proves a property about a program nobody wrote and it is reported `proved`.
 
-Three things hold the two sides together:
+Three tested checks hold the two sides together:
 
-1. **Both sides refuse the same constructs.** A construct one side cannot model is refused by both,
-   not skipped by either (`test_bare_expression_rules_are_refused_by_both_sides`,
+1. **Named statement cases are checked on both sides.** Bare expression statements are refused by
+   both; nested `if` statements are modelled by both; augmented assignment is refused by the
+   interpreter and produces no solver verdict
+   (`test_bare_expression_rules_are_refused_by_both_sides`,
    `test_nested_and_augmented_statements_are_modelled_or_refused_by_both_sides`).
-2. **Both sides give the same answer on operators where Python and Z3 differ by default.** `/` is
-   true division on both (`test_division_is_true_division_on_both_sides`); `%` follows Python's
-   floor semantics for a negative divisor, where Z3's `mod` is non-negative
+2. **Named operator differences are checked to agree.** `/` is true division on both
+   (`test_division_is_true_division_on_both_sides`); `%` follows Python's floor semantics for a
+   negative divisor, where Z3's `mod` is non-negative
    (`test_modulo_follows_python_semantics_for_any_divisor`).
 3. **Every proof is cross-checked at runtime.** Before any verdict is read off the solver, the Z3
    encoding is run against the rulelang interpreter on the witness the solver chose for the
@@ -213,29 +221,34 @@ a variable the formula treats as a magnitude (`test_quantitative_bound_needs_a_m
 This is the rung for a system that exposes `decide()` but no `logic()`: there is nothing to reason
 over, so the engine searches.
 
-> **If the probed engine reports `satisfied` at strength `probed`, then:** the engine replayed the
-> *N* inputs its budget names through the system's own `decide()`, and every one of them that
-> produced a decision satisfied `req.spec` under the rulelang interpreter. The budget states *N*, the
-> seed, the strategy, the per-field input space it varied, and how many inputs produced no decision
-> at all (`test_no_counterexample_in_budget_is_probed_and_every_rendering_carries_the_budget`).
+> **If the probed engine reports `satisfied` at strength `probed`, then:** the engine replayed *N*
+> planned inputs through the system's own `decide()`. Every input for which `decide()`,
+> conversion to a decision record, and property evaluation all completed satisfied `req.spec` under
+> the rulelang interpreter. The budget records *N*, the seed, the strategy, per-field candidate-value
+> counts, and how many inputs errored during one of those operations
+> (`test_no_counterexample_in_budget_is_probed_and_every_rendering_carries_the_budget`,
+> `test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass`,
+> `test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass`).
 
 *The domain, exactly.* `plan_inputs` replays the recorded decisions first, unmodified, then perturbs
 a randomly chosen recorded decision by replacing one or two fields with values drawn from that
 field's candidate pool: the values the trace shows for that field, the numeric literals of the
 property, and their immediate neighbours. A field whose values are of a kind the engine cannot vary
-is left out of the space entirely, and the budget's `input_space` names the fields that were in it,
-so what was held fixed is readable. The plan is a deterministic function of `(req.spec, records,
-trials, seed)` and nothing else, so a reported budget can be re-derived
+is left out of the space entirely. The budget's `input_space` maps each varied field to the number of
+candidate values for that field; it does not enumerate the inputs. Given the same `req.spec`,
+records, trials, and recorded seed, the plan is re-derived
 (`test_the_same_seed_searches_the_same_space`), and the inputs the budget counts are the inputs the
 system was actually run on (`test_the_engine_replays_exactly_the_planned_inputs`).
 
 *What it does not tell you.* Nothing about any input outside that plan — which is the entire
 distance between this rung and `proved`. `proved` says *for every input admitted by the constraints*;
-`probed` says *for every input we replayed, and here is the list*. A property can hold across 200
-replayed inputs and fail on the 201st, and no rendering of a probed verdict may present it otherwise
-(`test_probed_never_rounds_up_to_proved`). It also tells you nothing about inputs the system refused
-to decide: those are counted in the budget, not read as passes
-(`test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass`).
+`probed` says *for every planned input whose decision record and property evaluation completed*.
+A property can hold across 200 replayed inputs and fail on the 201st, and no rendering of a probed
+verdict may present it otherwise (`test_probed_never_rounds_up_to_proved`). It also tells you nothing
+about inputs for which `decide()` or property evaluation raised: both are aggregated into the
+budget's `inputs_errored` count and skipped, not read as passes
+(`test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass`,
+`test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass`).
 
 > **If it reports `violated` at strength `probed`, then:** one replayed input produced a decision
 > failing `req.spec`, and that same input, replayed a second time through `decide()`, failed again.
@@ -320,13 +333,13 @@ honest.
 holds this sentence to the order the code defines). Comparison against anything that is not a
 `Strength` is refused rather than coerced (`test_strength_comparison_rejects_foreign_types`).
 
-**What a comparison means.** `a < b` says the evidence at *b* was reached by a method that quantifies
-over strictly more than the method at *a*:
+**What a comparison means.** `a < b` orders the evidence-gathering method recorded on the result:
 
-- `unattainable` — the system cannot produce the required signals at all, so no method reaches it.
-- `observed` — the property held over a trace the system supplied.
-- `probed` — the property held over inputs the auditor generated and the system was run on.
-- `proved` — the property holds over every input the constraints admit.
+- `unattainable` — capability analysis stopped evaluation before an engine ran.
+- `observed` — a record or temporal conclusion was reached from the supplied trace.
+- `probed` — a logical conclusion was reached by bounded replay through `decide()`.
+- `proved` — a logical conclusion was reached by solver reasoning over the valuations admitted by
+  the declared constraints.
 
 **What a comparison does not mean.** It is not a confidence score, and it does not rank how much a
 reader should believe anything. A `proved` verdict over logic that has nothing to do with the
@@ -350,7 +363,8 @@ plausible (`test_counts_reconcile_against_both_totals`). They differ in what a r
 | Outcome | What happened | What to do next |
 |---|---|---|
 | **not applicable** | The duty is limited to a regulatory class, and the system was not declared to be in it — either no class was declared at all, or a different one was. Nothing about the system was checked. reasonsmith never infers the class. | Declare the class and re-run, or establish that the duty genuinely does not reach the system. Read the declared-scope line first: an undeclared system is neither placed in scope nor cleared. |
-| **unattainable** | The signals the duty needs are outside the system's capability set. Computed as a set difference, *without executing the system*. | Change the system. No amount of testing discharges this one — that is what "as built" means. |
+| **unattainable — declared basis** | The signals the duty needs are outside the system's declared capability set. Computed as a set difference, *without executing the system*. | Change the system. |
+| **unattainable — trace basis** | No record in the supplied trace carries the required signals; the adapter derived its capability set from that trace. This does not establish that the system cannot emit them. | Supply a longer trace or an explicit capability declaration. Change the system only if further evidence confirms the signals are absent. |
 | **not evaluated** | The duty reaches the system, the system can emit the signals, and no engine here established anything: an empty trace, an unparseable formula, a solver timeout, an unmodelled construct. `strength=None`, which is deliberately not a rung on the lattice. | Fix the evidence or the specification and re-run. This is a gap in the audit, not a finding about the system. |
 | **violated** | An engine produced a witness: a record, a trace step, or an input that fails the property. | Fix the system. This is the only outcome that fails a `check` run. |
 
@@ -376,16 +390,20 @@ every rendering. This document does not restate it — read it there, and note i
 covers both ways a requirement becomes not applicable
 (`test_limits_cover_both_ways_a_requirement_becomes_not_applicable`).
 
-Three things it says that bear repeating as the boundary of this whole document:
+Two consequences of that report text, followed by a separate package-level terminology distinction:
 
 - reasonsmith does not determine whether a legal duty is discharged. It assesses capability
-  information and trace evidence against formal specifications.
+  information and trace evidence against formal specifications
+  (`test_observed_verdict_states_what_it_does_not_cover`).
 - reasonsmith does not infer a system's regulatory class. An undeclared system is neither placed in
   scope nor cleared of a class-limited duty (`test_the_two_scope_gates_never_disagree`, and a
   misspelled class is refused rather than read as out-of-scope,
   `test_a_scope_outside_the_vocabulary_is_refused`).
-- reasonsmith certifies nothing. A report is a record of what was checked and how, carrying its own
-  limits, and it carries no narrative it did not measure
+- Separately, the package emits a **reason-deletion certificate**, a measured artifact about which
+  reasons an approximate engine dropped. It does not issue a **compliance certification**. The
+  artifact detects a dropped reason and carries its separate limits
+  (`test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_carries_its_limits`); a
+  conformance report carries no narrative it did not measure
   (`test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure`).
 
 ---
@@ -410,7 +428,7 @@ Three things it says that bear repeating as the boundary of this whole document:
 | The probe plan is re-derivable from its seed | `test_the_same_seed_searches_the_same_space` |
 | The budget counts the inputs the system was actually run on | `test_the_engine_replays_exactly_the_planned_inputs` |
 | Probed never rounds up to proved, in any count, headline or rendering | `test_probed_never_rounds_up_to_proved` |
-| An input the system refuses to decide is counted, not read as a pass | `test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass` |
+| An input whose `decide()` or property evaluation raises is counted, not read as a pass | `test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass`, `test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass` |
 | `probed violated` ⇒ the counterexample reproduced on a second replay | `test_a_genuine_counterexample_is_reported_violated_with_the_input` |
 | A counterexample that does not reproduce is not evaluated, never violated | `test_a_counterexample_that_does_not_reproduce_is_not_evaluated` |
 | No `decide()`, no trace, no budget, or an inexpressible property ⇒ not evaluated | `test_a_system_without_decide_is_not_evaluated_never_satisfied`, `test_an_empty_trace_gives_the_search_nothing_to_probe_around`, `test_nonpositive_trial_budget_is_not_confused_with_an_empty_trace`, `test_the_complete_property_must_be_expressible_and_boolean` |
@@ -420,7 +438,7 @@ Three things it says that bear repeating as the boundary of this whole document:
 | Solver `unknown` or timeout is not evaluated | `test_solver_timeout_reported_not_evaluated` |
 | An unmodelled construct is not evaluated, and pack text is never executed | `test_unsupported_construct_reported_not_evaluated`, `test_pack_text_is_never_executed_as_python` |
 | A proof is cross-checked against the reference interpreter before it is read | `test_encoding_disagreeing_with_the_interpreter_is_not_a_proof`, `test_rules_undefined_on_the_witness_are_named_as_such` |
-| Encoder and interpreter refuse the same constructs and agree on `/` and `%` | `test_bare_expression_rules_are_refused_by_both_sides`, `test_nested_and_augmented_statements_are_modelled_or_refused_by_both_sides`, `test_division_is_true_division_on_both_sides`, `test_modulo_follows_python_semantics_for_any_divisor` |
+| Named statement cases are modelled or refused on both sides, and `/` and `%` agree in the named cases | `test_bare_expression_rules_are_refused_by_both_sides`, `test_nested_and_augmented_statements_are_modelled_or_refused_by_both_sides`, `test_division_is_true_division_on_both_sides`, `test_modulo_follows_python_semantics_for_any_divisor` |
 | Arrow rewriting preserves the property | `test_arrow_rewriting_respects_parentheses_and_precedence`, `test_arrow_rewriting_leaves_string_literals_alone` |
 | A proof over reals names the rational/float64 gap | `test_a_proof_over_reals_says_it_is_a_proof_over_the_rationals` |
 | A declared sort never becomes a hidden input constraint | `test_declared_sorts_never_become_hidden_input_constraints` |
@@ -436,9 +454,12 @@ Three things it says that bear repeating as the boundary of this whole document:
 | The unattainable analysis never executes the system | `test_unattainable_analysis_no_execution`, `test_check_conformance_never_executes_a_system_it_cannot_check` |
 | A result cannot claim more than its evidence, and a raw string cannot slip past the guards | `test_result_cannot_claim_more_than_its_evidence`, `test_a_string_verdict_or_strength_is_parsed_not_trusted` |
 | A capability set is signal names and nothing else | `test_base_sut_rejects_a_bare_capability_string`, `test_base_sut_rejects_a_capability_map`, `test_unattainable_analysis_rejects_a_capability_map` |
-| A trace-derived capability set does not speak for the system | `test_unattainable_from_a_trace_does_not_speak_for_the_system`, `test_declared_capabilities_word_the_finding_as_about_the_system` |
+| Applicability reads `system_scope`, falling back to the `declared_scope` attribute | `test_declared_scope_attribute_is_the_applicability_fallback`, `test_the_two_scope_gates_never_disagree` |
+| Capability basis decides whether unattainability speaks about the system or its trace | `test_unattainable_from_a_trace_does_not_speak_for_the_system`, `test_declared_capabilities_word_the_finding_as_about_the_system` |
 | A malformed trace names the system that produced it | `test_a_trace_of_the_wrong_shape_names_the_system` |
 | A pack's requirement fields are exact and non-blank | `test_loader_rejects_missing_field`, `test_loader_rejects_an_unknown_field`, `test_loader_rejects_blank_and_duplicate_fields`, `test_requirement_needs_at_least_one_signal` |
 | The regulatory class is never inferred, and a misspelling is refused rather than read as out-of-scope | `test_the_two_scope_gates_never_disagree`, `test_a_scope_outside_the_vocabulary_is_refused`, `test_limits_cover_both_ways_a_requirement_becomes_not_applicable` |
+| A conformance report states that it is not a compliance guarantee | `test_observed_verdict_states_what_it_does_not_cover` |
+| A reason-deletion certificate detects a dropped reason and carries its own non-compliance limits | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_carries_its_limits` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |
