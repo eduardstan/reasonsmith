@@ -78,12 +78,11 @@ gap in the document rather than describing a tool that does not exist.
 ## The web home and the install surface
 
 The live home is `https://reasonsmith.dev` (landing) with the conformance dossier at
-`https://reasonsmith.dev/report.html`; the old `eduardstan.github.io/reasonsmith` GitHub Pages URL
-is superseded and nothing should reintroduce it. The package is installed from source today: the
-`reasonsmith` console entry point is real, but the package is not yet published to PyPI, so do not
-write `pip install reasonsmith` in this repo until it actually is — the README's install block is
-the authoritative form, and adding the PyPI line later is the one-line replacement of its four
-source-install lines.
+`https://reasonsmith.dev/report.html`; the old GitHub Pages URL is superseded and nothing should
+reintroduce it. The package is installed from source today: the `reasonsmith` console entry point
+is real, but the package is not yet published to PyPI, so do not describe a PyPI installation in
+this repo until it actually is — the README's install block is the authoritative form, and adding
+the PyPI line later is the one-line replacement of its four source-install lines.
 
 ## The front door
 

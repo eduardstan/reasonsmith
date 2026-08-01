@@ -4,7 +4,7 @@
 [![Python >= 3.11](https://img.shields.io/badge/python->=3.11-blue.svg)](https://www.python.org/)
 [![MIT licence](https://img.shields.io/github/license/eduardstan/reasonsmith)](https://github.com/eduardstan/reasonsmith/blob/main/LICENSE)
 
-[![Reasonsmith Conformance & Reason-Deletion Visual Report Screenshot](docs/report-preview.png)](https://reasonsmith.dev/)
+[![Reasonsmith Conformance & Reason-Deletion Visual Report Screenshot](docs/report-preview.png)](https://reasonsmith.dev/report.html)
 
 > [!TIP]
 > **Live on the web:** the landing page is at [**reasonsmith.dev**](https://reasonsmith.dev) and the self-contained conformance dossier at [**reasonsmith.dev/report.html**](https://reasonsmith.dev/report.html).
