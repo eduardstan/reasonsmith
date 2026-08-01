@@ -1,0 +1,59 @@
+name: publish
+
+# Fires on a published GitHub Release, not on a tag push: a tag can be moved, a release is a
+# deliberate act. This workflow is the whole publish mechanism for reasonsmith; it must be the
+# only thing that can upload to PyPI, and it must never be pointed at a token.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  test-build:
+    name: Test and build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Same one command a stranger runs from a fresh clone (README, "Quick Start"), plus the
+      # `build` frontend that provides `python -m build`. nesyarena is pinned to exact 0.1.0 on
+      # PyPI in pyproject.toml, so this environment and a local one resolve to the same code.
+      - run: pip install -e ".[dev]" build
+      - run: ruff check .
+      - run: pytest --cov=reasonsmith --cov-report=term-missing
+      # A release that fails its own tests must not reach PyPI, where a version number can never
+      # be reused. The dist is built only after the suite passes, and the publish job uploads
+      # exactly these files.
+      - name: Build the distributions
+        run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Upload release to PyPI
+    needs: test-build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/reasonsmith
+    permissions:
+      # Mandatory for Trusted Publishing: GitHub mints the short-lived OIDC token only when this
+      # permission is granted, and that token is what PyPI verifies. There is no API token
+      # anywhere — not in repository secrets, not on a laptop. If this job has no `id-token`
+      # permission, the upload fails with an authentication error that looks nothing like the
+      # real cause. It is granted only to this job, never at workflow level.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.14.2
