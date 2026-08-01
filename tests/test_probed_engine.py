@@ -433,6 +433,32 @@ def test_trace_established_numeric_name_is_refused_in_boolean_position():
     assert sut.replays == 0
 
 
+def test_trace_established_kind_propagates_through_arithmetic_operands():
+    class SearchTrackingSUT(HonestSUT):
+        def __init__(self):
+            super().__init__()
+            self.replays = 0
+
+        def decide(self, case):
+            self.replays += 1
+            return super().decide(case)
+
+    sut = SearchTrackingSUT()
+    result = ProbedEngine.evaluate(
+        _req(spec="True or (reason + 1 > 0)", requires=("reason",)),
+        sut,
+    )
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.verdict != Verdict.SATISFIED
+    assert result.strength is None
+    assert result.details["reason"] == "property_not_expressible"
+    assert "reason" in result.evidence_summary
+    assert "string" in result.evidence_summary
+    assert "+" in result.evidence_summary
+    assert sut.replays == 0
+
+
 def test_unestablished_property_kind_remains_permissive_and_is_disclosed():
     class AddsRiskScoreSUT(OpaqueSUT):
         def decide(self, case):

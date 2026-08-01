@@ -23,6 +23,9 @@ What a reader must not break:
     reported, and a candidate that does not reproduce is reported NOT EVALUATED, never violated.
     Why this matters: a system that answers differently on the same input has not been shown to
     violate anything; the finding would be a bug in this search reported as a breach of the duty.
+  - Replay inputs are isolated against accidental mutation by the system under test. This does
+    not defend against a system that deliberately subverts copying: a system that lies to its
+    auditor cannot be audited by that auditor, and reasonsmith does not claim otherwise.
   - A system exposing no `decide()`, a property this engine cannot parse, or a trace with no
     decision to perturb are all reported NOT EVALUATED (`verdict=INCONCLUSIVE`, `strength=None`),
     naming which of the three happened, and never `satisfied`.
@@ -201,55 +204,131 @@ def _trace_field_kinds(
     return established, tuple(unestablished)
 
 
-def _operand_kind(node: ast.AST, field_kinds: Mapping[str, str]) -> str:
+def _operation_text(operator: ast.operator | ast.cmpop) -> str:
+    return {
+        ast.Add: "+",
+        ast.Sub: "-",
+        ast.Mult: "*",
+        ast.Div: "/",
+        ast.Mod: "%",
+        ast.Eq: "==",
+        ast.NotEq: "!=",
+        ast.Lt: "<",
+        ast.LtE: "<=",
+        ast.Gt: ">",
+        ast.GtE: ">=",
+    }[type(operator)]
+
+
+def _trace_operand_kind(
+    node: ast.AST, field_kinds: Mapping[str, str]
+) -> tuple[str, tuple[tuple[str, str], ...]]:
     if isinstance(node, ast.Name):
-        return field_kinds.get(node.id, "unknown")
-    return _expression_kind(node)
+        kind = field_kinds.get(node.id, "unknown")
+        origins = ((node.id, kind),) if kind != "unknown" else ()
+        return kind, origins
+    if isinstance(node, ast.Constant):
+        return _expression_kind(node), ()
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+        kind, origins = _trace_operand_kind(node.operand, field_kinds)
+        if kind not in ("number", "unknown") and origins:
+            field, established = origins[0]
+            operation = "unary -" if isinstance(node.op, ast.USub) else "unary +"
+            raise UnsupportedConstructError(
+                f"Field {field!r} has trace-established kind {established}, which contradicts "
+                f"arithmetic operation {operation!r} in {ast.unparse(node)!r}"
+            )
+        return ("unknown" if kind == "unknown" else "number"), origins
+    if isinstance(node, ast.BinOp):
+        left_kind, left_origins = _trace_operand_kind(node.left, field_kinds)
+        right_kind, right_origins = _trace_operand_kind(node.right, field_kinds)
+        origins = left_origins + right_origins
+        for kind, kind_origins in (
+            (left_kind, left_origins),
+            (right_kind, right_origins),
+        ):
+            if kind not in ("number", "unknown") and kind_origins:
+                field, established = kind_origins[0]
+                operation = _operation_text(node.op)
+                raise UnsupportedConstructError(
+                    f"Field {field!r} has trace-established kind {established}, which "
+                    f"contradicts arithmetic operation {operation!r} in {ast.unparse(node)!r}"
+                )
+        kind = "unknown" if "unknown" in (left_kind, right_kind) else "number"
+        return kind, origins
+    if isinstance(node, ast.Call):
+        name = node.func.id if isinstance(node.func, ast.Name) else ""
+        if name in ("abs", "min", "max"):
+            kinds_and_origins = [
+                _trace_operand_kind(argument, field_kinds) for argument in node.args
+            ]
+            origins = tuple(
+                origin
+                for _, argument_origins in kinds_and_origins
+                for origin in argument_origins
+            )
+            for kind, argument_origins in kinds_and_origins:
+                if kind not in ("number", "unknown") and argument_origins:
+                    field, established = argument_origins[0]
+                    raise UnsupportedConstructError(
+                        f"Field {field!r} has trace-established kind {established}, which "
+                        f"contradicts arithmetic operation {name!r} in {ast.unparse(node)!r}"
+                    )
+            kind = (
+                "unknown"
+                if any(kind == "unknown" for kind, _ in kinds_and_origins)
+                else "number"
+            )
+            return kind, origins
+    return _expression_kind(node), ()
 
 
 def _validate_trace_kinds(node: ast.Expression, field_kinds: Mapping[str, str]) -> None:
-    boolean_positions: list[ast.AST] = []
+    boolean_positions: list[tuple[ast.AST, str]] = []
     if isinstance(node.body, ast.Name):
-        boolean_positions.append(node.body)
+        boolean_positions.append((node.body, "property result"))
     for current in ast.walk(node):
         if isinstance(current, ast.UnaryOp) and isinstance(current.op, ast.Not):
-            boolean_positions.append(current.operand)
+            boolean_positions.append((current.operand, "not"))
         elif isinstance(current, ast.BoolOp):
-            boolean_positions.extend(current.values)
+            operation = "and" if isinstance(current.op, ast.And) else "or"
+            boolean_positions.extend((value, operation) for value in current.values)
         elif isinstance(current, ast.Call):
             name = current.func.id if isinstance(current.func, ast.Name) else ""
             if name in ("implies", "Implies"):
-                boolean_positions.extend(current.args)
+                boolean_positions.extend((argument, name) for argument in current.args)
 
-    for position in boolean_positions:
+    for position, operation in boolean_positions:
         if not isinstance(position, ast.Name):
             continue
         kind = field_kinds.get(position.id, "unknown")
         if kind not in ("boolean", "unknown"):
             raise UnsupportedConstructError(
-                f"Field {position.id!r} is used in Boolean position, but the trace establishes "
-                f"its kind as {kind}"
+                f"Field {position.id!r} has trace-established kind {kind}, which contradicts "
+                f"Boolean operation {operation!r}"
             )
 
     for comparison in (item for item in ast.walk(node) if isinstance(item, ast.Compare)):
         left = comparison.left
-        left_kind = _operand_kind(left, field_kinds)
+        left_kind, left_origins = _trace_operand_kind(left, field_kinds)
         for operator, right in zip(comparison.ops, comparison.comparators, strict=True):
-            right_kind = _operand_kind(right, field_kinds)
+            right_kind, right_origins = _trace_operand_kind(right, field_kinds)
             known = left_kind != "unknown" and right_kind != "unknown"
             ordered = isinstance(operator, (ast.Lt, ast.LtE, ast.Gt, ast.GtE))
             compatible = left_kind == right_kind and (
                 not ordered or left_kind in ("number", "string")
             )
             if known and not compatible:
-                operator_text = {
-                    ast.Eq: "==",
-                    ast.NotEq: "!=",
-                    ast.Lt: "<",
-                    ast.LtE: "<=",
-                    ast.Gt: ">",
-                    ast.GtE: ">=",
-                }[type(operator)]
+                operator_text = _operation_text(operator)
+                established_fields = left_origins + right_origins
+                if established_fields:
+                    evidence = ", ".join(
+                        f"{field!r} ({kind})" for field, kind in established_fields
+                    )
+                    raise UnsupportedConstructError(
+                        f"Trace-established field kind(s) {evidence} contradict comparison "
+                        f"operation {operator_text!r} in {ast.unparse(comparison)!r}"
+                    )
                 raise UnsupportedConstructError(
                     f"Comparison {ast.unparse(left)!r} {operator_text} "
                     f"{ast.unparse(right)!r} has incompatible established kinds "
@@ -257,6 +336,7 @@ def _validate_trace_kinds(node: ast.Expression, field_kinds: Mapping[str, str]) 
                 )
             left = right
             left_kind = right_kind
+            left_origins = right_origins
 
 
 def _shared_mutable_path(
