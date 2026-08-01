@@ -65,11 +65,10 @@ Extending an engine, rather than adding another demo, is now the concrete, high-
 
 ## Reporting Issues
 
-If you encounter a bug or have a question:
+For a bug, question, or pack proposal:
 1. **Questions go to [GitHub Discussions](https://github.com/eduardstan/reasonsmith/discussions)**; issues are for bugs and pack proposals.
-2. Check existing issues to see if it has already been discussed.
+2. Check the existing discussions or issues before starting a new one.
 3. Pick a template from `.github/ISSUE_TEMPLATE/` — GitHub offers them automatically when you open an issue. **Bug report** asks for the exact command you ran and the output you saw; **Pack proposal** is how a new regulation pack gets started (which regulation, which official source, which duty). A proposal is the fastest way to go from interested reader to contributor.
-4. Provide clear reproduction steps, expected vs. actual behaviour, and details about your environment.
 
 ## Submitting Pull Requests
 
@@ -83,7 +82,7 @@ If you encounter a bug or have a question:
 
 reasonsmith normally **squash-merges** pull requests. On that path, GitHub collapses the branch's commits and writes the pull-request **title** onto `main` as the commit subject, appending `(#NN)` — the PR number. The individual branch commits do not appear in the history.
 
-PR #32 is the deliberate exception: it was merged with a merge commit to preserve an outside contributor's authorship after a squash had erased it. If keeping your individual commits in the history matters to you, ask for that in the pull-request description.
+PRs #31 and #32 are one deliberate exception sequence: the first reverted a squash that had erased an outside contributor's authorship, and the second re-landed the contributor's commits with a merge commit so that authorship survived. If keeping your individual commits in the history matters to you, ask for that in the pull-request description.
 
 That is where the convention is strict, and only there:
 
@@ -98,7 +97,7 @@ Titles follow **Conventional Commits**: `<type>(<scope>): <summary>`.
 - `scope` is optional and names the part of the codebase the change touches (`engines`, `cli`, `packs`, `report`, `drift`, `reasonsmith`, …). When in doubt, omit it.
 - `summary` is short, imperative, lowercase, and has no trailing period: *add*, *fix*, *document* — not *added* or *Adding*.
 
-One real example of each type, as each reads on `main` today (GitHub appends the `(#NN)` on merge):
+One real example of each type, as each reads on `main` today (on the normal squash path, GitHub appends `(#NN)` on merge):
 
 | Type | Example | PR |
 |---|---|---|

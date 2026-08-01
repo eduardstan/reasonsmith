@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting. Fill in the three fields below; the command and the output are what make the bug reproducible.
+        Thanks for reporting. Fill in the three required fields below; the command and the output are what make the bug reproducible.
   - type: textarea
     id: expectation
     attributes:
