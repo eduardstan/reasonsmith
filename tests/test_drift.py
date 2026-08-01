@@ -131,6 +131,33 @@ class TestExtractPassage:
         assert "A creditor shall notify an applicant of action taken within: (i) 30 days" in passage
 
 
+class TestFetchSource:
+    def test_ecfr_fetch_resolves_the_latest_official_issue_date(self, monkeypatch):
+        urls: list[str] = []
+        responses = iter(
+            [
+                BytesIO(b'{"meta":{"latest_issue_date":"2026-07-27"}}'),
+                BytesIO((FIXTURE_DIR / FIXTURE_BY_KEY["ecoa"]).read_bytes()),
+            ]
+        )
+
+        def fake_urlopen(request, timeout):
+            urls.append(request.full_url)
+            return next(responses)
+
+        monkeypatch.setattr(drift.urllib.request, "urlopen", fake_urlopen)
+        source = next(source for source in SOURCES if source.key == "ecoa")
+
+        passage = drift.fetch_source(source)
+
+        assert urls == [
+            drift.ECFR_VERSIONS_URL,
+            "https://www.ecfr.gov/api/versioner/v1/full/2026-07-27/"
+            "title-12.xml?part=1002&section=1002.9",
+        ]
+        assert "A creditor shall notify an applicant of action taken within:" in passage
+
+
 class TestCheckStatuteDrift:
     def test_all_statutory_quotes_match_the_recorded_sources(self):
         report = check_statute_drift(fixture_fetcher)
@@ -199,13 +226,7 @@ class TestRegistry:
             encoding="utf-8"
         )
         for source in SOURCES:
-            # docs/legal-sources.md records the AI Act and GDPR original Cellar endpoints as full
-            # URLs and the GDPR consolidated endpoint as its cellar UUID/DOC_1 suffix (line 91),
-            # so either form counts as recorded.
-            recorded = source.url in legal
-            if not recorded and "cellar/" in source.url:
-                recorded = source.url.split("cellar/", 1)[1] in legal
-            assert recorded, (
+            assert f"`{source.url}`" in legal, (
                 f"source {source.key!r} URL is not recorded in docs/legal-sources.md: {source.url}"
             )
 
@@ -216,6 +237,15 @@ class TestRegistry:
 
     def test_statutory_packs_exclude_table7(self):
         assert "table7" not in STATUTORY_PACKS
+
+
+class TestWorkflow:
+    def test_drift_issue_creation_is_serialized_and_uses_the_exact_title(self):
+        workflow = (
+            Path(__file__).resolve().parents[1] / ".github" / "workflows" / "statute-drift.yml"
+        ).read_text(encoding="utf-8")
+        assert "concurrency:\n  group: statute-drift\n  cancel-in-progress: false" in workflow
+        assert 'if issue["title"] == title' in workflow
 
 
 class TestReport:

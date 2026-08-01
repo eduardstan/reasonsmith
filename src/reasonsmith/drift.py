@@ -58,6 +58,7 @@ VOID_ELEMENTS = frozenset(
 #: Default network guardrails for the live fetch.
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_MAX_BYTES = 20 * 1024 * 1024
+ECFR_VERSIONS_URL = "https://www.ecfr.gov/api/versioner/v1/versions/title-12.json"
 
 
 @dataclass(frozen=True)
@@ -65,8 +66,8 @@ class SourceDocument:
     """A recorded official statutory source.
 
     `url` is copied verbatim from `docs/legal-sources.md`; `test_drift.py` holds the registry to
-    that file so the two cannot drift apart. `kind` names the format the endpoint serves and is
-    carried for provenance only -- extraction itself is markup-based.
+    that file so the two cannot drift apart. `kind` names the format the endpoint serves and tells
+    the live fetch whether it must resolve the current version before retrieval.
     """
 
     key: str
@@ -209,29 +210,54 @@ class DriftFetchError(RuntimeError):
     """The official source could not be retrieved at all."""
 
 
-def fetch_source(source: SourceDocument, *, timeout: float = DEFAULT_TIMEOUT,
-                 max_bytes: int = DEFAULT_MAX_BYTES) -> str:
-    """Fetch a recorded source document as text.
-
-    Raises `DriftFetchError` on any failure -- a connection error, an HTTP error, invalid UTF-8, or
-    a document larger than `max_bytes`, which would mean the endpoint is no longer serving the same
-    thing.
-    """
+def _fetch_url(url: str, *, timeout: float, max_bytes: int) -> str:
     request = urllib.request.Request(
-        source.url,
+        url,
         headers={"User-Agent": "reasonsmith-statute-drift/0.2 (+https://github.com/eduardstan/reasonsmith)"},
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             data = response.read(max_bytes + 1)
     except Exception as exc:  # noqa: BLE001 - every urllib failure mode is an unreachable source
-        raise DriftFetchError(f"could not fetch {source.url}: {exc}") from exc
+        raise DriftFetchError(f"could not fetch {url}: {exc}") from exc
     if len(data) > max_bytes:
-        raise DriftFetchError(f"{source.url} exceeded the {max_bytes}-byte size guard")
+        raise DriftFetchError(f"{url} exceeded the {max_bytes}-byte size guard")
     try:
         return data.decode("utf-8")
     except UnicodeDecodeError as exc:
-        raise DriftFetchError(f"could not decode {source.url} as UTF-8: {exc}") from exc
+        raise DriftFetchError(f"could not decode {url} as UTF-8: {exc}") from exc
+
+
+def _current_ecfr_url(source: SourceDocument, *, timeout: float, max_bytes: int) -> str:
+    metadata_text = _fetch_url(ECFR_VERSIONS_URL, timeout=timeout, max_bytes=max_bytes)
+    try:
+        issue_date = json.loads(metadata_text)["meta"]["latest_issue_date"]
+        canonical_date = datetime.strptime(issue_date, "%Y-%m-%d").date().isoformat()
+        if issue_date != canonical_date:
+            raise ValueError(f"non-canonical issue date {issue_date!r}")
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        raise DriftFetchError(
+            f"could not resolve the current eCFR version from {ECFR_VERSIONS_URL}: {exc}"
+        ) from exc
+    prefix, marker, dated_path = source.url.partition("/full/")
+    _recorded_date, separator, suffix = dated_path.partition("/")
+    if not marker or not separator:
+        raise DriftFetchError(f"recorded eCFR URL has no versioned full path: {source.url}")
+    return f"{prefix}/full/{issue_date}/{suffix}"
+
+
+def fetch_source(source: SourceDocument, *, timeout: float = DEFAULT_TIMEOUT,
+                 max_bytes: int = DEFAULT_MAX_BYTES) -> str:
+    """Fetch the live version of a recorded source document as text.
+
+    The eCFR versioner requires a published issue date, so its current date is resolved from
+    official title metadata at run time. Raises `DriftFetchError` on any resolution or retrieval
+    failure.
+    """
+    url = source.url
+    if source.kind == "ecfr-xml":
+        url = _current_ecfr_url(source, timeout=timeout, max_bytes=max_bytes)
+    return _fetch_url(url, timeout=timeout, max_bytes=max_bytes)
 
 
 @dataclass(frozen=True)

@@ -80,7 +80,8 @@
 - **Document Title:** Regulation (EU) 2016/679 of the European Parliament and of the Council of 27 April 2016 on the protection of natural persons with regard to the processing of personal data and on the free movement of such data, and repealing Directive 95/46/EC (General Data Protection Regulation)
 - **CELEX Identifier:** `32016R0679` (Consolidated CELEX: `02016R0679-20160504`)
 - **Official Source URL:** [EUR-Lex Regulation (EU) 2016/679](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679)
-- **Direct EU Cellar XHTML Endpoint:** `http://publications.europa.eu/resource/cellar/3e485e15-11bd-11e6-ba9a-01aa75ed71a1.0006.03/DOC_1`
+- **Direct EU Cellar XHTML Endpoint (original text and recitals):** `http://publications.europa.eu/resource/cellar/3e485e15-11bd-11e6-ba9a-01aa75ed71a1.0006.03/DOC_1`
+- **Direct EU Cellar XHTML Endpoint (consolidated articles):** `http://publications.europa.eu/resource/cellar/5f2552c2-cc45-11e6-ad7c-01aa75ed71a1.0022.03/DOC_1`
 - **Consolidation / Version Date:** 4 May 2016 (Corrigenda published 2016, 2018, 2021)
 - **Retrieval Date & Time:** 2026-07-31 09:52:25 UTC+2
 - **Legal Hierarchy Distinction Note:**
