@@ -104,7 +104,7 @@ The install is from source today; the console command it puts on your PATH is `r
 git clone https://github.com/eduardstan/reasonsmith.git
 cd reasonsmith
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev]"  # the published install line lands here, replacing the four bootstrap lines above
 ruff check .
 pytest
 python -m reasonsmith.demo

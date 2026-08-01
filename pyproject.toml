@@ -44,7 +44,7 @@ dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.4"]
 reasonsmith = "reasonsmith.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/eduardstan/reasonsmith"
+Homepage = "https://reasonsmith.dev"
 Documentation = "https://reasonsmith.dev"
 Repository = "https://github.com/eduardstan/reasonsmith"
 Issues = "https://github.com/eduardstan/reasonsmith/issues"
