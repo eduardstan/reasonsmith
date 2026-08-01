@@ -18,7 +18,7 @@ from reasonsmith.report import (
     check_conformance,
     evaluate_requirement,
 )
-from reasonsmith.rulelang import classify_fragment
+from reasonsmith.rulelang import classify_fragment, eval_expression, parse_property
 from reasonsmith.spec import (
     PACKS_DIR,
     REGULATORY_CLASSES,
@@ -1134,6 +1134,41 @@ def test_the_loader_refuses_quoted_prose_as_a_non_boolean_property(tmp_path):
 def test_the_loader_refuses_arithmetic_as_a_non_boolean_property(tmp_path):
     with pytest.raises(ValueError, match="is not a boolean property"):
         load_pack(_spec_pack(tmp_path, "logical", "1 + 2"))
+
+
+def test_the_loader_refuses_conflicting_boolean_and_magnitude_roles(tmp_path):
+    with pytest.raises(
+        ValueError,
+        match=r"signal_a.*bare Boolean role.*measured magnitude role|both a bare Boolean role",
+    ):
+        load_pack(
+            _spec_pack(
+                tmp_path,
+                "temporal",
+                "always(signal_a and signal_a > 0)",
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        pytest.param("always(False)", id="temporal-atom"),
+        pytest.param("signal_a and False", id="connective-operand"),
+    ],
+)
+def test_the_loader_refuses_boolean_constants_as_atoms(tmp_path, spec):
+    formalism = "temporal" if spec.startswith("always") else "logical"
+    with pytest.raises(ValueError, match="cannot stand as bare Boolean atoms"):
+        load_pack(_spec_pack(tmp_path, formalism, spec))
+
+
+def test_a_boolean_constant_remains_valid_as_a_comparison_operand(tmp_path):
+    pack = load_pack(_spec_pack(tmp_path, "logical", "signal_a == True"))
+    node = parse_property(pack.requirements[0].spec)
+
+    assert eval_expression(node, {"signal_a": True}) is True
+    assert eval_expression(node, {"signal_a": False}) is False
 
 
 def test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment(tmp_path):

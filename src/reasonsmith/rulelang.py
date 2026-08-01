@@ -47,6 +47,9 @@ _IMPLICATION_TOKENS = ("=>", "->", " implies ")
 #: The atom asking whether a decision record carries a value for a signal at all.
 PRESENCE_CALL = "present"
 
+#: The numeric comparison that gives a signal the flag role rather than the magnitude role.
+FLAG_THRESHOLD = 0.5
+
 #: The temporal operators of the language, in the prefix call form a Python parser accepts.
 #: rtamt's infix `until` and `since` are deliberately absent: they do not parse here, so a spec
 #: using one is refused at load time rather than accepted into a fragment nothing can classify.
@@ -344,6 +347,21 @@ def validate_property(node: ast.AST) -> None:
         raise UnsupportedConstructError(
             f"Requirement spec {ast.unparse(node)!r} is not a boolean property"
         )
+    constants = bare_boolean_constants(node)
+    if constants:
+        values = ", ".join(repr(value) for value in constants)
+        raise UnsupportedConstructError(
+            f"Boolean constant(s) {values} cannot stand as bare Boolean atoms. Compare a signal "
+            "to a Boolean constant when that is the property being stated"
+        )
+    conflicting = sorted(
+        set(bare_boolean_names(node)) & set(measured_magnitude_names(node))
+    )
+    if conflicting:
+        raise UnsupportedConstructError(
+            "Signal(s) used in both a bare Boolean role and a measured magnitude role: "
+            f"{', '.join(conflicting)}. A signal cannot have both roles in one property"
+        )
 
 
 def presence_atoms(node: ast.AST) -> tuple[str, ...] | None:
@@ -392,9 +410,9 @@ def signal_names(node: ast.AST) -> tuple[str, ...]:
     )
 
 
-def bare_boolean_names(node: ast.AST) -> tuple[str, ...]:
-    """Signal names used directly where the property language requires a Boolean value."""
+def _bare_boolean_parts(node: ast.AST) -> tuple[tuple[str, ...], tuple[bool, ...]]:
     names: set[str] = set()
+    constants: set[bool] = set()
 
     def visit(current: ast.AST, boolean_position: bool = False) -> None:
         if isinstance(current, ast.Expression):
@@ -402,6 +420,9 @@ def bare_boolean_names(node: ast.AST) -> tuple[str, ...]:
         elif isinstance(current, ast.Name):
             if boolean_position:
                 names.add(current.id)
+        elif isinstance(current, ast.Constant):
+            if boolean_position and isinstance(current.value, bool):
+                constants.add(current.value)
         elif isinstance(current, ast.UnaryOp):
             visit(current.operand, isinstance(current.op, ast.Not))
         elif isinstance(current, ast.BinOp):
@@ -424,6 +445,66 @@ def bare_boolean_names(node: ast.AST) -> tuple[str, ...]:
                     visit(argument)
 
     visit(node)
+    return tuple(sorted(names)), tuple(sorted(constants))
+
+
+def bare_boolean_names(node: ast.AST) -> tuple[str, ...]:
+    """Signal names used directly where the property language requires a Boolean value."""
+    return _bare_boolean_parts(node)[0]
+
+
+def bare_boolean_constants(node: ast.AST) -> tuple[bool, ...]:
+    """Boolean literals used directly where the property language requires a Boolean atom."""
+    return _bare_boolean_parts(node)[1]
+
+
+def _value_signal_names(node: ast.AST) -> set[str]:
+    if isinstance(node, ast.Name):
+        return {node.id}
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == PRESENCE_CALL
+    ):
+        return set()
+    names: set[str] = set()
+    for child in ast.iter_child_nodes(node):
+        if isinstance(node, ast.Call) and child is node.func:
+            continue
+        names.update(_value_signal_names(child))
+    return names
+
+
+def _flag_comparison(left: ast.AST, operator: ast.cmpop, right: ast.AST) -> bool:
+    left_flag = (
+        isinstance(left, ast.Name)
+        and isinstance(operator, ast.GtE)
+        and isinstance(right, ast.Constant)
+        and not isinstance(right.value, bool)
+        and right.value == FLAG_THRESHOLD
+    )
+    right_flag = (
+        isinstance(right, ast.Name)
+        and isinstance(operator, ast.LtE)
+        and isinstance(left, ast.Constant)
+        and not isinstance(left.value, bool)
+        and left.value == FLAG_THRESHOLD
+    )
+    return left_flag or right_flag
+
+
+def measured_magnitude_names(node: ast.AST) -> tuple[str, ...]:
+    """Signals used in comparisons that require measured numeric magnitudes."""
+    names: set[str] = set()
+    for comparison in (item for item in ast.walk(node) if isinstance(item, ast.Compare)):
+        left = comparison.left
+        for operator, right in zip(
+            comparison.ops, comparison.comparators, strict=True
+        ):
+            if not _flag_comparison(left, operator, right):
+                names.update(_value_signal_names(left))
+                names.update(_value_signal_names(right))
+            left = right
     return tuple(sorted(names))
 
 

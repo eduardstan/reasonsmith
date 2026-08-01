@@ -52,6 +52,7 @@ import rtamt
 
 from reasonsmith.report import RequirementResult
 from reasonsmith.rulelang import (
+    FLAG_THRESHOLD,
     PRESENCE_CALL,
     UnsupportedConstructError,
     bare_boolean_names,
@@ -64,7 +65,7 @@ from reasonsmith.verdict import Strength, Verdict
 
 #: The threshold a pack uses to read a signal as a flag. Everything else a variable is compared
 #: against is a quantity, and a quantity has to be measured.
-PRESENCE_THRESHOLD = 0.5
+PRESENCE_THRESHOLD = FLAG_THRESHOLD
 
 #: rtamt's offline discrete-time evaluator reads the sampling period off the trace, so a
 #: one-sample dataset raises out of its own internals. That is a limit of what was observed,
@@ -215,7 +216,8 @@ class ObservedEngine:
             )
 
         try:
-            boolean_atoms = set(bare_boolean_names(parse_property(req.spec)))
+            property_node = parse_property(req.spec)
+            boolean_atoms = set(bare_boolean_names(property_node))
         except UnsupportedConstructError as exc:
             return RequirementResult(
                 requirement_id=req.id,

@@ -506,6 +506,30 @@ class TestObservedEngine:
         assert result.strength is None
         assert result.details["signals_without_boolean_trace_kind"] == {"signal_a": 2}
 
+    def test_conflicting_boolean_and_magnitude_roles_are_not_evaluated(self):
+        sut = BaseSUT({"signal_a"})
+        req = Requirement(
+            id="temp_conflicting_roles",
+            source_document="Doc",
+            article_clause="Art 1",
+            verbatim_text="Quote",
+            stakeholder="deployer",
+            formalism="temporal",
+            spec="always(signal_a and signal_a > 0)",
+            rationale="The signal cannot have incompatible roles.",
+            requires=("signal_a",),
+            binding=True,
+            scope="",
+        )
+
+        result = ObservedEngine.evaluate(
+            req, sut, [{"signal_a": 1}, {"signal_a": 2}]
+        )
+        assert result.verdict == Verdict.INCONCLUSIVE
+        assert result.strength is None
+        assert "bare Boolean role" in result.details["error"]
+        assert "measured magnitude role" in result.details["error"]
+
     def test_presence_and_bare_boolean_atoms_keep_distinct_false_semantics(self):
         sut = BaseSUT({"signal_a"})
         records = [{"signal_a": False}, {"signal_a": False}]
