@@ -100,14 +100,27 @@ LIMITS OF THIS REPORT
 
 ## Quick Start
 
-The published install puts the `reasonsmith` command on your PATH, with `python -m reasonsmith.cli` staying available. The shortest true path to auditing a decision log against a regulation pack:
+1. Install the published package. This puts the `reasonsmith` command on your PATH, with `python -m reasonsmith.cli` staying available:
 
 ```sh
 pip install reasonsmith
-reasonsmith check --system decisions.jsonl --pack gdpr --html report.html
 ```
 
-`check` runs one of the four shipped packs (Table 7, EU AI Act, GDPR, ECOA/Reg B) against a JSONL decision log, printing the report as text, JSON (`--json`), or a self-contained HTML report (`--html FILE`). It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise. The committed `docs/sample_decisions.jsonl` is a three-record decision trace, so a `check` needs no data of your own — the `gdpr` run above exits 0 against it.
+2. Run the shipped demonstration:
+
+```sh
+python -m reasonsmith.demo
+```
+
+The demonstration runs on frozen synthetic data included in the package. It needs no input file or source checkout and prints the complete demonstration, including the `NOT PRODUCED` reasoning and `LIMITS` sections.
+
+3. Audit your own decision log against a regulation pack:
+
+```sh
+reasonsmith check --system <your-decisions>.jsonl --pack gdpr --html report.html
+```
+
+`check` runs one of the four shipped packs (Table 7, EU AI Act, GDPR, ECOA/Reg B) against your JSONL decision log, printing the report as text, JSON (`--json`), or a self-contained HTML report (`--html FILE`). It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise.
 
 Contributors and developers install from source instead, running the full verification suite and demonstration from the checkout:
 
