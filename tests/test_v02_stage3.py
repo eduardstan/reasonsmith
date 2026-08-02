@@ -1476,7 +1476,8 @@ def test_a_computes_that_is_not_a_collection_of_names_is_named_at_the_adapter():
     `set("approved")` and `set(True)` are a character soup and a `TypeError` respectively, and
     both used to surface as something else — a variable-table complaint about `'a'`, `'d'`, `'e'`
     …, or the engine's generic "error parsing decision logic or property". The engine refuses
-    both too (`_evaluate_proved`), because no adapter outside this repository goes through here.
+    both too (`ProvedEngine.evaluate`), because no adapter outside this repository goes through
+    here.
     """
     with pytest.raises(ValueError, match="computes must be a collection of names"):
         RulesAdapter(
