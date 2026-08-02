@@ -8,6 +8,8 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-02
+
 ### Added
 
 - **The `--json` envelope names its own shape** ([#88](https://github.com/eduardstan/reasonsmith/pull/88)).
