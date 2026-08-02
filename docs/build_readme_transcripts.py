@@ -47,6 +47,8 @@ README = ROOT / "README.md"
 
 #: Every README command whose stdout is committed beneath it, spelled as the README spells it.
 TRANSCRIPTS = (
+    "reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa "
+    "--system-name TruncatingCreditSystem",
     "reasonsmith check --system docs/sample_decisions.jsonl --pack ecoa "
     "--system-name CreditScoringPipeline --system-domain consumer-credit",
 )

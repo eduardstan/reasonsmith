@@ -28,7 +28,7 @@ Given a decision, the symbolic artifact behind it, and an applicable duty, reaso
 1. **Is the evidence record complete?** Does it carry every field the duty's formal specification requires?
 2. **Did the explanation engine keep the reasons it was supposed to give?** Or did it drop some on the way out?
 
-The first is evaluated against the formal specification and reported with its strength. The second compares actual engine behavior against ground-truth exact inference: where the applicable requirement identifies reasons the statute obliges, its paired reason-deletion certificate shows which of them the engine dropped.
+The first is evaluated against the formal specification and reported with its strength. The second compares actual engine behavior against ground-truth exact inference: where the applicable requirement identifies reasons the statute obliges, its paired reason-deletion certificate shows which of them the engine dropped. Where the system exposes the inference artefact behind a decision, that certificate is itself an engine, so the second question is answered as a requirement verdict rather than alongside one.
 
 ## Any model in: one duty, three systems, three rungs
 
@@ -54,6 +54,49 @@ reasonsmith check --system-module docs.adapters.symbolic_rules:system_under_test
 
 All three verdicts are `satisfied`, and the rung is what separates them: how far each claim reaches — three logged decisions, 200 replayed inputs, or every input the declared constraints admit. The neural system **cannot** reach `probed` or `proved` as built, and no adapter can change that; a test pins that ceiling. Full walkthrough, with the three transcripts and why this duty was chosen over a recital: [`docs/three-systems.md`](docs/three-systems.md).
 
+## Key Finding: form completeness does not imply reason fidelity — one system, two duties
+
+The table above holds the duty fixed and varies the system, so it answers **how far a claim reaches**. This section holds the system fixed and varies the property, so it answers **what the property actually says**. Two different questions about the same run; neither one answers the other, which is why both are on this page.
+
+12 CFR 1002.9(b)(2) asks two things of an adverse-action notice, and this repository ships them as two duties. `ecoa_reg_b_1002_9_b_2_specific_reasons` reads the notice's **form**: a statement of reasons is there, and it is none of the wordings the clause itself calls insufficient. `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` reads its **content**: are the reasons stated all the reasons the decision's own inference used? On the demonstration's decision `APP-1042`, served by a system that exposes its inference artefact, the first comes back **satisfied** and the second comes back **violated** — exact inference finds five reasons and the deletion probe shows the engine's answer depends on only one of them:
+
+```sh
+reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa --system-name TruncatingCreditSystem
+```
+
+```text
+CONFORMANCE REPORT
+system: TruncatingCreditSystem
+declared scope: undeclared
+declared domains: consumer-credit
+pack: ecoa
+headline: 4 requirements · 4 binding: 3 observed, 1 violated
+
+REQUIREMENT FINDINGS:
+  [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
+    requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
+    domain limit: consumer-credit
+    summary: Observed over 2 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))' satisfied at every decision step.
+  [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
+    requires: artifact_logs_decision_record, provenance_model_version
+    domain limit: consumer-credit
+    summary: Observed over 2 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied at every decision step.
+  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+    requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
+    domain limit: consumer-credit
+    summary: Observed over 2 decision(s): state monitor for 'present(artifact_logs_reason_explanation) -> ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, "internal standards") and not contains(artifact_logs_reason_explanation, "internal policies") and not contains(artifact_logs_reason_explanation, "failed to achieve a qualifying score"))' satisfied at every decision step.
+  [PROBED] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated
+    requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
+    domain limit: consumer-credit
+    summary: Violated on 1 of 2 certified decision(s): the stated reasons are not all the reasons. On decision #1 exact inference found 5 reason(s) and the deletion probe showed the system's answer does not depend on 4 of them — C05 — Insufficient number of credit references provided; C03 — Delinquent past or present credit obligations; C04 — Too many recent inquiries on credit bureau report; C02 — Length of time credit has been established is too short. Attribution: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799. Measured against the inference artefact the system exposed, not read from its decision log.
+    probe budget: 8 input(s) replayed, seed none — the proof enumeration and the deletion probes are deterministic, input space: decisions certified (2 values), reasons switched off (6 values). Strategy: for each decision the system exposed an inference artefact for, its reasons are enumerated exactly by bounded proof enumeration over the ground program and scored by exact weighted model counting; each reason holding a fact no other reason uses is then switched off alone and the system's own engine re-run on the perturbed interpretation. A reason whose deletion moves exact inference but leaves the engine unchanged is a reason the engine's answer does not depend on, and is counted here
+
+LIMITS OF THIS REPORT
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
+```
+
+Checking form alone launders that gap into a document that reads as authoritative: on this same decision the Table 7 evidence record is `COMPLETE`, and it is the reason-deletion certificate beneath it that reads `FAIL`. That record, that certificate and the four struck reasons are in [`docs/example-output.md`](docs/example-output.md); what the run above adds is the same finding as a *requirement verdict*, which no report from this tool could state until the certificate became an engine.
+
 ## What a verdict is worth
 
 Every evaluated result records its evidence strength, on one lattice:
@@ -67,44 +110,9 @@ Combining zero verdicts is `inconclusive`, never vacuously `satisfied`. A requir
 
 How each shipped requirement got from a clause of law to a formula — and, in a fourth column, what that refinement deliberately did not capture — is recorded in [`docs/refinement.md`](docs/refinement.md), one row per requirement across all four packs.
 
-## Key Finding: Form Completeness Does Not Imply Reason Fidelity
+## Automated Conformance Checking
 
-Evaluating structural form alone can launder severe compliance and reasoning gaps into documents that appear authoritative. In the ECOA/Reg B credit demonstration (`python -m reasonsmith.demo`), `reasonsmith` emits an evidence record that reads **`COMPLETE`** while its paired certificate reads **`FAIL`** because four of its five principal reasons were dropped by proof truncation:
-
-```text
-EVIDENCE RECORD [COMPLETE]
-decision: APP-1042
-duty: Adverse action reasons in credit decisions
-legal source: ECOA / Reg B (12 CFR 1002.9)
-source of the duty: Table 7 (row 4, p. 36:22), Symbols and Neurons: A Review of Symbolic XAI in Deep Learning, Stan, Sciavicco & Napoletano, Journal of Artificial Intelligence Research, Vol. 86, Article 36, July 2026
-symbolic artifact(s) Table 7 asks for: Rule-based “reason codes” mapped to standardized categories; monotone/eligibility constraints for fairness explanations
-where it fits: Adverse action notice (AAN) pipeline; compliance reporting
-
-minimal evidence retained:
-  [x] stored_reasons_per_decision (Stored reasons per decision):
-          C01 — Income insufficient for amount of credit requested
-  [x] model_version (model version):
-        credit-scoring-2026.03.1 / rules cs-rules-2026.03
-  [x] score_factors (score factors):
-        C01 0.7656; C02 0.6972; C03 0.6320; C04 0.6004; C05 0.5112
-  [x] audit_ids (audit IDs):
-        AAN-2026-0731-1042 / trace-9f3c1b
-  [x] retention_for_regulatory_lookback (retention for regulatory lookback):
-        25 months from notice date, per lender policy
-
-supporting material (NOT Table 7 evidence, and fills no gap above):
-  reason-deletion certificate:
-    REASON-DELETION CERTIFICATE [FAIL]
-    query: adverse_action(APP-1042)
-    engine: reference:top-1-proofs   claims: distribution semantics
-    exact inference: bounded proof enumeration to depth 1 (nesyarena ground-program IR) + exact weighted model counting
-    exact value 0.991399   engine value 0.765600   gap -0.225799   tolerance 1e-09
-    reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not certifiable
-```
-
-### Automated Conformance Checking
-
-`reasonsmith` also checks decision logs against formal regulation packs, producing reports whose evaluated results record their evidence strength. Run against the committed sample log:
+A decision log is the commonest system and the weakest: it exposes no inference artefact, so the same pack that reported the adequacy duty *violated* above reports it *unattainable* here, naming the signal nothing in the log could supply — never returning it to the presence check. The committed sample log, against the same pack:
 
 ```sh
 reasonsmith check --system docs/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline --system-domain consumer-credit
