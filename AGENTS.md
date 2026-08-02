@@ -199,9 +199,11 @@ this paragraph is the statement of the rule, and a rule that cannot name what it
 is not a rule — any repository-wide check for it must exclude this file.
 
 The release discipline lives in `CONTRIBUTING.md`, *Versioning and Releases*, and is enforced by
-`tests/test_release_discipline.py` (the pyproject `version`, the topmost released `CHANGELOG.md`
-heading and `__version__` in `src/reasonsmith/__init__.py` must agree; no tracked markdown may
-carry a bare `#NN` outside code and anchors) and by the tag check in `.github/workflows/publish.yml`
+`tests/test_release_discipline.py` (the version lives in **four** places — the pyproject
+`version`, the topmost released `CHANGELOG.md` heading, `__version__` in
+`src/reasonsmith/__init__.py` and `version` in `CITATION.cff`, the one the guard originally
+missed — and they must agree; no tracked markdown may carry a bare `#NN` outside code and
+anchors) and by the tag check in `.github/workflows/publish.yml`
 (a release whose tag is not `v` plus the pyproject version never builds). Bumping the version
 means closing `[Unreleased]` and opening a fresh one in the same change.
 
