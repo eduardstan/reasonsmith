@@ -180,7 +180,20 @@ constants and `_source_checkout` — and `ConformanceReport`'s methods of the sa
 delegates to it, so a rendering edit is a `render.py` edit and nothing in `report.py`. The website
 (landing, vendored libraries, fonts, assets) lives in the separate private `reasonsmith-site`
 repo and deploys to Vercel — see [#35](https://github.com/eduardstan/reasonsmith/pull/35); this
-repo only generates the dossier that gets published there as `report.html`.
+repo only generates the dossier that gets published there as `report.html`, and the audience
+gallery published there as `audiences.html`. Both files travel through the same hourly
+`sync-dossier.yml` in the site repo.
+
+`docs/audiences.html` is the second generated page and the only one that publishes more than one
+rendering of a run: `docs/build_audiences.py` runs the shipped `symbolic_rules` system against the
+`ecoa` pack — the one run where all three evidence rungs and an unattainable duty stand together,
+so each projection has something to withhold — and embeds all five `--audience` renderings
+verbatim as `srcdoc` frames inside a sixth, full `render_html` page. That shell is not decoration:
+the design tokens live inside `render_html`'s stylesheet and are not exported, so being a report
+page is the only way the gallery can style itself without a second palette.
+`tests/test_docs_audiences.py` holds the page byte-for-byte to the builder and fails if the
+gallery grows a `<style>` block, a colour literal, a font stack, a `var(--token)` the renderer
+does not define or a class it does not style. Regenerate with `python docs/build_audiences.py`.
 
 `AudienceProjection` has one field that emits rather than suppresses: `plain_account`, on for
 `affected-individual` alone, turning on `render._lay_sections`. Everything it prints is quoted —
