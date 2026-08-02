@@ -441,9 +441,13 @@ unattested.
 **Researchers** comparing systems or engines. This is the audience the tool is closest to usable
 for: [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) is a real run against five
 `nesyarena` provenances, and `docs/nesyarena-conformance-report.md` is its regenerable evidence.
-Missing: properties worth differentiating a system on. Fourteen of the nineteen shipped requirements
-are still presence checks, against three `logical` and two `temporal` ones, so a battery of engines
-mostly agrees by construction. The two duties that moved show both what closes this gap and how
+Missing: properties worth differentiating a system on, and the fifth pack moved this the wrong way.
+Twenty-two of the twenty-seven shipped requirements are now presence checks, up from fourteen of
+nineteen, against three `logical` and two `temporal` ones — so a battery of engines mostly agrees by
+construction, and more so than before `packs/gpai.toml` shipped. That pack's eight Article 53 and 55
+duties are document-production duties, for which presence is the correct refinement and no stronger
+property exists to write; the breadth is real and it is not depth
+([`ROADMAP.md`](ROADMAP.md) §4). The two duties that moved show both what closes this gap and how
 narrow each opening is. 12 CFR 1002.9(b)(2) can now be *failed* by a plain decision log, because the
 clause supplies its own list of statements that are insufficient — which is available only where a
 clause does that, and still establishes nothing about whether what was said instead was adequate.

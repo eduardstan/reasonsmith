@@ -16,6 +16,7 @@
 - **Publication Date:** 12 July 2024 (OJ L, 2024/1689)
 - **Entry into Force Date:** 1 August 2024 (20 days after publication, under Article 113)
 - **Retrieval Date & Time:** 2026-07-31 09:52:00 UTC+2
+- **Re-retrieval for Articles 53 and 55 (quoted by `src/reasonsmith/packs/gpai.toml`):** 2026-08-02. The same Cellar XHTML endpoint was fetched again and the `053.001` and `055.001` divisions transcribed below. Articles 53 and 55 were **not** covered by the 2026-07-31 retrieval, which recorded Articles 12 and 13 only: the CELEX identifier being already recorded establishes the *document*, not any particular provision of it, so this record was extended before the GPAI pack quoted a word of either Article.
 - **Uncertainty / Status Flag:** Verified against official EU Cellar XHTML. Direct EUR-Lex web frontend requests return a WAF HTTP 202 challenge; retrieved directly via official EU Publications Cellar XHTML API endpoint `dc8116a1-3fe6-11ef-865a-01aa75ed71a1.0006.03/DOC_1`.
 
 ---
@@ -64,6 +65,30 @@
 
 ---
 
+#### Article 53
+**Obligations for providers of general-purpose AI models**
+
+1. Providers of general-purpose AI models shall:
+   (a) draw up and keep up-to-date the technical documentation of the model, including its training and testing process and the results of its evaluation, which shall contain, at a minimum, the information set out in Annex XI for the purpose of providing it, upon request, to the AI Office and the national competent authorities;
+   (b) draw up, keep up-to-date and make available information and documentation to providers of AI systems who intend to integrate the general-purpose AI model into their AI systems. Without prejudice to the need to observe and protect intellectual property rights and confidential business information or trade secrets in accordance with Union and national law, the information and documentation shall:
+       (i) enable providers of AI systems to have a good understanding of the capabilities and limitations of the general-purpose AI model and to comply with their obligations pursuant to this Regulation; and
+       (ii) contain, at a minimum, the elements set out in Annex XII;
+   (c) put in place a policy to comply with Union law on copyright and related rights, and in particular to identify and comply with, including through state-of-the-art technologies, a reservation of rights expressed pursuant to Article 4(3) of Directive (EU) 2019/790;
+   (d) draw up and make publicly available a sufficiently detailed summary about the content used for training of the general-purpose AI model, according to a template provided by the AI Office.
+
+---
+
+#### Article 55
+**Obligations of providers of general-purpose AI models with systemic risk**
+
+1. In addition to the obligations listed in Articles 53 and 54, providers of general-purpose AI models with systemic risk shall:
+   (a) perform model evaluation in accordance with standardised protocols and tools reflecting the state of the art, including conducting and documenting adversarial testing of the model with a view to identifying and mitigating systemic risks;
+   (b) assess and mitigate possible systemic risks at Union level, including their sources, that may stem from the development, the placing on the market, or the use of general-purpose AI models with systemic risk;
+   (c) keep track of, document, and report, without undue delay, to the AI Office and, as appropriate, to national competent authorities, relevant information about serious incidents and possible corrective measures to address them;
+   (d) ensure an adequate level of cybersecurity protection for the general-purpose AI model with systemic risk and the physical infrastructure of the model.
+
+---
+
 ### Factual Summary of Demands (Law's Operative Words)
 - **What Article 12 demands be kept:**
   - Operative phrases: *"automatic recording of events (logs) over the lifetime of the system"*, *"recording of events relevant for: (a) identifying situations that may result in the high-risk AI system presenting a risk... or in a substantial modification; (b) facilitating the post-market monitoring...; and (c) monitoring the operation of high-risk AI systems"*.
@@ -71,6 +96,12 @@
 - **What Article 13 demands be given:**
   - Operative phrases: *"instructions for use in an appropriate digital format or otherwise that include concise, complete, correct and clear information that is relevant, accessible and comprehensible to deployers"*.
   - Mandatory instructions content includes: *"identity and the contact details of the provider"*, *"characteristics, capabilities and limitations of performance"*, *"level of accuracy, including its metrics, robustness and cybersecurity"*, *"technical capabilities and characteristics of the high-risk AI system to provide information that is relevant to explain its output"*, *"specifications for the input data, or any other relevant information in terms of the training, validation and testing data sets used"*, *"human oversight measures"*, and *"description of the mechanisms included within the high-risk AI system that allows deployers to properly collect, store and interpret the logs in accordance with Article 12"*.
+- **What Article 53(1) demands be produced by a provider of a general-purpose AI model:**
+  - Operative phrases: *"draw up and keep up-to-date the technical documentation of the model"*, *"draw up, keep up-to-date and make available information and documentation to providers of AI systems"*, *"put in place a policy to comply with Union law on copyright and related rights"*, and *"draw up and make publicly available a sufficiently detailed summary about the content used for training"*.
+  - Each of the four is a duty to **produce an artefact**, which is why presence of the artefact is the refinement of the duty rather than a proxy for it. The adequacy words the clause attaches to those artefacts are separate demands that presence cannot reach: *"shall contain, at a minimum, the information set out in Annex XI"*, *"contain, at a minimum, the elements set out in Annex XII"*, *"identify and comply with, including through state-of-the-art technologies, a reservation of rights"*, and *"sufficiently detailed"* / *"according to a template provided by the AI Office"*.
+- **What Article 55(1) additionally demands of a provider of a model with systemic risk:**
+  - Operative phrases: *"perform model evaluation in accordance with standardised protocols and tools reflecting the state of the art, including conducting and documenting adversarial testing"*, *"assess and mitigate possible systemic risks at Union level, including their sources"*, *"keep track of, document, and report, without undue delay, to the AI Office"* relevant information about serious incidents and possible corrective measures, and *"ensure an adequate level of cybersecurity protection"* for the model and *"the physical infrastructure of the model"*.
+  - **The timing limb names no period.** *"without undue delay"* is the whole of what point (c) says about when a report is owed; unlike 12 CFR 1002.9(a)(1)'s 30 and 90 days, there is no figure here for a pack to repeat, which is why `docs/refinement.md` records the limb as not formalised rather than bounding it with a number.
 
 ---
 

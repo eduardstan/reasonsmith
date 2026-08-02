@@ -888,7 +888,7 @@ class TestRequirementsMeasureTheirDuty:
 class TestRegulationPacks:
     """Tests for EU AI Act, GDPR, and ECOA regulation packs."""
 
-    @pytest.mark.parametrize("pack_name", ["eu_ai_act", "gdpr", "ecoa"])
+    @pytest.mark.parametrize("pack_name", ["eu_ai_act", "gpai", "gdpr", "ecoa"])
     def test_pack_loads_and_validates(self, pack_name: str):
         assert pack_name in list_packs()
         pack = load_pack(pack_name)
@@ -911,7 +911,7 @@ class TestRegulationPacks:
                     f"Section 6.3 taxonomy {CAPABILITY_TAXONOMY}"
                 )
 
-    @pytest.mark.parametrize("pack_name", ["eu_ai_act", "gdpr", "ecoa"])
+    @pytest.mark.parametrize("pack_name", ["eu_ai_act", "gpai", "gdpr", "ecoa"])
     def test_pack_quotes_found_verbatim_in_legal_sources_report(self, pack_name: str):
         """Every requirement quote in the regulation packs must be found character-for-character
         in docs/legal-sources.md.
