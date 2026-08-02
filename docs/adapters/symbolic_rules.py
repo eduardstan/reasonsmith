@@ -37,8 +37,15 @@ from reasonsmith.adapters.rules import RulesAdapter
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import load_pack
 
-#: The duty all three systems in `docs/adapters/` are checked against. Binding, and limited to no
-#: regulatory class, so it reaches every system without a declared scope.
+#: The duty all three systems in `docs/adapters/` are checked against. Binding, limited to no
+#: regulatory class, and limited to the consumer-credit decision domain — which all three of these
+#: systems are in, and which each of them declares below through `system_domains`. A system that
+#: declared nothing would be reported not applicable on this duty rather than judged on its trace.
+
+#: What kind of decision this system makes. Not inferred by reasonsmith from anything: an
+#: undeclared system is never reported satisfied on a domain-limited duty, so the declaration is
+#: what puts this system within the duty's reach at all.
+DECLARED_DOMAINS = ("consumer-credit",)
 REQUIREMENT_ID = "ecoa_reg_b_1002_9_b_2_specific_reasons"
 
 #: The underwriting policy, in execution order. Reason codes are the standardised ECOA ones.
@@ -113,7 +120,7 @@ TEST_INPUTS = [
 
 def system_under_test() -> RulesAdapter:
     """The system as reasonsmith sees it: exposed logic, and a capability set declared with it."""
-    return RulesAdapter(
+    sut = RulesAdapter(
         rules=RULES,
         variables=VARIABLES,
         constraints=CONSTRAINTS,
@@ -126,6 +133,8 @@ def system_under_test() -> RulesAdapter:
         },
         test_inputs=TEST_INPUTS,
     )
+    sut.system_domains = DECLARED_DOMAINS
+    return sut
 
 
 def main() -> None:

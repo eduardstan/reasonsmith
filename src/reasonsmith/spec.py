@@ -18,6 +18,14 @@ What a reader must not break:
     Why this matters: `formalism` used to be a label nothing checked, so prose could sit in `spec`
     under `formalism = "record"` and an STL formula could be labelled `record` and silently
     downgraded. The check is what makes the field mean something.
+  - `domains` names the kinds of decision a duty is about, from `DECISION_DOMAINS`, and an empty
+    list means the duty is not domain-limited. It is a required field with no default, exactly as
+    `binding` and `scope` are.
+    Why this matters: without it, an adverse-action notice duty reached a graph-reachability
+    benchmark that issues no credit and notifies nobody, and reported it `satisfied`. Defaulting a
+    missing `domains` to empty would put that false positive straight back, since empty is the
+    wildcard. The vocabulary is the pack author's and not any regulation's, which is a claim the
+    pack must carry rather than hide — see `DECISION_DOMAINS` and `docs/authoring-packs.md`.
   - Every signal name a `spec` reads *unconditionally* must appear in `requires`. A name read only
     inside a disjunction whose every branch is settled by `present()` atoms, and which does not
     occur in all of those branches, is exempt, and deliberately so.
@@ -34,6 +42,7 @@ What a reader must not break:
 from __future__ import annotations
 
 import tomllib
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -52,9 +61,9 @@ PACKS_DIR = Path(__file__).parent / "packs"
 #: rejected at load time rather than producing a requirement that cannot be
 #: traced back to its source, and one that adds a field the loader does not read
 #: is rejected too rather than looking like it carries data nothing acts on.
-#: `binding` and `scope` are on this list on purpose, including for externally authored
-#: packs: an unclassified requirement has no safe default (see Requirement), so the loader
-#: refuses the pack by name rather than guessing which kind of duty it is.
+#: `binding`, `scope` and `domains` are on this list on purpose, including for externally
+#: authored packs: an unclassified requirement has no safe default (see Requirement), so the
+#: loader refuses the pack by name rather than guessing which kind of duty it is.
 REQUIREMENT_FIELDS = (
     "id",
     "source_document",
@@ -67,6 +76,7 @@ REQUIREMENT_FIELDS = (
     "requires",
     "binding",
     "scope",
+    "domains",
 )
 
 
@@ -121,6 +131,107 @@ def normalize_scope(value: Any, what: str = "regulatory class") -> str:
     return normalized
 
 
+#: The decision domains this tool knows how to name — the *kind of decision* a duty is about,
+#: which is a different axis from the regulatory class above and is gated separately.
+#:
+#: This vocabulary is **the pack author's, and not any regulation's**, and the difference from
+#: `REGULATORY_CLASSES` is the whole reason it is written down here rather than derived. The five
+#: regulatory classes are one statute's own vocabulary: the EU AI Act defines them, so a pack can
+#: quote them. No statute defines a list of decision domains. Consumer credit, employment,
+#: housing, insurance, healthcare and criminal justice are carved differently by every regime that
+#: carves them at all — the GDPR is not domain-limited in the first place, and the AI Act works
+#: from Annex III use-cases rather than subject matters. Any closed list is therefore wrong
+#: somewhere, and this one is deliberately coarse: it exists to answer *has this system said what
+#: kind of decision it makes*, not to classify a system correctly for a regulator.
+#:
+#: What that buys is one guarantee and no more: a system that has not declared its domain is never
+#: reported `satisfied` on a domain-limited duty. `docs/authoring-packs.md` (*the decision-domain
+#: vocabulary is the pack author's*) states the discipline a pack owes when it uses one of these
+#: names, which is the same discipline it owes an invented threshold.
+#:
+#: An empty selection is not a member. On a requirement it means "not domain-limited"; on a system
+#: it means "undeclared". Those are absences, not domains, and they are not the same absence.
+DECISION_DOMAINS = (
+    "consumer-credit",
+    "criminal-justice",
+    "education",
+    "employment",
+    "healthcare",
+    "housing",
+    "insurance",
+    "public-services",
+)
+
+
+def normalize_domain(value: Any, what: str = "decision domain") -> str:
+    """Normalize one decision domain for comparison and refuse one outside the vocabulary.
+
+    The same normalization `normalize_scope` performs, and for the same reasons: surrounding
+    whitespace and letter case only, so `consumer-credit` and `consumer_credit` stay different
+    strings. A value outside `DECISION_DOMAINS` is refused where it is written rather than carried
+    forward as a domain nothing can ever match — in a pack that would leave a duty unreachable for
+    every system, and on a caller's declaration it would turn every domain-limited duty not
+    applicable in a run that still exits clean.
+
+    Unlike `normalize_scope`, the empty string is refused here too. A requirement says "not
+    domain-limited" with an empty *list*, and a system says "undeclared" by declaring no domains
+    at all; an empty string inside a list is a name someone failed to finish typing.
+    """
+    if not isinstance(value, str):
+        raise TypeError(
+            f"a {what} must be a string, got {type(value).__name__}: {value!r}"
+        )
+    normalized = value.strip().lower()
+    if normalized not in DECISION_DOMAINS:
+        raise ValueError(
+            f"{value!r} is not a known {what}. Accepted: "
+            f"{', '.join(repr(d) for d in DECISION_DOMAINS)}. Leave the list empty for a "
+            "requirement that is not domain-limited or a system whose domains are undeclared. "
+            "Domains are compared after trimming surrounding whitespace and lowercasing, and are "
+            "not otherwise guessed at. This vocabulary is the pack author's, not any regulation's "
+            "— see docs/authoring-packs.md."
+        )
+    return normalized
+
+
+def normalize_domains(value: Any, what: str = "decision domain") -> tuple[str, ...]:
+    """Normalize a collection of decision domains, sorted and deduplicated.
+
+    Refuses a bare string for the reason every other signal-name site in this package does: a
+    string is iterable, so `"housing"` would become seven single-character domains. Refuses a
+    mapping for the reason `sut._validate_capability_collection` does — its False-valued entries
+    would read as declared.
+
+    Returns `()` for None and for an empty collection, which is "not domain-limited" on a
+    requirement and "undeclared" on a system.
+    """
+    if value is None:
+        return ()
+    if isinstance(value, (str, bytes)):
+        raise TypeError(
+            f"a {what} list must be a collection of domain names, not a single string; "
+            f"pass [{value!r}] to name one domain"
+        )
+    if isinstance(value, Mapping):
+        raise TypeError(
+            f"a {what} list must be the declared domain names, not a map; got "
+            f"{type(value).__name__}, whose False-valued entries would be read as declared"
+        )
+    if not isinstance(value, Iterable):
+        raise TypeError(
+            f"a {what} list must be a collection of domain names, got {type(value).__name__}"
+        )
+    names = [normalize_domain(item, what) for item in value]
+    duplicates = sorted({n for n in names if names.count(n) > 1})
+    if duplicates:
+        raise ValueError(
+            f"duplicate {what}(s): {', '.join(duplicates)}. A domain list is a set of the kinds "
+            "of decision a duty reaches, so naming one twice says nothing a single mention does "
+            "not."
+        )
+    return tuple(sorted(names))
+
+
 @dataclass(frozen=True)
 class Requirement:
     """A single regulatory or governance requirement with signal dependencies.
@@ -134,17 +245,22 @@ class Requirement:
     `binding` indicates whether this duty is a legally binding obligation (true) or an
     interpretive recital/guidance item (false). `scope` records any regulatory class the duty
     is limited to; empty means the duty is not class-limited, and anything else must be a
-    member of `REGULATORY_CLASSES`.
+    member of `REGULATORY_CLASSES`. `domains` records the kinds of decision the duty is about —
+    a different axis, gated separately — and every entry must be a member of `DECISION_DOMAINS`.
+    An empty list means the duty is not domain-limited and reaches every system it is run
+    against, which is true of the GDPR's Article 22 and false of an adverse-action notice duty.
 
     The fragment and signal-name checks live in `load_pack`, not here: a test that hands an
     engine a deliberately unparseable property is checking what that engine does with one, and
     refusing to construct it would test nothing.
 
-    Neither field has a default, here or in the loader: defaulting a missing `binding` to true
-    would silently promote an unclassified item to a legal obligation, and defaulting it to
-    false would silently demote a statutory duty out of the compliance headline. A pack that
-    has not classified a requirement is a pack that must say so and be fixed, not one this
-    code guesses for.
+    None of the three fields has a default, here or in the loader: defaulting a missing `binding`
+    to true would silently promote an unclassified item to a legal obligation, and defaulting it
+    to false would silently demote a statutory duty out of the compliance headline. Defaulting
+    `scope` or `domains` to empty would make an unclassified duty a wildcard reaching every
+    system — which is precisely the false positive the domain gate exists to stop, reintroduced
+    as a default. A pack that has not classified a requirement is a pack that must say so and be
+    fixed, not one this code guesses for.
     """
 
     id: str
@@ -158,6 +274,7 @@ class Requirement:
     requires: tuple[str, ...]
     binding: bool
     scope: str
+    domains: tuple[str, ...]
 
     def __post_init__(self) -> None:
         if not isinstance(self.binding, bool):
@@ -168,6 +285,10 @@ class Requirement:
             normalize_scope(self.scope)
         except ValueError as exc:
             raise ValueError(f"Requirement {self.id!r}: field 'scope': {exc}") from exc
+        try:
+            object.__setattr__(self, "domains", normalize_domains(self.domains))
+        except (TypeError, ValueError) as exc:
+            raise type(exc)(f"Requirement {self.id!r}: field 'domains': {exc}") from exc
         if self.formalism not in VALID_FORMALISMS:
             raise ValueError(
                 f"Invalid formalism {self.formalism!r}; must be one of {VALID_FORMALISMS}"
@@ -210,6 +331,7 @@ class Requirement:
             "requires": list(self.requires),
             "binding": self.binding,
             "scope": self.scope,
+            "domains": list(self.domains),
         }
 
 
@@ -342,6 +464,12 @@ def load_pack(name_or_path: str | Path) -> Pack:
                 f"{where}: 'requires' must be an array of signal names, got "
                 f"{type(rdata['requires']).__name__}"
             )
+        if not isinstance(rdata["domains"], list):
+            raise ValueError(
+                f"{where}: 'domains' must be an array of decision domains — write `domains = []` "
+                f"for a duty that is not domain-limited — got "
+                f"{type(rdata['domains']).__name__}"
+            )
         try:
             req = Requirement(
                 id=rdata["id"],
@@ -355,8 +483,11 @@ def load_pack(name_or_path: str | Path) -> Pack:
                 requires=tuple(rdata["requires"]),
                 binding=rdata["binding"],
                 scope=rdata["scope"],
+                domains=tuple(rdata["domains"]),
             )
-        except ValueError as exc:
+        except (TypeError, ValueError) as exc:
+            # Both become a load error: a caller of `load_pack` is told the pack is refused and
+            # which block is at fault, not which of two exception types the field check chose.
             raise ValueError(f"{where}: {exc}") from exc
         _check_spec(req, where)
         reqs.append(req)

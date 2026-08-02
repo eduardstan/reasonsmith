@@ -7,7 +7,8 @@ What this module is for:
 
   Usage:
       reasonsmith check --system <decisions.jsonl> --pack <pack_name>
-          [--system-name <name>] [--system-scope <class>] [--capabilities <file>] [--json]
+          [--system-name <name>] [--system-scope <class>] [--system-domain <domain>]...
+          [--capabilities <file>] [--json]
       reasonsmith check --system-module <module>:<attribute> --pack <pack_name> [...]
       reasonsmith validate-pack <pack_name_or_file> [...]
 
@@ -19,8 +20,9 @@ What a reader must not break:
   - Only a violation is a breach, so only a violation is non-zero. Unattainable, not applicable
     and not evaluated are findings to read in the report, not verdicts against the system: an
     unattainable requirement says the system as built cannot discharge the duty on the evidence
-    supplied, a not-applicable one says the duty is limited to a regulatory class this system was
-    not declared to be in, and a not-evaluated one says no engine here checked it.
+    supplied, a not-applicable one says the duty is limited to a regulatory class or a decision
+    domain this system was not declared to be in, and a not-evaluated one says no engine here
+    checked it.
     Why this matters: none of the three is evidence the system failed a duty, so none of them
     fails the caller's build.
   - `--capabilities <file>` is the only way a CLI run says the system itself claims the signal
@@ -64,7 +66,7 @@ from typing import Any
 
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.report import check_conformance
-from reasonsmith.spec import REGULATORY_CLASSES, Pack, list_packs, load_pack
+from reasonsmith.spec import DECISION_DOMAINS, REGULATORY_CLASSES, Pack, list_packs, load_pack
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Verdict
 
@@ -180,7 +182,8 @@ def format_pack(pack: Pack) -> str:
     for req in pack.requirements:
         lines.append(
             f"  {req.id} | {req.source_document} {req.article_clause} | {req.formalism} "
-            f"| binding: {str(req.binding).lower()} | scope: {req.scope or 'unset'}"
+            f"| binding: {str(req.binding).lower()} | scope: {req.scope or 'unset'} "
+            f"| domains: {', '.join(req.domains) or 'none'}"
         )
     return "\n".join(lines)
 
@@ -198,7 +201,8 @@ def main(args: list[str] | None = None) -> int:
             "  2  at least one requirement is violated.\n"
             "  1  usage or input error (unknown pack, unreadable system log, unreadable or\n"
             "     malformed capability declaration, a --system-scope that is not a known\n"
-            "     regulatory class, no system given, --system-module combined with --system or\n"
+            "     regulatory class, a --system-domain that is not a known decision domain,\n"
+            "     no system given, --system-module combined with --system or\n"
             "     --capabilities, or a --system-module that does not import, names no such\n"
             "     attribute, or is not a SystemUnderTest).\n"
             "exit codes for validate-pack:\n"
@@ -260,6 +264,21 @@ def main(args: list[str] | None = None) -> int:
             "any class when this is left undeclared, are reported not applicable rather than "
             "assumed to apply. Compared after trimming whitespace and lowercasing; a value "
             "outside that list is a usage error rather than a clean run"
+        ),
+    )
+    check_parser.add_argument(
+        "--system-domain",
+        action="append",
+        default=None,
+        dest="system_domains",
+        metavar="DOMAIN",
+        help=(
+            "Declared decision domain of the system — the kind of decision it makes — one of: "
+            f"{', '.join(DECISION_DOMAINS)}. Repeat the flag for a system that makes more than "
+            "one kind. Requirements about other domains, or about any domain when this is left "
+            "undeclared, are reported not applicable rather than assumed to apply. This "
+            "vocabulary is the pack author's, not any regulation's; a value outside it is a "
+            "usage error rather than a clean run"
         ),
     )
     check_parser.add_argument(
@@ -363,7 +382,11 @@ def main(args: list[str] | None = None) -> int:
 
         try:
             report = check_conformance(
-                sut, pack, system_name=parsed.system_name, system_scope=parsed.system_scope
+                sut,
+                pack,
+                system_name=parsed.system_name,
+                system_scope=parsed.system_scope,
+                system_domains=parsed.system_domains,
             )
         except (TypeError, ValueError) as exc:
             print(f"Error: {exc}", file=sys.stderr)

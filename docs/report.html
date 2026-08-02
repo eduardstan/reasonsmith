@@ -592,6 +592,10 @@
           <span class="meta-value">high-risk</span>
         </div>
         <div class="meta-item">
+          <span class="meta-label">Declared Domains</span>
+          <span class="meta-value">consumer-credit</span>
+        </div>
+        <div class="meta-item">
           <span class="meta-label">Regulation Pack</span>
           <span class="meta-value">table7</span>
         </div>
@@ -600,7 +604,7 @@
 
     <div class="headline-banner">
       <div class="headline-title">Executive Headline Summary</div>
-      <div class="headline-text">6 requirements · 4 binding: 3 observed, 1 violated · 2 interpretive: 2 unattainable</div>
+      <div class="headline-text">6 requirements · 4 binding: 3 observed, 1 violated · 2 interpretive: 1 unattainable, 1 not applicable</div>
       <div class="provenance-bar"><strong>Report Provenance:</strong> Generated without an identified source commit. Command: <code>python docs/build_example.py</code></div>
     </div>
 
@@ -892,7 +896,7 @@
             <span>2 total</span>
           </div>
           <div class="pill-group">
-            <span class="stat-pill verdict-unattainable"><span aria-hidden="true">⊘</span> 2 unattainable</span>
+            <span class="stat-pill verdict-unattainable"><span aria-hidden="true">⊘</span> 1 unattainable</span><span class="stat-pill verdict-not-applicable"><span aria-hidden="true">⊝</span> 1 not applicable</span>
           </div>
         </div>
       </div>
@@ -910,6 +914,7 @@
             <div class="badge-group">
               <span class="badge badge-binding">Binding</span>
               <span class="badge badge-scope">Scope: high-risk</span>
+              
               <span class="badge verdict-satisfied"><span aria-hidden="true">✓</span> SATISFIED</span>
             </div>
           </header>
@@ -935,6 +940,7 @@
             <div class="badge-group">
               <span class="badge badge-binding">Binding</span>
               <span class="badge badge-scope">Scope: high-risk</span>
+              
               <span class="badge verdict-violated"><span aria-hidden="true">✖</span> VIOLATED</span>
             </div>
           </header>
@@ -959,6 +965,7 @@
             </div>
             <div class="badge-group">
               <span class="badge badge-binding">Binding</span>
+              
               
               <span class="badge verdict-satisfied"><span aria-hidden="true">✓</span> SATISFIED</span>
             </div>
@@ -985,6 +992,7 @@
             <div class="badge-group">
               <span class="badge badge-binding">Binding</span>
               
+              <span class="badge badge-scope">Domain: consumer-credit</span>
               <span class="badge verdict-satisfied"><span aria-hidden="true">✓</span> SATISFIED</span>
             </div>
           </header>
@@ -1001,7 +1009,7 @@
           </div>
         </article>
 
-        <article class="req-card verdict-unattainable">
+        <article class="req-card verdict-not-applicable">
           <header class="req-card-header">
             <div class="req-title-group">
               <span class="req-id">fda_gmlp_samd</span>
@@ -1010,19 +1018,20 @@
             <div class="badge-group">
               <span class="badge badge-interpretive">Interpretive</span>
               
-              <span class="badge verdict-unattainable"><span aria-hidden="true">⊘</span> UNATTAINABLE</span>
+              <span class="badge badge-scope">Domain: healthcare</span>
+              <span class="badge verdict-not-applicable"><span aria-hidden="true">⊝</span> NOT APPLICABLE</span>
             </div>
           </header>
           <div class="lattice-container">
             <span class="lattice-label">Strength Lattice:</span>
-            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+            <div class="lattice-track"><span class="lattice-step "><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
           </div>
           <div class="req-card-body">
             <div class="signal-list">
               <strong>Requires Signals:</strong> <span class="signal-tag">design_history_links</span><span class="signal-tag">verification_logs</span><span class="signal-tag">change_control</span>
             </div>
-            <div class="evidence-summary">Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for change_control, design_history_links, verification_logs, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.</div>
-            <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">change_control</span><span class="signal-tag missing">design_history_links</span><span class="signal-tag missing">verification_logs</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
+            <div class="evidence-summary">Not applicable: this duty is about healthcare decisions, but the system&#x27;s decision domain is declared as consumer-credit. reasonsmith never infers a system&#x27;s decision domain, and the domain vocabulary is the pack author&#x27;s rather than the regulation&#x27;s — see docs/authoring-packs.md.</div>
+            
           </div>
         </article>
 
@@ -1034,6 +1043,7 @@
             </div>
             <div class="badge-group">
               <span class="badge badge-interpretive">Interpretive</span>
+              
               
               <span class="badge verdict-unattainable"><span aria-hidden="true">⊘</span> UNATTAINABLE</span>
             </div>
@@ -1054,7 +1064,7 @@
 
     <section class="limits-card">
       <h3 class="limits-header">Limits of this report</h3>
-      <p class="limits-text">This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.</p>
+      <p class="limits-text">This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.</p>
     </section>
     <footer class="dossier-foot">
       <span>reasonsmith &middot; audit-grade explanations</span>

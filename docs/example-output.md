@@ -940,46 +940,55 @@ illustrative, not recommended values. Real monitoring faces unscripted drift on 
 
 Both runs below read [`sample_decisions.jsonl`](sample_decisions.jsonl), the committed
 three-record decision trace from a credit-scoring pipeline. Neither run declares capabilities, so
-both are read from that trace alone, and both reports say so on their face.
+both are read from that trace alone, and both reports say so on their face. Both do declare a
+decision domain, `--system-domain consumer-credit`, because that is what the pipeline decides:
+without it every duty limited to a domain is reported not applicable rather than checked, which is
+the run in §2.2 below showing exactly that for a duty about medical-device software.
 
 ### 2.1 ECOA / Reg B pack — every requirement observed (exit code 0)
 
 ```sh
-python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline
+python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline --system-domain consumer-credit
 ```
 
 ```text
 CONFORMANCE REPORT
 system: CreditScoringPipeline
 declared scope: undeclared
+declared domains: consumer-credit
 pack: ecoa
 headline: 3 requirements · 3 binding: 3 observed
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
     requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
+    domain limit: consumer-credit
     summary: Observed over 3 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))' satisfied across all time steps.
   [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
     requires: artifact_logs_decision_record, provenance_model_version
+    domain limit: consumer-credit
     summary: Observed over 3 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied across all time steps.
   [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
+    domain limit: consumer-credit
     summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
-### 2.2 Table 7 pack — two rows discharged, two out of scope, two unattainable (exit code 0)
+### 2.2 Table 7 pack — two rows discharged, three out of reach, one unattainable (exit code 0)
 
 The same log checked against the Table 7 pack, which names Table 7's own evidence-field keys. This
 trace carries the keys the GDPR Art. 22 and ECOA rows require, so those two are reported observed
 over the three decisions in it — and observed is as far as a trace can carry them: read from that
 trace alone, and not extended to decisions not in it. The two EU AI Act rows are limited to the
 high-risk class and no scope was declared on the command line, so they are reported not applicable
-— `reasonsmith` never infers that class. The two interpretive rows are reported unattainable with
-their missing signals named, because the trace carries none of the keys they require and the run
-declared no capabilities. Nothing here is a breach, so the CLI exits 0.
+— `reasonsmith` never infers that class. The FDA GMLP row is reported not applicable on the other
+gate: it is a duty about `healthcare` decisions and this run declared `consumer-credit`, so the
+duty does not reach this system and nothing about it was checked. The remaining interpretive row is
+reported unattainable with its missing signals named, because the trace carries none of the keys it
+requires and the run declared no capabilities. Nothing here is a breach, so the CLI exits 0.
 
 Declaring the class with `--system-scope high-risk` is what brings the two EU AI Act rows into
 scope and has them evaluated rather than set aside; that is the run behind the HTML page in
@@ -987,15 +996,16 @@ scope and has them evaluated rather than set aside; that is the run behind the H
 because it also carries the demonstration's key finding.
 
 ```sh
-python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline
+python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline --system-domain consumer-credit
 ```
 
 ```text
 CONFORMANCE REPORT
 system: CreditScoringPipeline
 declared scope: undeclared
+declared domains: consumer-credit
 pack: table7
-headline: 6 requirements · 4 binding: 2 observed, 2 not applicable · 2 interpretive: 2 unattainable
+headline: 6 requirements · 4 binding: 2 observed, 2 not applicable · 2 interpretive: 1 unattainable, 1 not applicable
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] eu_ai_act_art13_transparency (EU AI Act Art. 13): not_applicable
@@ -1011,16 +1021,17 @@ REQUIREMENT FINDINGS:
     summary: Observed over 3 decision(s): every required signal (per_decision_reason_string, feature_to_named_concept_mapping, dpia_cross_reference) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
   [OBSERVED] ecoa_reg_b_adverse_action (ECOA / Reg B 12 CFR 1002.9): satisfied
     requires: stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback
+    domain limit: consumer-credit
     summary: Observed over 3 decision(s): every required signal (stored_reasons_per_decision, model_version, score_factors, audit_ids, retention_for_regulatory_lookback) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
-  [UNATTAINABLE] [INTERPRETIVE] fda_gmlp_samd (FDA GMLP agency transparency guidance): inconclusive
+  [NOT APPLICABLE] [INTERPRETIVE] fda_gmlp_samd (FDA GMLP agency transparency guidance): not_applicable
     requires: design_history_links, verification_logs, change_control
-    MISSING SIGNALS: change_control, design_history_links, verification_logs
-    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for change_control, design_history_links, verification_logs, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
+    domain limit: healthcare
+    summary: Not applicable: this duty is about healthcare decisions, but the system's decision domain is declared as consumer-credit. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [UNATTAINABLE] [INTERPRETIVE] nist_ai_rmf_risk_evidence (NIST AI RMF 1.0): inconclusive
     requires: continuous_monitoring_logs, metric_thresholds_and_alerts, reviews_and_sign_offs, incident_tickets
     MISSING SIGNALS: continuous_monitoring_logs, incident_tickets, metric_thresholds_and_alerts, reviews_and_sign_offs
     summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for continuous_monitoring_logs, incident_tickets, metric_thresholds_and_alerts, reviews_and_sign_offs, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```

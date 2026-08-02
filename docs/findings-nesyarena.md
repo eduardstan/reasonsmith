@@ -49,30 +49,44 @@ discharge, which is the failure this whole exercise exists to avoid.
 a measurement harness, not an AI system placed on the market in an Annex III use. Declaring
 `high-risk` to make the EU AI Act pack bite would have been a fabrication.
 
+**No decision domain was declared either.** These provenances decide graph reachability and Sudoku
+validity. They issue no credit, hire nobody and treat no patient, so there is nothing to declare,
+and the three ECOA duties come back not applicable rather than checked. That is finding 3 below,
+and it is the reason the gate exists.
+
 ## The headline
 
 60 results — 5 systems × 12 requirements across the three packs:
 
 | outcome | count |
 | --- | ---: |
-| satisfied, at strength `observed` | 20 |
-| violated, at strength `observed` | 5 |
-| inconclusive, `unattainable` | 15 |
+| satisfied, at strength `observed` | 12 |
+| violated, at strength `observed` | 3 |
+| inconclusive, `unattainable` | 10 |
 | not applicable (no class declared) | 20 |
+| not applicable (no decision domain declared) | 15 |
 | satisfied at `probed` | 0 |
 | satisfied at `proved` | 0 |
 
-Three of the five violations are the missing-reason finding below, which the first run of this
+One of the three violations is the missing-reason finding below, which the first run of this
 battery already produced against 11 requirements. The other two are the twelfth requirement, added
 after that run to read the declared deviation rather than the field that explains it — see
 [what changed](#what-changed-since-this-finding), under finding 1.
 
+The whole ECOA column moved to *not applicable* when the decision-domain gate landed: 8 satisfied,
+2 violated and 5 unattainable results became 15 not-applicable ones. Nothing about these systems
+changed. What changed is that a duty about consumer credit stopped being answered against a graph
+solver — finding 3.
+
 ## The violation
 
-`add-mult(clamped)` is reported **violated** on three requirements —
-`ecoa_reg_b_1002_9_a_2_written_statement` and `ecoa_reg_b_1002_9_b_2_specific_reasons` (both
-binding) and `gdpr_recital71_meaningful_explanation` (interpretive) — on the same evidence: 4 of
-its 16 decisions carry no reason at all. The counterexamples are instances `G1-P4-L2-c0`,
+`add-mult(clamped)` is reported **violated** on `gdpr_recital71_meaningful_explanation`
+(interpretive), on this evidence: 4 of its 16 decisions carry no reason at all. It used to be
+reported violated on `ecoa_reg_b_1002_9_a_2_written_statement` and
+`ecoa_reg_b_1002_9_b_2_specific_reasons` (both binding) on exactly the same records; those two are
+now not applicable, because 12 CFR 1002.9 is about consumer-credit decisions and this system
+decides graph reachability. The evidence is unchanged and so is the defect — what went away is a
+finding reported against a duty that does not govern the system. The counterexamples are instances `G1-P4-L2-c0`,
 `G1-P4-L2-c1`, `G1-P4-L3-c0` and `G1-P4-L3-c1` (record indices 8–11).
 
 This is not a bug in the adapter and it is not a contrived input. On those four instances naive
@@ -171,6 +185,12 @@ What has **not** changed, and what an adopter must still read the same way:
   ships the exact oracle beside the approximate provenance. A deployed neuro-symbolic system would
   come back `unattainable`, and that is the honest outcome rather than a gap in the pack.
 - Every satisfied record-formalism row in this report still means only *the record has the fields*.
+- **The "conformance verdicts" column above is the run as it stood then.** The decision-domain gate
+  of finding 3 has since moved every ECOA result to *not applicable*, so `add-mult(clamped)` is
+  violated on one duty rather than three and "all checkable duties satisfied" now covers a smaller
+  set of duties. Nothing in the *evidence* moved. Fewer duties reaching a system is not the same as
+  more of them being discharged, and a reader comparing the two runs must not read it as an
+  improvement in any system.
 
 ### 2. The top two rungs of the evidence lattice were unreachable
 
@@ -187,7 +207,9 @@ about a controller's legal basis or about a human-intervention route and one is 
 decision has on a person. The ECOA timing duty needs a notification latency the system has no
 concept of. The GDPR error-risk duty and the ECOA content duty are checkable and produce `observed`
 verdicts; temporal monitoring does not reach either of the top two rungs, and no engine in this
-build reasons about a formula quantified over a trace (`docs/semantics.md` §3.5).
+build reasons about a formula quantified over a trace (`docs/semantics.md` §3.5). (Since finding 3,
+the ECOA content duty no longer reaches this system at all — its ceiling is unchanged, but this run
+is no longer where it can be seen.)
 
 `ecoa_reg_b_1002_9_a_2_written_statement` is temporal only since the either/or of 12 CFR
 1002.9(a)(2) was formalised; it was a `record` duty when this run was first made, and its verdicts
@@ -230,6 +252,40 @@ pack can say "this duty is about consumer credit" — so a domain mismatch is in
 class mismatch is caught. The unattainable verdict on the timing requirement is the only hint in
 the ECOA output that the domain does not fit, and it arrives for the wrong reason: a missing
 signal, not a missing domain.
+
+#### What changed since this finding
+
+**Fixed, and this is what fixing it cost.** A `domains` field now sits beside `scope` on every
+requirement, naming the kinds of decision a duty is about, and it is matched by intersection against
+what a system declares (`--system-domain`, or `system_domains` on an adapter). The three ECOA duties
+carry `domains = ["consumer-credit"]`; this run declares no domain; all fifteen ECOA results are now
+`not_applicable`, where four of the five systems were `satisfied` on
+`ecoa_reg_b_1002_9_a_2_written_statement` before. The GDPR results did **not** move, and that is the
+right answer rather than a gap: Article 22 governs a solely-automated decision whatever the decision
+is about, so the five GDPR duties carry `domains = []` and reach every system, including this one.
+
+Three things this did not fix, in descending order of how much they should worry a reader:
+
+- **The vocabulary is this repository's, not any regulation's.** `DECISION_DOMAINS` is a coarse
+  eight-member list written here because no statute defines one. Placing 12 CFR 1002.9 in
+  `consumer-credit` is a pack author's reading; a not-applicable verdict on this gate says *this
+  classification does not match what the system declared*, never *this statute does not govern this
+  system*. `docs/authoring-packs.md` requires a pack limiting a duty to a domain to say so in its
+  own description, so a reader of the tool's output meets the claim too.
+- **A declaration is a self-declaration.** Nothing checks that a system declaring `consumer-credit`
+  issues credit. The gate stops a duty reaching a system that said nothing; it does nothing about
+  one that said the wrong thing — the same standing as the Article 22(2) basis flags
+  (`docs/semantics.md` §3, *the assumption all four share*).
+- **The trigger inside a decision is still not modelled.** 12 CFR 1002.9 is triggered by adverse
+  action having been taken, not by the creditor being in consumer credit. Against a system that
+  *does* declare `consumer-credit`, the property still runs over every record in the trace,
+  approvals included. That is the reach gap `docs/refinement.md` names in column four, and no gate
+  at the system level can close it.
+
+And the observation this finding made about the *output* is now less true but not gone: the
+unattainable verdict on the timing requirement was the only hint the domain did not fit. It has been
+replaced by fifteen results that name the domain mismatch directly. What has not been replaced is
+any way to tell, from the report alone, whether the classification behind them was a good one.
 
 ### 4. The AI Act pack said nothing at all
 

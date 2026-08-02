@@ -31,6 +31,7 @@ requires = [
 ]
 binding = true
 scope = ""
+domains = []
 
 [[requirement]]
 id = "gdpr_art22_1_no_prohibited_decision_for_any_input"
@@ -58,6 +59,7 @@ requires = [
 ]
 binding = true
 scope = ""
+domains = []
 
 [[requirement]]
 id = "gdpr_art22_3_safeguards_human_intervention"
@@ -74,6 +76,7 @@ requires = [
 ]
 binding = true
 scope = ""
+domains = []
 
 [[requirement]]
 id = "gdpr_recital71_meaningful_explanation"
@@ -94,6 +97,7 @@ requires = [
 ]
 binding = false
 scope = ""
+domains = []
 
 [[requirement]]
 id = "gdpr_recital71_error_risk_minimised"
@@ -114,3 +118,4 @@ requires = [
 ]
 binding = false
 scope = ""
+domains = []

@@ -12,9 +12,10 @@ Where this document and the code disagree, the code is right and this document h
 
 ## 1. The objects
 
-**Requirement** — `spec.py`, `Requirement`. A frozen record of one duty, carrying exactly the eleven
+**Requirement** — `spec.py`, `Requirement`. A frozen record of one duty, carrying exactly the twelve
 fields of `REQUIREMENT_FIELDS` and no others: `id`, `source_document`, `article_clause`,
-`verbatim_text`, `stakeholder`, `formalism`, `spec`, `rationale`, `requires`, `binding`, `scope`.
+`verbatim_text`, `stakeholder`, `formalism`, `spec`, `rationale`, `requires`, `binding`, `scope`,
+`domains`.
 
 `spec` is the property, written in the one language of §2. `rationale` is the English explanation of
 the duty; it is carried on the requirement and in `to_dict()`, and **no verdict is derived from its
@@ -39,7 +40,12 @@ never asked for by the unattainable analysis, so a system declaring neither bran
 trace and can be reported `violated` there
 (`test_a_creditor_giving_neither_branch_is_violated`).
 `binding` separates a statutory obligation from an interpretive recital. `scope` is a regulatory
-class from `REGULATORY_CLASSES`, or empty for a duty that is not class-limited. A pack that omits a
+class from `REGULATORY_CLASSES`, or empty for a duty that is not class-limited. `domains` is the set
+of decision domains the duty is about, from `DECISION_DOMAINS`, or empty for a duty about no
+particular kind of decision; the two are separate axes and are gated separately (§4). Neither
+vocabulary is guessed at, and only one of them belongs to a regulation: `REGULATORY_CLASSES` is the
+EU AI Act's own, `DECISION_DOMAINS` is this repository's, which is a claim a pack using one has to
+carry (`docs/authoring-packs.md`). A pack that omits a
 field, adds one, or leaves one blank is refused at load time rather than loaded with a guess
 (`test_loader_rejects_missing_field`, `test_loader_rejects_an_unknown_field`,
 `test_loader_rejects_blank_and_duplicate_fields`, `test_requirement_needs_at_least_one_signal`).
@@ -50,12 +56,16 @@ be unreachable.
 
 **System under test** — `sut.py`, `SystemUnderTest`. A protocol with three methods —
 `capabilities()`, `decisions()`, `logic()` — and one optional method, `decide(case)`, deliberately
-outside the protocol because replay is optional. Three plain instance attributes outside that
+outside the protocol because replay is optional. Four plain instance attributes outside that
 protocol are also semantic inputs. `evaluate_requirement` and `check_conformance` in `report.py`
 select `system_scope`, falling back to `declared_scope`, to decide applicability
 (`test_declared_scope_attribute_is_the_applicability_fallback`,
 `test_system_scope_precedes_a_conflicting_declared_scope`,
-`test_the_two_scope_gates_never_disagree`). `_unattainable_result` reads `capability_basis` to
+`test_the_two_scope_gates_never_disagree`). They read `system_domains` the same way, with no second
+spelling honoured, for the domain gate; an adapter that sets nothing is a system whose domain is
+undeclared, which is a lawful state and not a broken adapter
+(`test_an_undeclared_system_cannot_reach_satisfied_on_a_domain_limited_duty`,
+`test_the_two_domain_gates_never_disagree`). `_unattainable_result` reads `capability_basis` to
 decide whether a missing signal describes the system as built or only the supplied trace
 (`test_unattainable_from_a_trace_does_not_speak_for_the_system`,
 `test_declared_capabilities_word_the_finding_as_about_the_system`).
@@ -595,11 +605,14 @@ vacuous `satisfied` (`test_verdict_combination`, `test_combining_no_verdicts_is_
 `not applicable`, `unattainable`, `not evaluated` and `violated` are four distinct report categories
 (`test_the_four_unresolved_outcomes_are_four_distinct_report_categories`), every result lands in
 exactly one, and the counts reconcile against the total rather than merely summing to something
-plausible (`test_counts_reconcile_against_both_totals`). They differ in what a reader should do next:
+plausible (`test_counts_reconcile_against_both_totals`). `not applicable` is one category reached by
+two independent gates, split into two rows below because they are two different instructions; the
+result's own summary says which gate answered. They differ in what a reader should do next:
 
 | Outcome | What happened | What to do next |
 |---|---|---|
-| **not applicable** | The duty is limited to a regulatory class, and the system was not declared to be in it — either no class was declared at all, or a different one was. Nothing about the system was checked. reasonsmith never infers the class. | Declare the class and re-run, or establish that the duty genuinely does not reach the system. Read the declared-scope line first: an undeclared system is neither placed in scope nor cleared. |
+| **not applicable — class** | The duty is limited to a regulatory class, and the system was not declared to be in it — either no class was declared at all, or a different one was. Nothing about the system was checked. reasonsmith never infers the class. | Declare the class and re-run, or establish that the duty genuinely does not reach the system. Read the declared-scope line first: an undeclared system is neither placed in scope nor cleared. |
+| **not applicable — domain** | The duty is about a kind of decision the system was not declared to make — either no decision domain was declared at all, or none of the ones declared is one the duty is about. Nothing about the system was checked. reasonsmith never infers the domain. | Declare the domain and re-run (`--system-domain`), or establish that the duty genuinely does not govern this kind of decision. Two things this does *not* say: that the system is compliant, and that any regulator agrees with the classification — the domain vocabulary is the pack author's (`docs/authoring-packs.md`). |
 | **unattainable — declared basis** | The signals the duty needs are outside the system's declared capability set. Computed as a set difference, *without executing the system*. | Change the system. |
 | **unattainable — trace basis** | No record in the supplied trace carries the required signals; the adapter derived its capability set from that trace. This does not establish that the system cannot emit them. | Supply a longer trace or an explicit capability declaration. Change the system only if further evidence confirms the signals are absent. |
 | **not evaluated** | The duty reaches the system, the system can emit the signals, and no engine here established anything: an empty trace, an unparseable formula, a solver timeout, an unmodelled construct. `strength=None`, which is deliberately not a rung on the lattice. | Fix the evidence or the specification and re-run. This is a gap in the audit, not a finding about the system. |
@@ -608,6 +621,30 @@ plausible (`test_counts_reconcile_against_both_totals`). They differ in what a r
 Collapsing any two of them loses that instruction. "Unattainable" read as "violated" sends someone to
 fix a system that is behaving as designed; "not evaluated" read as "satisfied" is the single overclaim
 this tool exists to prevent; "not applicable" read as "satisfied" clears a duty nobody checked.
+
+**Why an undeclared domain is `not applicable` and not `inconclusive`.** The two are not
+interchangeable: `inconclusive` says a duty that *does* reach the system was not resolved, and
+`not_applicable` says the duty's reach was never established over this system, so nothing was
+checked. Neither is a perfect fit — with no declaration, reasonsmith does not *know* the duty fails
+to reach — and the choice is made on what each answer instructs a reader to do. `inconclusive` sends
+someone to look for better evidence about a system the duty may not govern at all, and it would put
+every domain-limited duty into the unresolved column of a run against a system nobody classified.
+`not_applicable` sends them to declare what the system decides, which is the actual missing input,
+and it carries no strength, so nothing can be read from it as a finding
+(`test_an_undeclared_system_cannot_reach_satisfied_on_a_domain_limited_duty`). It is also what the
+class gate already answers for an undeclared class, and a reader who has learned one of the two
+gates should not have to learn the other separately. What stops that reading as *cleared* is the
+same thing that stops it for the class: the reason string names which of the two ways the duty
+failed to reach, and `LIMITS` carries all four on every report
+(`test_limits_cover_both_ways_a_requirement_becomes_not_applicable`).
+
+**A duty with no domain is a wildcard, and that is deliberate.** `domains = []` means the duty is
+about no particular kind of decision — GDPR Article 22 governs a solely-automated decision whatever
+it is about — and such a duty is answered on its evidence against a system that declares nothing
+(`test_a_duty_with_no_domain_still_reaches_a_system_that_declares_none`). The wildcard is safe only
+because it cannot be reached by omission: `domains` is a required field with no default, so a pack
+that has not classified a requirement fails to load rather than being guessed for
+(`test_a_pack_that_has_not_classified_a_requirement_is_refused`).
 
 The operational consequence is in the exit code: among completed reports, only a violation exits
 non-zero. Unattainable
@@ -638,6 +675,13 @@ Two consequences of that report text, followed by a separate package-level termi
   (`test_report_limits_exclude_legal_determination_and_scope_inference`,
   `test_the_two_scope_gates_never_disagree`). A misspelled class is refused rather than read as
   out-of-scope (`test_a_scope_outside_the_vocabulary_is_refused`).
+- reasonsmith does not infer a system's decision domain either, and — separately — the domain
+  vocabulary it compares against is written by this repository and by no regulation
+  (`reasonsmith.spec.DECISION_DOMAINS`, `docs/authoring-packs.md`). A not-applicable verdict on that
+  gate is a statement about a classification a pack author made, never a finding that a statute does
+  not govern the system, and nothing checks that a system declaring `consumer-credit` issues credit
+  (`test_report_limits_exclude_legal_determination_and_scope_inference`,
+  `test_a_domain_outside_the_vocabulary_is_refused`, `test_the_two_domain_gates_never_disagree`).
 - Separately, the package emits a **reason-deletion certificate**, a measured artifact about which
   reasons an approximate engine dropped. It does not issue a **compliance certification**. The
   artifact detects a dropped reason and carries its separate limits
@@ -728,6 +772,11 @@ Two consequences of that report text, followed by a separate package-level termi
 | A pack's requirement fields are exact and non-blank | `test_loader_rejects_missing_field`, `test_loader_rejects_an_unknown_field`, `test_loader_rejects_blank_and_duplicate_fields`, `test_requirement_needs_at_least_one_signal` |
 | Report limits exclude legal-duty determination and regulatory-class inference | `test_report_limits_exclude_legal_determination_and_scope_inference`, `test_limits_cover_both_ways_a_requirement_becomes_not_applicable` |
 | A misspelled regulatory class is refused rather than read as out-of-scope | `test_a_scope_outside_the_vocabulary_is_refused` |
+| An undeclared system never reaches `satisfied` on a domain-limited duty, and a declared mismatch is worded apart from it | `test_an_undeclared_system_cannot_reach_satisfied_on_a_domain_limited_duty`, `test_a_system_in_another_domain_is_not_applicable_rather_than_judged` |
+| A duty with no domain still reaches a system that declares none, and matching is intersection | `test_a_duty_with_no_domain_still_reaches_a_system_that_declares_none`, `test_matching_is_intersection_so_one_shared_domain_is_enough` |
+| A pack that has not classified a requirement fails to load; there is no default domain | `test_a_pack_that_has_not_classified_a_requirement_is_refused`, `test_every_shipped_pack_classifies_every_requirement` |
+| A misspelled decision domain is refused on both sides, and a domain list is domain names and nothing else | `test_a_domain_outside_the_vocabulary_is_refused`, `test_a_domain_list_is_domain_names_and_nothing_else` |
+| The whole-pack plan and the single-requirement path give the same applicability answer, and neither runs an out-of-reach system | `test_the_two_domain_gates_never_disagree`, `test_an_undeclared_domain_never_runs_the_system` |
 | A reason-deletion certificate detects a dropped reason and excludes compliance certification beyond its measured input | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_limits_exclude_compliance_certification`, `test_certificate_carries_its_limits` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |

@@ -24,5 +24,5 @@ Welcome to the documentation directory for `reasonsmith`.
 - **Live site:** the landing page at [reasonsmith.dev](https://reasonsmith.dev) and the self-contained conformance dossier at [reasonsmith.dev/report.html](https://reasonsmith.dev/report.html).
 - [`README.md`](../README.md): Project overview, key findings, quick start, and module index.
 - [`RESULTS.md`](../RESULTS.md): Full empirical measurement suite, test counts, torch environment details, and execution provenance.
-- [`ROADMAP.md`](../ROADMAP.md): The public backlog — five numbered objectives, each with the gap it closes, a measurable outcome that fails today, and what it depends on, plus what is deliberately not planned.
+- [`ROADMAP.md`](../ROADMAP.md): The public backlog — four numbered objectives, each with the gap it closes, a measurable outcome that fails today, and what it depends on, plus what is deliberately not planned.
 - [`CONTRIBUTING.md`](../CONTRIBUTING.md): Contributor on-ramp, coding rules, and concrete open work.

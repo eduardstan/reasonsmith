@@ -35,6 +35,15 @@ Three things made it the right duty for this demonstration, and it is worth sayi
   none, and the same duty genuinely applies to all three systems below. A duty scoped to
   `high-risk` would have come back *not applicable* for any system that did not declare itself
   into that class, and the table would have been about a declaration rather than about evidence.
+- **It is limited to one decision domain, and all three systems are in it.** `domains =
+  ["consumer-credit"]`, and each of the three declares `system_domains = ("consumer-credit",)` —
+  they are consumer lenders, so the declaration is true of them and the duty genuinely governs
+  them. This is the one place the table *does* rest on a declaration, and it must: a system that
+  declared no domain would be reported *not applicable* here rather than judged, which is the point
+  of the gate (`docs/authoring-packs.md`, *the decision-domain vocabulary is yours, not the
+  regulation's*). What must not be read into the three rungs below is that any of them was reached
+  by declaring a domain — the domain decides whether the duty is answered at all, and the rung
+  decides how strongly, from what the system exposes and nothing else.
 - **Its property is a state property.** The spec is
   `present(artifact_logs_reason_explanation) and present(provenance_model_version) and
   present(scope_statements_local_vs_global)` — a formula about a single decision. That is what
@@ -58,16 +67,18 @@ python docs/adapters/neural_scorer.py
 CONFORMANCE REPORT
 system: risk-net (neural, served behind an inference API)
 declared scope: undeclared
+declared domains: consumer-credit
 pack: ecoa:ecoa_reg_b_1002_9_b_2_specific_reasons
 headline: 1 requirements · 1 binding: 1 observed
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
+    domain limit: consumer-credit
     summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ## 2. Probabilistic — `probed`
@@ -95,17 +106,19 @@ python docs/adapters/probabilistic_scorer.py
 CONFORMANCE REPORT
 system: bayes-risk (probabilistic, replayable in-process)
 declared scope: undeclared
+declared domains: consumer-credit
 pack: ecoa:ecoa_reg_b_1002_9_b_2_specific_reasons
 headline: 1 requirements · 1 binding: 1 probed
 
 REQUIREMENT FINDINGS:
   [PROBED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
+    domain limit: consumer-credit
     summary: Probed: no counterexample to 'present(artifact_logs_reason_explanation) and present(provenance_model_version) and present(scope_statements_local_vs_global)' in 200 input(s) replayed through the system's own decide() (seed 0, generated by perturbing 2 recorded decision(s) over 10 field(s)). This is a bounded search, not a proof: the property is unchecked outside the inputs this budget names.
     probe budget: 200 input(s) replayed, seed 0, input space: applicant_id (3 values), artifact_logs_reason_explanation (2 values), credit_history_months (11 values), credit_score (11 values), debt_to_income (11 values), decision (2 values), delinquencies_24m (7 values), posterior_default (11 values), provenance_model_version (2 values), scope_statements_local_vs_global (2 values). Strategy: the recorded decisions are replayed first unmodified; remaining inputs use seeded random perturbation of one recorded decision, replacing one or two fields with values drawn from that field's candidate pool (the values the trace shows for it, the numeric literals of the property, and their immediate neighbours)
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ## 3. Symbolic — `proved`
@@ -132,16 +145,18 @@ python docs/adapters/symbolic_rules.py
 CONFORMANCE REPORT
 system: underwriting-rules (symbolic, logic exposed)
 declared scope: undeclared
+declared domains: consumer-credit
 pack: ecoa:ecoa_reg_b_1002_9_b_2_specific_reasons
 headline: 1 requirements · 1 binding: 1 proved
 
 REQUIREMENT FINDINGS:
   [PROVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
+    domain limit: consumer-credit
     summary: Proved for all inputs: formal solver verified requirement 'present(artifact_logs_reason_explanation) and present(provenance_model_version) and present(scope_statements_local_vs_global)' holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ## From a shell

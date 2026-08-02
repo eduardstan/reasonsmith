@@ -23,7 +23,7 @@
 [pack]
 id = "table7"
 title = "Table 7: Symbolic XAI Regulatory & Governance Duties"
-description = "Checklist tying symbolic artifacts to legal/assurance duties and required minimal evidence."
+description = "Checklist tying symbolic artifacts to legal/assurance duties and required minimal evidence. Two rows are limited to a decision domain: the ECOA row to consumer credit and the FDA GMLP row to healthcare. Those classifications are this pack author's, written in a vocabulary this repository defines (reasonsmith.spec.DECISION_DOMAINS); the paper's Table 7 has no such column and no statute defines the list. They exist so that a system which has not declared what kind of decision it makes is reported not applicable on those two rows rather than satisfied. The other four rows are limited to no domain, which is a classification rather than an omission: those duties are about how a system is documented and decided, not about what subject its decisions are in."
 
 [source]
 table = "Table 7"
@@ -60,6 +60,7 @@ requires = [
 ]
 binding = true
 scope = "high-risk"
+domains = []
 
 [[requirement]]
 id = "eu_ai_act_art12_record_keeping"
@@ -77,6 +78,7 @@ requires = [
 ]
 binding = true
 scope = "high-risk"
+domains = []
 
 [[requirement]]
 id = "gdpr_art22_meaningful_information"
@@ -100,6 +102,7 @@ requires = [
 # packs/gdpr.toml.
 binding = true
 scope = ""
+domains = []
 
 [[requirement]]
 id = "ecoa_reg_b_adverse_action"
@@ -124,6 +127,7 @@ requires = [
 ]
 binding = true
 scope = ""
+domains = ["consumer-credit"]
 
 [[requirement]]
 id = "fda_gmlp_samd"
@@ -141,6 +145,7 @@ requires = [
 ]
 binding = false
 scope = ""
+domains = ["healthcare"]
 
 [[requirement]]
 id = "nist_ai_rmf_risk_evidence"
@@ -163,3 +168,4 @@ requires = [
 ]
 binding = false
 scope = ""
+domains = []

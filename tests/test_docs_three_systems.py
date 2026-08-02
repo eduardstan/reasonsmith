@@ -137,8 +137,19 @@ def test_each_adapter_reports_only_the_duty_it_names():
 
 
 def test_the_chosen_duty_is_binding_and_reaches_an_undeclared_system():
-    """Why this duty and not `gdpr_recital71_meaningful_explanation`, asserted where it can rot."""
+    """Why this duty and not `gdpr_recital71_meaningful_explanation`, asserted where it can rot.
+
+    "Undeclared" is now about the regulatory class only. The duty is limited to the
+    `consumer-credit` decision domain, so each of the three systems declares that domain — which
+    is what puts it inside a duty about adverse-action reasons. A system that declared nothing
+    would be reported not applicable here rather than judged, and the artefact would demonstrate
+    nothing; that is the gate working, not a way around it.
+    """
     req = load_pack("ecoa").get_requirement("ecoa_reg_b_1002_9_b_2_specific_reasons")
     assert req.binding is True
     assert req.scope == ""
+    assert req.domains == ("consumer-credit",)
     assert req.formalism == "record"
+    for name in ("neural_scorer", "probabilistic_scorer", "symbolic_rules"):
+        module = _load(name)
+        assert module.system_under_test().system_domains == ("consumer-credit",)

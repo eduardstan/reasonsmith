@@ -47,6 +47,7 @@ def _logical_req(
         requires=requires,
         binding=binding,
         scope=scope,
+        domains=(),
     )
 
 
@@ -761,6 +762,7 @@ def _record_req(spec: str, requires: tuple[str, ...], req_id: str = "rec_r1") ->
         requires=requires,
         binding=True,
         scope="",
+        domains=(),
     )
 
 
@@ -971,6 +973,7 @@ def test_a_temporal_duty_never_rises_above_observed():
         requires=("artifact_logs_reason_explanation",),
         binding=True,
         scope="",
+        domains=(),
     )
     sut = RulesAdapter(
         rules=_REASON_RULES,

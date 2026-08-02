@@ -51,6 +51,7 @@ def _req(
         requires=requires,
         binding=True,
         scope="",
+        domains=(),
     )
 
 

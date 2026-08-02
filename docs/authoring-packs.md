@@ -49,11 +49,12 @@ rationale = "What the duty asks, in English."
 requires = ["signal_a", "signal_b"]
 binding = true                # true = legal obligation, false = interpretive recital/guidance
 scope = "high-risk"           # or "" for a duty that is not class-limited
+domains = ["consumer-credit"] # or [] for a duty that is about no particular kind of decision
 ```
 
 A `[[requirement]]` block carries **exactly** these fields: `id`, `source_document`,
 `article_clause`, `verbatim_text`, `stakeholder`, `formalism`, `spec`, `rationale`, `requires`,
-`binding`, `scope`. Omitting one, or adding a field nothing reads, is a load-time error — an
+`binding`, `scope`, `domains`. Omitting one, or adding a field nothing reads, is a load-time error — an
 omitted field would break source traceability, and an unread field would look like data the
 codebase acts on when it does not.
 
@@ -71,6 +72,7 @@ codebase acts on when it does not.
 | `requires` | The signal names the system must be capable of emitting for the requirement to be checkable at all. A system missing one is reported unattainable on the missing signal, without being run. It is a conjunction — see "An either/or clause" below before listing a branch of one here. |
 | `binding` | Whether this duty is a legally binding obligation (`true`) or an interpretive recital/guidance item (`false`). |
 | `scope` | The regulatory class the duty is limited to, from the fixed vocabulary `prohibited`, `high-risk`, `limited-risk`, `minimal-risk`, `general-purpose`; `""` means the duty is not class-limited. |
+| `domains` | The kinds of decision the duty is about, from `reasonsmith.spec.DECISION_DOMAINS`; `[]` means the duty is about no particular kind. A different axis from `scope`, gated separately, and matched by intersection — see "the decision-domain vocabulary is yours, not the regulation's" below before writing one. |
 
 Signal names conventionally start with the Section 6.3 taxonomy prefixes (`provenance_`,
 `artifact_logs_`, `stability_signals_`, `scope_statements_`). The loader enforces nothing here: a
@@ -136,13 +138,60 @@ observed engine reports a log holding a single decision not evaluated rather tha
 violated. `ecoa_reg_b_1002_9_a_2_written_statement` is the worked example, and `docs/refinement.md`
 records what its disjunction still does not capture.
 
-## binding and scope have no default
+## binding, scope and domains have no default
 
-Neither field has a default, here or in the loader. Defaulting a missing `binding` to `true`
+None of the three has a default, here or in the loader. Defaulting a missing `binding` to `true`
 would silently promote an unclassified item to a legal obligation, and defaulting it to `false`
 would silently demote a statutory duty out of the compliance headline. Defaulting a missing
-`scope` to `""` would leave an unclassified duty reachable for every system. A pack that has not
-classified a requirement is a pack that must say so and be fixed, not one the code guesses for.
+`scope` to `""`, or a missing `domains` to `[]`, would leave an unclassified duty reachable for
+every system — and in the `domains` case that is exactly the false positive the gate exists to
+stop, reintroduced as a default and invisible, because an omitted field would then be
+indistinguishable from a deliberate `[]`. A pack that has not classified a requirement is a pack
+that must say so and be fixed, not one the code guesses for
+(`test_a_pack_that_has_not_classified_a_requirement_is_refused`).
+
+## The decision-domain vocabulary is yours, not the regulation's
+
+`scope` and `domains` look alike and are not alike. The five regulatory classes are *one statute's
+own vocabulary*: the EU AI Act defines prohibited, high-risk and the rest, so a pack quoting the
+Act can quote its classes too. **No statute defines a list of decision domains.** Consumer credit,
+employment, housing, insurance, healthcare and criminal justice are carved differently by every
+regime that carves them at all; the GDPR is not domain-limited in the first place, and the AI Act
+works from Annex III use-cases rather than subject matters. `DECISION_DOMAINS` is therefore a list
+this repository wrote, it is deliberately coarse, and it is wrong somewhere.
+
+Write one into a requirement anyway, when the duty is genuinely about a subject matter — but owe it
+the same discipline this guide already demands of an invented threshold (*a number in a `spec`*,
+below). **Say in the pack description that the classification is the pack author's and not the
+regulation's**, exactly as `packs/ecoa.toml` and `packs/table7.toml` do; a shipped pack that limits
+a duty to a domain without saying so fails
+`test_every_shipped_pack_classifies_every_requirement`. What the gate buys is one guarantee and
+not a taxonomy:
+
+> A system that has not declared its domain is never reported `satisfied` on a domain-limited duty.
+
+Three rules follow from that, and each is a test:
+
+- **Undeclared is `not_applicable`, not `inconclusive`.** The duty did not reach the system, so
+  nothing about the system was checked and no strength may be claimed — the same answer, and the
+  same wording discipline, the class gate already gives an undeclared class. The reason string says
+  which of the two ways it failed to reach, so *not applicable* is never read as *cleared*
+  (`docs/semantics.md` §4, `test_an_undeclared_system_cannot_reach_satisfied_on_a_domain_limited_duty`).
+- **`domains = []` is a wildcard, and it is a classification.** A duty about no particular kind of
+  decision reaches every system, including one that declares nothing — GDPR Article 22 governs a
+  solely-automated decision whatever it is about. That behaviour is safe only because it has to be
+  written down: the field is required, so the wildcard is never reached by forgetting
+  (`test_a_duty_with_no_domain_still_reaches_a_system_that_declares_none`).
+- **Matching is intersection, and one shared domain is enough.** A duty may govern several domains
+  and a system may decide in several. Demanding that the system's declaration be a subset of the
+  duty's would put a lender that also underwrites insurance out of Regulation B's reach, which is
+  wrong in the direction that matters — it would clear a duty that does govern the system
+  (`test_matching_is_intersection_so_one_shared_domain_is_enough`).
+
+A caller declares the other side with `--system-domain` (repeat it for a system that makes more
+than one kind of decision), or by setting `system_domains` on an adapter. Both sides are checked
+against the vocabulary, so a misspelling is refused where it is written rather than silently
+matching nothing.
 
 ## A number in a `spec` is a parameter of the check, never a fact about the law
 

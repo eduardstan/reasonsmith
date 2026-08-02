@@ -163,6 +163,7 @@ seeing a result.
 CONFORMANCE REPORT
 system: nesyarena:exact-wmc
 declared scope: undeclared
+declared domains: undeclared
 pack: gdpr
 headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 2 observed
 
@@ -186,7 +187,7 @@ REQUIREMENT FINDINGS:
     summary: Observed over 16 decision(s): temporal monitor for 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' satisfied across all time steps.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `exact-wmc` against `eu_ai_act`
@@ -195,6 +196,7 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:exact-wmc
 declared scope: undeclared
+declared domains: undeclared
 pack: eu_ai_act
 headline: 4 requirements · 4 binding: 4 not applicable
 
@@ -217,7 +219,7 @@ REQUIREMENT FINDINGS:
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `exact-wmc` against `ecoa`
@@ -226,23 +228,26 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:exact-wmc
 declared scope: undeclared
+declared domains: undeclared
 pack: ecoa
-headline: 3 requirements · 3 binding: 2 observed, 1 unattainable
+headline: 3 requirements · 3 binding: 3 not applicable
 
 REQUIREMENT FINDINGS:
-  [UNATTAINABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): inconclusive
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable
     requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
-    MISSING SIGNALS: artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days
-    summary: Unattainable as built: the system declares no capability to emit artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
-  [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): not_applicable
     requires: artifact_logs_decision_record, provenance_model_version
-    summary: Observed over 16 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied across all time steps.
-  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
-    summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `add-mult(clamped)` against `gdpr`
@@ -251,6 +256,7 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:add-mult(clamped)
 declared scope: undeclared
+declared domains: undeclared
 pack: gdpr
 headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 violated
 
@@ -275,7 +281,7 @@ REQUIREMENT FINDINGS:
     summary: Observed over 16 decision(s): temporal monitor for 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' satisfied across all time steps.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `add-mult(clamped)` against `eu_ai_act`
@@ -284,6 +290,7 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:add-mult(clamped)
 declared scope: undeclared
+declared domains: undeclared
 pack: eu_ai_act
 headline: 4 requirements · 4 binding: 4 not applicable
 
@@ -306,7 +313,7 @@ REQUIREMENT FINDINGS:
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `add-mult(clamped)` against `ecoa`
@@ -315,24 +322,26 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:add-mult(clamped)
 declared scope: undeclared
+declared domains: undeclared
 pack: ecoa
-headline: 3 requirements · 3 binding: 2 violated, 1 unattainable
+headline: 3 requirements · 3 binding: 3 not applicable
 
 REQUIREMENT FINDINGS:
-  [UNATTAINABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): inconclusive
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable
     requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
-    MISSING SIGNALS: artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days
-    summary: Unattainable as built: the system declares no capability to emit artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
-  [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): violated
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): not_applicable
     requires: artifact_logs_decision_record, provenance_model_version
-    summary: Violated over 16 decision(s): temporal property 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' failed at decision step(s) [8, 9, 10, 11].
-  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
-    ABSENT FROM TRACE: artifact_logs_reason_explanation
-    summary: Violated over 16 observed decision(s): the system declares it can emit these signals, but records carry no value for artifact_logs_reason_explanation.
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `top-1-proofs` against `gdpr`
@@ -341,6 +350,7 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:top-1-proofs
 declared scope: undeclared
+declared domains: undeclared
 pack: gdpr
 headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 violated
 
@@ -364,7 +374,7 @@ REQUIREMENT FINDINGS:
     summary: Violated over 16 decision(s): temporal property 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' failed at decision step(s) [4, 5, 6, 7, 8, 9, 10, 11].
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `top-1-proofs` against `eu_ai_act`
@@ -373,6 +383,7 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:top-1-proofs
 declared scope: undeclared
+declared domains: undeclared
 pack: eu_ai_act
 headline: 4 requirements · 4 binding: 4 not applicable
 
@@ -395,7 +406,7 @@ REQUIREMENT FINDINGS:
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `top-1-proofs` against `ecoa`
@@ -404,23 +415,26 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:top-1-proofs
 declared scope: undeclared
+declared domains: undeclared
 pack: ecoa
-headline: 3 requirements · 3 binding: 2 observed, 1 unattainable
+headline: 3 requirements · 3 binding: 3 not applicable
 
 REQUIREMENT FINDINGS:
-  [UNATTAINABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): inconclusive
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable
     requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
-    MISSING SIGNALS: artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days
-    summary: Unattainable as built: the system declares no capability to emit artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
-  [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): not_applicable
     requires: artifact_logs_decision_record, provenance_model_version
-    summary: Observed over 16 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied across all time steps.
-  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
-    summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `top-3-proofs` against `gdpr`
@@ -429,6 +443,7 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:top-3-proofs
 declared scope: undeclared
+declared domains: undeclared
 pack: gdpr
 headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 2 observed
 
@@ -452,7 +467,7 @@ REQUIREMENT FINDINGS:
     summary: Observed over 16 decision(s): temporal monitor for 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' satisfied across all time steps.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `top-3-proofs` against `eu_ai_act`
@@ -461,6 +476,7 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:top-3-proofs
 declared scope: undeclared
+declared domains: undeclared
 pack: eu_ai_act
 headline: 4 requirements · 4 binding: 4 not applicable
 
@@ -483,7 +499,7 @@ REQUIREMENT FINDINGS:
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `top-3-proofs` against `ecoa`
@@ -492,23 +508,26 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:top-3-proofs
 declared scope: undeclared
+declared domains: undeclared
 pack: ecoa
-headline: 3 requirements · 3 binding: 2 observed, 1 unattainable
+headline: 3 requirements · 3 binding: 3 not applicable
 
 REQUIREMENT FINDINGS:
-  [UNATTAINABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): inconclusive
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable
     requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
-    MISSING SIGNALS: artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days
-    summary: Unattainable as built: the system declares no capability to emit artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
-  [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): not_applicable
     requires: artifact_logs_decision_record, provenance_model_version
-    summary: Observed over 16 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied across all time steps.
-  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
-    summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `min-max-prob` against `gdpr`
@@ -517,6 +536,7 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:min-max-prob
 declared scope: undeclared
+declared domains: undeclared
 pack: gdpr
 headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 violated
 
@@ -540,7 +560,7 @@ REQUIREMENT FINDINGS:
     summary: Violated over 16 decision(s): temporal property 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' failed at decision step(s) [0, 1, 2, 3, 8].
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `min-max-prob` against `eu_ai_act`
@@ -549,6 +569,7 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:min-max-prob
 declared scope: undeclared
+declared domains: undeclared
 pack: eu_ai_act
 headline: 4 requirements · 4 binding: 4 not applicable
 
@@ -571,7 +592,7 @@ REQUIREMENT FINDINGS:
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ### `min-max-prob` against `ecoa`
@@ -580,23 +601,26 @@ LIMITS OF THIS REPORT
 CONFORMANCE REPORT
 system: nesyarena:min-max-prob
 declared scope: undeclared
+declared domains: undeclared
 pack: ecoa
-headline: 3 requirements · 3 binding: 2 observed, 1 unattainable
+headline: 3 requirements · 3 binding: 3 not applicable
 
 REQUIREMENT FINDINGS:
-  [UNATTAINABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): inconclusive
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable
     requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
-    MISSING SIGNALS: artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days
-    summary: Unattainable as built: the system declares no capability to emit artifact_logs_counteroffer_not_accepted, artifact_logs_notification_latency_days, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
-  [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): not_applicable
     requires: artifact_logs_decision_record, provenance_model_version
-    summary: Observed over 16 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied across all time steps.
-  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
+  [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
-    summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    domain limit: consumer-credit
+    summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
 
 LIMITS OF THIS REPORT
-  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
 ## Counterexamples
@@ -605,7 +629,5 @@ The decisions behind every `violated` verdict above, named so a reader can
 reproduce them from the measured-inference table.
 
 - `add-mult(clamped)` / `gdpr` / `gdpr_recital71_meaningful_explanation`: 4 of 16 decisions carry no artifact_logs_reason_explanation — instances G1-P4-L2-c0, G1-P4-L2-c1, G1-P4-L3-c0, G1-P4-L3-c1 (record index 8, 9, 10, 11)
-- `add-mult(clamped)` / `ecoa` / `ecoa_reg_b_1002_9_a_2_written_statement`: 4 of 16 decisions breach `always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))` — instances G1-P4-L2-c0, G1-P4-L2-c1, G1-P4-L3-c0, G1-P4-L3-c1 (record index 8, 9, 10, 11)
-- `add-mult(clamped)` / `ecoa` / `ecoa_reg_b_1002_9_b_2_specific_reasons`: 4 of 16 decisions carry no artifact_logs_reason_explanation — instances G1-P4-L2-c0, G1-P4-L2-c1, G1-P4-L3-c0, G1-P4-L3-c1 (record index 8, 9, 10, 11)
 - `top-1-proofs` / `gdpr` / `gdpr_recital71_error_risk_minimised`: 8 of 16 decisions breach `always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` — instances G1-P2-L2-c0, G1-P2-L2-c1, G1-P2-L3-c0, G1-P2-L3-c1, G1-P4-L2-c0, G1-P4-L2-c1, G1-P4-L3-c0, G1-P4-L3-c1 (record index 4, 5, 6, 7, 8, 9, 10, 11)
 - `min-max-prob` / `gdpr` / `gdpr_recital71_error_risk_minimised`: 5 of 16 decisions breach `always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` — instances G1-P1-L2-c0, G1-P1-L2-c1, G1-P1-L3-c0, G1-P1-L3-c1, G1-P4-L2-c0 (record index 0, 1, 2, 3, 8)
