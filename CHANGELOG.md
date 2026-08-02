@@ -10,6 +10,27 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **One run, five artefacts: `reasonsmith check --audience {developer,deployer,auditor,regulator,affected-individual}`.**
+  A conformance report had exactly one shape and every reader got it, but the questions differ — a
+  regulator asks how far the claim reaches, a person refused credit asks what this does not tell
+  them, a developer asks which signal is missing. The flag is a **projection over data the run
+  already produced** and computes nothing per reader: an `AudienceProjection` in
+  `src/reasonsmith/render.py` selects which parts of the one `ConformanceReport` each rendering
+  draws. Three properties are pinned in `tests/test_audience_view.py` because the feature is
+  unsafe without them — no audience sees a verdict another audience does not, no audience loses
+  the limits or the duties-not-checked notice, and the affected-individual artefact carries no
+  system internals (asserted as an *exclusion* over the run's own signal names, summaries, probe
+  budgets and counterexample values, so a later leak fails rather than passes). A fourth test
+  asserts two audiences differ by emitted content and not by framing, over the body with every
+  heading excluded, so an implementation rendering one report under five titles fails. Omitting
+  the flag renders the full report byte-for-byte as before — verified over 24 renderings, three
+  adapters × four packs × two domain settings, in both text and HTML — which is also the auditor
+  projection, by object identity. `--json` is deliberately unprojected: it stays the complete
+  machine record, and a display flag must not quietly drop fields from a pipeline's input. The
+  table of what each audience is shown, and the reasoning for every row, is authored rather than
+  derived and is written down in `docs/semantics.md` §7, along with two limits — this artefact
+  carries no reasons for the decision itself, and `--audience` is presentation, not redaction.
+  ([#71](https://github.com/eduardstan/reasonsmith/pull/71))
 - **One differential test holds the two implementations of the property language to one semantics.**
   `rulelang.eval_expression` and the Z3 encoding in `engines/proved.py` are two implementations of
   one language — `rulelang`'s docstring says so, and says why a gap between them is the worst defect

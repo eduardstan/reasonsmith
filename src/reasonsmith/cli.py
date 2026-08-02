@@ -8,7 +8,7 @@ What this module is for:
   Usage:
       reasonsmith check --system <decisions.jsonl> --pack <pack_name>
           [--system-name <name>] [--system-scope <class>] [--system-domain <domain>]...
-          [--capabilities <file>] [--json]
+          [--capabilities <file>] [--audience <reader>] [--json]
       reasonsmith check --system-module <module>:<attribute> --pack <pack_name> [...]
       reasonsmith validate-pack <pack_name_or_file> [...]
 
@@ -52,6 +52,15 @@ What a reader must not break:
     and neither is silently dropped.
     Why this matters: a run that silently ignored one of the two would report on a system the
     caller did not ask about, or on a capability set the system never claimed.
+  - `--audience <reader>` selects one of `reasonsmith.render.AUDIENCES` and changes *what the
+    text and HTML renderings show*, never what the run claims: one set of verdicts, one set of
+    strengths, five artefacts. Omitting it renders the full report, which is byte-for-byte the
+    report this CLI printed before the flag existed and is what every generated document under
+    `docs/` is pinned to. `--json` is deliberately unprojected: it is the complete machine
+    record, and a consumer parsing it must not have fields disappear under a display flag.
+    Why this matters: a reader handed a narrower artefact has been shown less, and must never
+    have been told something different — and a reader who reaches for the flag by habit must not
+    silently lose fields from a pipeline's JSON.
   - `validate-pack` prints what the pack contains and exits 0, or exits 1 naming the file and
     the requirement at fault for a pack the loader refuses. It reuses the pack loader exactly,
     so the packs a `check` run can load are exactly the packs `validate-pack` accepts.
@@ -71,6 +80,7 @@ from pathlib import Path
 from typing import Any
 
 from reasonsmith.adapters.jsonl import JSONLAdapter
+from reasonsmith.render import AUDIENCES
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import DECISION_DOMAINS, REGULATORY_CLASSES, Pack, list_packs, load_pack
 from reasonsmith.sut import SystemUnderTest
@@ -288,6 +298,18 @@ def main(args: list[str] | None = None) -> int:
         ),
     )
     check_parser.add_argument(
+        "--audience",
+        default=None,
+        choices=sorted(AUDIENCES),
+        help=(
+            "Project the text and HTML renderings for one reader. The run, the verdicts and the "
+            "strengths are the same whichever is given — only what is shown changes, and every "
+            "audience keeps the limits of the report. Omitted, the full report is printed, which "
+            "is what the auditor projection also gives. --json is unaffected: it is the complete "
+            "machine record, not a reader's artefact. docs/semantics.md names what each shows"
+        ),
+    )
+    check_parser.add_argument(
         "--json",
         action="store_true",
         help="Output report in JSON format",
@@ -409,7 +431,7 @@ def main(args: list[str] | None = None) -> int:
             else:
                 command = [sys.argv[0], *cmd_args]
             cmd_str = shlex.join(command)
-            html_content = report.render_html(command=cmd_str)
+            html_content = report.render_html(command=cmd_str, audience=parsed.audience)
             if parsed.html == "-":
                 if parsed.json:
                     print(
@@ -426,11 +448,15 @@ def main(args: list[str] | None = None) -> int:
                 except OSError as exc:
                     print(f"Error writing HTML report to {parsed.html!r}: {exc}", file=sys.stderr)
                     return 1
-                print(report.to_json(indent=2) if parsed.json else report.render_text())
+                print(
+                    report.to_json(indent=2)
+                    if parsed.json
+                    else report.render_text(audience=parsed.audience)
+                )
         elif parsed.json:
             print(report.to_json(indent=2))
         else:
-            print(report.render_text())
+            print(report.render_text(audience=parsed.audience))
 
         violations = [r for r in report.results if r.verdict == Verdict.VIOLATED]
         return 2 if violations else 0

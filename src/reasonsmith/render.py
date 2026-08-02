@@ -17,17 +17,97 @@ What a reader must not break:
     rows and skipped duties are printed with the numbers they had, and a requirement without a
     strength renders as not evaluated, never as satisfied. A rendering that must not be read as
     complete carries its own limit in the same breath.
+  - An audience projection (`AudienceProjection`, `AUDIENCES`) decides *what is shown*, never
+    what is claimed. Three properties of it are load-bearing and are asserted in
+    `tests/test_audience_view.py`: no audience sees a verdict another audience does not see, no
+    audience loses `report.limits`, and the affected-individual projection carries no system
+    internals. `audience=None` is the full report and is byte-identical to the rendering that
+    existed before projections did — every generated document in `docs/` is pinned to it.
 """
 
 from __future__ import annotations
 
 import subprocess
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from reasonsmith.report import _CATEGORY_LABELS, PROBE_BUDGET_KEY, ConformanceReport
 from reasonsmith.verdict import Strength, Verdict
+
+
+@dataclass(frozen=True)
+class AudienceProjection:
+    """Which parts of a report one audience is shown.
+
+    Every field selects a part of the report that already exists; nothing here computes anything
+    about the system, and no field can change a verdict. A projection narrows a rendering and
+    never widens it beyond what the full report carries.
+    """
+
+    #: The declared scope and domain lines, the headline and the per-category counts.
+    overview: bool = True
+    #: The evidence strength: the text tier prefix and the HTML strength lattice. With this off
+    #: the verdict badge is drawn from the verdict alone, so an unattainable result still reads
+    #: as the `inconclusive` it is rather than gaining a strength word the reader is not shown.
+    strength: bool = True
+    #: Binding-vs-interpretive, the regulatory class limit and the decision domain limit.
+    legal_metadata: bool = True
+    #: Signal names as diagnostics: what the duty requires, and what the trace did not carry.
+    signals: bool = True
+    #: The missing-capability finding that makes a duty unattainable as built.
+    missing_signals: bool = True
+    #: The engine's own sentence about what it established.
+    evidence_summary: bool = True
+    #: What a bounded replay search covered.
+    probe_budget: bool = True
+    #: Concrete decision records and solver inputs that witness a violation.
+    witnesses: bool = True
+
+
+#: The full report: every part of it, and the rendering `audience=None` produces.
+_FULL = AudienceProjection()
+
+
+#: The five audiences, and what each is shown. This table is **authored**, not derived — the same
+#: kind of choice a pack author makes when they pick a threshold — and the reasoning for each row
+#: is written down in `docs/semantics.md` §7 rather than left to be inferred from the flags.
+#:
+#: `auditor` is `_FULL` itself, by identity: the report that existed before this table did is the
+#: auditor's report, which is why the no-flag default did not have to change to gain one.
+AUDIENCES: dict[str, AudienceProjection] = {
+    "affected-individual": AudienceProjection(
+        overview=False,
+        strength=False,
+        legal_metadata=False,
+        signals=False,
+        missing_signals=False,
+        evidence_summary=False,
+        probe_budget=False,
+        witnesses=False,
+    ),
+    "auditor": _FULL,
+    "deployer": AudienceProjection(signals=False, witnesses=False),
+    "developer": AudienceProjection(legal_metadata=False),
+    "regulator": AudienceProjection(signals=False, missing_signals=False, witnesses=False),
+}
+
+
+def _projection(audience: str | None) -> AudienceProjection:
+    """Resolve an audience name, refusing one outside the table rather than falling back.
+
+    An unknown name silently rendering the full report is how an affected individual would be
+    handed a page of solver output because of a typo.
+    """
+    if audience is None:
+        return _FULL
+    try:
+        return AUDIENCES[audience]
+    except KeyError:
+        raise ValueError(
+            f"unknown audience {audience!r}; known audiences are {', '.join(sorted(AUDIENCES))}"
+        ) from None
 
 
 def _budget_line(budget: Mapping[str, Any]) -> str:
@@ -127,16 +207,26 @@ def _source_checkout() -> tuple[str, str]:
     return head.stdout.strip(), "clean"
 
 
-def render_text(report: ConformanceReport) -> str:
-        """Readable text rendering of the report."""
+def render_text(report: ConformanceReport, audience: str | None = None) -> str:
+        """Readable text rendering of the report, projected for `audience`.
+
+        `audience` left `None` renders the full report, byte for byte as it always did; a name
+        from `AUDIENCES` narrows what is shown and nothing else. Whatever the projection, the
+        verdict of every requirement and the report's limits are printed.
+        """
+        view = _projection(audience)
         lines = [
             "CONFORMANCE REPORT",
             f"system: {report.system_name}",
-            f"declared scope: {report.system_scope or 'undeclared'}",
-            f"declared domains: {', '.join(report.system_domains) or 'undeclared'}",
-            f"pack: {report.pack_id}",
-            f"headline: {report.headline}",
         ]
+        if view.overview:
+            lines += [
+                f"declared scope: {report.system_scope or 'undeclared'}",
+                f"declared domains: {', '.join(report.system_domains) or 'undeclared'}",
+            ]
+        lines.append(f"pack: {report.pack_id}")
+        if view.overview:
+            lines.append(f"headline: {report.headline}")
         notice = report.undeclared_domain_notice
         if notice:
             lines.append(f"DUTIES NOT CHECKED: {notice}")
@@ -150,24 +240,27 @@ def render_text(report: ConformanceReport) -> str:
                 tier = "NOT APPLICABLE"
             else:
                 tier = r.strength.value.upper() if r.strength else "NOT EVALUATED"
-            interp_tag = " [INTERPRETIVE]" if not r.binding else ""
+            tier_tag = f"[{tier}]" if view.strength else ""
+            interp_tag = " [INTERPRETIVE]" if view.legal_metadata and not r.binding else ""
+            head = f"{tier_tag}{interp_tag} ".lstrip()
             lines.append(
-                f"  [{tier}]{interp_tag} {r.requirement_id} ({r.source_clause}): {r.verdict.value}"
+                f"  {head}{r.requirement_id} ({r.source_clause}): {r.verdict.value}"
             )
-            lines.append(f"    requires: {', '.join(r.signals_required)}")
-            if r.scope:
+            if view.signals:
+                lines.append(f"    requires: {', '.join(r.signals_required)}")
+            if view.legal_metadata and r.scope:
                 lines.append(f"    scope limit: {r.scope}")
-            if r.domains:
+            if view.legal_metadata and r.domains:
                 lines.append(f"    domain limit: {', '.join(r.domains)}")
-            if r.signals_missing:
+            if view.missing_signals and r.signals_missing:
                 lines.append(f"    MISSING SIGNALS: {', '.join(r.signals_missing)}")
             absent = r.details.get("signals_absent_from_trace")
-            if absent:
+            if view.signals and absent:
                 lines.append(f"    ABSENT FROM TRACE: {', '.join(absent)}")
-            if r.evidence_summary:
+            if view.evidence_summary and r.evidence_summary:
                 lines.append(f"    summary: {r.evidence_summary}")
             budget = r.details.get(PROBE_BUDGET_KEY)
-            if budget:
+            if view.probe_budget and budget:
                 lines.append(f"    probe budget: {_budget_line(budget)}")
         lines.extend(["", "LIMITS OF THIS REPORT", f"  {report.limits}"])
         return "\n".join(lines)
@@ -178,6 +271,7 @@ def render_html(
     commit_hash: str | None = None,
     command: str | None = None,
     extra_section_html: str | None = None,
+    audience: str | None = None,
 ) -> str:
         """Self-contained HTML conformance report rendering.
 
@@ -199,8 +293,14 @@ def render_html(
         rendered by default: a narrative about another system's decision, sitting inside a
         document handed to an auditor, is exactly the false completeness this package refuses.
         The caller that passes it owns the claim it makes and escapes its own content.
+
+        `audience` selects an `AudienceProjection` exactly as it does for `render_text`: it
+        narrows which parts of this report are drawn and changes no verdict. `None` is the full
+        page, unchanged, which is what every generated document under `docs/` is pinned to.
         """
         import html
+
+        view = _projection(audience)
 
         if commit_hash is None:
             commit_hash, tree_state = _source_checkout()
@@ -255,6 +355,56 @@ def render_html(
             else ""
         )
 
+        # Page-level optional blocks. Each carries the indentation the template spelled
+        # inline, so the full view stays byte-for-byte the page that existed before.
+        declared_meta_html = (
+            '        <div class="meta-item">\n'
+            '          <span class="meta-label">Declared Scope</span>\n'
+            f'          <span class="meta-value">{sys_scope}</span>\n'
+            "        </div>\n"
+            '        <div class="meta-item">\n'
+            '          <span class="meta-label">Declared Domains</span>\n'
+            f'          <span class="meta-value">{sys_domains}</span>\n'
+            "        </div>\n"
+            if view.overview
+            else ""
+        )
+        headline_block = (
+            '    <div class="headline-banner">\n'
+            '      <div class="headline-title">Executive Headline Summary</div>\n'
+            f'      <div class="headline-text">{headline_esc}</div>\n'
+            f"      {provenance_html}\n"
+            "    </div>\n"
+            if view.overview
+            else ""
+        )
+        dashboard_block = (
+            '    <section class="dashboard-section">\n'
+            '      <div class="split-grid">\n'
+            '        <div class="split-card">\n'
+            '          <div class="split-card-header">\n'
+            "            <span>Binding Duties</span>\n"
+            f"            <span>{counts['binding_total']} total</span>\n"
+            "          </div>\n"
+            '          <div class="pill-group">\n'
+            f"            {binding_pills}\n"
+            "          </div>\n"
+            "        </div>\n"
+            '        <div class="split-card">\n'
+            '          <div class="split-card-header">\n'
+            "            <span>Interpretive Items</span>\n"
+            f"            <span>{counts['interpretive_total']} total</span>\n"
+            "          </div>\n"
+            '          <div class="pill-group">\n'
+            f"            {interp_pills}\n"
+            "          </div>\n"
+            "        </div>\n"
+            "      </div>\n"
+            "    </section>\n"
+            if view.overview
+            else ""
+        )
+
         req_html_blocks = []
         for r in report.results:
             r._validate_probe_budget()
@@ -272,9 +422,13 @@ def render_html(
                 if r.binding
                 else '<span class="badge badge-interpretive">Interpretive</span>'
             )
+            if not view.legal_metadata:
+                binding_tag = scope_tag = domain_tag = ""
 
-            # Verdict badge & card styling
-            is_unattainable = r.strength == Strength.UNATTAINABLE
+            # Verdict badge & card styling. An audience not shown the strength is not shown the
+            # strength-derived badge either: `unattainable` is a rung, not a verdict, and a
+            # reader who is told the rung is not being shown must still be told the verdict.
+            is_unattainable = view.strength and r.strength == Strength.UNATTAINABLE
             if is_unattainable:
                 v_class = "verdict-unattainable"
                 v_badge = (
@@ -331,14 +485,36 @@ def render_html(
                 + '<span class="lattice-arrow">&rarr;</span>'.join(lattice_spans)
                 + "</div>"
             )
+            # Each optional block carries the indentation the template used to spell inline, so
+            # the full view is byte-for-byte the page that existed before projections did.
+            lattice_block = (
+                '          <div class="lattice-container">\n'
+                '            <span class="lattice-label">Strength Lattice:</span>\n'
+                f"            {lattice_html}\n"
+                "          </div>"
+                if view.strength
+                else ""
+            )
 
             # Signal tags
             req_signals = "".join(
                 f'<span class="signal-tag">{html.escape(s)}</span>' for s in r.signals_required
             )
+            signal_block = (
+                '            <div class="signal-list">\n'
+                f"              <strong>Requires Signals:</strong> {req_signals}\n"
+                "            </div>"
+                if view.signals
+                else ""
+            )
+            summary_block = (
+                f'            <div class="evidence-summary">{summary}</div>'
+                if view.evidence_summary
+                else ""
+            )
 
             details_html = ""
-            if r.signals_missing:
+            if view.missing_signals and r.signals_missing:
                 missing_tags = "".join(
                     f'<span class="signal-tag missing">{html.escape(s)}</span>'
                     for s in r.signals_missing
@@ -353,7 +529,7 @@ def render_html(
                 )
 
             absent_signals = r.details.get("signals_absent_from_trace")
-            if absent_signals:
+            if view.signals and absent_signals:
                 absent_tags = "".join(
                     f'<span class="signal-tag absent">{html.escape(s)}</span>'
                     for s in absent_signals
@@ -368,7 +544,7 @@ def render_html(
             # Counterexample / witness rendering for ObservedEngine violations
             offending_segment = r.details.get("offending_trace_segment")
             violation_indices = r.details.get("violation_step_indices")
-            if offending_segment and violation_indices:
+            if view.witnesses and offending_segment and violation_indices:
                 witnesses = list(zip(violation_indices, offending_segment, strict=False))
                 shown = witnesses[:_WITNESS_ROW_LIMIT]
                 rows = []
@@ -405,7 +581,7 @@ def render_html(
                 )
 
             probe_budget = r.details.get(PROBE_BUDGET_KEY)
-            if probe_budget:
+            if view.probe_budget and probe_budget:
                 details_html += (
                     '<div class="callout-box callout-probe">'
                     "<strong>PROBED — What Was Searched:</strong><br>"
@@ -416,7 +592,7 @@ def render_html(
                 )
 
             counterexample = r.details.get("counterexample")
-            if counterexample and r.verdict == Verdict.VIOLATED:
+            if view.witnesses and counterexample and r.verdict == Verdict.VIOLATED:
                 ce_str = ", ".join(
                     f"{html.escape(str(k))}: {html.escape(str(v))}"
                     for k, v in counterexample.items()
@@ -445,15 +621,10 @@ def render_html(
               {v_badge}
             </div>
           </header>
-          <div class="lattice-container">
-            <span class="lattice-label">Strength Lattice:</span>
-            {lattice_html}
-          </div>
+{lattice_block}
           <div class="req-card-body">
-            <div class="signal-list">
-              <strong>Requires Signals:</strong> {req_signals}
-            </div>
-            <div class="evidence-summary">{summary}</div>
+{signal_block}
+{summary_block}
             {details_html}
           </div>
         </article>""")
@@ -1064,54 +1235,19 @@ def render_html(
           <span class="meta-label">System under test</span>
           <span class="meta-value">{sys_name}</span>
         </div>
-        <div class="meta-item">
-          <span class="meta-label">Declared Scope</span>
-          <span class="meta-value">{sys_scope}</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Declared Domains</span>
-          <span class="meta-value">{sys_domains}</span>
-        </div>
-        <div class="meta-item">
+{declared_meta_html}        <div class="meta-item">
           <span class="meta-label">Regulation Pack</span>
           <span class="meta-value">{pack_name}</span>
         </div>
       </div>
     </header>
 
-    <div class="headline-banner">
-      <div class="headline-title">Executive Headline Summary</div>
-      <div class="headline-text">{headline_esc}</div>
-      {provenance_html}
-    </div>
-
+{headline_block}
     {notice_html}
 
     {extra_section}
 
-    <section class="dashboard-section">
-      <div class="split-grid">
-        <div class="split-card">
-          <div class="split-card-header">
-            <span>Binding Duties</span>
-            <span>{counts['binding_total']} total</span>
-          </div>
-          <div class="pill-group">
-            {binding_pills}
-          </div>
-        </div>
-        <div class="split-card">
-          <div class="split-card-header">
-            <span>Interpretive Items</span>
-            <span>{counts['interpretive_total']} total</span>
-          </div>
-          <div class="pill-group">
-            {interp_pills}
-          </div>
-        </div>
-      </div>
-    </section>
-
+{dashboard_block}
     <h2 class="section-title" id="findings">Requirement Findings</h2>
     <main class="req-list">
 {req_section_html}

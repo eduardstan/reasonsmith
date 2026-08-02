@@ -390,17 +390,22 @@ class ConformanceReport:
             "adapter — and run it again; docs/authoring-packs.md names the vocabulary."
         )
 
-    def render_text(self) -> str:
-        """Readable text rendering of the report."""
+    def render_text(self, audience: str | None = None) -> str:
+        """Readable text rendering of the report, projected for `audience`.
+
+        `audience` left `None` renders the full report; see `reasonsmith.render.AUDIENCES` for
+        the five projections and `docs/semantics.md` §7 for why each shows what it shows.
+        """
         from reasonsmith.render import render_text
 
-        return render_text(self)
+        return render_text(self, audience=audience)
 
     def render_html(
         self,
         commit_hash: str | None = None,
         command: str | None = None,
         extra_section_html: str | None = None,
+        audience: str | None = None,
     ) -> str:
         """Self-contained HTML conformance report rendering.
 
@@ -422,11 +427,17 @@ class ConformanceReport:
         rendered by default: a narrative about another system's decision, sitting inside a
         document handed to an auditor, is exactly the false completeness this package refuses.
         The caller that passes it owns the claim it makes and escapes its own content.
+
+        `audience` selects an audience projection, exactly as it does for `render_text`.
         """
         from reasonsmith.render import render_html
 
         return render_html(
-            self, commit_hash=commit_hash, command=command, extra_section_html=extra_section_html
+            self,
+            commit_hash=commit_hash,
+            command=command,
+            extra_section_html=extra_section_html,
+            audience=audience,
         )
 
 

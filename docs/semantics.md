@@ -1050,4 +1050,80 @@ Two consequences of that report text, followed by a separate package-level termi
 | No artefact, a broken artefact, or a property the engine cannot ground ⇒ not evaluated | `test_a_trace_with_no_artifact_is_not_evaluated_never_satisfied`, `test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`, `test_the_engine_refuses_a_property_it_cannot_ground` |
 | A reason-deletion certificate detects a dropped reason and excludes compliance certification beyond its measured input | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_limits_exclude_compliance_certification`, `test_certificate_carries_its_limits` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |
+| One run renders as five audience artefacts, and no two audiences disagree about a verdict | `test_the_five_audiences_all_render`, `test_no_audience_sees_a_different_verdict_from_another` |
+| No audience projection drops the limits, or the notice that duties went unchecked | `test_every_audience_keeps_the_limits`, `test_every_audience_keeps_the_notice_that_duties_went_unchecked` |
+| The affected-individual artefact carries no system internals, asserted as an exclusion | `test_the_affected_individual_view_leaks_no_system_internals` |
+| Two audiences differ by content and not by framing, and an unknown audience is refused rather than widened | `test_two_audiences_differ_by_content_not_framing`, `test_an_unknown_audience_is_refused_rather_than_widened`, `test_the_cli_offers_the_five_audiences_and_refuses_a_sixth` |
+| The unprojected rendering is the full report and is the auditor's | `test_the_default_rendering_is_the_full_report_and_the_auditors` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |
+
+---
+
+## 7. Who the report is for
+
+`reasonsmith check --audience {developer,deployer,auditor,regulator,affected-individual}` renders
+one conformance run five ways. **The projection changes what is shown and never what is claimed.**
+Nothing is recomputed per reader: every part of every artefact is a part of the single
+`ConformanceReport` the run already produced, selected by an `AudienceProjection`
+(`src/reasonsmith/render.py`). A verdict a regulator is shown is the verdict a developer is shown
+(`test_no_audience_sees_a_different_verdict_from_another`), and dropping the flag renders the full
+report unchanged (`test_the_default_rendering_is_the_full_report_and_the_auditors`) — which is why
+every generated document under `docs/` still regenerates byte-for-byte.
+
+**The table below is authored, not derived.** It is the same kind of choice a pack author makes
+when they pick a threshold: nothing in the law, in the packs or in the evidence says a deployer
+should not see a counterexample. It is written here so it can be argued with, rather than left to
+be reverse-engineered from a dataclass.
+
+| Shown | developer | deployer | auditor | regulator | affected-individual |
+|---|---|---|---|---|---|
+| verdict | ✓ | ✓ | ✓ | ✓ | ✓ |
+| limits, and the duties-not-checked notice | ✓ | ✓ | ✓ | ✓ | ✓ |
+| evidence strength (tier, lattice) | ✓ | ✓ | ✓ | ✓ | — |
+| declared scope/domains, headline, counts | ✓ | ✓ | ✓ | ✓ | — |
+| binding vs interpretive, scope and domain limits | — | ✓ | ✓ | ✓ | — |
+| required signals, signals absent from the trace | ✓ | — | ✓ | — | — |
+| missing capability signals | ✓ | ✓ | ✓ | — | — |
+| evidence summary | ✓ | ✓ | ✓ | ✓ | — |
+| probe budget | ✓ | ✓ | ✓ | ✓ | — |
+| counterexamples and trace witnesses | ✓ | — | ✓ | — | — |
+
+The reasoning, row by row:
+
+- **auditor** is the full report, by identity: `AUDIENCES["auditor"] is _FULL`. An auditor's
+  question is *what is the complete evidentiary basis*, and the report this package already
+  emitted is the answer to it. That is the honest reason the no-flag default did not have to
+  change to acquire an audience — not a coincidence worth hiding behind a duplicate table.
+- **developer** asks *which signal is missing and where*, so it keeps every signal name, the
+  absent-from-trace finding, the witness records and the counterexample inputs. It drops the
+  binding/interpretive tag and the scope and domain limits: those decide whether a duty reaches
+  this system, which is not a thing a developer changes by editing the system.
+- **deployer** asks *does this duty reach my deployment, and what must I declare or procure*. It
+  keeps the legal classification and the missing-capability finding, and drops the diagnostic
+  signal lists and the witnesses. The witnesses are the sharper call: a witness table inlines
+  real decision records, which in a consumer-credit deployment are personal data about
+  applicants, and an operator does not need them to act.
+- **regulator** asks *which duties were checked, how far does the claim reach, and what was not
+  determined*. It keeps the strength, the legal classification, the evidence summaries, the probe
+  budgets — the bound on a `probed` claim is exactly "how far does this reach" — and the limits.
+  It drops signal names and witnesses: the internal architecture of a system and the personal
+  data of the people it decided about are not what makes a claim's reach legible.
+- **affected-individual** is the narrowest artefact and the one with a hard rule around it: it
+  carries which duties were checked, how each came out, and the limits, and it carries no system
+  internals at all — no counterexamples, no probe budgets, no signal names, no solver output, and
+  no strength vocabulary, because being told a duty is `probed` hands a person this tool's
+  evidence model instead of an answer. `test_the_affected_individual_view_leaks_no_system_internals`
+  asserts that as an *exclusion* over the run's own data rather than as a list of what should be
+  present, so a later change that adds a leak fails rather than passes.
+
+Two limits of this feature, stated rather than left to be discovered:
+
+- **The affected-individual view carries no reasons for the decision itself.** A person refused
+  credit wants the reasons they were refused. A conformance report holds verdicts about duties,
+  not the adverse-action statement a creditor owes them, and this projection will not manufacture
+  one: what it can honestly say is which duties were checked and how they came out. Closing that
+  gap means a different artefact reading a different input, not a wider projection of this one.
+- **`--json` is not projected.** It stays the complete machine record, so a pipeline parsing it
+  never loses fields to a display flag — and so `--audience affected-individual --json` is not a
+  redaction. Redaction is a security property; this is a presentation one, and the two must not
+  be confused.
