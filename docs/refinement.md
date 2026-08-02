@@ -54,7 +54,7 @@ Four kinds of gap recur, and naming them once keeps the table short:
 - **Organisational facts are outside every engine.** A controller's legal basis, a staffed appeals
   desk, a signed instruction manual: no decision record witnesses these. Where a clause turns on
   one, the property reads a flag the system sets about itself, and reasonsmith checks what a system
-  says, not whether it was honest (`docs/semantics.md` §3, *the assumption all four share*).
+  says, not whether it was honest (`docs/semantics.md` §3, *the assumption all five share*).
 - **The property's reach is not the clause's scope.** Most clauses below are triggered — by adverse
   action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
   evaluated over every record in a trace is checked outside that trigger too. Two axes of a
@@ -92,7 +92,7 @@ It is stated once, here, rather than nineteen times:
   does not govern a particular lender.
 - **What the system declares is a self-declaration.** Nothing checks that a system that says
   `consumer-credit` issues credit, the same way nothing checks the flags of the Article 22(2) bases
-  (`docs/semantics.md` §3, *the assumption all four share*). The gate stops a duty reaching a system
+  (`docs/semantics.md` §3, *the assumption all five share*). The gate stops a duty reaching a system
   that said nothing; it does not stop one that said the wrong thing.
 - **The trigger inside a decision is still not modelled *as a gate*, and that is the larger
   remaining gap.** 12 CFR 1002.9 is triggered by *adverse action having been taken*, not by the

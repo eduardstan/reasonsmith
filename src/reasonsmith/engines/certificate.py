@@ -223,7 +223,20 @@ class CertificateEngine:
                         f"arguments of certificate.certify ({', '.join(ARTIFACT_KEYS)})."
                     ),
                 )
-            certified.append((index, cert, bool(eval_expression(node, _env(record, cert)))))
+            try:
+                held = bool(eval_expression(node, _env(record, cert)))
+            except Exception as exc:  # noqa: BLE001 — reported, never swallowed
+                return _result(
+                    req,
+                    Verdict.INCONCLUSIVE,
+                    None,
+                    (
+                        f"Not evaluated: evaluating {req.spec!r} against decision #{index} raised "
+                        f"{type(exc).__name__}: {exc}. The measurement was made; the property "
+                        "could not be decided from it, so nothing is claimed either way."
+                    ),
+                )
+            certified.append((index, cert, held))
 
         if not certified:
             return _result(
