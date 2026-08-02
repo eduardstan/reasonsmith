@@ -54,6 +54,8 @@ reasonsmith check --system-module docs.adapters.symbolic_rules:system_under_test
 
 All three verdicts are `satisfied`, and the rung is what separates them: how far each claim reaches — three logged decisions, 200 replayed inputs, or every input the declared constraints admit. The neural system **cannot** reach `probed` or `proved` as built, and no adapter can change that; a test pins that ceiling. Full walkthrough, with the three transcripts and why this duty was chosen over a recital: [`docs/three-systems.md`](docs/three-systems.md).
 
+A fourth system — [a language model prompted to write the notice](docs/adapters/language_model_notices.py) — adds no rung: a model you can call sits at `probed`, where the probabilistic scorer already sits. It is worth a document of its own for the *other* axis, which duties can be answered about a system at all. Run against the whole `ecoa` pack it comes back `observed` on the notice's timing and contents, `probed` on 12 CFR 1002.9(b)(2)'s specific-reasons duty, and **`unattainable`** on the other half of that same clause, naming the signal it lacks — because reason fidelity is measured from an inference artefact and a decoder has none. reasonsmith refuses that duty rather than passing the system on the easier one beside it: [`docs/language-model.md`](docs/language-model.md).
+
 ## Key Finding: form completeness does not imply reason fidelity — one system, two duties
 
 The table above holds the duty fixed and varies the system, so it answers **how far a claim reaches**. This section holds the system fixed and varies the property, so it answers **what the property actually says**. Two different questions about the same run; neither one answers the other, which is why both are on this page.

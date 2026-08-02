@@ -10,6 +10,21 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **A language model as a system under test: `docs/adapters/language_model_notices.py` and
+  `docs/language-model.md`.** A fourth runnable system beside the three of `docs/three-systems.md`,
+  and deliberately not a fourth rung: a model you can call sits at `probed`, exactly where the
+  probabilistic scorer sits. What it demonstrates is the axis underneath — which duties can be
+  answered about a system at all. Run against the whole `ecoa` pack it comes back `observed` on the
+  notice's timing and contents, `probed` on 12 CFR 1002.9(b)(2)'s specific-reasons duty carrying
+  its search budget, and `unattainable` on the other half of that same clause, naming
+  `artifact_logs_deleted_reason_count` as the signal it lacks — reason fidelity is measured from an
+  inference artefact and a decoder has none to give. The adapter takes one
+  `complete(prompt: str) -> str` and nothing else: no vendor SDK, no client wrapper, no network,
+  and a deterministic stub so the committed transcript is reproducible from a fresh clone.
+  `tests/test_docs_language_model.py` holds the transcript byte-for-byte and asserts the ceiling on
+  the mechanism rather than on the printed word — `logic()` is `None`, so `proved` is structurally
+  unreachable, and the adequacy duty is never answered by the presence check that shares its clause.
+  ([#73](https://github.com/eduardstan/reasonsmith/pull/73))
 - **One run, five artefacts: `reasonsmith check --audience {developer,deployer,auditor,regulator,affected-individual}`.**
   A conformance report had exactly one shape and every reader got it, but the questions differ — a
   regulator asks how far the claim reaches, a person refused credit asks what this does not tell

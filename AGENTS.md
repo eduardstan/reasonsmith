@@ -168,6 +168,18 @@ way `test_docs_example_output.py` does, asserts the three rungs are still three,
 neural system's ceiling. That ceiling is the point of the artefact: raising it means changing the
 *system*, never the adapter, and the README's first screen carries the same table.
 
+`docs/language-model.md` and the fourth adapter `docs/adapters/language_model_notices.py` are a
+different axis, and the filename `three-systems.md` was left alone rather than made false. A
+language model you can call adds **no rung** — it sits at `probed` beside the probabilistic
+scorer — so do not write "four systems, four rungs". What it demonstrates is which duties a system
+can be answered on at all: run against the whole `ecoa` pack it is `observed`, `probed` and
+`unattainable` in one report, the last on `ecoa_reg_b_1002_9_b_2_principal_reasons_complete`,
+whose `artifact_logs_deleted_reason_count` is measured from an inference artefact a decoder has
+none of. The adapter takes one `complete(prompt: str) -> str` — never a vendor SDK, never a
+network call — behind a deterministic stub, because `tests/test_docs_language_model.py` pins the
+transcript byte-for-byte and asserts the ceiling on the mechanism: `logic()` is `None`, and the
+adequacy duty is never downgraded to the presence check sharing its clause.
+
 `docs/nesyarena-conformance-report.md` is the third generated document, and the only run against a
 real system rather than a demonstration fixture: `docs/build_nesyarena_report.py` drives the five
 `nesyarena.suts.registry()` provenances over generated ground programs against the GDPR, EU AI Act
