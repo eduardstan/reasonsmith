@@ -8,6 +8,42 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Added
+
+- **A temporal duty reaches `proved`, where its shape reduces to a property of one decision**
+  ([#81](https://github.com/eduardstan/reasonsmith/pull/81)). `ROADMAP.md` objective 1. Every
+  `temporal` duty stopped at `observed` whatever a system exposed, because the solver and the replay
+  search each reason about one decision at a time and had nothing to say about a formula quantified
+  over a trace. One shape does have something to say to them, and it is the one both shipped
+  temporal duties are written in. A conformance run reads a **finite** decision trace — LTLf, not
+  LTL — and over a finite trace `always(f)` holds exactly when `f` holds at every position; every
+  position of every trace a system can emit is a decision its exposed `logic()` produces from an
+  input its own `constraints` admit. So proving `f` over that input space proves `always(f)` for
+  every trace the system can emit, which is strictly more than the one trace a run reads.
+  `engines/temporal.py` is that reduction and nothing else: it hands `f` to the proved engine and
+  inherits every refusal that engine already makes. `eventually(f)` asserts that some position
+  *exists* — a fact about the trace a system emitted rather than about the decisions its logic
+  admits — so it does not reduce and stays at `observed`, as does every nested shape. **The two
+  verdicts are not mirror images and the result says so:** satisfied is universal and covers every
+  trace, violated is existential and names an admissible input whose decision breaches the property,
+  which is a finding about the system as built and not about the trace supplied.
+  `TRACE_SEMANTICS` travels on every result the engine returns, for the same reason the probe budget
+  does. **No new dependency**, decided rather than defaulted: an LTLf decision procedure was priced
+  first, and neither candidate installs from PyPI without a system package — `ltlf2dfa` shells out
+  to a MONA binary its wheel does not carry, and PyPI's `spot` is an unrelated 2013 package rather
+  than the Spot library — but this fragment needs neither, because `always` distributes over
+  positions and what is left is a state property Z3 already decides here under guards that took
+  several releases to write. It is vendored rather than shipped through the `reasonsmith.engines`
+  entry-point group for the same reason: that surface exists so an *optional* dependency can stay
+  optional, and there is no optional dependency here. `temporal` joins `BUILTIN_ENGINE_NAMES`, so an
+  installed plug-in cannot take the name. `test_a_temporal_duty_never_rises_above_observed` is
+  *replaced*, never deleted, by `test_only_always_reaches_the_temporal_proof_rung`, which pins the
+  new ceiling from both sides; the soundness paragraph is `docs/semantics.md` §3, *`proved`, over a
+  trace*. `examples/symbolic_rules.py` gains the notification and margin rules the two shipped
+  temporal duties read — both duties reported `unattainable` against it before — and its docstring
+  names the two of those rules that state a policy commitment rather than measure anything, because
+  that is what the proof is worth.
+
 ## [0.5.0] - 2026-08-02
 
 **Breaking:** the example systems and the sample decision log moved from `docs/adapters/` and
