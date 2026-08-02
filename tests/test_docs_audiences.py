@@ -15,10 +15,14 @@ What a reader must not break:
     rendered page rather than holding a list of its own. A token renamed in `render.py` fails
     this test at the use site instead of leaving the page referring to a variable that no longer
     exists.
+  - `test_every_frame_opens_where_the_documents_differ` guards the one thing a byte-for-byte
+    pin cannot: that the page still *shows* a difference. The pin passes just as happily on
+    five frames opened at five identical mastheads.
 """
 
 from __future__ import annotations
 
+import html
 import importlib.util
 import re
 from pathlib import Path
@@ -77,6 +81,30 @@ def test_every_audience_is_embedded_as_a_whole_document():
 
     for name in AUDIENCES:
         assert f"<span>{name}</span>" in page
+
+
+def test_every_frame_opens_where_the_documents_differ():
+    """The frames open at the findings, and the findings are in all five documents.
+
+    Opened at the top, four of the five renderings are identical for a whole screen — the
+    masthead, the headline and the dashboard are chrome no projection touches — so the page
+    demonstrated nothing until a reader scrolled inside each frame. The fix is a scroll
+    position, and it is worth exactly as much as the anchor it names: an `id` renamed or
+    dropped in `render_html` leaves every frame back at the top, silently. So this asserts both
+    halves — that each frame carries the scroll, and that the element it scrolls to is in every
+    document the page embeds.
+    """
+    page = DOCS_AUDIENCES.read_text(encoding="utf-8")
+    anchor = build_audiences.FRAME_ANCHOR
+
+    onload = html.escape(build_audiences.FRAME_ONLOAD, quote=True)
+    assert page.count(f'onload="{onload}"') == len(AUDIENCES)
+    assert f"getElementById('{anchor}')" in build_audiences.FRAME_ONLOAD
+
+    report = build_audiences.gallery_report()
+    for name in AUDIENCES:
+        document = report.render_html(commit_hash="", audience=name)
+        assert f'id="{anchor}"' in document, f"{name} has no {anchor} anchor to open at"
 
 
 def test_the_page_states_the_short_document_is_correct():

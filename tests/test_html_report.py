@@ -473,6 +473,30 @@ def test_the_dark_scheme_is_screen_only_so_print_stays_light():
     assert html.index(dark) < html.index("@media print {")
 
 
+def test_a_requirement_identifier_never_renders_under_its_badges():
+    """The card header must reflow before it collides, at every width above the mobile block.
+
+    The header is one flex row: the identifier and its citation on the left, the badges on the
+    right. Given a zero flex basis and a floor narrower than an identifier, that left item was
+    handed less width than its own content between roughly 768px and 1000px — the desktop row
+    still applied, and there was no room for a long identifier beside three badges — so the
+    identifier overflowed *under* the badges and the reader saw them overprinted. A tablet, a
+    half-width desktop window and every frame in `docs/audiences.html` are in that band.
+
+    Two declarations keep it apart and neither is visible in a screenshot of a wide window, so
+    both are pinned here. The basis is the width below which the row is not worth keeping: with
+    it, the badge group drops to its own line before anything can overlap. `overflow-wrap` is
+    the backstop for a width no reflow can rescue — an identifier is a single unbreakable token,
+    so on a phone it must be allowed to break rather than run out of the card.
+    """
+    html = _minimal_report().render_html()
+
+    assert ".req-title-group { flex: 1 1 26rem; min-width: 0; }" in html
+
+    req_id = html[html.index(".req-id {") : html.index(".req-clause {")]
+    assert "overflow-wrap: anywhere;" in req_id
+
+
 def test_both_schemes_keep_the_verdict_colours_apart():
     """Satisfied-green and violated-red carry meaning here, so both schemes must separate them.
 

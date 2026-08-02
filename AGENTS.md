@@ -212,6 +212,13 @@ page is the only way the gallery can style itself without a second palette.
 `tests/test_docs_audiences.py` holds the page byte-for-byte to the builder and fails if the
 gallery grows a `<style>` block, a colour literal, a font stack, a `var(--token)` the renderer
 does not define or a class it does not style. Regenerate with `python docs/build_audiences.py`.
+Each frame is scrolled on load to `render_html`'s own `id="findings"` and is 24rem tall
+(`FRAME_ANCHOR` / `FRAME_HEIGHT`), because opened at the top four of the five renderings are
+identical for a whole screen — masthead, headline and dashboard are chrome no projection touches —
+and the page demonstrated nothing. Renaming or dropping that `id` in `render.py` returns every
+frame to the top while the byte-for-byte pin still passes, so
+`test_every_frame_opens_where_the_documents_differ` asserts the anchor exists in all five
+renderings.
 
 The page's stylesheet is two token blocks, and three rules keep them from drifting. The dark block
 is `@media screen and (prefers-color-scheme: dark)` — the `screen` is load-bearing, because the

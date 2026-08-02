@@ -55,6 +55,36 @@ releases before it predate the file and are not reconstructed here.
   `docs/semantics.md` §3.5, *When the magnitudes are not the system's own*, is rewritten around the
   declaration and names the test behind every claim.
 
+### Fixed
+
+- **A requirement identifier no longer renders under its own badges** ([#90](https://github.com/eduardstan/reasonsmith/pull/90)).
+  The requirement card header is one flex row — identifier and citation left, badges right — and
+  its left item had a zero flex basis with a 16rem floor, narrower than a requirement identifier.
+  Between roughly 768px and 1000px the desktop row still applied and there was no room for a long
+  identifier beside three badges, so the identifier overflowed *under* them and the two printed on
+  top of each other. A tablet, a half-width desktop window and every frame in
+  `docs/audiences.html` are in that band. The left item now has a real basis (`flex: 1 1 26rem`),
+  so the badge group drops to its own line before anything can collide, and the identifier carries
+  `overflow-wrap: anywhere` as the backstop for a phone width no reflow can rescue. Measured in
+  Chrome from 375px to 1440px on both generated pages: no overlap at any width, no card overflow,
+  no horizontal page scroll. `docs/report.html` and `docs/audiences.html` are regenerated.
+
+- **The audience gallery opens where the documents differ** ([#90](https://github.com/eduardstan/reasonsmith/pull/90)).
+  `docs/audiences.html` embeds one run rendered for five readers, and every frame opened at the top
+  of its document — where the masthead, the headline banner and the dashboard are chrome no audience
+  projection touches. Four of the five were byte-identical for their whole first screen and the
+  first real difference sat below every frame's visible area, so the page claimed a difference it
+  never showed. Each frame is now scrolled on load to `id="findings"`, the anchor `render_html`
+  already carries for its own skip link, and `FRAME_HEIGHT` drops to 24rem so two frames fit one
+  screen: the auditor's card carries the binding and domain chips, the lattice and the signals row;
+  the developer's drops the chips; the regulator's and the deployer's drop the signals row; the
+  affected individual's shows three whole cards where an expert reading shows one. One anchor and
+  one height for all five, so this is a scroll position and not a crop — nothing cropped, restyled
+  or reordered, every frame still holding its whole document, and with scripting off the frames open
+  at the top exactly as before. `test_every_frame_opens_where_the_documents_differ` guards what the
+  byte-for-byte pin cannot: an `id` renamed in `render_html` would return every frame to the top
+  silently and the pin would still pass.
+
 ## [0.5.1] - 2026-08-02
 
 ### Added
