@@ -878,7 +878,7 @@ CATEGORY_KEYS = (
 )
 
 
-@pytest.mark.parametrize("pack_name", ["table7", "eu_ai_act", "gdpr", "ecoa"])
+@pytest.mark.parametrize("pack_name", ["table7", "eu_ai_act", "gpai", "gdpr", "ecoa"])
 @pytest.mark.parametrize("declared_scope", ["", "high-risk", "limited-risk"])
 def test_counts_reconcile_against_both_totals(pack_name, declared_scope):
     """Neither half of the counts may lose a requirement or count one twice.
@@ -1101,7 +1101,7 @@ def test_a_blank_scope_is_a_typo_not_an_absent_class(tmp_path):
     assert load_pack(_write_pack(tmp_path, body.replace('"   "', '""'))).requirements[0].scope == ""
 
 
-@pytest.mark.parametrize("pack_name", ["table7", "eu_ai_act", "gdpr", "ecoa"])
+@pytest.mark.parametrize("pack_name", ["table7", "eu_ai_act", "gpai", "gdpr", "ecoa"])
 @pytest.mark.parametrize("declared_scope", ["", "high-risk", "limited-risk"])
 def test_the_two_scope_gates_never_disagree(pack_name, declared_scope):
     """Applicability is decided twice — once to plan the run, once per requirement.

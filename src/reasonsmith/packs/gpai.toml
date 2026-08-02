@@ -1,0 +1,167 @@
+[pack]
+id = "gpai"
+title = "EU AI Act (Regulation (EU) 2024/1689): Articles 53 & 55 — general-purpose AI models"
+description = "Obligations of providers of general-purpose AI models (Art. 53(1)(a)-(d)) and the additional obligations of providers of general-purpose AI models with systemic risk (Art. 55(1)(a)-(d)). Every duty carries scope = \"general-purpose\", so a system that has not declared that class is reported not applicable rather than satisfied, and reasonsmith never infers the class. Two things a reader must take from this description before reading a verdict. First, **every requirement here is a presence check and nothing more.** Each of these clauses is a duty to produce a document or a record — technical documentation, downstream documentation, a copyright policy, a public training-content summary, an evaluation, a risk assessment, an incident report, a cybersecurity statement — and the presence of the artefact is the correct refinement of a duty to draw it up. It is not a refinement of the clause's adequacy words: nothing here sees whether the technical documentation contains what Annex XI asks for, whether the training-content summary is *sufficiently detailed*, whether the copyright policy is honoured in practice, or whether an evaluation *reflects the state of the art*. Every one of those is a row in docs/refinement.md. Second, **Article 55(1)(c)'s timing limb is not formalised.** The clause requires reporting *without undue delay* and names no period; formalising it would need either a number this pack invented and presented as the Act's, or a deadline signal the system declares about itself, which is a system grading its own compliance. The duty here is written as the record duty — an incident was tracked and a report exists — and the timing limb is recorded as not captured. No requirement in this pack is domain-limited: domains = [] is the classification, not an omission, because a general-purpose AI model is not a model of a particular kind of decision."
+
+[source]
+document = "Regulation (EU) 2024/1689 of the European Parliament and of the Council"
+publication = "Official Journal of the European Union, OJ L, 2024/1689, 12.7.2024"
+url = "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689"
+
+[[requirement]]
+id = "eu_ai_act_art53_1_a_technical_documentation"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 53(1)(a)"
+verbatim_text = "draw up and keep up-to-date the technical documentation of the model, including its training and testing process and the results of its evaluation, which shall contain, at a minimum, the information set out in Annex XI for the purpose of providing it, upon request, to the AI Office and the national competent authorities;"
+stakeholder = "regulator"
+formalism = "record"
+spec = """\
+present(provenance_technical_documentation) and \
+present(artifact_logs_training_and_testing_process) and \
+present(artifact_logs_model_evaluation_results)"""
+rationale = "The provider drew up technical documentation of the model, and it records the training and testing process and the results of the model's evaluation. A duty to draw up documentation is discharged by the documentation existing, so presence is the refinement of this duty rather than a proxy for it — but presence cannot see whether the documentation carries what Annex XI asks for."
+requires = [
+    "provenance_technical_documentation",
+    "artifact_logs_training_and_testing_process",
+    "artifact_logs_model_evaluation_results",
+]
+binding = true
+scope = "general-purpose"
+domains = []
+
+[[requirement]]
+id = "eu_ai_act_art53_1_b_downstream_documentation"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 53(1)(b)"
+verbatim_text = """draw up, keep up-to-date and make available information and documentation to providers of AI systems who intend to integrate the general-purpose AI model into their AI systems. Without prejudice to the need to observe and protect intellectual property rights and confidential business information or trade secrets in accordance with Union and national law, the information and documentation shall:
+       (i) enable providers of AI systems to have a good understanding of the capabilities and limitations of the general-purpose AI model and to comply with their obligations pursuant to this Regulation; and
+       (ii) contain, at a minimum, the elements set out in Annex XII;"""
+stakeholder = "deployer"
+formalism = "record"
+spec = """\
+present(provenance_downstream_provider_documentation) and \
+present(scope_statements_capabilities_and_limitations)"""
+rationale = "Documentation exists for providers of AI systems that intend to integrate this model, and it carries a statement of the model's capabilities and limitations — the understanding point (i) names. Presence establishes that the documentation was drawn up and not that a downstream provider could act on it."
+requires = [
+    "provenance_downstream_provider_documentation",
+    "scope_statements_capabilities_and_limitations",
+]
+binding = true
+scope = "general-purpose"
+domains = []
+
+[[requirement]]
+id = "eu_ai_act_art53_1_c_copyright_policy"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 53(1)(c)"
+verbatim_text = "put in place a policy to comply with Union law on copyright and related rights, and in particular to identify and comply with, including through state-of-the-art technologies, a reservation of rights expressed pursuant to Article 4(3) of Directive (EU) 2019/790;"
+stakeholder = "affected individual"
+formalism = "record"
+spec = """\
+present(provenance_copyright_policy) and \
+present(provenance_rights_reservation_identification)"""
+rationale = "A copyright policy is in place, and the model records how a reservation of rights under Article 4(3) of Directive (EU) 2019/790 is identified. Both limbs the clause names are read as artefacts that exist; whether the policy is complied with in practice is outside every engine here."
+requires = [
+    "provenance_copyright_policy",
+    "provenance_rights_reservation_identification",
+]
+binding = true
+scope = "general-purpose"
+domains = []
+
+[[requirement]]
+id = "eu_ai_act_art53_1_d_training_content_summary"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 53(1)(d)"
+verbatim_text = "draw up and make publicly available a sufficiently detailed summary about the content used for training of the general-purpose AI model, according to a template provided by the AI Office."
+stakeholder = "affected individual"
+formalism = "record"
+spec = """\
+present(provenance_training_content_summary) and \
+present(provenance_training_content_summary_template)"""
+rationale = "A summary of the content used for training exists, and it names the template it follows. Presence sees that a summary and a template reference were produced; it does not see whether the summary is sufficiently detailed, whether it was made publicly available, or whether the template named is the one the AI Office provided."
+requires = [
+    "provenance_training_content_summary",
+    "provenance_training_content_summary_template",
+]
+binding = true
+scope = "general-purpose"
+domains = []
+
+[[requirement]]
+id = "eu_ai_act_art55_1_a_model_evaluation"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 55(1)(a)"
+verbatim_text = "perform model evaluation in accordance with standardised protocols and tools reflecting the state of the art, including conducting and documenting adversarial testing of the model with a view to identifying and mitigating systemic risks;"
+stakeholder = "regulator"
+formalism = "record"
+spec = """\
+present(artifact_logs_model_evaluation_results) and \
+present(artifact_logs_adversarial_testing_record)"""
+rationale = "A model evaluation was performed and its results recorded, and adversarial testing of the model was documented — the clause asks for the testing to be documented, so a record of it is what the duty produces. Whether the protocols and tools reflect the state of the art is a judgement no engine here makes."
+requires = [
+    "artifact_logs_model_evaluation_results",
+    "artifact_logs_adversarial_testing_record",
+]
+binding = true
+scope = "general-purpose"
+domains = []
+
+[[requirement]]
+id = "eu_ai_act_art55_1_b_systemic_risk_assessment"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 55(1)(b)"
+verbatim_text = "assess and mitigate possible systemic risks at Union level, including their sources, that may stem from the development, the placing on the market, or the use of general-purpose AI models with systemic risk;"
+stakeholder = "regulator"
+formalism = "record"
+spec = """\
+present(artifact_logs_systemic_risk_assessment) and \
+present(artifact_logs_systemic_risk_mitigation)"""
+rationale = "A systemic-risk assessment exists and a record of the mitigations taken exists. The clause names two acts — assess and mitigate — and each leaves an artefact; presence establishes the artefacts and not that any risk was correctly identified or actually reduced."
+requires = [
+    "artifact_logs_systemic_risk_assessment",
+    "artifact_logs_systemic_risk_mitigation",
+]
+binding = true
+scope = "general-purpose"
+domains = []
+
+[[requirement]]
+id = "eu_ai_act_art55_1_c_serious_incident_reporting"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 55(1)(c)"
+verbatim_text = "keep track of, document, and report, without undue delay, to the AI Office and, as appropriate, to national competent authorities, relevant information about serious incidents and possible corrective measures to address them;"
+stakeholder = "regulator"
+formalism = "record"
+spec = """\
+present(artifact_logs_serious_incident_record) and \
+present(artifact_logs_serious_incident_report) and \
+present(artifact_logs_corrective_measures)"""
+rationale = "Serious incidents are tracked and documented, a report to the AI Office exists, and the possible corrective measures are recorded — the clause's three limbs, each as the artefact it produces. The clause's fourth limb, *without undue delay*, is deliberately not formalised: it names no period, so a bound here would be this pack's own number presented as the Act's, and a deadline the system declared about itself would be the system grading its own compliance. See docs/refinement.md."
+requires = [
+    "artifact_logs_serious_incident_record",
+    "artifact_logs_serious_incident_report",
+    "artifact_logs_corrective_measures",
+]
+binding = true
+scope = "general-purpose"
+domains = []
+
+[[requirement]]
+id = "eu_ai_act_art55_1_d_cybersecurity_protection"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 55(1)(d)"
+verbatim_text = "ensure an adequate level of cybersecurity protection for the general-purpose AI model with systemic risk and the physical infrastructure of the model."
+stakeholder = "regulator"
+formalism = "record"
+spec = """\
+present(provenance_cybersecurity_protection) and \
+present(provenance_physical_infrastructure_protection)"""
+rationale = "A statement of the cybersecurity protection covering the model exists, and one covering the physical infrastructure of the model exists — the two things the clause names. *Adequate* is an adequacy judgement presence cannot make, and no engine here tests any control either statement describes."
+requires = [
+    "provenance_cybersecurity_protection",
+    "provenance_physical_infrastructure_protection",
+]
+binding = true
+scope = "general-purpose"
+domains = []

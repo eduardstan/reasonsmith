@@ -46,7 +46,7 @@ from reasonsmith.spec import load_pack
 
 #: The packs whose quotes are verified against official statutory sources. `table7` is deliberately
 #: absent: its quotes come from the review paper itself, and no official document re-fetches them.
-STATUTORY_PACKS = ("eu_ai_act", "gdpr", "ecoa")
+STATUTORY_PACKS = ("eu_ai_act", "gpai", "gdpr", "ecoa")
 
 #: Elements that carry no text and no end tag even in well-formed XHTML/XML, so the passage
 #: extractor must not count them when tracking element nesting depth.
@@ -121,6 +121,16 @@ PROVISIONS = {
     "Article 12(2)": ("ai_act", "012.002"),
     "Article 13(1)": ("ai_act", "013.001"),
     "Article 13(2)": ("ai_act", "013.002"),
+    # Article 53(1) and 55(1) carry their lettered points inside the paragraph division, so all
+    # four points of each share the paragraph's selector and each quote is a substring of it.
+    "Article 53(1)(a)": ("ai_act", "053.001"),
+    "Article 53(1)(b)": ("ai_act", "053.001"),
+    "Article 53(1)(c)": ("ai_act", "053.001"),
+    "Article 53(1)(d)": ("ai_act", "053.001"),
+    "Article 55(1)(a)": ("ai_act", "055.001"),
+    "Article 55(1)(b)": ("ai_act", "055.001"),
+    "Article 55(1)(c)": ("ai_act", "055.001"),
+    "Article 55(1)(d)": ("ai_act", "055.001"),
     "Article 22(1)": ("gdpr_consolidated", "art_22"),
     "Article 22(3)": ("gdpr_consolidated", "art_22"),
     "Recital 71": ("gdpr_original", "rct_71"),

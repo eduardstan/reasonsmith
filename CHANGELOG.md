@@ -44,6 +44,50 @@ releases before it predate the file and are not reconstructed here.
   names the two of those rules that state a policy commitment rather than measure anything, because
   that is what the proof is worth.
 
+- **A GPAI pack, and the first duties to use the `general-purpose` class**
+  ([#80](https://github.com/eduardstan/reasonsmith/pull/80)). Eight requirements from Articles
+  53(1)(a)-(d) and 55(1)(a)-(d) of Regulation (EU) 2024/1689 — the obligations of a provider of a
+  general-purpose AI model, and the additional obligations where the model has systemic risk.
+  `general-purpose` had been a member of `spec.REGULATORY_CLASSES` since the class gate landed and
+  was used by zero shipped requirements, so the gate had a member no run had ever exercised; these
+  eight exercise it. A system declaring the class gets verdicts, one declaring nothing is reported
+  not applicable on all eight, and reasonsmith still never infers the class.
+
+  The retrieval record came first. `docs/legal-sources.md` recorded CELEX `32024R1689` as a
+  *document*, but its verbatim section held Articles 12 and 13 only, so Articles 53 and 55 were
+  re-fetched from the same official Cellar XHTML endpoint on 2026-08-02 and transcribed before the
+  pack quoted a word of either. `gpai` joins `drift.STATUTORY_PACKS` and the eight clauses join
+  `PROVISIONS`, so the monthly statute-drift workflow re-verifies these quotes against the print;
+  the AI Act fixture gains the `053.001` and `055.001` divisions and is renamed to stop claiming it
+  holds only Articles 12 and 13.
+
+  **Every requirement is a presence check, and the pack says so rather than implying otherwise.**
+  For a duty to draw up a document, presence is the correct refinement and no stronger property
+  exists to write; it is not a refinement of the adequacy words the same clauses attach — whether
+  the technical documentation carries what Annex XI asks for, whether the training-content summary
+  is *sufficiently detailed*, whether the copyright policy is honoured in practice, whether an
+  evaluation *reflects the state of the art*. Each has its own row in `docs/refinement.md`, along
+  with two limits that ride on the whole pack: these are duties about a model read off a decision
+  record, and Article 55's systemic-risk trigger is not modelled, so declaring `general-purpose`
+  reaches all eight duties.
+
+  Article 55(1)(c)'s *without undue delay* limb is deliberately not formalised. A temporal property
+  could bound a reporting latency the way the ECOA notice duty does, but that clause supplies its
+  own 30 and 90 days and this one supplies no period at all; a constant chosen here would be a pack
+  author's figure presented as the Act's, and a self-declared deadline signal would be the system
+  grading itself. The duty is written on its three artefact limbs and the record states the
+  consequence: a provider that reported a serious incident a year late is `satisfied` on it.
+
+### Changed
+
+- **The presence-check ratio moved the wrong way, and the documents that count it say so**
+  ([#80](https://github.com/eduardstan/reasonsmith/pull/80)). 21 of 27 shipped requirements are now
+  `record` duties, up from 13 of 19. `ROADMAP.md` objective 4 records that the fifth pack met its
+  measurable outcome in full while leaving the judgement it names *less* settled than before —
+  breadth bought this way is real breadth and it is not depth — and puts the ask on a sixth pack:
+  say which of its duties reaches above `record`. The README's researcher paragraph carries the
+  same number.
+
 ## [0.5.0] - 2026-08-02
 
 **Breaking:** the example systems and the sample decision log moved from `docs/adapters/` and
