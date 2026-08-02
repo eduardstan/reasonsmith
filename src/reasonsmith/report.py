@@ -81,6 +81,15 @@ _UNREAD = object()
 #: parsing a sentence that is free to be reworded.
 UNDECLARED_DOMAIN_KEY = "skipped_for_undeclared_domain"
 
+#: Where a result produced by an installed engine plug-in records which plug-in produced it and
+#: what ceiling that plug-in declared. Both halves are load-bearing. The name is provenance: a
+#: reader of a verdict must be able to see that a third-party engine answered, and this package
+#: refuses an invisible provenance everywhere else. The ceiling is the claim the plug-in made
+#: about itself, and `__post_init__` refuses a result carrying a strength above it — an engine
+#: declaring `probed` and returning `proved` has its result refused rather than trusted. See
+#: `reasonsmith.plugins` and `docs/authoring-engines.md`.
+ENGINE_PLUGIN_KEY = "engine_plugin"
+
 
 #: Re-exported so the engines and the JSONL adapter keep importing presence from one place. The
 #: definition lives in `rulelang` because `present(signal)` is an atom of the property language
@@ -153,6 +162,11 @@ class RequirementResult:
         # impossible to publish a probed verdict in any format without what was searched.
         self._validate_probe_budget()
 
+        # A plug-in cannot report above the ceiling it declared. Refused here rather than trusted
+        # and rendered, for the same reason the probe budget is: an installed package this
+        # repository never audited must not be able to make the tool claim more than it has.
+        self._validate_plugin_claim()
+
         unattainable = self.strength == Strength.UNATTAINABLE
         if unattainable and self.verdict != Verdict.INCONCLUSIVE:
             raise ValueError(
@@ -216,6 +230,32 @@ class RequirementResult:
             raise ValueError(
                 f"{self.requirement_id}: the probe budget must name "
                 f"{', '.join(PROBE_BUDGET_FIELDS)}; missing {', '.join(missing_fields)}"
+            )
+
+    def _validate_plugin_claim(self) -> None:
+        """Refuse a plug-in result claiming a strength above the ceiling the plug-in declared."""
+        plugin = self.details.get(ENGINE_PLUGIN_KEY)
+        if plugin is None:
+            return
+        if not isinstance(plugin, Mapping) or not plugin.get("name"):
+            raise ValueError(
+                f"{self.requirement_id}: details[{ENGINE_PLUGIN_KEY!r}] must be a mapping naming "
+                f"the plug-in that produced this result; got {plugin!r}"
+            )
+        try:
+            ceiling = Strength.parse(plugin["max_strength"])
+        except (KeyError, ValueError) as exc:
+            raise ValueError(
+                f"{self.requirement_id}: the plug-in {plugin.get('name')!r} must declare the "
+                f"maximum strength it may report in details[{ENGINE_PLUGIN_KEY!r}]"
+                f"['max_strength']: {exc}"
+            ) from exc
+        if self.strength is not None and self.strength > ceiling:
+            raise ValueError(
+                f"{self.requirement_id}: the engine plug-in {plugin['name']!r} declared a maximum "
+                f"strength of {ceiling} but reported {self.strength}; the result is refused. "
+                "reasonsmith does not audit a plug-in, so the ceiling it declares is the only "
+                "bound on what it may claim — see docs/authoring-engines.md."
             )
 
     @property
@@ -844,7 +884,14 @@ def _engine_ladder(
     reason field is non-blank, or that the number the system wrote in it is small — and reporting
     either in place of the measurement is the substitution the certificate engine exists to
     remove. A system exposing no artefact is therefore reported *unattainable* by that engine
-    rather than falling through to a presence check.
+    rather than falling through to a presence check. That single rung stays single: the plug-in
+    rungs below are appended after it has already returned, so no installed package can answer that
+    duty off the system's log either.
+
+    Engines an installed package supplies (entry-point group `reasonsmith.engines`) join the ladder
+    at the ceiling each declares, which is exactly what makes "a new engine is reached the moment it
+    exists" mean *installed* rather than *in this tree*. What a plug-in may claim, and what happens
+    when one misbehaves, is `reasonsmith.plugins` and `docs/authoring-engines.md`.
     """
     from reasonsmith.engines.certificate import DELETED_REASON_COUNT
 
@@ -903,6 +950,17 @@ def _engine_ladder(
                 ),
             )
         )
+
+    # Engines an installed package supplies, each at the ceiling it declared. Appended last, so at
+    # an equal rung a built-in is tried first and a plug-in answers only what the built-in left
+    # un-established. Nothing else about the ladder changes: with no plug-in installed this is the
+    # empty list, and `_engine_ladder` returns exactly what it returned before.
+    from reasonsmith.plugins import engine_rungs
+    ladder.extend(
+        engine_rungs(
+            req, sut, lambda: records if records is not None else resources.trace()
+        )
+    )
 
     return ladder
 

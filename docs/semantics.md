@@ -746,6 +746,46 @@ and a logged decision carries none — the ladder reports the `proved` verdict a
 read for that duty. That is not a contradiction the tool resolves; it is a system misdescribing
 itself to its auditor, which §3 already says reasonsmith does not detect.
 
+### An engine that was installed rather than vendored
+
+The ladder collects engines from the system's exposed surface rather than from the pack, so a new
+engine is reached the moment it *exists* — and "exists" means installed, not in this tree. An engine
+shipped as its own pip package, declared in the `importlib.metadata` entry-point group
+`reasonsmith.engines`, joins the ladder at the rung it declares in `max_strength` and can discharge
+a duty like any built-in (`test_an_installed_engine_joins_the_ladder_and_discharges_a_duty`). The
+property language is untouched by this; only the set of engines that may discharge a duty is open.
+
+What such a verdict means is bounded by four claims, and by nothing else, because **reasonsmith does
+not audit the plug-in**:
+
+- **A plug-in cannot report above the ceiling it declared.** The refusal is in
+  `RequirementResult.__post_init__`, beside the probe budget and the not-applicable invariants, so a
+  result claiming more than the plug-in declared cannot be constructed at all
+  (`test_a_result_claiming_above_the_declared_ceiling_is_refused`,
+  `test_an_overclaiming_plugin_reports_not_evaluated_rather_than_proved`).
+- **A plug-in that raises, exhausts its own time bound, returns the wrong type, or cannot be
+  imported reports *not evaluated*** — never satisfied, and never violated either, because a false
+  violation from an unaudited package is as bad as a false pass
+  (`test_a_broken_plugin_establishes_nothing`,
+  `test_a_broken_plugin_cannot_fail_a_duty_the_builtin_satisfies`,
+  `test_a_plugin_that_cannot_be_imported_is_skipped`). reasonsmith imposes no wall clock of its own:
+  a plug-in that hangs hangs the run, and bounding its own search is the plug-in's job.
+- **A plug-in cannot take a built-in engine's name.** It is refused with a warning and the built-in
+  stands, rather than being namespaced into a decorated name that would leave the shadowing engine
+  answering the same duty (`test_a_plugin_shadowing_a_builtin_engine_is_refused`). The same rule
+  holds for a pack name (`test_a_pack_shadowing_a_builtin_pack_name_is_refused`).
+- **Every plug-in result names the plug-in**, in `details["engine_plugin"]` and in the evidence
+  summary, failures included (`test_an_installed_engine_joins_the_ladder_and_discharges_a_duty`,
+  `test_a_broken_plugin_establishes_nothing`).
+
+That is the whole guarantee, and it is deliberately a guarantee about *form*. A `proved` from
+`engines/proved.py` is a claim this repository's suite is about; a `proved` from an unfamiliar
+plug-in is worth exactly what the installer's trust in that package is worth. The provenance in
+every plug-in result is what lets a reader tell the two apart, and reading it is the installer's
+job — see [`authoring-engines.md`](authoring-engines.md). With nothing installed, both groups are
+empty and the ladder is the built-in ladder, unchanged
+(`test_with_no_plugin_installed_the_ladder_is_the_builtin_ladder`).
+
 ### When the presence atom cannot be proved
 
 `ProvedEngine` refuses `present(x)` unless the declared rules definitely assign `x`: every path
@@ -969,6 +1009,12 @@ Two consequences of that report text, followed by a separate package-level termi
 | The ladder takes the strongest evidence produced, not the strongest engine available | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can` |
 | An engine whose interface raises establishes nothing, and the duty still lands on the rung that answered | `test_a_record_duty_survives_a_system_whose_logic_raises`, `test_a_logical_duty_survives_a_system_whose_logic_raises`, `test_a_logic_failure_is_named_when_no_rung_produced_evidence`, `test_a_raising_logic_is_attempted_once_per_evaluation` |
 | Building the ladder reads the callable surface and never executes the system | `test_building_the_ladder_never_executes_the_system` |
+| An installed engine plug-in joins the ladder, discharges a duty, and names itself in the result | `test_an_installed_engine_joins_the_ladder_and_discharges_a_duty` |
+| A plug-in cannot report above the ceiling it declared | `test_a_result_claiming_above_the_declared_ceiling_is_refused`, `test_a_plugin_result_must_declare_a_ceiling`, `test_an_overclaiming_plugin_reports_not_evaluated_rather_than_proved` |
+| A plug-in that raises, times out, returns the wrong type, or cannot be imported is not evaluated, never satisfied and never violated | `test_a_broken_plugin_establishes_nothing`, `test_a_broken_plugin_cannot_fail_a_duty_the_builtin_satisfies`, `test_a_plugin_that_cannot_be_imported_is_skipped`, `test_a_plugin_without_a_declared_ceiling_gets_no_rung` |
+| A plug-in cannot shadow a built-in engine or pack name | `test_a_plugin_shadowing_a_builtin_engine_is_refused`, `test_a_pack_shadowing_a_builtin_pack_name_is_refused` |
+| An installed pack loads through the one loader and is held to every rule an in-tree one is | `test_an_installed_pack_loads_by_name`, `test_an_installed_pack_may_be_a_callable`, `test_an_installed_pack_is_held_to_every_rule_an_in_tree_one_is` |
+| With no plug-in installed the ladder is the built-in ladder | `test_with_no_plugin_installed_the_ladder_is_the_builtin_ladder` |
 | A malformed trace still raises and names the system | `test_a_trace_of_the_wrong_shape_names_the_system` |
 | A presence proof requires the rules to assign the signal on every path | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`, `test_presence_is_not_proved_when_only_one_branch_assigns_the_signal` |
 | A temporal duty never rises above observed | `test_a_temporal_duty_never_rises_above_observed` |

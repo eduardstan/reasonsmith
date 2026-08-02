@@ -407,17 +407,33 @@ def _check_spec(req: Requirement, where: str) -> None:
 
 
 def load_pack(name_or_path: str | Path) -> Pack:
-    """Load a regulation pack from a built-in pack name or TOML file path."""
+    """Load a regulation pack from a built-in pack name, an installed package, or a TOML path.
+
+    The three are one lookup and one loader, in that order: a built-in file under `PACKS_DIR`, then
+    a pack an installed package provides through the `reasonsmith.packs` entry-point group, then
+    the name read as a path. A built-in wins a name collision and the shadowing entry point is
+    refused with a warning (`reasonsmith.plugins`), so installing a package can never change what
+    `load_pack("gdpr")` means. Whatever the route, the file goes through the checks below
+    unchanged: an externally provided pack is held to every rule an in-tree one is.
+    """
+    from reasonsmith.plugins import pack_names, pack_path
+
     path = Path(name_or_path)
     if not path.is_file() and not str(name_or_path).endswith(".toml"):
         candidate = PACKS_DIR / f"{name_or_path}.toml"
         if candidate.is_file():
             path = candidate
+        else:
+            provided = pack_path(str(name_or_path), tuple(list_packs()))
+            if provided is not None:
+                path = provided
 
     if not path.is_file():
+        installed = pack_names(tuple(list_packs()))
         raise FileNotFoundError(
             f"Pack file not found: {name_or_path}. "
             f"Built-in packs: {', '.join(list_packs()) or 'none'}"
+            + (f". Installed packs: {', '.join(installed)}" if installed else "")
         )
 
     with path.open("rb") as f:

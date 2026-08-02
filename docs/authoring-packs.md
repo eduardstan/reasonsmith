@@ -244,3 +244,34 @@ same way so a reviewer can verify the quotation against the print; `validate-pac
 field is nonblank, not that it matches an external source. A requirement with a blank source
 document, clause or quotation is malformed rather than merely incomplete, because it cannot be
 checked against the print at all.
+
+## Shipping a pack as its own package
+
+A pack does not have to live in this tree. Declare it in the `reasonsmith.packs` entry-point group
+and `load_pack` resolves it by name once your package is installed:
+
+```toml
+# your package's pyproject.toml
+[project.entry-points."reasonsmith.packs"]
+my_pack = "my_package:PACK_PATH"
+```
+
+The entry point resolves to a path to the TOML file, or to a zero-argument callable returning one —
+the second form is how a package that ships its pack inside a wheel points at it
+(`importlib.resources` is the usual way to produce that path).
+
+Nothing else changes. There is one loader and one lookup order — a built-in pack file first, then an
+installed package's, then the name read as a path — so an externally provided pack is refused by
+exactly the checks an in-tree one is: the exact field set, the fragment classification, the
+`requires` gate, all of it. Validate it the same way, by name:
+
+```sh
+reasonsmith validate-pack my_pack
+```
+
+A built-in wins a name collision: an entry point named for a shipped pack is refused with a warning
+and the built-in stands, so installing a package can never change what `load_pack("gdpr")` means.
+
+Engines install the same way, through `reasonsmith.engines` — see
+[`authoring-engines.md`](authoring-engines.md), which is also where the discipline lives: what a
+plug-in may claim, and what a `proved` from an engine this repository never audited is worth.

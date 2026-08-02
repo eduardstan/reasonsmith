@@ -114,6 +114,19 @@ domain is never reported satisfied on a domain-limited duty. It does not model t
 a decision (12 CFR 1002.9 fires on adverse action, not on being a creditor), and it does not check
 that a system declaring `consumer-credit` issues credit.
 
+An engine and a pack can be **installed rather than vendored**. `plugins.py` is the whole of it —
+`importlib.metadata.entry_points` over `reasonsmith.engines` and `reasonsmith.packs` — and it is
+deliberately not a plug-in framework: no registry, no lifecycle, no manifest. A discovered engine
+joins `_engine_ladder` at the rung its `max_strength` declares and cannot report above it
+(`RequirementResult.__post_init__`, `ENGINE_PLUGIN_KEY`); one that raises, times out, returns the
+wrong type or will not import reports *not evaluated*, never satisfied and never violated; one
+taking a built-in's name is refused rather than namespaced; and every plug-in result names its
+plug-in. `load_pack` resolves an installed pack through the same lookup and the same checks, with
+built-ins winning a name collision. There is no wall clock — a plug-in that hangs hangs the run, and
+that limit is stated in `docs/authoring-engines.md` rather than papered over. Read that document and
+`docs/semantics.md` §3.5 (*An engine that was installed rather than vendored*) before widening any
+of it; nothing here audits a plug-in, so its declared ceiling is the only bound on what it claims.
+
 `src/reasonsmith/packs/*.toml` are derived, not authored. The EU AI Act, GDPR and ECOA packs quote
 `docs/legal-sources.md`, which is the retrieval record for the official statutory text and the one
 place a quote is checked against the law. The Table 7 pack restates the rows of

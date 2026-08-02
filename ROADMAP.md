@@ -32,7 +32,9 @@ ceiling stops being checked.
 
 **Depends on.** Nothing structural: the engine ladder
 ([#47](https://github.com/eduardstan/reasonsmith/pull/47)) already collects engines from the
-system's exposed surface rather than from the pack, so a new engine is reached the moment it exists.
+system's exposed surface rather than from the pack, so a new engine is reached the moment it exists —
+and it need not be vendored here, since an engine installed through the `reasonsmith.engines`
+entry-point group joins the same ladder ([`docs/authoring-engines.md`](docs/authoring-engines.md)).
 What it needs is the reasoning itself — a bounded search over generated traces, or a solver encoding
 of a trace-wide formula — and, before it can ship, its own soundness paragraph in
 `docs/semantics.md` §3 naming the test that fails if the claim becomes false.
