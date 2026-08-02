@@ -30,7 +30,7 @@ releases before it predate the file and are not reconstructed here.
   table of what each audience is shown, and the reasoning for every row, is authored rather than
   derived and is written down in `docs/semantics.md` §7, along with two limits — this artefact
   carries no reasons for the decision itself, and `--audience` is presentation, not redaction.
-  ([#71](https://github.com/eduardstan/reasonsmith/pull/71))
+  ([#72](https://github.com/eduardstan/reasonsmith/pull/72))
 - **One differential test holds the two implementations of the property language to one semantics.**
   `rulelang.eval_expression` and the Z3 encoding in `engines/proved.py` are two implementations of
   one language — `rulelang`'s docstring says so, and says why a gap between them is the worst defect
