@@ -8,6 +8,14 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-02
+
+**Breaking:** the example systems and the sample decision log moved from `docs/adapters/` and
+`docs/sample_decisions.jsonl` into the `reasonsmith.examples` package, so a command from 0.4.0's
+README that names those paths must be updated — use `python -m reasonsmith.examples.<name>`,
+`--system-module reasonsmith.examples.<name>:system_under_test`, and `python -m reasonsmith.examples`
+for the log's directory.
+
 ### Documentation
 
 - **The front page shows the audience view and says the tool is extensible**
