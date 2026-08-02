@@ -217,13 +217,20 @@ byte-for-byte. Anything that moves `render_text`'s wording, the nesyarena versio
 own constants means regenerating with `python docs/build_nesyarena_report.py`. Like
 `docs/report.html`, it names its build command and deliberately carries no commit hash; reproducibility
 is owned by the byte-for-byte builder test, so do not add a hash back. Its adapter declares only
-signals a provenance genuinely emits, so ten pack signals are deliberately undeclared, and neither a
-regulatory class nor a decision domain is declared — these systems decide graph reachability and
-Sudoku validity, so there is nothing to declare; the resulting unattainable and not-applicable
-verdicts are the finding, not a gap to close, and naming a domain to make the ECOA rows evaluate
-again would put finding 3's false positive back by hand.
-`docs/findings-nesyarena.md` is the written account and is hand-maintained — every number in it
-comes from that report, so regenerating one means rereading the other.
+signals a provenance genuinely emits, so eleven pack signals are deliberately undeclared, and
+neither a regulatory class nor a decision domain is declared — these systems decide graph
+reachability and Sudoku validity, so there is nothing to declare; the resulting unattainable and
+not-applicable verdicts are the finding, not a gap to close, and naming a domain to make the ECOA
+rows evaluate again would put finding 3's false positive back by hand.
+`docs/findings-nesyarena.md` is the written account of that report, held to it by
+`tests/test_findings_nesyarena.py`: every figure the prose quotes is derived from the run the
+builder drives — the report, the declared/undeclared signal census, the per-formalism requirement
+census — and a failure names the figure and what to regenerate, so a pack change that moves a
+count fails the build until the prose is re-derived. Two sharp edges: the pack loader refuses a
+`formalism` that does not match a requirement's spec, so pin breaks must come from the builder's
+census or the document, never from a duty reclassification; and historical claims (the first
+run's 11 requirements and 8 signals, the pre-domain-gate ECOA column of 8 satisfied / 2 violated
+/ 5 unattainable) are not derivable and are verified against git history instead.
 
 `docs/semantics.md` states what each verdict means and what it does not, and every claim in it names
 the test that fails if the claim becomes false. `tests/test_docs_semantics.py` checks that mapping,

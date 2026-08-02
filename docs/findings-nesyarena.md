@@ -206,19 +206,30 @@ Across all three packs there are three `logical` requirements
 (`gdpr_art22_1_no_prohibited_decision_for_any_input`, `ecoa_reg_b_1002_9_b_2_specific_reasons` and
 `ecoa_reg_b_1002_9_b_2_principal_reasons_complete`) and three `temporal` requirements
 (`ecoa_reg_b_1002_9_a_1_timing_of_notice`, `ecoa_reg_b_1002_9_a_2_written_statement` and
-`gdpr_recital71_error_risk_minimised`). The GDPR logical duty and the ECOA *timing* duty came back
-`unattainable` for all five systems, so the Z3 proved engine and the replay probed engine never
-ran. That GDPR duty needs six signals; the system can emit none of them, because five are facts
-about a controller's legal basis or about a human-intervention route and one is about the effect a
-decision has on a person. The ECOA timing duty needs a notification latency the system has no
-concept of. The GDPR error-risk duty and the ECOA content duty are checkable and produce `observed`
-verdicts; temporal monitoring does not reach either of the top two rungs, and no engine in this
-build reasons about a formula quantified over a trace (`docs/semantics.md` §3.5). (Since finding 3,
-the ECOA content duty no longer reaches this system at all — its ceiling is unchanged, but this run
-is no longer where it can be seen.) This account of why the top two rungs went unreached was
-written when `gdpr_art22_1_no_prohibited_decision_for_any_input` was the only `logical` duty in
-these packs; it does not cover the two ECOA `logical` duties added since, and why they also
-produce no `probed` or `proved` verdict here has not been re-derived.
+`gdpr_recital71_error_risk_minimised`). Two duties came back `unattainable` for all five systems —
+the whole unattainable column of ten: the GDPR logical duty
+`gdpr_art22_1_no_prohibited_decision_for_any_input` and the GDPR record duty
+`gdpr_art22_1_automated_decision_prohibition`. The logical duty needs six signals; the system can
+emit none of them, because five are facts about a controller's legal basis or about a
+human-intervention route and one is about the effect a decision has on a person. The record duty
+needs `provenance_active_exceptions`, and definite Horn programs have no defeater mechanism to
+record as active. The ECOA *timing* duty is not `unattainable` in this run at all — it is one of
+the twenty not-applicable results, because the domain gate of finding 3 reports it without running
+it. It needs a notification latency and a counteroffer signal the system has no concept of, so a
+run that declared `consumer-credit` would report it `unattainable`, but this run is not that run.
+
+The two ECOA `logical` duties and the ECOA content duty produce no `probed` or `proved` verdict
+for the same reason the ECOA timing duty produces no `unattainable` one: the domain gate reports
+them not applicable without running any engine, so their rung is decided by finding 3 rather than
+by the evidence ladder. The GDPR error-risk duty is the one temporal duty this run checks, and it
+produces `observed` verdicts; temporal monitoring does not reach either of the top two rungs, and
+no engine in this build reasons about a formula quantified over a trace (`docs/semantics.md` §3.5).
+
+**The conclusion still holds, against the current counts: the Z3 proved engine and the replay
+probed engine never ran.** Z3 never ran because no `logical` duty reaches an engine in this run —
+the GDPR one is `unattainable` before any engine is asked, and the two ECOA ones are not applicable
+on the domain gate — and even a checkable `logical` duty would have found no `logic()` to reason
+over. The replay search never ran because no system in the battery exposes `decide()`.
 
 `ecoa_reg_b_1002_9_a_2_written_statement` is temporal only since the either/or of 12 CFR
 1002.9(a)(2) was formalised; it was a `record` duty when this run was first made, and its verdicts
@@ -234,8 +245,11 @@ surface allows, and the same property reaches `proved` against exposed `logic()`
 builder after the fix changes nothing in this report.** The counts above are unmoved, and that is
 the correct answer rather than a leftover of the defect: `NesyArenaSUT` implements `decisions()`
 and nothing else, so there is no `decide()` to replay a perturbed input through and no `logic()` to
-reason over. The record duties stay `observed` because a bare trace is all the evidence this system
-offers, which is what `observed` means.
+reason over. Of the seven record duties, four are the AI Act's and are not applicable on the scope
+gate, one — `gdpr_art22_1_automated_decision_prohibition` — reaches no engine at all, and the two
+that do, `gdpr_art22_3_safeguards_human_intervention` and `gdpr_recital71_meaningful_explanation`,
+stay `observed`, because a bare trace is all the evidence this system offers, which is what
+`observed` means.
 
 Giving the adapter a `decide()` would move the number and would be dishonest: the probe engine
 perturbs *record fields*, and this system's inputs are a ground program and its fact
@@ -276,7 +290,10 @@ The gate is not the only thing standing between these systems and the fourth of 
 `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` gates on `artifact_logs_deleted_reason_count`, a
 count reasonsmith *measures* from an inference artefact a system exposes through the optional
 `artifact()` method rather than reads from a log, so even a run declaring `consumer-credit` would
-report it `unattainable` on all five provenances, where the other three would become checkable.
+report it `unattainable` on all five provenances. It would not be alone: the timing duty would be
+`unattainable` too, on the notification latency and counteroffer signals it gates on, so two of the
+four duties would stay unattainable and the other two — the written-statement and specific-reasons
+duties — would become checkable.
 
 Three things this did not fix, in descending order of how much they should worry a reader:
 
