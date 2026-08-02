@@ -72,6 +72,18 @@ it reads the `spec` as written, so implication in a pack must be spelled `->` an
 the atom encodings, and the one case the ladder does not resolve (exposed logic disagreeing with the
 trace).
 
+The proof rung refuses a property built out of names the declared rules never assign, on the ground
+that such a name is a free constant of the encoding — for `present()`, for `contains()`, and (since
+the temporal reduction made it reachable) for a comparison of magnitudes. The third,
+`_check_magnitudes_are_computed`, is the only one that is a **heuristic**, and it is narrow for two
+reasons that are each a duty: it needs the property to read no assigned name at all, or
+`income >= 30000 implies approved` stops being provable, and it needs a free name of arithmetic
+sort, or `gdpr_art22_1_no_prohibited_decision_for_any_input` — whose whole point is quantifying over
+Boolean flags no rule assigns — loses its proof. Widening either condition breaks a shipped duty.
+The principled closure is adapters declaring variable directions, which no engine can ask for today;
+`docs/semantics.md` §3.5, *When the magnitudes are not the system's own*, is the statement of all of
+it.
+
 `contains(signal, "phrase")` is the one atom that reads *what a statement says* rather than whether a
 field is blank, and it exists because a duty settled by `present()` alone accepts a reason of
 `"n/a"`. It must keep agreeing across all three encodings — the rulelang interpreter, the synthetic
@@ -194,6 +206,29 @@ page is the only way the gallery can style itself without a second palette.
 `tests/test_docs_audiences.py` holds the page byte-for-byte to the builder and fails if the
 gallery grows a `<style>` block, a colour literal, a font stack, a `var(--token)` the renderer
 does not define or a class it does not style. Regenerate with `python docs/build_audiences.py`.
+
+The page's stylesheet is two token blocks, and three rules keep them from drifting. The dark block
+is `@media screen and (prefers-color-scheme: dark)` — the `screen` is load-bearing, because the
+`@media print` block below it overrides a handful of declarations and otherwise assumes the light
+values, so a dark override reaching print media prints white on white
+(`test_the_dark_scheme_is_screen_only_so_print_stays_light`). A solid chip pairs its fill
+(`--ink`, `--ok`, `--warn`, `--accent`) with `var(--paper)`, never `var(--surface)`: that pairing
+inverts with the scheme, and `--surface` puts near-white text on a light green fill in the dark
+block. The report header is not an inversion of the page — it is a dark band in both schemes, so
+it and the key-finding banner read `--band`/`--band-ink`/`--band-faint`/`--band-line`/
+`--band-accent` rather than swapping `--ink` and `--surface`. Satisfied-green and violated-red
+carry meaning here, so `test_both_schemes_keep_the_verdict_colours_apart` pins the hue channel of
+`--ok` and `--accent-deep` in both blocks: a scheme that desaturates them toward a common grey
+passes every contrast check and still destroys the distinction. `demo.py` carries its own
+stylesheet for the key-finding section that `docs/build_example.py` composes in, and it is subject
+to all three rules.
+
+`ConformanceReport.to_dict()` leads with `schema_version` (`report.JSON_SCHEMA_VERSION`), the
+`--json` envelope's shape version. It is not the package version, it increments only when a key is
+removed, renamed or changes type or meaning, and `tests/test_json_schema_version.py` writes out the
+key set at both levels beside the number so a shape change without a bump fails. Adding a key fails
+it too, deliberately: the convention says that is not a bump, and the test exists to make the
+decision be made rather than skipped.
 
 `AudienceProjection` has one field that emits rather than suppresses: `plain_account`, on for
 `affected-individual` alone, turning on `render._lay_sections`. Everything it prints is quoted —

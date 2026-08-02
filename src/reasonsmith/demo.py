@@ -402,8 +402,8 @@ _KEY_FINDING_CSS = """
     overflow: hidden;
   }
   .key-finding-banner {
-    background: var(--ink);
-    color: var(--surface);
+    background: var(--band);
+    color: var(--band-ink);
     padding: var(--space-m) var(--space-l);
     border-bottom: 4px solid var(--accent);
   }
@@ -415,7 +415,7 @@ _KEY_FINDING_CSS = """
     letter-spacing: 0.16em;
     text-transform: uppercase;
     background: var(--accent);
-    color: var(--surface);
+    color: var(--paper);
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
     margin-bottom: var(--space-2xs);
@@ -430,7 +430,7 @@ _KEY_FINDING_CSS = """
   }
   .kf-subtitle {
     font-size: var(--step--1);
-    color: oklch(80% 0.01 260);
+    color: var(--band-faint);
     margin-top: var(--space-2xs);
     max-width: 70ch;
     text-wrap: pretty;
@@ -577,11 +577,11 @@ _KEY_FINDING_CSS = """
   }
   .tag-live {
     background: var(--ok);
-    color: var(--surface);
+    color: var(--paper);
   }
   .tag-deleted {
     background: var(--accent);
-    color: var(--surface);
+    color: var(--paper);
   }
 """
 

@@ -1257,6 +1257,111 @@ def test_a_temporal_violation_names_the_trace_it_is_and_is_not_about():
     assert "not a finding about the trace supplied here" in result.evidence_summary
 
 
+_UNCOMPUTED_MAGNITUDE_VARIABLES = {
+    "score": "int",
+    "approved": "bool",
+    "scope_statements_declared_deviation": "real",
+    "artifact_logs_decision_margin": "real",
+    "scope_statements_approximation_vs_guarantee": "bool",
+}
+_UNCOMPUTED_MAGNITUDE_SIGNALS = {
+    "scope_statements_declared_deviation",
+    "artifact_logs_decision_margin",
+    "scope_statements_approximation_vs_guarantee",
+}
+
+
+def _deviation_sut(test_inputs: list[dict]) -> RulesAdapter:
+    """A system deciding on a score alone, declaring the deviation signals and computing none."""
+    return RulesAdapter(
+        rules=["approved = score >= 650"],
+        variables=_UNCOMPUTED_MAGNITUDE_VARIABLES,
+        constraints=["score >= 0", "score <= 1000"],
+        test_inputs=test_inputs,
+        declared_capabilities=set(_UNCOMPUTED_MAGNITUDE_SIGNALS),
+    )
+
+
+def test_a_magnitude_the_rules_never_compute_is_not_proved_violated():
+    """No proof verdict from arithmetic over two names no rule assigns.
+
+    `gdpr_recital71_error_risk_minimised` compares a declared deviation with a decision's own
+    margin. A system that decides on a score alone computes neither, so both are free constants of
+    the solver's encoding, and the solver will happily pick `deviation = 1, margin = 0`. The
+    counterexample verification does not catch it: the reference interpreter is handed the same
+    free inputs, so the "violation" reproduces. Left unguarded, a clean system was reported
+    `violated` at `proved` — the one verdict that exits non-zero — on numbers nobody computed.
+
+    Both halves are the fix. The duty must not reach a proof rung on such a system, and it must
+    fall to the engine that reads the trace, which measures the magnitudes when the decisions
+    carry them and reports them unmeasured when they do not.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+
+    unmeasured = evaluate_requirement(
+        req, _deviation_sut([{"score": 700}, {"score": 300}])
+    )
+    assert unmeasured.strength is None
+    assert unmeasured.verdict == Verdict.INCONCLUSIVE
+    assert "reads nothing the declared rules assign" in unmeasured.evidence_summary
+
+    measured = evaluate_requirement(
+        req,
+        _deviation_sut(
+            [
+                {
+                    "score": 700,
+                    "scope_statements_declared_deviation": 2.0,
+                    "artifact_logs_decision_margin": 50.0,
+                    "scope_statements_approximation_vs_guarantee": True,
+                },
+                {
+                    "score": 300,
+                    "scope_statements_declared_deviation": 2.0,
+                    "artifact_logs_decision_margin": 350.0,
+                    "scope_statements_approximation_vs_guarantee": True,
+                },
+            ]
+        ),
+    )
+    assert measured.verdict == Verdict.SATISFIED
+    assert measured.strength == Strength.OBSERVED
+
+
+def test_article_22_still_quantifies_over_flags_the_rules_never_assign():
+    """The reading the magnitude guard must not silence.
+
+    `gdpr_art22_1_no_prohibited_decision_for_any_input` asks whether *any* admissible input yields
+    a decision that is solely automated and significantly affecting without an Article 22(2) basis.
+    Its flags are free inputs of the exposed rules on purpose — quantifying over them is the whole
+    duty — so a guard that refused every unassigned name would turn this proof into silence. It
+    fires only on a property reading no assigned name *and* reading some free name as a magnitude,
+    and these flags are Booleans.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_art22_1_no_prohibited_decision_for_any_input")
+    flags = (
+        "artifact_logs_solely_automated",
+        "artifact_logs_significant_effect",
+        "artifact_logs_human_intervention_route",
+        "provenance_basis_contract",
+        "provenance_basis_union_or_member_state_law",
+        "provenance_basis_explicit_consent",
+    )
+    sut = RulesAdapter(
+        rules=["approved = score >= 650"],
+        variables={"score": "int", "approved": "bool", **{flag: "bool" for flag in flags}},
+        constraints=["score >= 0", "score <= 1000"],
+        test_inputs=[{"score": 700}, {"score": 300}],
+        declared_capabilities=set(flags),
+    )
+
+    result = evaluate_requirement(req, sut)
+
+    assert result.verdict == Verdict.VIOLATED
+    assert result.strength == Strength.PROVED
+    assert result.details["counterexample"]["artifact_logs_solely_automated"] is True
+
+
 def test_the_solvers_blank_string_is_pythons_blank_string():
     """`present()` over a string must mean the same thing to Z3 as it does to the interpreter.
 

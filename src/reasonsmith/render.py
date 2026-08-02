@@ -815,12 +815,17 @@ def render_html(
     :root {{
       --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      /* ponytail: serif di sistema, non Newsreader come la landing — il report resta
-         self-contained (un woff2 inline costerebbe ~130KB per ogni report CLI).
-         Upgrade path: subset Newsreader + data-URI se l'identita' lo richiede. */
+      /* ponytail: a system serif, not Newsreader as on the landing page — the report
+         stays self-contained (one inlined woff2 would cost ~130KB for every CLI report).
+         Upgrade path: subset Newsreader + data URI if the identity demands it. */
       --font-serif: Georgia, "Times New Roman", serif;
 
-      /* Dossier palette: tinted neutrals in oklch, one accent (deletion red), color by role */
+      /* Dossier palette: tinted neutrals in oklch, one accent (deletion red), color by role.
+         Every colour is a token here so the dark block below is a second set of values,
+         not a second stylesheet. Two rules keep both schemes legible:
+         solid chips pair var(--ink)/var(--ok)/var(--warn) with var(--paper), which inverts
+         with the scheme; and the report header keeps its own --band/--band-ink pair,
+         because it is a dark band in both schemes rather than an inversion of the page. */
       --paper: oklch(96.6% 0.005 95);
       --surface: oklch(99.2% 0.003 95);
       --ink: oklch(24% 0.012 260);
@@ -829,6 +834,11 @@ def render_html(
       --line: oklch(88% 0.007 260);
       --line-strong: oklch(72% 0.01 260);
       --neutral-soft: oklch(95.5% 0.005 260);
+      --band: oklch(24% 0.012 260);
+      --band-ink: oklch(99.2% 0.003 95);
+      --band-faint: oklch(72% 0.012 260);
+      --band-line: oklch(42% 0.012 260);
+      --band-accent: oklch(80% 0.06 25);
 
       --accent: oklch(50% 0.19 25);
       --accent-deep: oklch(38% 0.14 25);
@@ -864,6 +874,42 @@ def render_html(
       --radius: 6px;
     }}
 
+    /* Dark scheme. Scoped to `screen` on purpose: the @media print block below assumes the
+       light tokens, so a dark OS setting must not follow the page onto paper. */
+    @media screen and (prefers-color-scheme: dark) {{
+      :root {{
+        --paper: oklch(18% 0.008 260);
+        --surface: oklch(22.5% 0.009 260);
+        --ink: oklch(93% 0.006 95);
+        --ink-muted: oklch(76% 0.008 260);
+        --ink-faint: oklch(64% 0.008 260);
+        --line: oklch(32% 0.01 260);
+        --line-strong: oklch(45% 0.012 260);
+        --neutral-soft: oklch(27% 0.009 260);
+        --band: oklch(13.5% 0.01 260);
+        --band-ink: oklch(95% 0.004 95);
+        --band-faint: oklch(70% 0.012 260);
+        --band-line: oklch(34% 0.012 260);
+        --band-accent: oklch(78% 0.08 25);
+
+        /* Violated red and satisfied green must stay far apart on a dark ground:
+           the foreground pair is 72% L red against 78% L green, and each sits on its
+           own tinted soft ground rather than on the shared page background. */
+        --accent: oklch(66% 0.19 25);
+        --accent-deep: oklch(78% 0.13 25);
+        --accent-soft: oklch(27% 0.055 25);
+        --accent-line: oklch(45% 0.11 25);
+
+        --ok: oklch(78% 0.14 155);
+        --ok-soft: oklch(26% 0.045 155);
+        --ok-line: oklch(44% 0.08 155);
+
+        --warn: oklch(80% 0.12 80);
+        --warn-soft: oklch(27% 0.04 85);
+        --warn-line: oklch(46% 0.07 85);
+      }}
+    }}
+
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{
       font-family: var(--font-sans);
@@ -880,7 +926,7 @@ def render_html(
       top: 0;
       z-index: 10;
       background: var(--ink);
-      color: var(--surface);
+      color: var(--paper);
       font-family: var(--font-mono);
       font-size: var(--step--1);
       padding: var(--space-2xs) var(--space-s);
@@ -898,8 +944,8 @@ def render_html(
     }}
 
     .report-header {{
-      background: var(--ink);
-      color: var(--surface);
+      background: var(--band);
+      color: var(--band-ink);
       padding: var(--space-l);
       border-bottom: 4px solid var(--accent);
     }}
@@ -914,10 +960,10 @@ def render_html(
       font-size: 0.72rem;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: oklch(72% 0.012 260);
+      color: var(--band-faint);
       white-space: nowrap;
     }}
-    .header-corner a {{ color: oklch(80% 0.06 25); text-decoration: none; }}
+    .header-corner a {{ color: var(--band-accent); text-decoration: none; }}
     .header-corner a:hover {{ text-decoration: underline; }}
     .dossier-foot {{
       margin: 0 var(--space-l) var(--space-m);
@@ -943,7 +989,7 @@ def render_html(
       font-weight: 600;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: oklch(80% 0.06 25);
+      color: var(--band-accent);
       margin-bottom: var(--space-2xs);
     }}
     .brand-title svg {{ width: 1.15rem; height: 1.15rem; }}
@@ -963,7 +1009,7 @@ def render_html(
       gap: var(--space-m);
       margin-top: var(--space-l);
       padding-top: var(--space-m);
-      border-top: 1px solid oklch(42% 0.012 260);
+      border-top: 1px solid var(--band-line);
     }}
     .meta-item {{ display: flex; flex-direction: column; gap: 0.15rem; }}
     .meta-label {{
@@ -971,12 +1017,12 @@ def render_html(
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.12em;
-      color: oklch(72% 0.012 260);
+      color: var(--band-faint);
     }}
     .meta-value {{
       font-size: var(--step-0);
       font-weight: 600;
-      color: var(--surface);
+      color: var(--band-ink);
       font-family: var(--font-mono);
       font-variant-numeric: tabular-nums;
     }}
@@ -1163,7 +1209,7 @@ def render_html(
       gap: 0.3rem;
       white-space: nowrap;
     }}
-    .badge-binding {{ background: var(--ink); color: var(--surface); }}
+    .badge-binding {{ background: var(--ink); color: var(--paper); }}
     .badge-interpretive {{
       background: var(--surface); color: var(--ink-muted); border: 1px solid var(--line-strong);
     }}
@@ -1233,16 +1279,16 @@ def render_html(
       font-variant-numeric: tabular-nums;
     }}
     .lattice-step.active-proved {{
-      background: var(--ink); color: var(--surface); border-color: var(--ink); font-weight: 700;
+      background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 700;
     }}
     .lattice-step.active-probed {{
-      background: var(--ok); color: var(--surface); border-color: var(--ok); font-weight: 700;
+      background: var(--ok); color: var(--paper); border-color: var(--ok); font-weight: 700;
     }}
     .lattice-step.active-observed {{
-      background: var(--ok); color: var(--surface); border-color: var(--ok); font-weight: 700;
+      background: var(--ok); color: var(--paper); border-color: var(--ok); font-weight: 700;
     }}
     .lattice-step.active-unattainable {{
-      background: var(--warn); color: var(--surface); border-color: var(--warn);
+      background: var(--warn); color: var(--paper); border-color: var(--warn);
       font-weight: 700; border-style: dashed;
     }}
     .lattice-step.passed {{

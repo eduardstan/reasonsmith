@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -61,6 +62,16 @@ def _fake_git(
         return subprocess.CompletedProcess(argv, head_rc, head_out, "")
 
     return run
+
+
+def _minimal_report():
+    """One real run, for the tests that inspect the stylesheet rather than the content."""
+    return check_conformance(
+        JSONLAdapter(str(SAMPLE_LOG)),
+        load_pack("table7"),
+        system_name="TestSystem",
+        system_scope="high-risk",
+    )
 
 
 def test_html_renderer_presents_exact_same_counts_and_verdicts():
@@ -443,3 +454,52 @@ def test_the_page_names_a_provenance_command_that_reproduces_it():
 
 def _docs_report() -> ConformanceReport:
     return build_example.example_report()
+
+
+def test_the_dark_scheme_is_screen_only_so_print_stays_light():
+    """The dark tokens must not follow the page onto paper.
+
+    The `@media print` block below them overrides a handful of declarations and otherwise assumes
+    the light token values, so a dark override that also matched print media would print white
+    text on a white sheet. Scoping the dark block to `screen` is what keeps the two apart, and it
+    is one word — exactly the kind of word a later edit drops without noticing.
+    """
+    html = _minimal_report().render_html()
+
+    dark = "@media screen and (prefers-color-scheme: dark)"
+
+    assert dark in html
+    assert "@media (prefers-color-scheme: dark)" not in html
+    assert html.index(dark) < html.index("@media print {")
+
+
+def test_both_schemes_keep_the_verdict_colours_apart():
+    """Satisfied-green and violated-red carry meaning here, so both schemes must separate them.
+
+    The check is on the hue channel of the two foreground tokens, in both token blocks: a dark
+    scheme that reached for one muted grey-red and one muted grey-green would still pass a
+    contrast check against the background and would still have destroyed the distinction the
+    reader uses. `--ok` is a green hue and `--accent-deep` is a red one, twice.
+    """
+    html = _minimal_report().render_html()
+    hues = re.findall(r"--(ok|accent-deep): oklch\([\d.]+% [\d.]+ (\d+)\)", html)
+
+    assert len(hues) == 4, "each token is defined once in the light block and once in the dark one"
+    for token, hue in hues:
+        expected = (140, 170) if token == "ok" else (10, 40)
+        assert expected[0] <= int(hue) <= expected[1], f"--{token} left its hue range at {hue}"
+
+
+def test_the_dark_page_is_still_self_contained():
+    """A dark scheme is the classic excuse for a first external asset. There must not be one.
+
+    The page's one inline script is not at issue — it has always been there and fetches nothing.
+    What this refuses is a stylesheet, font or script pulled off a host at read time.
+    """
+    html = _minimal_report().render_html()
+
+    assert "http://" not in html
+    assert "https://" not in html
+    assert "@import" not in html
+    assert "src=" not in html
+    assert "<link" not in html

@@ -95,6 +95,17 @@ ENGINE_PLUGIN_KEY = "engine_plugin"
 #: not all the reasons" is being shown this measurement and nothing else.
 CERTIFICATES_KEY = "certificates"
 
+#: The version of the `--json` envelope's *shape*, carried as `schema_version` on every
+#: `ConformanceReport.to_dict()`. It is a single integer and it is not the package version:
+#: a consumer reads it to know which keys to expect, and pinning it to `__version__` would make
+#: every release look like a shape change. The convention, stated in README, "The CLI", is that
+#: it increments when an existing key is **removed, renamed, or changes type or meaning** —
+#: anything a parser written against the previous number could get wrong — and does **not**
+#: increment when a key is added, because a consumer reading known keys is unaffected.
+#: `tests/test_json_schema_version.py` pins the key set at each level to this number, so a
+#: change to the shape fails the suite until this number moves with it.
+JSON_SCHEMA_VERSION = 1
+
 #: The two signals a decision record is read for when a report is asked what the system itself
 #: said about a decision: what it recorded as the decision, and what it stated as the reason.
 #:
@@ -561,6 +572,7 @@ class ConformanceReport:
 
     def to_dict(self) -> dict:
         return {
+            "schema_version": JSON_SCHEMA_VERSION,
             "system_name": self.system_name,
             "system_scope": self.system_scope,
             "system_domains": list(self.system_domains),
