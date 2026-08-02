@@ -30,6 +30,12 @@ releases before it predate the file and are not reconstructed here.
 
 ### Changed
 
+- **CI enforces the coverage floor it already measured.** Both `ci.yml` and `publish.yml` ran
+  `pytest --cov=reasonsmith --cov-report=term-missing` and threw the number away: a silently
+  falling total went unnoticed. The same command now carries `--cov-fail-under=93`, the suite's
+  measured total, commented as a floor to be raised deliberately, never lowered.
+  ([#71](https://github.com/eduardstan/reasonsmith/pull/71))
+
 - **The rendering is out of `report.py`.** `ConformanceReport.render_html` was a ~1000-line method
   and its sibling `render_text`, together half the file, and two upcoming packages both edit that
   region. Their bodies move verbatim into the new `src/reasonsmith/render.py` as module-level
@@ -52,6 +58,14 @@ releases before it predate the file and are not reconstructed here.
   ([#68](https://github.com/eduardstan/reasonsmith/pull/68))
 
 ### Fixed
+
+- **The stale `docs/index.html` reference is corrected.** `AGENTS.md` (and `CLAUDE.md`, its
+  symlink) said touching the renderer means regenerating `docs/index.html`; the generated dossier
+  has been `docs/report.html` since the website moved to its own repository. The same stale
+  reference in the `docs/build_nesyarena_report.py` docstring is corrected too. The
+  `test_docs_index_html_matches_the_renderer` test name and the historical record in
+  `docs/findings-nesyarena.md` are deliberately left as they are.
+  ([#71](https://github.com/eduardstan/reasonsmith/pull/71))
 
 - **The version guard reaches the fourth place it lives.** `CITATION.cff` carried `0.3.0` against a
   0.4.0 package: it was already stale when `tests/test_release_discipline.py` locked
