@@ -5,8 +5,9 @@ What this module is for:
   exists as a script rather than a CLI invocation because the page is deliberately not what the
   CLI writes: it carries the demonstration's key finding
   (`reasonsmith.demo.render_key_finding_html`) beside the report, and no report the CLI produces
-  may carry that section, because it is about the demonstration's case `APP-1042` and says
-  nothing about whatever system a report is run on.
+  may carry that section, because it is a *second* conformance run — the `ecoa` pack against the
+  demonstration's own pipeline, on case `APP-1042` — and says nothing about whatever system a
+  report is run on. The section names its own system on the page for that reason.
 
   Run: `python docs/build_example.py`
 

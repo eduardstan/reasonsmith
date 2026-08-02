@@ -453,10 +453,10 @@ _KEY_FINDING_CSS = """
     display: flex;
     flex-direction: column;
   }
-  .kf-card-record {
+  .kf-card-satisfied {
     border-top: 4px solid var(--ok);
   }
-  .kf-card-cert {
+  .kf-card-violated {
     border-top: 4px solid var(--accent);
   }
   .kf-card-header {
@@ -464,16 +464,22 @@ _KEY_FINDING_CSS = """
     background: var(--neutral-soft);
     border-bottom: 1px solid var(--line);
     display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
     justify-content: space-between;
     align-items: center;
   }
+  /* A requirement id is long and the verdict badge beside it must never be the thing that
+     gets clipped: the title wraps, the badge does not. */
   .kf-card-title {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.06em;
     color: var(--ink-muted);
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .kf-card-body {
     padding: var(--space-s);
@@ -496,37 +502,26 @@ _KEY_FINDING_CSS = """
     padding-top: var(--space-2xs);
     border-top: 1px dashed var(--line);
   }
-  .kf-field-list, .kf-reason-list {
+  .kf-reason-list {
     list-style: none;
     padding: 0;
     margin: 0;
   }
-  .kf-field-list li {
-    margin-bottom: 0.35rem;
+  .kf-summary {
+    font-size: 0.8rem;
     line-height: 1.5;
-    font-size: 0.8rem;
+    color: var(--ink-muted);
   }
-  .check-icon {
-    color: var(--ok);
-    font-weight: 800;
-    margin-right: 0.25rem;
-  }
-  .kf-values-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-xs);
-    background: var(--surface);
-    padding: 0.4rem 0.6rem;
-    border-radius: 4px;
-    border: 1px solid var(--line);
-    margin: var(--space-2xs) 0;
+  .kf-budget {
     font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-variant-numeric: tabular-nums;
-  }
-  .kf-gap {
-    color: var(--accent);
-    font-weight: 700;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--ink-faint);
+    background: var(--neutral-soft);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    margin-top: var(--space-2xs);
   }
   .kf-reason-list li {
     position: relative;
@@ -588,97 +583,128 @@ _KEY_FINDING_CSS = """
     background: var(--accent);
     color: var(--surface);
   }
-  .reason-score {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--ink-faint);
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
-  }
 """
 
 
+def key_finding_report():
+    """The run behind the key-finding section: this module's own pipeline, checked against `ecoa`.
+
+    It is a *second* run, about a different system from whatever the page's body reports on, which
+    is why the section names its system on the page. The import is local because `report` is a
+    heavier module than the demonstrations need and nothing else here reaches for it.
+    """
+    from .report import check_conformance
+    from .spec import load_pack
+
+    return check_conformance(
+        deployed_credit_system(),
+        load_pack("ecoa"),
+        system_name="TruncatingCreditSystem",
+        system_domains=("consumer-credit",),
+    )
+
+
+def _key_finding_card(result, extra_html: str = "") -> str:
+    """One requirement of the key finding as a card: its id, its clause, its verdict, its rung."""
+    import html
+
+    verdict = str(result.verdict)
+    mark = "\u2713" if verdict == "satisfied" else "\u2716"
+    req_id = html.escape(result.requirement_id)
+    clause = html.escape(result.source_clause)
+    summary = html.escape(result.evidence_summary)
+    return f'''        <div class="kf-card kf-card-{verdict}">
+          <div class="kf-card-header">
+            <span class="kf-card-title">{req_id}</span>
+            <span class="badge verdict-{verdict}">
+              <span aria-hidden="true">{mark}</span> {verdict.upper()}
+            </span>
+          </div>
+          <div class="kf-card-body">
+            <div class="kf-meta-line"><strong>Clause:</strong> {clause}</div>
+            <div class="kf-meta-line"><strong>Evidence strength:</strong>
+              <code>{result.strength}</code></div>
+            <div class="kf-summary">{summary}</div>
+{extra_html}          </div>
+        </div>'''
+
+
 def render_key_finding_html() -> str:
-    """Render the key finding: Evidence Record [COMPLETE] vs Reason-Deletion Certificate [FAIL].
+    """Render the key finding: the two halves of 12 CFR 1002.9(b)(2) coming apart on one system.
 
-    Computed live via evidence.emit and certificate.certify so every value on the page
-    matches exact engine outputs.
+    Every value is produced by `key_finding_report()` — the verdicts, the rungs, the reasons the
+    deletion probe found missing and the probe budget that bounds the search. Nothing here is
+    typed in beside the run.
 
-    This is the demonstration's own case, `APP-1042`, and it lives here rather than in the
-    renderer because it says nothing about whatever system a report is about. It belongs on the
-    committed example page and nowhere else: a conformance report is read as being about its own
-    system, so a report that carried this section by default would put another decision's
-    evidence in front of the auditor reading it.
+    This is the demonstration's own system and its own decision, and it lives here rather than in
+    the renderer because it says nothing about whatever system a report is about. It belongs on
+    the committed example page and nowhere else: a conformance report is read as being about its
+    own system, so a report that carried this section by default would put another decision's
+    evidence in front of the auditor reading it. That is also why the section states, on the page,
+    which system it ran against.
     """
     import html
 
-    case = build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88)
-    cert = certify_case(case, ReferenceAdapter(TopK(1)))
-    reasons_line = "\n".join(
-        f"  {v.label}" for v in sorted(cert.live, key=lambda v: v.label)
-    )
-    record = emit(
-        "ecoa_reg_b_adverse_action",
-        case.case_id,
-        {
-            "stored_reasons_per_decision": reasons_line.strip(),
-            "model_version": "credit-scoring-2026.03.1 / rules cs-rules-2026.03",
-            "score_factors": score_factors(cert),
-            "audit_ids": "AAN-2026-0731-1042 / trace-9f3c1b",
-            "retention_for_regulatory_lookback": "25 months from notice date, per lender policy",
-        },
-    )
+    report = key_finding_report()
+    results = {r.requirement_id: r for r in report.results}
+    form = results["ecoa_reg_b_1002_9_b_2_specific_reasons"]
+    content = results["ecoa_reg_b_1002_9_b_2_principal_reasons_complete"]
 
-    rec_d = record.to_dict()
-    cert_d = cert.to_dict()
+    # The failing certificate is the one the violated verdict rests on: it names the decision, the
+    # reasons exact inference found and the ones the engine's answer does not depend on.
+    failing = [c for c in content.details["certificates"] if c["certificate_verdict"] == "FAIL"]
+    offending = content.details["offending_trace_segment"]
+    stated = [
+        s.strip()
+        for s in offending[0]["artifact_logs_reason_explanation"].split(";")
+        if s.strip()
+    ]
+    decision_id = html.escape(str(offending[0]["decision_id"]))
 
-    rec_fields_html = []
-    for k, v in rec_d["fields"].items():
-        k_esc = html.escape(k)
-        v_esc = html.escape(str(v))
-        rec_fields_html.append(
-            f'<li><span class="check-icon">✓</span> '
-            f'<strong><code>{k_esc}</code></strong>: {v_esc}</li>'
+    reasons_html = []
+    for label in stated:
+        reasons_html.append(
+            f'<li class="reason-live"><span class="reason-tag tag-live">[stated]</span> '
+            f'<span>{html.escape(label)}</span></li>'
         )
+    for cert in failing:
+        for label in cert["missing_reasons"]:
+            reasons_html.append(
+                f'<li class="reason-deleted">'
+                f'<span class="reason-tag tag-deleted">[DELETED]</span> '
+                f'<span>{html.escape(label)}</span></li>'
+            )
 
-    cert_reasons_html = []
-    for v_item in sorted(cert_d["verdicts"], key=lambda x: (-x["score"], x["label"])):
-        lbl = html.escape(v_item["label"])
-        sc = v_item["score"]
-        st = v_item["status"]
-        if st == "live":
-            badge_item = '<span class="reason-tag tag-live">[used]</span>'
-            cls_item = "reason-live"
-        elif st == "deleted":
-            badge_item = '<span class="reason-tag tag-deleted">[DELETED]</span>'
-            cls_item = "reason-deleted"
-        else:
-            badge_item = f'<span class="reason-tag tag-other">[{st}]</span>'
-            cls_item = "reason-other"
+    found = sum(c["reasons_found"] for c in failing)
+    deleted = sum(c["reasons_deleted"] for c in failing)
+    budget = content.details["probe_budget"]
+    space = ", ".join(f"{k} ({v} values)" for k, v in budget["input_space"].items())
+    budget_line = (
+        f"probe budget: {budget['trials']} input(s) replayed, seed {budget['seed']}; "
+        f"input space: {space}"
+    )
 
-        cert_reasons_html.append(
-            f'<li class="{cls_item}">{badge_item} <span>{lbl}</span> '
-            f'<span class="reason-score">(score {sc:.4f})</span></li>'
-        )
+    content_extra = f'''            <div class="kf-subhead">
+              Reason audit on decision <code>{decision_id}</code> ({found} found &middot;
+              <strong style="color: var(--accent)">{deleted} deleted</strong>):
+            </div>
+            <ul class="kf-reason-list">
+{chr(10).join("              " + li for li in reasons_html)}
+            </ul>
+            <div class="kf-budget">{html.escape(budget_line)}</div>
+'''
 
-    rec_fields_str = "\n".join(rec_fields_html)
-    cert_reasons_str = "\n".join(cert_reasons_html)
-
+    sys_esc = html.escape(report.system_name)
+    pack_esc = html.escape(report.pack_id)
     sub_title = (
-        "An evidence record can be marked <strong>COMPLETE</strong> while "
-        "four of its five legally-owed reasons are missing due to proof truncation."
+        f"A <strong>second conformance run</strong>, on a different system from the one this "
+        f"dossier reports on above: <code>{sys_esc}</code> against the <code>{pack_esc}</code> "
+        f"pack. 12 CFR 1002.9(b)(2) asks two things of an adverse-action notice, and this "
+        f"repository ships them as two duties. On decision <code>{decision_id}</code> the "
+        f"notice\u2019s <strong>form</strong> is satisfied and its <strong>content</strong> is "
+        f"violated: the reasons stated are not all the reasons the decision\u2019s own inference "
+        f"used."
     )
-    rec_status = rec_d["status"]
-    rec_id_esc = html.escape(rec_d["decision_id"])
-    rec_duty_esc = html.escape(rec_d["duty"])
-    rec_source_esc = html.escape(rec_d["legal_source"])
-
-    cert_verdict = cert_d["verdict"]
-    cert_query_esc = html.escape(cert_d["query"])
-    cert_adapter_esc = html.escape(cert_d["adapter_name"])
-    cert_semantics_esc = html.escape(cert_d["claimed_semantics"])
-    reasons_found = cert_d["reasons_found"]
-    reasons_deleted = cert_d["reasons_deleted"]
 
     return f"""
     <style>
@@ -686,56 +712,15 @@ def render_key_finding_html() -> str:
     </style>
     <section class="key-finding-section">
       <div class="key-finding-banner">
-        <div class="kf-badge">KEY FINDING</div>
+        <div class="kf-badge">KEY FINDING &middot; SEPARATE RUN &middot; {sys_esc}</div>
         <h2 class="kf-title">Form Completeness Does Not Imply Reason Fidelity</h2>
         <div class="kf-subtitle">
           {sub_title}
         </div>
       </div>
       <div class="key-finding-grid">
-        <div class="kf-card kf-card-record">
-          <div class="kf-card-header">
-            <span class="kf-card-title">Evidence Record</span>
-            <span class="badge verdict-satisfied">
-              <span aria-hidden="true">✓</span> {rec_status}
-            </span>
-          </div>
-          <div class="kf-card-body">
-            <div class="kf-meta-line"><strong>Decision:</strong> <code>{rec_id_esc}</code></div>
-            <div class="kf-meta-line"><strong>Duty:</strong> {rec_duty_esc}</div>
-            <div class="kf-meta-line"><strong>Source:</strong> {rec_source_esc}</div>
-            <div class="kf-subhead">Minimal Evidence Retained (5 of 5 Table 7 fields):</div>
-            <ul class="kf-field-list">
-              {rec_fields_str}
-            </ul>
-          </div>
-        </div>
-        <div class="kf-card kf-card-cert">
-          <div class="kf-card-header">
-            <span class="kf-card-title">Reason-Deletion Certificate</span>
-            <span class="badge verdict-violated">
-              <span aria-hidden="true">✖</span> {cert_verdict}
-            </span>
-          </div>
-          <div class="kf-card-body">
-            <div class="kf-meta-line"><strong>Query:</strong> <code>{cert_query_esc}</code></div>
-            <div class="kf-meta-line">
-              <strong>Engine:</strong> <code>{cert_adapter_esc}</code> ({cert_semantics_esc})
-            </div>
-            <div class="kf-values-bar">
-              <span>Exact: <code>{cert_d['exact_value']:.4f}</code></span>
-              <span>Engine: <code>{cert_d['engine_value']:.4f}</code></span>
-              <span class="kf-gap">Gap: <code>{cert_d['value_gap']:+.4f}</code></span>
-            </div>
-            <div class="kf-subhead">
-              Reason Audit ({reasons_found} found &middot;
-              <strong style="color: var(--accent)">{reasons_deleted} deleted</strong>):
-            </div>
-            <ul class="kf-reason-list">
-              {cert_reasons_str}
-            </ul>
-          </div>
-        </div>
+{_key_finding_card(form)}
+{_key_finding_card(content, content_extra)}
       </div>
     </section>
 """

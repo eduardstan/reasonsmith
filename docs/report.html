@@ -688,10 +688,10 @@
     display: flex;
     flex-direction: column;
   }
-  .kf-card-record {
+  .kf-card-satisfied {
     border-top: 4px solid var(--ok);
   }
-  .kf-card-cert {
+  .kf-card-violated {
     border-top: 4px solid var(--accent);
   }
   .kf-card-header {
@@ -699,16 +699,22 @@
     background: var(--neutral-soft);
     border-bottom: 1px solid var(--line);
     display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
     justify-content: space-between;
     align-items: center;
   }
+  /* A requirement id is long and the verdict badge beside it must never be the thing that
+     gets clipped: the title wraps, the badge does not. */
   .kf-card-title {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.06em;
     color: var(--ink-muted);
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .kf-card-body {
     padding: var(--space-s);
@@ -731,37 +737,26 @@
     padding-top: var(--space-2xs);
     border-top: 1px dashed var(--line);
   }
-  .kf-field-list, .kf-reason-list {
+  .kf-reason-list {
     list-style: none;
     padding: 0;
     margin: 0;
   }
-  .kf-field-list li {
-    margin-bottom: 0.35rem;
+  .kf-summary {
+    font-size: 0.8rem;
     line-height: 1.5;
-    font-size: 0.8rem;
+    color: var(--ink-muted);
   }
-  .check-icon {
-    color: var(--ok);
-    font-weight: 800;
-    margin-right: 0.25rem;
-  }
-  .kf-values-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-xs);
-    background: var(--surface);
-    padding: 0.4rem 0.6rem;
-    border-radius: 4px;
-    border: 1px solid var(--line);
-    margin: var(--space-2xs) 0;
+  .kf-budget {
     font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-variant-numeric: tabular-nums;
-  }
-  .kf-gap {
-    color: var(--accent);
-    font-weight: 700;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--ink-faint);
+    background: var(--neutral-soft);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    margin-top: var(--space-2xs);
   }
   .kf-reason-list li {
     position: relative;
@@ -823,73 +818,55 @@
     background: var(--accent);
     color: var(--surface);
   }
-  .reason-score {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--ink-faint);
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
-  }
 
     </style>
     <section class="key-finding-section">
       <div class="key-finding-banner">
-        <div class="kf-badge">KEY FINDING</div>
+        <div class="kf-badge">KEY FINDING &middot; SEPARATE RUN &middot; TruncatingCreditSystem</div>
         <h2 class="kf-title">Form Completeness Does Not Imply Reason Fidelity</h2>
         <div class="kf-subtitle">
-          An evidence record can be marked <strong>COMPLETE</strong> while four of its five legally-owed reasons are missing due to proof truncation.
+          A <strong>second conformance run</strong>, on a different system from the one this dossier reports on above: <code>TruncatingCreditSystem</code> against the <code>ecoa</code> pack. 12 CFR 1002.9(b)(2) asks two things of an adverse-action notice, and this repository ships them as two duties. On decision <code>APP-1042</code> the notice’s <strong>form</strong> is satisfied and its <strong>content</strong> is violated: the reasons stated are not all the reasons the decision’s own inference used.
         </div>
       </div>
       <div class="key-finding-grid">
-        <div class="kf-card kf-card-record">
+        <div class="kf-card kf-card-satisfied">
           <div class="kf-card-header">
-            <span class="kf-card-title">Evidence Record</span>
+            <span class="kf-card-title">ecoa_reg_b_1002_9_b_2_specific_reasons</span>
             <span class="badge verdict-satisfied">
-              <span aria-hidden="true">✓</span> COMPLETE
+              <span aria-hidden="true">✓</span> SATISFIED
             </span>
           </div>
           <div class="kf-card-body">
-            <div class="kf-meta-line"><strong>Decision:</strong> <code>APP-1042</code></div>
-            <div class="kf-meta-line"><strong>Duty:</strong> Adverse action reasons in credit decisions</div>
-            <div class="kf-meta-line"><strong>Source:</strong> ECOA / Reg B (12 CFR 1002.9)</div>
-            <div class="kf-subhead">Minimal Evidence Retained (5 of 5 Table 7 fields):</div>
-            <ul class="kf-field-list">
-              <li><span class="check-icon">✓</span> <strong><code>stored_reasons_per_decision</code></strong>: C01 — Income insufficient for amount of credit requested</li>
-<li><span class="check-icon">✓</span> <strong><code>model_version</code></strong>: credit-scoring-2026.03.1 / rules cs-rules-2026.03</li>
-<li><span class="check-icon">✓</span> <strong><code>score_factors</code></strong>: C01 0.7656; C02 0.6972; C03 0.6320; C04 0.6004; C05 0.5112</li>
-<li><span class="check-icon">✓</span> <strong><code>audit_ids</code></strong>: AAN-2026-0731-1042 / trace-9f3c1b</li>
-<li><span class="check-icon">✓</span> <strong><code>retention_for_regulatory_lookback</code></strong>: 25 months from notice date, per lender policy</li>
-            </ul>
+            <div class="kf-meta-line"><strong>Clause:</strong> ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)</div>
+            <div class="kf-meta-line"><strong>Evidence strength:</strong>
+              <code>observed</code></div>
+            <div class="kf-summary">Observed over 2 decision(s): state monitor for &#x27;present(artifact_logs_reason_explanation) -&gt; ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, &quot;internal standards&quot;) and not contains(artifact_logs_reason_explanation, &quot;internal policies&quot;) and not contains(artifact_logs_reason_explanation, &quot;failed to achieve a qualifying score&quot;))&#x27; satisfied at every decision step.</div>
           </div>
         </div>
-        <div class="kf-card kf-card-cert">
+        <div class="kf-card kf-card-violated">
           <div class="kf-card-header">
-            <span class="kf-card-title">Reason-Deletion Certificate</span>
+            <span class="kf-card-title">ecoa_reg_b_1002_9_b_2_principal_reasons_complete</span>
             <span class="badge verdict-violated">
-              <span aria-hidden="true">✖</span> FAIL
+              <span aria-hidden="true">✖</span> VIOLATED
             </span>
           </div>
           <div class="kf-card-body">
-            <div class="kf-meta-line"><strong>Query:</strong> <code>adverse_action(APP-1042)</code></div>
-            <div class="kf-meta-line">
-              <strong>Engine:</strong> <code>reference:top-1-proofs</code> (distribution semantics)
-            </div>
-            <div class="kf-values-bar">
-              <span>Exact: <code>0.9914</code></span>
-              <span>Engine: <code>0.7656</code></span>
-              <span class="kf-gap">Gap: <code>-0.2258</code></span>
-            </div>
+            <div class="kf-meta-line"><strong>Clause:</strong> ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)</div>
+            <div class="kf-meta-line"><strong>Evidence strength:</strong>
+              <code>probed</code></div>
+            <div class="kf-summary">Violated on 1 of 2 certified decision(s): the stated reasons are not all the reasons. On decision #1 exact inference found 5 reason(s) and the deletion probe showed the system&#x27;s answer does not depend on 4 of them — C05 — Insufficient number of credit references provided; C03 — Delinquent past or present credit obligations; C04 — Too many recent inquiries on credit bureau report; C02 — Length of time credit has been established is too short. Attribution: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799. Measured against the inference artefact the system exposed, not read from its decision log.</div>
             <div class="kf-subhead">
-              Reason Audit (5 found &middot;
+              Reason audit on decision <code>APP-1042</code> (5 found &middot;
               <strong style="color: var(--accent)">4 deleted</strong>):
             </div>
             <ul class="kf-reason-list">
-              <li class="reason-live"><span class="reason-tag tag-live">[used]</span> <span>C01 — Income insufficient for amount of credit requested</span> <span class="reason-score">(score 0.7656)</span></li>
-<li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C02 — Length of time credit has been established is too short</span> <span class="reason-score">(score 0.6972)</span></li>
-<li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C03 — Delinquent past or present credit obligations</span> <span class="reason-score">(score 0.6320)</span></li>
-<li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C04 — Too many recent inquiries on credit bureau report</span> <span class="reason-score">(score 0.6004)</span></li>
-<li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C05 — Insufficient number of credit references provided</span> <span class="reason-score">(score 0.5112)</span></li>
+              <li class="reason-live"><span class="reason-tag tag-live">[stated]</span> <span>C01 — Income insufficient for amount of credit requested</span></li>
+              <li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C05 — Insufficient number of credit references provided</span></li>
+              <li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C03 — Delinquent past or present credit obligations</span></li>
+              <li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C04 — Too many recent inquiries on credit bureau report</span></li>
+              <li class="reason-deleted"><span class="reason-tag tag-deleted">[DELETED]</span> <span>C02 — Length of time credit has been established is too short</span></li>
             </ul>
+            <div class="kf-budget">probe budget: 8 input(s) replayed, seed none — the proof enumeration and the deletion probes are deterministic; input space: decisions certified (2 values), reasons switched off (6 values)</div>
           </div>
         </div>
       </div>
