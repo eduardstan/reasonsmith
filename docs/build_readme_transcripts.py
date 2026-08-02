@@ -57,6 +57,10 @@ SAMPLE_LOG_SUBSTITUTION = ("$(python -m reasonsmith.examples)", str(EXAMPLES_DIR
 TRANSCRIPTS = (
     "reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa "
     "--system-name TruncatingCreditSystem",
+    "reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa "
+    "--system-name TruncatingCreditSystem --audience regulator",
+    "reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa "
+    "--system-name TruncatingCreditSystem --audience affected-individual",
     'reasonsmith check --system "$(python -m reasonsmith.examples)/sample_decisions.jsonl" '
     "--pack ecoa --system-name CreditScoringPipeline --system-domain consumer-credit",
 )

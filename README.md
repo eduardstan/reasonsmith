@@ -102,6 +102,92 @@ LIMITS OF THIS REPORT
 
 Checking form alone launders that gap into a document that reads as authoritative: on this same decision the Table 7 evidence record is `COMPLETE`, and it is the reason-deletion certificate beneath it that reads `FAIL`. That record, that certificate and the four struck reasons are in [`docs/example-output.md`](docs/example-output.md); what the run above adds is the same finding as a *requirement verdict*, which no report from this tool could state until the certificate became an engine.
 
+## One run, five readers
+
+The block above is one rendering of that run, not the only one. `--audience` renders the *same*
+run for a named reader — five ship: `developer`, `deployer`, `auditor`, `regulator`,
+`affected-individual` — and **it changes what is shown, never what is claimed**. Nothing is
+recomputed per reader: every part of every view is a part of the single report the run already
+produced. No reader is shown a verdict another reader is not shown, no reader loses the limits
+section, and dropping the flag renders the full report — which is the auditor's view, by identity,
+so the transcript above is already one of the five.
+
+Here is that run for a **regulator**. Same four verdicts, same strengths, different content: every
+`requires:` line is gone, and the `domain limit:` line that decides whether the duty reaches this
+system at all stays. A regulator's question is how far a claim reaches, so the probe budget stays
+too; the internal signal names and — on a run that produces them — the trace witnesses holding real
+applicants' records do not.
+
+```sh
+reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa --system-name TruncatingCreditSystem --audience regulator
+```
+
+```text
+CONFORMANCE REPORT
+system: TruncatingCreditSystem
+declared scope: undeclared
+declared domains: consumer-credit
+pack: ecoa
+headline: 4 requirements · 4 binding: 3 observed, 1 violated
+
+REQUIREMENT FINDINGS:
+  [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
+    domain limit: consumer-credit
+    summary: Observed over 2 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))' satisfied at every decision step.
+  [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Observed over 2 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied at every decision step.
+  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+    domain limit: consumer-credit
+    summary: Observed over 2 decision(s): state monitor for 'present(artifact_logs_reason_explanation) -> ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, "internal standards") and not contains(artifact_logs_reason_explanation, "internal policies") and not contains(artifact_logs_reason_explanation, "failed to achieve a qualifying score"))' satisfied at every decision step.
+  [PROBED] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated
+    domain limit: consumer-credit
+    summary: Violated on 1 of 2 certified decision(s): the stated reasons are not all the reasons. On decision #1 exact inference found 5 reason(s) and the deletion probe showed the system's answer does not depend on 4 of them — C05 — Insufficient number of credit references provided; C03 — Delinquent past or present credit obligations; C04 — Too many recent inquiries on credit bureau report; C02 — Length of time credit has been established is too short. Attribution: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799. Measured against the inference artefact the system exposed, not read from its decision log.
+    probe budget: 8 input(s) replayed, seed none — the proof enumeration and the deletion probes are deterministic, input space: decisions certified (2 values), reasons switched off (6 values). Strategy: for each decision the system exposed an inference artefact for, its reasons are enumerated exactly by bounded proof enumeration over the ground program and scored by exact weighted model counting; each reason holding a fact no other reason uses is then switched off alone and the system's own engine re-run on the perturbed interpretation. A reason whose deletion moves exact inference but leaves the engine unchanged is a reason the engine's answer does not depend on, and is counted here
+
+LIMITS OF THIS REPORT
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
+```
+
+And the same run for the **person the decision was about** — the narrowest artefact this tool
+renders, twelve lines against the full report's twenty-eight: which duties were checked, how each
+came out, and the limits, with no system internals at all. No signal names, no probe budget, no
+counterexamples, and no strength vocabulary, because being told a duty is `probed` hands a person
+this tool's evidence model instead of an answer.
+
+```sh
+reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa --system-name TruncatingCreditSystem --audience affected-individual
+```
+
+```text
+CONFORMANCE REPORT
+system: TruncatingCreditSystem
+pack: ecoa
+
+REQUIREMENT FINDINGS:
+  ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
+  ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
+  ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+  ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated
+
+LIMITS OF THIS REPORT
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
+```
+
+**What that view does not carry, and this page will not pretend it does: the reasons.** A person
+refused credit wants the reasons they were refused. What is above is verdicts about duties — it
+says the creditor's statement of reasons was found incomplete, and it does not say which reasons
+were dropped. A conformance report does not hold the adverse-action statement a creditor owes
+them, and this projection will not manufacture one; closing that gap means a different artefact
+reading a different input, not a wider projection of this one. That limit and the full row-by-row
+table of what each of the five readers is shown — authored here, not derived from the law, so it
+can be argued with — are in [`docs/semantics.md`](docs/semantics.md) §7.
+
+`--audience` projects the text and HTML renderings only. `--json` stays the complete machine
+record, so a pipeline never loses fields to a display flag — and so `--audience
+affected-individual --json` is not a redaction. Redaction is a security property; this is a
+presentation one.
+
 ## What a verdict is worth
 
 Every evaluated result records its evidence strength, on one lattice:
@@ -114,6 +200,21 @@ Every evaluated result records its evidence strength, on one lattice:
 Combining zero verdicts is `inconclusive`, never vacuously `satisfied`. A requirement no engine here can evaluate is reported with no strength, rather than judged by a weaker check. What each verdict means — and does not mean — is stated one engine at a time in [`docs/semantics.md`](docs/semantics.md); every soundness claim there names the test that fails if the claim becomes false.
 
 How each shipped requirement got from a clause of law to a formula — and, in a fourth column, what that refinement deliberately did not capture — is recorded in [`docs/refinement.md`](docs/refinement.md), one row per requirement across all four packs.
+
+## Can it use a different formalism? Engines and packs install
+
+Four engines ship here, but the set is not closed. An engine is discovered through the
+`reasonsmith.engines` entry-point group and a pack through `reasonsmith.packs`, so a Prolog, ASP or
+other-solver engine — and a regulation pack this repository does not carry — ships as *your* pip
+package and joins the run the moment it is installed, with no pull request here. The property
+language does not change: a plug-in engine is handed the same requirement in the same language the
+built-ins get. What opens is which engine may discharge a duty, and nothing else. A plug-in cannot
+report above the `max_strength` it declares, one that raises, will not import or returns the wrong
+type is reported *not evaluated* rather than satisfied, and every plug-in result names its plug-in.
+There is no wall clock, so a plug-in that hangs hangs the run — and nothing here audits a plug-in,
+so a `proved` from an engine this repository never saw is worth the installer's trust in that
+package and no more. What to supply, and what that trust does and does not
+buy: [`docs/authoring-engines.md`](docs/authoring-engines.md).
 
 ## Automated Conformance Checking
 
@@ -217,6 +318,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 
 | File / Module | Description |
 |---|---|
+| `src/reasonsmith/__init__.py` | The package's public surface and `__version__`, which `reasonsmith --version` prints |
 | `src/reasonsmith/table7.toml` | The six Table 7 duties transcribed verbatim, with row-level traceability |
 | `src/reasonsmith/evidence.py` | Minimal evidence record emitter and missing field reporter |
 | `src/reasonsmith/certificate.py` | Reason-deletion certificates against exact inference oracle (`nesyarena`) |
@@ -225,10 +327,13 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 | `src/reasonsmith/verdict.py` | Core lattice: evidence strength lattice (`unattainable < observed < probed < proved`) and verdict vocabulary |
 | `src/reasonsmith/spec.py` | Core requirement loader & specification structures from `packs/*.toml` |
 | `src/reasonsmith/sut.py` | System-under-test protocol — declared capabilities, decision trace, optional replay hook, and exposed logic |
-| `src/reasonsmith/report.py` | Conformance report skeleton, headline builder, static unattainable analysis, and the text/JSON/self-contained-HTML renderers |
+| `src/reasonsmith/report.py` | Conformance report skeleton, headline builder, static unattainable analysis, the engine ladder, and both applicability gates |
+| `src/reasonsmith/render.py` | The text and self-contained-HTML renderings of a report, and the five audience projections (`AUDIENCES`) `--audience` selects between; `ConformanceReport.render_text`/`render_html` delegate here |
+| `src/reasonsmith/plugins.py` | Discovery of engines and packs installed as separate pip packages, through the `reasonsmith.engines` and `reasonsmith.packs` entry-point groups ([`docs/authoring-engines.md`](docs/authoring-engines.md)) |
 | `src/reasonsmith/rulelang.py` | The whitelisted mini-language rule and specification text is parsed and executed in, shared by the rule adapter and the proved engine |
 | `src/reasonsmith/adapters/` | SUT protocol adapters for JSONL decision logs, Python callables, and rule-based systems that expose their decision logic |
 | `src/reasonsmith/engines/` | Verification engines: `record` completeness check, `observed` rtamt monitor over a trace (temporal formulas and per-record state properties), `probed` perturb-and-replay search, and `proved` Z3 solver |
+| `src/reasonsmith/examples/` | The four runnable example systems and `sample_decisions.jsonl`, shipped in the wheel so every documented command runs after `pip install`; `python -m reasonsmith.examples` prints the directory they installed into |
 | `src/reasonsmith/cli.py` | Command-line interface (`reasonsmith` / `python -m reasonsmith.cli`): `check --system /path/to/your-decisions.jsonl --pack gdpr --capabilities /path/to/capabilities.txt` and `validate-pack gdpr` |
 | `src/reasonsmith/drift.py` | Statute drift check (`python -m reasonsmith.drift`): re-fetches the official legal sources and re-verifies every pack quote, reporting `match` / `differ` / `could-not-verify` without ever editing a pack |
 | `src/reasonsmith/packs/table7.toml` | Table 7 rows restated as a formal requirement pack |
@@ -251,7 +356,10 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
   reasonsmith --version
   ```
 
-  `check` exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise. Unattainable, not applicable and not evaluated are findings to read in the report, not breaches, so none of them changes the exit code. Reports render to plain text, structured JSON (`--json`), or a self-contained offline HTML report (`--html FILE`). By default the CLI reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system; pass `--capabilities /path/to/capabilities.txt` to instead have the system's maintainers declare what it can emit. The file has one signal name per line; blank lines and whole-line comments whose first nonblank character is `#` are ignored. The report then says the capabilities were declared. An empty declaration file declares nothing, which is a distinct claim from having no declaration at all, and a malformed line is refused naming the file and the line. `validate-pack` validates one or more requirement packs and prints what each contains, exiting 0 for any packs a `check` run could load and 1 at the first one the loader refuses, naming the file and the requirement at fault; the authoring guide is [`docs/authoring-packs.md`](docs/authoring-packs.md).
+  `check` exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise. Unattainable, not applicable and not evaluated are findings to read in the report, not breaches, so none of them changes the exit code. Reports render to plain text, structured JSON (`--json`), or a self-contained offline HTML report (`--html FILE`). By default the CLI reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system; pass `--capabilities /path/to/capabilities.txt` to instead have the system's maintainers declare what it can emit. The file has one signal name per line; blank lines and whole-line comments whose first nonblank character is `#` are ignored. The report then says the capabilities were declared. An empty declaration file declares nothing, which is a distinct claim from having no declaration at all, and a malformed line is refused naming the file and the line. `--audience {developer,deployer,auditor,regulator,affected-individual}` projects the text and HTML
+renderings for one reader, changing what is shown and never what is claimed; omitted, the full
+report is printed. `--json` is deliberately not projected. `validate-pack` validates one or more
+requirement packs and prints what each contains, exiting 0 for any packs a `check` run could load and 1 at the first one the loader refuses, naming the file and the requirement at fault; the authoring guide is [`docs/authoring-packs.md`](docs/authoring-packs.md).
 - **Machine-Readable & Visual HTML Output:** Records, certificates, and reports serialize to dicts (`to_dict()`), JSON (`to_json(indent=None)`), and self-contained HTML (`render_html()`). Each carries the same facts as its text rendering, including its missing-field report and its own limits, so a downstream consumer cannot read a partial document as a complete one. Values outside JSON's own types are stringified rather than raising. Conformance results need no serializer: `group_stats()` and `stratified()` already return plain dicts of JSON-native types, so `json.dumps(stratified(groups))` is the whole recipe — and an unmeasured metric serialises as `null`, never `0`. The HTML report opens from any `file://` path with zero network dependencies, presents the evidence strength lattice, splits binding vs interpretive duties, highlights counterexample trace witnesses for violations, and visually distinguishes unattainable architectural gaps from runtime violations.
 - **The Statute Drift Check (`drift.py`):** A maintenance check, not a conformance engine. `python -m reasonsmith.drift` re-fetches each official statutory document recorded in [`docs/legal-sources.md`](docs/legal-sources.md) and compares the packs' `verbatim_text` against the live source, collapsing only whitespace (the one thing a printer legitimately changes). Every requirement is `match`, `differ` (both strings named) or `could-not-verify` (the source is unreachable or no longer carries the passage — never a pass), and a pack is never edited automatically. `.github/workflows/statute-drift.yml` runs it on the first of every month and files a single GitHub issue when anything drifts; the tests run the same check against recorded byte-faithful fixture slices, so the suite needs no network.
 - **Dependencies & PyPI:** `reasonsmith` 0.2.0 is published on PyPI (`pip install reasonsmith`). `nesyarena` supplies ground-program IR, proof enumeration, and exact WMC (pinned to `nesyarena==0.1.0` on PyPI in `pyproject.toml`); `pip install -e ".[dev]"` in a venv is the contributor install, pulling the dev tooling in with the source checkout. `rtamt`, which supplies STL temporal monitoring, and `z3-solver`, which supplies the SMT solver behind the proved engine, are declared runtime dependencies of `reasonsmith`, both pinned exactly. `torch`, by contrast, is an optional dependency of `nesyarena` (~1GB) and is deliberately not a declared dependency of `reasonsmith` — it was installed and measured in a separate environment, recorded in [RESULTS.md](RESULTS.md).
@@ -270,9 +378,20 @@ Figures this README takes from the paper rather than from running code — the 2
 
 ## Who could use this, and what is missing first
 
-Four audiences this work is aimed at, and — for each — what is missing before the tool is usable to
+Four groups this work is aimed at, and — for each — what is missing before the tool is usable to
 them. These are gaps, not wishes: every one is stated in a committed document, cited here. A reader
 from one of these groups should be able to recognise their own blocker.
+
+*Not the same list as `--audience`, and deliberately kept apart.* The five audiences above are
+**readers of one report**: a projection of a rendering, which ships, works today, and has nothing to
+do with whether the tool is usable to anyone. The four below are **parties who might adopt the
+project**, each with a blocker that is not a rendering. They share two words and neither list
+refines the other — an insurer is a kind of buyer, an affected individual is a kind of reader, and a
+regulator appears on both while meaning something different on each. Merging them would have to
+either invent an adoption blocker for `developer` and `affected-individual`, which no committed
+document states and this page may not manufacture, or drop `insurers`, who read no report at all.
+
+
 
 **Insurers** pricing exposure on an automated decision system. Missing: a claim that survives past
 the trace. `observed` covers exactly the records supplied and establishes nothing about decisions
