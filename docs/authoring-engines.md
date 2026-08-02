@@ -70,11 +70,11 @@ in the evidence summary, and the built-in ladder answers the duty as though the 
 installed.
 
 **A plug-in cannot take a built-in's name.** An entry point named `record`, `observed`, `probed`,
-`proved` or `certificate` is refused with a warning and the built-in stands. It is not namespaced
-into `mypackage.proved` either, because namespacing would leave the shadowing engine running under
-a decorated name — the same engine answering the same duty, with only the collision hidden. These
-five names are what this repository's tests are about, and an installed package that could rebind
-one would change what a published verdict means while every test here still passed.
+`proved`, `certificate` or `temporal` is refused with a warning and the built-in stands. It is not
+namespaced into `mypackage.proved` either, because namespacing would leave the shadowing engine
+running under a decorated name — the same engine answering the same duty, with only the collision
+hidden. These six names are what this repository's tests are about, and an installed package that
+could rebind one would change what a published verdict means while every test here still passed.
 
 **There is no time limit.** reasonsmith does not bound how long your `evaluate` runs: a plug-in
 that hangs hangs the run. Killing a running call needs a subprocess, and a subprocess needs a

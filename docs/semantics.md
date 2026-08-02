@@ -546,7 +546,7 @@ many there were.
 used all of the ones exact inference found. Nothing about whether they are what a person would call
 principal. And nothing about a system that lies about its own artefact — a system that returns a
 program it did not run is a system misdescribing itself to its auditor, which *the assumption all
-five share* below already covers.
+six share* below already covers.
 
 > **If it reports `violated` at strength `probed`, then:** on at least one certified decision, the
 > deletion probe showed the system's answer does not depend on a reason exact inference found. The
@@ -630,7 +630,47 @@ that does not reproduce (`test_counterexample_verification_failure_reported_not_
 > exists, otherwise against the declared logic, and the summary names which
 > (`test_property_fails_with_verified_counterexample`).
 
-### The assumption all five share
+### `proved`, over a trace — `engines/temporal.py`
+
+> **If the temporal proof engine reports `satisfied` at strength `proved`, then:** the duty was
+> `always(f)` for some `f` free of temporal operators, and Z3 proved `f` over every valuation of the
+> free inputs the declared constraints admit — the whole `proved` paragraph above, unchanged, about
+> `f` (`test_only_always_reaches_the_temporal_proof_rung`).
+
+This is the rung this document said did not exist. The argument is one reduction and no new
+machinery. A conformance run reads a **finite** decision trace, which is why the semantics claimed
+here is LTLf and not LTL: over a finite trace, `always(f)` holds exactly when `f` holds at every
+position. Every position of every trace this system can emit is a decision its exposed `logic()`
+produces from an input its own `constraints` admit. So a proof of `f` over that whole input space is
+a proof of `always(f)` for every trace the system can emit — a strictly larger set than the one trace
+this run read, which is what makes the rung `proved` rather than `observed`. `TRACE_SEMANTICS`
+travels on every result the engine returns, so the set of traces a verdict is about is on the page
+and not left to be inferred, the same discipline the probe budget is held to.
+
+*What it does not tell you.*
+
+- **The two verdicts are not mirror images, and the summary says so.** `satisfied` is universal and
+  covers every trace the system can emit, this run's included. `violated` is existential: the solver
+  found one admissible input whose decision breaches `f`, verified to reproduce, so *some* trace the
+  system admits breaches the duty. That is a finding about the system as built and **not** a finding
+  about the trace supplied here — a run whose log happens to contain no such decision is still
+  reported violated (`test_a_temporal_violation_names_the_trace_it_is_and_is_not_about`).
+- **`always` is the only operator that reduces**, and the operand must itself be a state property.
+  `eventually(f)` asserts that some position *exists*, which is a fact about the trace a system
+  emitted rather than about the decisions its logic admits, and no reasoning about one decision at a
+  time establishes it; `always(eventually(f))` fails the same test one level down. Both stop at
+  `observed` exactly as every temporal duty did before this engine existed
+  (`test_only_always_reaches_the_temporal_proof_rung`,
+  `test_a_nested_temporal_operator_does_not_reduce`).
+- **Everything the `proved` engine cannot claim, this cannot claim**, because the verdict *is* that
+  engine's verdict: `unknown`, a timeout, vacuous premises, an encoding that disagrees with the
+  interpreter, or a counterexample that does not reproduce all yield not evaluated, and the duty
+  falls back to the trace.
+- **The empty trace is covered vacuously**, since `always(f)` is true of it. A satisfied verdict here
+  is therefore not evidence that the system ever decided anything — the same caveat the
+  `unattainable` and empty-trace rules carry elsewhere in this document.
+
+### The assumption all six share
 
 None of these engines defends against a system that is adversarial toward its own audit. The probed
 engine states the boundary and this document does not invent a second version of it — from
@@ -644,7 +684,7 @@ The isolation against *accidental* mutation is real and tested
 (`test_nested_mutation_cannot_change_the_verification_input_or_witness`,
 `test_uncloneable_probe_input_is_not_evaluated`). The defence against a deliberate one is not claimed.
 
-Read across all five engines, the same shape holds: a declared capability set is taken at its word, a
+Read across all six engines, the same shape holds: a declared capability set is taken at its word, a
 trace is taken as given, and exposed logic is taken as describing the system. reasonsmith checks
 what a system says against what a specification asks. It does not check whether the system was
 honest.
@@ -700,11 +740,11 @@ the two are the same property to every other engine, and only the arrow reaches 
 arbitrary, which is why the shipped Article 22 duty is spelled with the arrow and the test says so;
 teaching the renderer to lower the prefix form is a change to the renderer, not to this ladder.
 
-**A temporal duty never rises above `observed`, and that ceiling is untouched by the above.** It is
-in the next-but-one paragraph and it is a different claim: the solver and the replay search reason
-about one decision at a time, so they have nothing to say about a formula quantified over a trace.
-Giving the state fragments a rung *downward* to the trace does not give the temporal fragment one
-upward.
+**A temporal duty rises above `observed` in one shape only, and that ceiling is untouched by the
+above.** It is in the next-but-one paragraph and it is a different claim: the solver and the replay
+search reason about one decision at a time, so they have nothing to say about a formula quantified
+over a trace *unless the quantification reduces to a property of one decision*. Giving the state
+fragments a rung *downward* to the trace does not give the temporal fragment one upward.
 
 So the same presence property is `observed` against a trace and `proved` against exposed `logic()`
 (`test_a_record_duty_reaches_proved_when_the_system_exposes_its_logic`), and `probed` against a
@@ -733,10 +773,14 @@ never executes the system: both optional rungs are read off the callable surface
 absorbed this way — that is the system's own decision log coming back the wrong shape, and it
 still raises and names the system (`test_a_trace_of_the_wrong_shape_names_the_system`).
 
-**A temporal duty never rises above `observed`** (`test_a_temporal_duty_never_rises_above_observed`).
-The solver and the replay search both reason about one decision at a time and have nothing to say
-about a formula quantified over a trace. There is no temporal engine above `observed` in this build,
-and a rung for a claim no engine established would be the overclaim this package exists to refuse.
+**A temporal duty reaches `proved` only when it is `always(f)` over a state property**
+(`test_only_always_reaches_the_temporal_proof_rung`, `test_a_nested_temporal_operator_does_not_reduce`).
+That one shape reduces to a property of a single decision — see §3, *`proved`, over a trace* — so the
+solver can answer it, and `engines/temporal.py` puts the rung on the ladder for a system that exposes
+`logic()`. Every other temporal shape stops at `observed` where it always did: the solver and the
+replay search both reason about one decision at a time and still have nothing to say about a formula
+that quantifies existentially over a trace, and a rung for a claim no engine established would be the
+overclaim this package exists to refuse.
 
 **What selection does not change.** Nothing here alters the lattice or what any verdict means; §3 is
 unchanged by it. A `proved` verdict is still a claim about the logic the system exposed, and an
@@ -1017,7 +1061,8 @@ Two consequences of that report text, followed by a separate package-level termi
 | With no plug-in installed the ladder is the built-in ladder | `test_with_no_plugin_installed_the_ladder_is_the_builtin_ladder` |
 | A malformed trace still raises and names the system | `test_a_trace_of_the_wrong_shape_names_the_system` |
 | A presence proof requires the rules to assign the signal on every path | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`, `test_presence_is_not_proved_when_only_one_branch_assigns_the_signal` |
-| A temporal duty never rises above observed | `test_a_temporal_duty_never_rises_above_observed` |
+| A temporal duty reaches proved only as `always(f)` over a state property; every other shape stops at observed | `test_only_always_reaches_the_temporal_proof_rung`, `test_a_nested_temporal_operator_does_not_reduce` |
+| A proved temporal violation is existential and says so: it is about the system as built, not about the trace supplied | `test_a_temporal_violation_names_the_trace_it_is_and_is_not_about` |
 | The solver's blank string is Python's blank string, so a provable blank reason is a violation | `test_the_solvers_blank_string_is_pythons_blank_string`, `test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose` |
 | `contains()` takes a signal name and a literal ASCII phrase, and every other shape is refused | `test_a_malformed_contains_atom_is_refused_rather_than_guessed_at`, `test_a_contains_atom_is_a_boolean_property_outside_the_record_fragment`, `test_the_phrase_is_not_a_signal_the_property_reads` |
 | The solver's ASCII case fold is the interpreter's, over a generated corpus | `test_the_solvers_fold_is_the_interpreters_fold`, `test_the_fold_is_ascii_case_and_reaches_no_further` |

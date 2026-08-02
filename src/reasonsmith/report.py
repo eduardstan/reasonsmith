@@ -806,8 +806,14 @@ def _run_proof_rung(
     sut: SystemUnderTest,
     records: list[dict[str, Any]] | None,
     resources: _EvaluationResources,
+    engine: Any = None,
 ) -> RequirementResult:
     """The proof rung, with a broken `logic()` reported rather than raised.
+
+    `engine` names which solver-backed engine answers — `ProvedEngine` for a state property, and
+    `engines.temporal.TemporalProofEngine` for an `always(f)` quantified over the trace. One
+    function for both, because the handling of a `logic()` that raises is a property of the rung
+    and not of the engine standing on it, and two copies of it would drift.
 
     `logic()` is an optional interface, and one that raises has established nothing — which is
     what `strength=None` means. Letting the exception out would take the whole evaluation down
@@ -816,7 +822,10 @@ def _run_proof_rung(
     system's own decision log coming back the wrong shape, and it still raises and names the
     system.
     """
-    from reasonsmith.engines.proved import ProvedEngine
+    if engine is None:
+        from reasonsmith.engines.proved import ProvedEngine
+
+        engine = ProvedEngine
 
     try:
         logic_data = resources.logic()
@@ -836,7 +845,7 @@ def _run_proof_rung(
             binding=req.binding,
             scope=req.scope,
         )
-    result = ProvedEngine.evaluate(req, sut, records, logic_data=logic_data)
+    result = engine.evaluate(req, sut, records, logic_data=logic_data)
     if logic_data is None:
         return replace(result, details={**result.details, "result": _NO_LOGIC_TO_REASON_OVER})
     return result
@@ -872,10 +881,16 @@ def _engine_ladder(
     state formula is monitored per record by `ObservedEngine`, whose rtamt monitor scores a
     non-temporal formula pointwise and names the record positions that breached.
 
-    Temporal properties reach only the observed engine, and that ceiling is unchanged. The solver
-    and the replay search both reason about one decision at a time and have nothing to say about a
-    formula quantified over the trace; there is no temporal engine above `observed` in this build,
-    and inventing a rung for one would be the overclaim this package exists to refuse.
+    **A temporal duty reaches the proof rung only in the one shape that reduces to a state
+    property.** `always(f)`, over a finite trace, holds exactly when `f` holds at every position,
+    and every position is a decision the exposed logic produces — so `engines.temporal`'s reduction
+    hands the solver a property about one decision, which is the only kind it can answer. Every
+    other temporal shape stops at `observed` as it always did, because a solver reasoning about one
+    decision at a time still has nothing to say about it, and inventing a rung for one would be the
+    overclaim this package exists to refuse. The rung is selected from the *shape of the spec* as
+    well as from the exposed surface, which is why `state_property_under_always` is consulted here:
+    appending a rung that will always report not-evaluated would make every non-`always` temporal
+    duty pay for a solver call that cannot answer it.
 
     One duty is deliberately given a ladder of **one** rung: a duty gating on
     `engines.certificate.DELETED_REASON_COUNT` asks whether the reasons a decision states are all
@@ -907,6 +922,21 @@ def _engine_ladder(
         ]
 
     ladder: list[tuple[Strength, Any]] = []
+
+    if req.formalism == "temporal" and callable(getattr(sut, "logic", None)):
+        from reasonsmith.engines.temporal import (
+            TemporalProofEngine,
+            state_property_under_always,
+        )
+        if state_property_under_always(req.spec) is not None:
+            ladder.append(
+                (
+                    Strength.PROVED,
+                    lambda: _run_proof_rung(
+                        req, sut, records, resources, engine=TemporalProofEngine
+                    ),
+                )
+            )
 
     if req.formalism in STATE_FRAGMENTS:
         if callable(getattr(sut, "logic", None)):

@@ -50,11 +50,16 @@ Four kinds of gap recur, and naming them once keeps the table short:
 - **The trace is a sample.** An `observed` or `record` verdict covers exactly the records supplied,
   and nothing establishes that they are representative, complete or unfiltered
   (`docs/semantics.md` §1). Any clause whose duty runs over the lifetime of a system —
-  record retention, continuous monitoring — is met by a check over one supplied run.
+  record retention, continuous monitoring — is met by a check over one supplied run. One escape
+  exists and reaches only one shape of duty: an `always(f)` whose `f` is a property of a single
+  decision is proved over every input a system's exposed logic admits, so the verdict covers every
+  trace that system can emit rather than the sampled one (`docs/semantics.md` §3, *`proved`, over a
+  trace*). It is still a claim about the logic the system exposed, and a system that cannot expose
+  any is left with the sample.
 - **Organisational facts are outside every engine.** A controller's legal basis, a staffed appeals
   desk, a signed instruction manual: no decision record witnesses these. Where a clause turns on
   one, the property reads a flag the system sets about itself, and reasonsmith checks what a system
-  says, not whether it was honest (`docs/semantics.md` §3, *the assumption all five share*).
+  says, not whether it was honest (`docs/semantics.md` §3, *the assumption all six share*).
 - **The property's reach is not the clause's scope.** Most clauses below are triggered — by adverse
   action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
   evaluated over every record in a trace is checked outside that trigger too. Two axes of a
@@ -92,7 +97,7 @@ It is stated once, here, rather than nineteen times:
   does not govern a particular lender.
 - **What the system declares is a self-declaration.** Nothing checks that a system that says
   `consumer-credit` issues credit, the same way nothing checks the flags of the Article 22(2) bases
-  (`docs/semantics.md` §3, *the assumption all five share*). The gate stops a duty reaching a system
+  (`docs/semantics.md` §3, *the assumption all six share*). The gate stops a duty reaching a system
   that said nothing; it does not stop one that said the wrong thing.
 - **The trigger inside a decision is still not modelled *as a gate*, and that is the larger
   remaining gap.** 12 CFR 1002.9 is triggered by *adverse action having been taken*, not by the

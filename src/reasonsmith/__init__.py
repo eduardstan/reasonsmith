@@ -20,7 +20,8 @@ What this module is for:
     rulelang.py     the whitelisted mini-language rules and properties are parsed and run in
     adapters/       JSONL decision-log, Python-callable and rule-based-system adapters
     engines/        record completeness, rtamt monitors of temporal and state properties,
-                    the replay probed engine and the Z3 proved engine
+                    the replay probed engine, the Z3 proved engine, and the temporal proof
+                    engine that reduces `always(f)` to a property of one decision
     cli.py          checks a JSONL decision log against a requirement pack
     drift.py        re-fetches the official statutory sources and re-verifies the pack quotes
     packs/          Table 7, EU AI Act, GDPR, and ECOA / Regulation B requirements

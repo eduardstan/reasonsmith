@@ -53,9 +53,9 @@ Three things made it the right duty for this demonstration, and it is worth sayi
   where that decision carries a statement of reasons, the statement names the model version and the
   scope it speaks for and is not one of the two the clause itself calls insufficient. That is what
   lets all three rungs be in play — the solver and the replay search each reason about one decision
-  at a time. A temporal duty (`always(...)`) never rises above `observed` in this build, whatever
-  the system exposes, because no engine here reasons over a trace-wide formula — see
-  [`semantics.md`](semantics.md) §3.5.
+  at a time. A temporal duty reaches the solver only where it reduces to a property of one decision,
+  which `always(f)` does and no other shape here does — see [`semantics.md`](semantics.md) §3.5 and
+  §3, *`proved`, over a trace*.
 
   It is worth knowing what this duty used to be, because the change is the reason the demonstration
   is worth more than it was. Until recently the property was a conjunction of `present()` atoms:
@@ -205,12 +205,18 @@ refuse each other, as does `--capabilities`, which speaks for a log's adapter wh
 system declares its own capabilities.
 
 The rungs are unchanged by the route: run against the whole `ecoa` pack, the symbolic system still
-comes back `proved` and the probabilistic one `probed` on `ecoa_reg_b_1002_9_b_2_specific_reasons`,
-with the pack's three other duties unattainable: two of them on systems that declare no
-`artifact_logs_decision_record`, and `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` on all
-three, because none of these adapters exposes the inference artefact its
-`artifact_logs_deleted_reason_count` is measured from — and that duty is never answered by
-anything weaker (`docs/semantics.md` §3, *certificate*).
+comes back `proved` and the probabilistic one `probed` on `ecoa_reg_b_1002_9_b_2_specific_reasons`.
+Of the pack's three other duties, `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` is unattainable
+on all three systems, because none of these adapters exposes the inference artefact its
+`artifact_logs_deleted_reason_count` is measured from — and that duty is never answered by anything
+weaker (`docs/semantics.md` §3, *certificate*). The two `temporal` duties are unattainable on the
+probabilistic and neural systems, which declare no `artifact_logs_decision_record`. The symbolic
+system declares one, and there the two split on the shape of the property rather than on the
+surface: `1002.9(a)(1)` is `always(f)` over a state property, so it reduces and the solver proves it,
+while `1002.9(a)(2)` reads `artifact_logs_right_to_reasons_disclosure` — a signal these rules never
+assign, so the presence atom cannot be proved and the duty lands on the trace at `observed`. Two
+temporal duties, one system, two different rungs, and neither of them a fact about the word
+`temporal`.
 
 ## What the rung is, and what it is not
 

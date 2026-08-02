@@ -9,35 +9,30 @@ Each objective gives a **measurable outcome** — a check that fails today and w
 objective is met — and what it **depends on**. Where the honest answer is that an objective is
 blocked, or deliberately not started, that is written down rather than left as an implied "soon".
 
-Current state, for scale: **4 packs, 19 requirements, 5 engines** (`record`, `observed`, `probed`,
-`certificate` — also at `probed` — and `proved`). `reasonsmith validate-pack ecoa eu_ai_act gdpr table7` prints what each contains.
+Current state, for scale: **4 packs, 19 requirements, 6 engines** (`record`, `observed`, `probed`,
+`certificate` — also at `probed` — `proved`, and the temporal proof engine, also at `proved`).
+`reasonsmith validate-pack ecoa eu_ai_act gdpr table7` prints what each contains.
 
 ---
 
-## 1. A temporal engine above `observed`
+## 1. A temporal engine above `observed` — closed, for one shape of duty
 
-**The gap.** A temporal duty never rises above `observed`, whatever the system exposes. The solver
-and the replay search both reason about one decision at a time and have nothing to say about a
-formula quantified over a trace, so there is no rung above `observed` for the two shipped `temporal`
-requirements — `ecoa_reg_b_1002_9_a_1_timing_of_notice` and `gdpr_recital71_error_risk_minimised` —
-even against a system that exposes `logic()`.
+**What closed it.** `engines/temporal.py` proves an `always(f)` whose `f` is a property of a single
+decision, by the one reduction that is exact over a finite trace: `always(f)` holds iff `f` holds at
+every position, and every position is a decision the system's exposed `logic()` admits. Both shipped
+temporal requirements — `ecoa_reg_b_1002_9_a_1_timing_of_notice` and
+`gdpr_recital71_error_risk_minimised` — now report `proved` against
+`reasonsmith.examples.symbolic_rules`, and `test_a_temporal_duty_never_rises_above_observed` was
+replaced by `test_only_always_reaches_the_temporal_proof_rung`, which pins the new ceiling from both
+sides. The soundness paragraph is [`docs/semantics.md`](docs/semantics.md) §3, *`proved`, over a
+trace*.
 
-Stated in [`docs/semantics.md`](docs/semantics.md) §3.5, and pinned by
-`test_a_temporal_duty_never_rises_above_observed`.
-
-**Measurable outcome.** Both shipped temporal requirements report at `probed` or `proved` against
-`reasonsmith.examples.symbolic_rules`, and `test_a_temporal_duty_never_rises_above_observed` is
-*replaced* by a test pinning the new ceiling rather than deleted — a removed ceiling test is how a
-ceiling stops being checked.
-
-**Depends on.** Nothing structural: the engine ladder
-([#47](https://github.com/eduardstan/reasonsmith/pull/47)) already collects engines from the
-system's exposed surface rather than from the pack, so a new engine is reached the moment it exists —
-and it need not be vendored here, since an engine installed through the `reasonsmith.engines`
-entry-point group joins the same ladder ([`docs/authoring-engines.md`](docs/authoring-engines.md)).
-What it needs is the reasoning itself — a bounded search over generated traces, or a solver encoding
-of a trace-wide formula — and, before it can ship, its own soundness paragraph in
-`docs/semantics.md` §3 naming the test that fails if the claim becomes false.
+**What is left, and it is not this objective.** The rung reaches exactly one temporal shape.
+`eventually(f)` asserts that some position *exists*, which is a fact about the trace a system emitted
+rather than about the decisions its logic admits, so nothing reasoning about one decision at a time
+establishes it and it stays at `observed`. Closing *that* needs the reasoning this objective did not
+need — a bounded search over generated traces, or a finite-trace decision procedure — and no shipped
+duty uses the operator, so it waits for one, on the same terms as objective 2.
 
 ## 2. `until` and `since` in the temporal fragment
 
