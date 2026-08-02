@@ -177,6 +177,16 @@ delegates to it, so a rendering edit is a `render.py` edit and nothing in `repor
 repo and deploys to Vercel — see [#35](https://github.com/eduardstan/reasonsmith/pull/35); this
 repo only generates the dossier that gets published there as `report.html`.
 
+`AudienceProjection` has one field that emits rather than suppresses: `plain_account`, on for
+`affected-individual` alone, turning on `render._lay_sections`. Everything it prints is quoted —
+the decision and the reason out of `ConformanceReport.decisions` (the trace `check_conformance`
+already read, carried on the report and deliberately absent from `to_dict`, which is the findings
+record), and a reason left unstated out of the certificate engine's own measurement. It paraphrases
+no statute and explains no decision; `docs/semantics.md` §7 is the rule and the four tests in
+`tests/test_audience_view.py` are the enforcement, including the one that fails if the view ever
+becomes a subset of an expert view again. The `--audience` transcripts in `README.md` are derived
+and no test pins them, so a wording change there means `python docs/build_readme_transcripts.py`.
+
 `docs/assets/og.png` is generated from `brand/og.html` in the site repository, is served live as the
 site's social card, and must never be edited here — regenerate there, copy here, update the pinned
 digest in `tests/test_social_card.py`.

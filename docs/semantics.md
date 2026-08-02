@@ -1144,6 +1144,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | One run renders as five audience artefacts, and no two audiences disagree about a verdict | `test_the_five_audiences_all_render`, `test_no_audience_sees_a_different_verdict_from_another` |
 | No audience projection drops the limits, or the notice that duties went unchecked | `test_every_audience_keeps_the_limits`, `test_every_audience_keeps_the_notice_that_duties_went_unchecked` |
 | The affected-individual artefact carries no system internals, asserted as an exclusion | `test_the_affected_individual_view_leaks_no_system_internals` |
+| The affected-individual artefact is a derivation and not a subset of an expert one, emits no heading it has nothing to put under, and does not let the disclaimer dominate its page | `test_the_lay_view_derives_content_no_expert_view_carries`, `test_the_lay_view_never_puts_a_heading_over_an_empty_box`, `test_the_lay_page_does_not_let_the_disclaimer_dominate` |
 | Two audiences differ by content and not by framing, and an unknown audience is refused rather than widened | `test_two_audiences_differ_by_content_not_framing`, `test_an_unknown_audience_is_refused_rather_than_widened`, `test_the_cli_offers_the_five_audiences_and_refuses_a_sixth` |
 | The unprojected rendering is the full report and is the auditor's | `test_the_default_rendering_is_the_full_report_and_the_auditors` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |
@@ -1178,6 +1179,7 @@ be reverse-engineered from a dataclass.
 | evidence summary | ✓ | ✓ | ✓ | ✓ | — |
 | probe budget | ✓ | ✓ | ✓ | ✓ | — |
 | counterexamples and trace witnesses | ✓ | — | ✓ | — | — |
+| the plain-language account of what the system recorded | — | — | — | — | ✓ |
 
 The reasoning, row by row:
 
@@ -1200,21 +1202,44 @@ The reasoning, row by row:
   It drops signal names and witnesses: the internal architecture of a system and the personal
   data of the people it decided about are not what makes a claim's reach legible.
 - **affected-individual** is the narrowest artefact and the one with a hard rule around it: it
-  carries which duties were checked, how each came out, and the limits, and it carries no system
-  internals at all — no counterexamples, no probe budgets, no signal names, no solver output, and
-  no strength vocabulary, because being told a duty is `probed` hands a person this tool's
-  evidence model instead of an answer. `test_the_affected_individual_view_leaks_no_system_internals`
+  carries no system internals at all — no counterexamples, no probe budgets, no signal names, no
+  solver output, and no strength vocabulary, because being told a duty is `probed` hands a person
+  this tool's evidence model instead of an answer. `test_the_affected_individual_view_leaks_no_system_internals`
   asserts that as an *exclusion* over the run's own data rather than as a list of what should be
-  present, so a later change that adds a leak fails rather than passes.
+  present, so a later change that adds a leak fails rather than passes. It is also the one
+  audience whose projection **emits**: `plain_account` turns on `render._lay_sections`, and every
+  other row of the table above suppresses. Which is the point of the last row, and the answer to
+  a defect this table used to describe as a design: built out of suppression flags alone, this
+  artefact was the developer's report with parts removed — its word set a strict subset of the
+  developer's, its difference empty — so the reader least able to fill a gap in was the one
+  handed the most gaps. `test_the_lay_view_derives_content_no_expert_view_carries` is that
+  measurement, kept as an assertion.
 
-Two limits of this feature, stated rather than left to be discovered:
+What the account may say is fixed by the same rule as everything else here, and is narrower than
+the reader would like:
 
-- **The affected-individual view carries no reasons for the decision itself.** A person refused
-  credit wants the reasons they were refused. A conformance report holds verdicts about duties,
-  not the adverse-action statement a creditor owes them, and this projection will not manufacture
-  one: what it can honestly say is which duties were checked and how they came out. Closing that
-  gap means a different artefact reading a different input, not a wider projection of this one.
+- **The system's own words, and the engines' own measurements. Nothing else.** The decision and
+  the reason are quoted out of the decision record the run already read
+  (`ConformanceReport.decisions`, `report.DECISION_RECORD_SIGNAL` and `report.REASON_SIGNAL`); a
+  reason the stated ones left out is named with the label `engines/certificate.py` gave it when
+  it re-ran the system's own inference. No sentence in it paraphrases a statute, explains a
+  decision, or advises. This projection still will not manufacture the adverse-action statement a
+  creditor owes a person — quoting the log is not writing one — and a report that read no
+  decision record says exactly that rather than going quiet.
+- **Absence of a finding is never completeness.** A run where no certificate measured whether the
+  stated reasons were all the reasons prints a section saying so, because silence there reads to
+  this reader as a clean result, and it is not one
+  (`test_the_lay_view_never_puts_a_heading_over_an_empty_box`).
+- **The limits are kept whole and folded.** No projection may drop a word of them
+  (`test_every_audience_keeps_the_limits`), and on a page addressed to a layperson a 222-word
+  legal caveat was also the largest thing on it. The HTML rendering puts them in a native
+  `<details>` for this audience only, so they are one click and no scroll away
+  (`test_the_lay_page_does_not_let_the_disclaimer_dominate`). The text rendering keeps them last
+  and whole, where they are still the longest single block — the console has no fold, and
+  shortening them is not on offer.
 - **`--json` is not projected.** It stays the complete machine record, so a pipeline parsing it
   never loses fields to a display flag — and so `--audience affected-individual --json` is not a
   redaction. Redaction is a security property; this is a presentation one, and the two must not
-  be confused.
+  be confused. `ConformanceReport.decisions` is not in it either, for the opposite reason: the
+  JSON is the findings record, and the decisions are an input the run read, not a finding it
+  made.
