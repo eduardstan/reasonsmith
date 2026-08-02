@@ -8,6 +8,8 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-02
+
 ### Added
 
 - `contains(signal, "phrase")`, a property-language atom that reads *what a statement says* rather
@@ -19,6 +21,7 @@ releases before it predate the file and are not reconstructed here.
   string. It is a substring test and claims to be nothing more: it does not model *specific*. See
   [docs/semantics.md](docs/semantics.md) §2 and [docs/authoring-packs.md](docs/authoring-packs.md),
   *a phrase in a `spec` is the clause's own words*.
+  ([#64](https://github.com/eduardstan/reasonsmith/pull/64))
 
 ### Changed
 
@@ -35,6 +38,7 @@ releases before it predate the file and are not reconstructed here.
   that exited 0 can exit 2 on evidence it always had. Two shapes still cannot be monitored and stay
   not evaluated: a comparison against a Boolean constant, and an implication written
   `Implies(a, b)` rather than `(a) -> (b)` — the monitor renders the `spec` as the pack wrote it.
+  ([#64](https://github.com/eduardstan/reasonsmith/pull/64))
 - **12 CFR 1002.9(b)(2) checks the clause's own negative constraint, and carries its trigger.** The
   duty was a conjunction of `present()` atoms, so a reason of `"n/a"` satisfied it. It now also
   checks that the statement is not one of the two the clause itself calls insufficient, which makes
@@ -48,13 +52,18 @@ releases before it predate the file and are not reconstructed here.
   where a log carries no statement of reasons at all, the duty is `satisfied` vacuously and no
   report outcome distinguishes that from a trace that was checked and met
   ([docs/semantics.md](docs/semantics.md) §4).
+  ([#64](https://github.com/eduardstan/reasonsmith/pull/64))
 
 ### Fixed
 
 - The Z3 encoding of `present()`'s blankness rule now also governs `contains()`, so the solver and
   the reference interpreter agree that a value the record does not carry carries no phrase.
+  ([#64](https://github.com/eduardstan/reasonsmith/pull/64))
 
 ## [0.3.0]
+
+0.3.0 was numbered in the source tree but never published to PyPI, so its changes reach users in
+0.4.0.
 
 ### Added
 
@@ -63,11 +72,11 @@ releases before it predate the file and are not reconstructed here.
   matched by intersection against what a system declares. See
   [docs/authoring-packs.md](docs/authoring-packs.md) for the vocabulary rules and
   [docs/semantics.md](docs/semantics.md) §4 for what a not-applicable verdict on it does and does
-  not say.
+  not say. ([#63](https://github.com/eduardstan/reasonsmith/pull/63))
 - A report whose duties were skipped for a missing declaration says so: `render_text`,
   `render_html` and the CLI's stderr all carry a line naming how many duties were reported not
   applicable solely because the system declared no decision domain, and what to pass to check
-  them. Exit codes are unchanged.
+  them. Exit codes are unchanged. ([#63](https://github.com/eduardstan/reasonsmith/pull/63))
 
 ### Changed — breaking
 
@@ -76,10 +85,11 @@ releases before it predate the file and are not reconstructed here.
   naming the kinds of decision the duty is about, or `domains = []` for a duty that is about no
   particular kind of decision. There is deliberately no default: a wildcard reachable by
   forgetting the field would defeat the gate, so the omission is refused the way a missing
-  `binding` or `scope` already is.
+  `binding` or `scope` already is. ([#63](https://github.com/eduardstan/reasonsmith/pull/63))
 - **An invocation that declares no decision domain now reports domain-limited duties
   `not_applicable` rather than checking them.** Declare what the system decides with
   `--system-domain <domain>` (repeatable), or set `system_domains` on an adapter. All three
   requirements of the shipped ECOA pack and two rows of the Table 7 pack are domain-limited today,
   so an existing ECOA run without the flag now checks nothing and reports every duty not
   applicable. `reasonsmith` never infers a system's decision domain.
+  ([#63](https://github.com/eduardstan/reasonsmith/pull/63))

@@ -153,7 +153,7 @@ report the CLI writes may carry — and `test_docs_index_html_matches_the_render
 committed page byte-for-byte to that script. Touching the renderer means regenerating the page with
 `python docs/build_example.py`, the command the page names as its own provenance. The website
 (landing, vendored libraries, fonts, assets) lives in the separate private `reasonsmith-site`
-repo and deploys to Vercel — see issue #35; this repo only generates the dossier that gets
+repo and deploys to Vercel — see [#35](https://github.com/eduardstan/reasonsmith/pull/35); this repo only generates the dossier that gets
 published there as `report.html`.
 
 `docs/three-systems.md` and the three files in `docs/adapters/` are the answer to "how does any
@@ -197,6 +197,13 @@ superseded and nothing should reintroduce it. `reasonsmith` 0.2.0 is published o
 for running the suite from a checkout. The forbidden string appears here deliberately:
 this paragraph is the statement of the rule, and a rule that cannot name what it forbids
 is not a rule — any repository-wide check for it must exclude this file.
+
+The release discipline lives in `CONTRIBUTING.md`, *Versioning and Releases*, and is enforced by
+`tests/test_release_discipline.py` (the pyproject `version` must equal the topmost released
+`CHANGELOG.md` heading; no tracked markdown may carry a bare `#NN` outside code and anchors) and by
+the tag check in `.github/workflows/publish.yml` (a release whose tag is not `v` plus the pyproject
+version never builds). Bumping the version means closing `[Unreleased]` and opening a fresh one in
+the same change.
 
 ## The front door
 

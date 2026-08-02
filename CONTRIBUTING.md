@@ -35,7 +35,7 @@ All three must pass cleanly with zero errors or warnings. Continuous integration
 
 | Category | Status | Details |
 |---|---|---|
-| **What is built** | Complete (v0.2 Core) | The module inventory lives in the [`README.md`](README.md) architecture table — read it there rather than here. Beyond the modules: the HTML report is published as part of the website (separate `reasonsmith-site` repo on Vercel, see issue #35), and end-to-end demonstrations exist for all six Table 7 rows — the `demo.py` line of that same architecture table lists them. |
+| **What is built** | Complete (v0.2 Core) | The module inventory lives in the [`README.md`](README.md) architecture table — read it there rather than here. Beyond the modules: the HTML report is published as part of the website (separate `reasonsmith-site` repo on Vercel, see [#35](https://github.com/eduardstan/reasonsmith/pull/35)), and end-to-end demonstrations exist for all six Table 7 rows — the `demo.py` line of that same architecture table lists them. |
 | **Deliberately NOT done** | Out of Scope | Web/GUI dashboards — the `--html` report is one static offline file, not a served application — reimplementing `nesyarena` IR or oracle engines, generating automated legal opinions, or making un-hedged legal compliance guarantees. |
 
 ### Concrete Open Work for Contributors
@@ -66,6 +66,23 @@ Extending an engine, rather than adding another demo, is now the concrete, high-
    - Accompanying unit tests in `tests/`.
    - Complete adherence to existing module docstring shapes and safety boundaries.
 
+## Versioning and Releases
+
+The project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Below 1.0 the
+shape is `0.y.z`: a **breaking** change bumps `y`, everything else bumps `z`, and there is no
+major bump available below 1.0. **1.0.0 is a promise of a stable public interface, and this
+project is not ready to make it.** The absence of a 1.0.0 is a decision, not an oversight.
+
+Every `CHANGELOG.md` entry links the pull request that introduced it.
+
+To release: bump `version` in `pyproject.toml`, close the `[Unreleased]` heading into the new
+version, and publish a GitHub Release whose tag is `v<version>`. `.github/workflows/publish.yml`
+does the PyPI upload by trusted publishing; there is no token anywhere.
+
+`tests/test_release_discipline.py` holds `version` in `pyproject.toml` to the topmost released
+`CHANGELOG.md` heading, and `publish.yml` refuses to build a release whose tag is not `v` plus
+that version.
+
 ## Reporting Issues
 
 For a bug, question, or pack proposal:
@@ -85,7 +102,7 @@ For a bug, question, or pack proposal:
 
 reasonsmith normally **squash-merges** pull requests. On that path, GitHub collapses the branch's commits and writes the pull-request **title** onto `main` as the commit subject, appending `(#NN)` — the PR number. The individual branch commits do not appear in the history.
 
-PRs #31 and #32 are one deliberate exception sequence: the first reverted a squash that had erased an outside contributor's authorship, and the second re-landed the contributor's commits with a merge commit so that authorship survived. If keeping your individual commits in the history matters to you, ask for that in the pull-request description.
+PRs [#31](https://github.com/eduardstan/reasonsmith/pull/31) and [#32](https://github.com/eduardstan/reasonsmith/pull/32) are one deliberate exception sequence: the first reverted a squash that had erased an outside contributor's authorship, and the second re-landed the contributor's commits with a merge commit so that authorship survived. If keeping your individual commits in the history matters to you, ask for that in the pull-request description.
 
 That is where the convention is strict, and only there:
 
@@ -106,11 +123,11 @@ appended the `(#NN)` suffix to each squash-merged subject; the merge-commit exce
 
 | Type | Example | PR |
 |---|---|---|
-| `feat` — a new capability | `feat(engines): add active probing for opaque decision systems (#37)` | #37 |
-| `fix` — a bug corrected | `fix: depend on nesyarena==0.1.0 from PyPI instead of a git commit pin (#26)` | #26 |
-| `docs` — documentation only | `docs: define verifiable verdict semantics (#38)` | #38 |
-| `build` — packaging, dependencies, CI | `build(reasonsmith): pin nesyarena by commit and run the same install path in CI (#2)` | #2 |
-| `revert` — undoes an earlier change | `revert: undo the squash merge of #30 so the contributor commits can land with their authorship` | #31 |
+| `feat` — a new capability | `feat(engines): add active probing for opaque decision systems (#37)` | [#37](https://github.com/eduardstan/reasonsmith/pull/37) |
+| `fix` — a bug corrected | `fix: depend on nesyarena==0.1.0 from PyPI instead of a git commit pin (#26)` | [#26](https://github.com/eduardstan/reasonsmith/pull/26) |
+| `docs` — documentation only | `docs: define verifiable verdict semantics (#38)` | [#38](https://github.com/eduardstan/reasonsmith/pull/38) |
+| `build` — packaging, dependencies, CI | `build(reasonsmith): pin nesyarena by commit and run the same install path in CI (#2)` | [#2](https://github.com/eduardstan/reasonsmith/pull/2) |
+| `revert` — undoes an earlier change | `revert: undo the squash merge of #30 so the contributor commits can land with their authorship` | [#31](https://github.com/eduardstan/reasonsmith/pull/31) |
 
 Put issue references (`Fixes #123`) in the pull-request **description**, not the title — the description closes the issue on merge, and the title would otherwise carry the reference into the commit subject.
 

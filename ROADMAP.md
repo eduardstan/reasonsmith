@@ -30,7 +30,7 @@ Stated in [`docs/semantics.md`](docs/semantics.md) §3.5, and pinned by
 *replaced* by a test pinning the new ceiling rather than deleted — a removed ceiling test is how a
 ceiling stops being checked.
 
-**Depends on.** Nothing structural: the engine ladder (#47) already collects engines from the
+**Depends on.** Nothing structural: the engine ladder ([#47](https://github.com/eduardstan/reasonsmith/pull/47)) already collects engines from the
 system's exposed surface rather than from the pack, so a new engine is reached the moment it exists.
 What it needs is the reasoning itself — a bounded search over generated traces, or a solver encoding
 of a trace-wide formula — and, before it can ship, its own soundness paragraph in

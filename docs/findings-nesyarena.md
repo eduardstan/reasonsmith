@@ -328,7 +328,7 @@ the decision of what counts as a reason sits with that author, not with the tool
 
 ## What would need to change to publish this on the site
 
-Nothing here touches `docs/report.html` or `docs/index.html`; PRs #33 and #34 restyle exactly
+Nothing here touches `docs/report.html` or `docs/index.html`; PRs [#33](https://github.com/eduardstan/reasonsmith/pull/33) and [#34](https://github.com/eduardstan/reasonsmith/pull/34) restyle exactly
 those files and this work deliberately stays out of their way. To put this run on the published
 site later:
 
@@ -339,7 +339,7 @@ site later:
   `docs/build_example.py` that lays out 15 reports plus the measured-inference table, and a
   byte-for-byte test to match — the pattern `test_docs_index_html_matches_the_renderer` already
   establishes.
-- Whatever nav or link the restyled `index.html` settles on after #33/#34 land would need an entry
+- Whatever nav or link the restyled `index.html` settles on after [#33](https://github.com/eduardstan/reasonsmith/pull/33)/[#34](https://github.com/eduardstan/reasonsmith/pull/34) land would need an entry
   pointing at it. That decision belongs to those pull requests, not to this one.
 
 ## Reproducing it
