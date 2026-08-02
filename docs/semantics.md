@@ -646,6 +646,15 @@ because it cannot be reached by omission: `domains` is a required field with no 
 that has not classified a requirement fails to load rather than being guessed for
 (`test_a_pack_that_has_not_classified_a_requirement_is_refused`).
 
+**A run that skipped duties for a missing declaration does not read like a run that checked them.**
+A duty reported not applicable *solely* because the system declared no decision domain is a missing
+input, not an answer, and it is flagged as one on the result itself
+(`report.UNDECLARED_DOMAIN_KEY`). The text report, the HTML dossier and the CLI's stderr each carry
+a line naming how many duties that was and what to declare to check them; a duty skipped because the
+system declared a domain that is simply not this duty's raises no such line, because that one was
+answered (`test_a_run_that_skipped_duties_for_a_missing_declaration_says_so`). The exit code is
+unchanged, which is why the notice exists.
+
 The operational consequence is in the exit code: among completed reports, only a violation exits
 non-zero. Unattainable
 (`test_cli_exits_zero_when_findings_are_unattainable`), not applicable
@@ -777,6 +786,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | A pack that has not classified a requirement fails to load; there is no default domain | `test_a_pack_that_has_not_classified_a_requirement_is_refused`, `test_every_shipped_pack_classifies_every_requirement` |
 | A misspelled decision domain is refused on both sides, and a domain list is domain names and nothing else | `test_a_domain_outside_the_vocabulary_is_refused`, `test_a_domain_list_is_domain_names_and_nothing_else` |
 | The whole-pack plan and the single-requirement path give the same applicability answer, and neither runs an out-of-reach system | `test_the_two_domain_gates_never_disagree`, `test_an_undeclared_domain_never_runs_the_system` |
+| A run that skipped duties for an undeclared domain says so in every rendering, and a declared mismatch raises no such notice | `test_a_run_that_skipped_duties_for_a_missing_declaration_says_so` |
 | A reason-deletion certificate detects a dropped reason and excludes compliance certification beyond its measured input | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_limits_exclude_compliance_certification`, `test_certificate_carries_its_limits` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |

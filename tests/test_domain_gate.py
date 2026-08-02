@@ -26,6 +26,8 @@ What a reader must not break:
 
 from __future__ import annotations
 
+import html
+
 import pytest
 
 from reasonsmith.report import check_conformance, evaluate_requirement
@@ -280,3 +282,35 @@ def test_every_shipped_pack_classifies_every_requirement():
                 f"{name} limits a duty to a domain without saying in its description that the "
                 "vocabulary is the pack author's rather than the regulation's"
             )
+
+
+def test_a_run_that_skipped_duties_for_a_missing_declaration_says_so():
+    """The exit code cannot carry this, so the report has to.
+
+    A duty skipped for an undeclared domain is reported not applicable, and only a violation
+    exits non-zero — so an existing gate over the ECOA pack goes green the moment this version
+    lands and stays green over duties nothing looked at. Every rendering therefore names the
+    count and what to pass to un-skip it. A *declared* mismatch is a real answer and must not
+    raise the same alarm: a notice that fires when nothing is missing teaches a reader to skip it.
+    """
+    pack = load_pack("ecoa")
+    signals = {s for req in pack.requirements for s in req.requires}
+
+    undeclared = check_conformance(BaseSUT(signals), pack)
+    assert len(undeclared.skipped_for_undeclared_domain) == len(pack.requirements)
+    notice = undeclared.undeclared_domain_notice
+    assert notice is not None
+    assert f"{len(pack.requirements)} domain-limited duties were" in notice
+    assert "--system-domain <domain>" in notice
+    assert f"DUTIES NOT CHECKED: {notice}" in undeclared.render_text()
+    assert html.escape(notice) in undeclared.render_html(commit_hash="")
+
+    mismatched = check_conformance(BaseSUT(signals), pack, system_domains=["healthcare"])
+    assert all(r.verdict == Verdict.NOT_APPLICABLE for r in mismatched.results)
+    assert mismatched.skipped_for_undeclared_domain == ()
+    assert mismatched.undeclared_domain_notice is None
+    assert "DUTIES NOT CHECKED" not in mismatched.render_text()
+
+    declared = check_conformance(BaseSUT(signals), pack, system_domains=["consumer-credit"])
+    assert declared.skipped_for_undeclared_domain == ()
+    assert declared.undeclared_domain_notice is None

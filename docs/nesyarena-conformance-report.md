@@ -231,6 +231,7 @@ declared scope: undeclared
 declared domains: undeclared
 pack: ecoa
 headline: 3 requirements · 3 binding: 3 not applicable
+DUTIES NOT CHECKED: 3 domain-limited duties were reported not applicable without being checked, because this system declares no decision domain. Nothing in this report says those duties are met. Declare what kind of decision this system makes — --system-domain <domain>, repeatable, or a system_domains attribute on the adapter — and run it again; docs/authoring-packs.md names the vocabulary.
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable
@@ -325,6 +326,7 @@ declared scope: undeclared
 declared domains: undeclared
 pack: ecoa
 headline: 3 requirements · 3 binding: 3 not applicable
+DUTIES NOT CHECKED: 3 domain-limited duties were reported not applicable without being checked, because this system declares no decision domain. Nothing in this report says those duties are met. Declare what kind of decision this system makes — --system-domain <domain>, repeatable, or a system_domains attribute on the adapter — and run it again; docs/authoring-packs.md names the vocabulary.
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable
@@ -418,6 +420,7 @@ declared scope: undeclared
 declared domains: undeclared
 pack: ecoa
 headline: 3 requirements · 3 binding: 3 not applicable
+DUTIES NOT CHECKED: 3 domain-limited duties were reported not applicable without being checked, because this system declares no decision domain. Nothing in this report says those duties are met. Declare what kind of decision this system makes — --system-domain <domain>, repeatable, or a system_domains attribute on the adapter — and run it again; docs/authoring-packs.md names the vocabulary.
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable
@@ -511,6 +514,7 @@ declared scope: undeclared
 declared domains: undeclared
 pack: ecoa
 headline: 3 requirements · 3 binding: 3 not applicable
+DUTIES NOT CHECKED: 3 domain-limited duties were reported not applicable without being checked, because this system declares no decision domain. Nothing in this report says those duties are met. Declare what kind of decision this system makes — --system-domain <domain>, repeatable, or a system_domains attribute on the adapter — and run it again; docs/authoring-packs.md names the vocabulary.
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable
@@ -604,6 +608,7 @@ declared scope: undeclared
 declared domains: undeclared
 pack: ecoa
 headline: 3 requirements · 3 binding: 3 not applicable
+DUTIES NOT CHECKED: 3 domain-limited duties were reported not applicable without being checked, because this system declares no decision domain. Nothing in this report says those duties are met. Declare what kind of decision this system makes — --system-domain <domain>, repeatable, or a system_domains attribute on the adapter — and run it again; docs/authoring-packs.md names the vocabulary.
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): not_applicable

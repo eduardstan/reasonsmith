@@ -25,6 +25,12 @@ What a reader must not break:
     checked it.
     Why this matters: none of the three is evidence the system failed a duty, so none of them
     fails the caller's build.
+  - A run that reported a duty not applicable *only* because the system declared no decision
+    domain prints the report's own notice to stderr as well as into the report, and still exits
+    on the contract above. Stdout may be JSON, or redirected to a file, or an HTML dossier; a
+    caller reading none of those still learns that duties went unchecked for a missing input.
+    Why this matters: the exit code cannot distinguish a clean run from a run that looked at
+    nothing, so a caller that only watches exit codes must be told some other way.
   - `--capabilities <file>` is the only way a CLI run says the system itself claims the signal
     names: without it the adapter derives capabilities from the trace and the report says so,
     and with it — even an empty or comment-only file, which declares nothing — the report says
@@ -391,6 +397,10 @@ def main(args: list[str] | None = None) -> int:
         except (TypeError, ValueError) as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
+
+        notice = report.undeclared_domain_notice
+        if notice:
+            print(f"Warning: {notice}", file=sys.stderr)
 
         if parsed.html:
             cmd_args = args if args is not None else sys.argv[1:]

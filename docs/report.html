@@ -191,6 +191,21 @@
       color: var(--accent-deep);
       margin-bottom: var(--space-2xs);
     }
+    .notice-banner {
+      background: var(--warn-soft);
+      border-color: var(--warn-line);
+      border-left-color: var(--warn);
+    }
+    .notice-banner .headline-title { color: var(--warn); }
+    .notice-text {
+      font-family: var(--font-serif);
+      font-size: var(--step-0);
+      font-weight: 600;
+      line-height: 1.45;
+      color: var(--warn);
+      max-width: 70ch;
+      text-wrap: pretty;
+    }
     .headline-text {
       font-family: var(--font-serif);
       font-size: var(--step-2);
@@ -607,6 +622,8 @@
       <div class="headline-text">6 requirements · 4 binding: 3 observed, 1 violated · 2 interpretive: 1 unattainable, 1 not applicable</div>
       <div class="provenance-bar"><strong>Report Provenance:</strong> Generated without an identified source commit. Command: <code>python docs/build_example.py</code></div>
     </div>
+
+    
 
     
     <style>

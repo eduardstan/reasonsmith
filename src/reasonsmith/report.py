@@ -73,6 +73,14 @@ PROBE_BUDGET_KEY = "probe_budget"
 PROBE_BUDGET_FIELDS = ("trials", "strategy", "seed", "input_space")
 _UNREAD = object()
 
+#: Where a not-applicable result records that the *system* said nothing, rather than that it said
+#: something else. The two are not the same finding: a declared domain that does not meet the
+#: duty's is an answer, while an undeclared one is a missing input, and a run that skipped duties
+#: for a missing input must not read like a run that checked them. Carried as a flag rather than
+#: left to be recovered from the reason prose, so every rendering asks the result rather than
+#: parsing a sentence that is free to be reworded.
+UNDECLARED_DOMAIN_KEY = "skipped_for_undeclared_domain"
+
 
 def _budget_line(budget: Mapping[str, Any]) -> str:
     """One line naming what a probed search covered, shared by every rendering of it."""
@@ -444,6 +452,39 @@ class ConformanceReport:
             parts.append(f"{counts[total_key]} {noun}{detail}")
         return " · ".join(parts)
 
+    @property
+    def skipped_for_undeclared_domain(self) -> tuple[str, ...]:
+        """The duties reported not applicable *solely* because this system declared no domain.
+
+        A declared domain that does not meet a duty's is not counted here: that duty was answered,
+        not skipped for want of an input.
+        """
+        return tuple(
+            r.requirement_id for r in self.results if r.details.get(UNDECLARED_DOMAIN_KEY)
+        )
+
+    @property
+    def undeclared_domain_notice(self) -> str | None:
+        """The one sentence every rendering owes a reader when duties went unchecked, or None.
+
+        A run that skipped duties for a missing declaration exits exactly as a run that checked
+        them does — only a violation exits non-zero, and that is deliberate (`docs/semantics.md`
+        §4). So the report itself has to carry what the exit code cannot, in the place a reader
+        cannot miss and in every format, or a compliance gate goes green and stays green over
+        duties nothing here looked at.
+        """
+        skipped = self.skipped_for_undeclared_domain
+        if not skipped:
+            return None
+        duties = "duty was" if len(skipped) == 1 else "duties were"
+        return (
+            f"{len(skipped)} domain-limited {duties} reported not applicable without being "
+            "checked, because this system declares no decision domain. Nothing in this report "
+            "says those duties are met. Declare what kind of decision this system makes — "
+            "--system-domain <domain>, repeatable, or a system_domains attribute on the "
+            "adapter — and run it again; docs/authoring-packs.md names the vocabulary."
+        )
+
     def render_text(self) -> str:
         """Readable text rendering of the report."""
         lines = [
@@ -453,6 +494,11 @@ class ConformanceReport:
             f"declared domains: {', '.join(self.system_domains) or 'undeclared'}",
             f"pack: {self.pack_id}",
             f"headline: {self.headline}",
+        ]
+        notice = self.undeclared_domain_notice
+        if notice:
+            lines.append(f"DUTIES NOT CHECKED: {notice}")
+        lines += [
             "",
             "REQUIREMENT FINDINGS:",
         ]
@@ -555,6 +601,16 @@ class ConformanceReport:
         binding_pills = render_pill_group("")
         interp_pills = render_pill_group("interpretive_")
         extra_section = extra_section_html or ""
+
+        notice = self.undeclared_domain_notice
+        notice_html = (
+            '<div class="headline-banner notice-banner">'
+            '<div class="headline-title">Duties Not Checked</div>'
+            f'<div class="notice-text">{html.escape(notice)}</div>'
+            "</div>"
+            if notice
+            else ""
+        )
 
         req_html_blocks = []
         for r in self.results:
@@ -953,6 +1009,21 @@ class ConformanceReport:
       letter-spacing: 0.14em;
       color: var(--accent-deep);
       margin-bottom: var(--space-2xs);
+    }}
+    .notice-banner {{
+      background: var(--warn-soft);
+      border-color: var(--warn-line);
+      border-left-color: var(--warn);
+    }}
+    .notice-banner .headline-title {{ color: var(--warn); }}
+    .notice-text {{
+      font-family: var(--font-serif);
+      font-size: var(--step-0);
+      font-weight: 600;
+      line-height: 1.45;
+      color: var(--warn);
+      max-width: 70ch;
+      text-wrap: pretty;
     }}
     .headline-text {{
       font-family: var(--font-serif);
@@ -1371,6 +1442,8 @@ class ConformanceReport:
       {provenance_html}
     </div>
 
+    {notice_html}
+
     {extra_section}
 
     <section class="dashboard-section">
@@ -1599,7 +1672,9 @@ def _declared_domains(sut: SystemUnderTest, system_domains: Any) -> tuple[str, .
     return normalize_domains(system_domains, "declared system decision domain")
 
 
-def _not_applicable(req: Requirement, summary: str) -> RequirementResult:
+def _not_applicable(
+    req: Requirement, summary: str, details: dict[str, Any] | None = None
+) -> RequirementResult:
     """The not-applicable result: no strength, no missing signals, nothing about the system."""
     return RequirementResult(
         requirement_id=req.id,
@@ -1608,6 +1683,7 @@ def _not_applicable(req: Requirement, summary: str) -> RequirementResult:
         strength=None,
         signals_required=tuple(req.requires),
         evidence_summary=summary,
+        details=dict(details or {}),
         binding=req.binding,
         scope=req.scope,
         domains=req.domains,
@@ -1616,8 +1692,14 @@ def _not_applicable(req: Requirement, summary: str) -> RequirementResult:
 
 def _inapplicability(
     req: Requirement, sys_scope_norm: str, sys_domains: tuple[str, ...], system_scope: Any
-) -> str | None:
-    """Why this duty does not reach this system, or None when it does.
+) -> tuple[str, dict[str, Any]] | None:
+    """Why this duty does not reach this system, and what that is, or None when it does.
+
+    The second element is the details a result carries away from here. A duty skipped because
+    the system declared *no* decision domain is flagged with `UNDECLARED_DOMAIN_KEY`: that is a
+    missing input rather than an answer, and every rendering says so. A duty skipped because the
+    system declared a domain that is simply not this duty's carries nothing — that one is a real
+    answer, and warning about it would train a reader to ignore the warning that matters.
 
     Two independent gates, on two axes that are not the same question. `scope` is a regulatory
     class from one statute's own fixed vocabulary; `domains` is the kind of decision the duty is
@@ -1638,7 +1720,8 @@ def _inapplicability(
         desc = f"declared as {system_scope!r}" if sys_scope_norm else "undeclared"
         return (
             f"Not applicable: requirement scope is {req.scope!r}, but system regulatory "
-            f"class is {desc}. reasonsmith never infers a system's regulatory class."
+            f"class is {desc}. reasonsmith never infers a system's regulatory class.",
+            {},
         )
     if req.domains and not (set(req.domains) & set(sys_domains)):
         desc = f"declared as {', '.join(sys_domains)}" if sys_domains else "undeclared"
@@ -1646,7 +1729,8 @@ def _inapplicability(
             f"Not applicable: this duty is about {', '.join(req.domains)} decisions, but the "
             f"system's decision domain is {desc}. reasonsmith never infers a system's decision "
             "domain, and the domain vocabulary is the pack author's rather than the "
-            "regulation's — see docs/authoring-packs.md."
+            "regulation's — see docs/authoring-packs.md.",
+            {} if sys_domains else {UNDECLARED_DOMAIN_KEY: True},
         )
     return None
 
@@ -1703,7 +1787,7 @@ def _evaluate_requirement(
 
     inapplicable = _inapplicability(req, sys_scope_norm, sys_domains, system_scope)
     if inapplicable:
-        return _not_applicable(req, inapplicable)
+        return _not_applicable(req, *inapplicable)
 
     is_unattainable, missing = analyze_unattainable(req, sut)
     if is_unattainable:
