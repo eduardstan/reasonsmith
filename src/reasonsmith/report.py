@@ -1574,9 +1574,16 @@ def _unattainable_result(
 
 
 def _declared_scope(sut: SystemUnderTest, system_scope: str | None) -> str | None:
-    """The regulatory class this run is judging against — the argument, or the system's own."""
+    """The regulatory class this run is judging against — the argument, or the system's own.
+
+    Refused here, beside `_declared_domains` and on the same terms, rather than at the first
+    requirement that happens to be class-limited: a pack with no requirements, or none carrying
+    a class, would otherwise end in a clean run on a misspelled one. The value returned is the
+    declaration as it was given, because that is what a report prints back to its reader.
+    """
     if system_scope is None:
-        return getattr(sut, "system_scope", getattr(sut, "declared_scope", None))
+        system_scope = getattr(sut, "system_scope", getattr(sut, "declared_scope", None))
+    normalize_scope(system_scope, "declared system scope")
     return system_scope
 
 
@@ -1892,7 +1899,6 @@ def check_conformance(
     reported not applicable as a declared mismatch.
     """
     system_scope = _declared_scope(sut, system_scope)
-    normalize_scope(system_scope, "declared system scope")
     sys_domains = _declared_domains(sut, system_domains)
     resources = _EvaluationResources(sut)
     results = [
