@@ -876,7 +876,16 @@ three states:
 | --- | --- | --- |
 | in `computes` | an output the system produces | wrong unless the rules settle it |
 | in `variables`, not in `computes` | an input the situation supplies | exactly right |
-| in neither | a name the system has no notion of | an invention |
+| in neither list | a name the system has no notion of | an invention |
+
+The outer boundary is **both** lists and not `variables` alone. `RulesAdapter` keeps `computes`
+inside `variables` and refuses to construct otherwise, but the protocol asks an adapter only for the
+names its system produces, so a computed name the type table does not repeat is an output at the
+default sort and never a name the system has no notion of
+(`test_a_computed_name_outside_the_type_table_is_an_output_not_an_unknown`). A `computes` given as a
+bare string is a misdeclaration and reported not evaluated, because reading it as the iterable it
+technically is yields its own characters and quietly makes every declared variable an input
+(`test_computes_declared_as_a_string_is_refused_rather_than_read_as_characters`).
 
 `_check_declared_directions` reads that and refuses two things, neither of which is a judgement
 about the property:
@@ -1119,6 +1128,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | A name the declared directions give the system no notion of is refused a proof, and a declared output the rules never settle is too | `test_a_magnitude_the_rules_never_compute_is_not_proved_violated`, `test_a_declared_output_the_rules_never_settle_is_refused_a_proof` |
 | A declared input is quantified over, flags and magnitudes alike | `test_article_22_still_quantifies_over_flags_the_rules_never_assign`, `test_a_magnitude_declared_an_input_is_quantified_over_like_any_other` |
 | Directions are derived from the rules, must name declared variables, and logic declaring none keeps the sort heuristic | `test_computes_is_derived_from_the_rules_and_must_name_declared_variables`, `test_logic_that_declares_no_directions_keeps_the_sort_heuristic` |
+| The two declarations together bound what the system has, and a `computes` that is a bare string is refused rather than read as its characters | `test_a_computed_name_outside_the_type_table_is_an_output_not_an_unknown`, `test_computes_declared_as_a_string_is_refused_rather_than_read_as_characters` |
 | An engine whose interface raises establishes nothing, and the duty still lands on the rung that answered | `test_a_record_duty_survives_a_system_whose_logic_raises`, `test_a_logical_duty_survives_a_system_whose_logic_raises`, `test_a_logic_failure_is_named_when_no_rung_produced_evidence`, `test_a_raising_logic_is_attempted_once_per_evaluation` |
 | Building the ladder reads the callable surface and never executes the system | `test_building_the_ladder_never_executes_the_system` |
 | An installed engine plug-in joins the ladder, discharges a duty, and names itself in the result | `test_an_installed_engine_joins_the_ladder_and_discharges_a_duty` |

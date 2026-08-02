@@ -1470,15 +1470,83 @@ def test_computes_is_derived_from_the_rules_and_must_name_declared_variables():
         )
 
 
+class _ComputesOutsideTheTypeTableSUT(BaseSUT):
+    """Third-party logic declaring a computed name the type table does not repeat.
+
+    `RulesAdapter` keeps `computes` inside `variables`, but no adapter outside this repository is
+    bound by that: the protocol asks for the names the system produces and never says the type
+    table must list them too. The rules here assign the margin, so it is an output at the default
+    sort and not a name this system has no notion of.
+    """
+
+    def __init__(self):
+        super().__init__(set(_UNCOMPUTED_MAGNITUDE_SIGNALS))
+
+    def logic(self):
+        return {
+            "variables": {
+                "score": "int",
+                "approved": "bool",
+                "scope_statements_declared_deviation": "real",
+            },
+            "computes": ["approved", "artifact_logs_decision_margin"],
+            "rules": ["approved = score >= 650", "artifact_logs_decision_margin = 100"],
+            "constraints": ["score >= 0", "score <= 1000"],
+        }
+
+
+def test_a_computed_name_outside_the_type_table_is_an_output_not_an_unknown():
+    """The outer boundary is both declarations, not `variables` alone.
+
+    Reading `variables` as the only boundary would answer a system about a name it said in as many
+    words that it computes with "you have no notion of this" — and refuse a proof the rules
+    genuinely establish. The margin is assigned on every path, the deviation is a declared input,
+    and the duty is decided rather than refused.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+
+    result = evaluate_requirement(req, _ComputesOutsideTheTypeTableSUT())
+
+    assert result.verdict == Verdict.VIOLATED
+    assert result.strength == Strength.PROVED
+
+
+class _StringComputesSUT(_ComputesOutsideTheTypeTableSUT):
+    """The misdeclaration that reads as its own characters."""
+
+    def logic(self):
+        data = super().logic()
+        data["computes"] = "approved"
+        return data
+
+
+def test_computes_declared_as_a_string_is_refused_rather_than_read_as_characters():
+    """A bare string is iterable, and taking it silently widens every proof.
+
+    `set("approved")` is six characters naming nothing the system computes, so the declaration
+    guard would find no output to check, the sort heuristic would already have been skipped, and
+    every declared variable would read as an input — the reading `docs/semantics.md` §3.5 says
+    hands back the `violated`-at-`proved` verdict the declaration exists to stop.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+
+    result = evaluate_requirement(req, _StringComputesSUT())
+
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert "declares `computes` as a string" in result.evidence_summary
+
+
 def test_article_22_still_quantifies_over_flags_the_rules_never_assign():
-    """The reading the magnitude guard must not silence.
+    """The reading neither guard may silence.
 
     `gdpr_art22_1_no_prohibited_decision_for_any_input` asks whether *any* admissible input yields
     a decision that is solely automated and significantly affecting without an Article 22(2) basis.
     Its flags are free inputs of the exposed rules on purpose — quantifying over them is the whole
-    duty — so a guard that refused every unassigned name would turn this proof into silence. It
-    fires only on a property reading no assigned name *and* reading some free name as a magnitude,
-    and these flags are Booleans.
+    duty — so a guard that refused every unassigned name would turn this proof into silence. This
+    SUT is a `RulesAdapter`, so it declares `computes` and `_check_declared_directions` is the
+    guard that runs: the flags are in `variables` and not in `computes`, which is the declaration
+    for an input the situation supplies, and an input is quantified over.
     """
     req = load_pack("gdpr").get_requirement("gdpr_art22_1_no_prohibited_decision_for_any_input")
     flags = (

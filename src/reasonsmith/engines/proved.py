@@ -379,9 +379,12 @@ def _check_declared_directions(node: ast.AST, scope: _Scope, computes: set[str])
 
     Runs in place of `_check_magnitudes_are_computed` whenever `sut.logic()` declares `computes`,
     and asks the question that guard could only approximate. The declaration splits every name into
-    three, `variables` supplying the outer boundary and `computes` the inner one:
+    three, the two lists together supplying the outer boundary and `computes` the inner one:
 
-    - **in `computes`** — an output the system produces.
+    - **in `computes`** — an output the system produces. `RulesAdapter` keeps `computes` a subset
+      of `variables`, but nothing in the protocol requires an adapter to repeat a computed name in
+      the type table, so a name declared computed and nothing else is an output here and not an
+      unknown: it is a name the system said it produces, whatever sort `_declare` gives it.
     - **in `variables`, not in `computes`** — an input the decision situation supplies. The
       solver's free constant is exactly the right encoding of one, and quantifying over it is what
       a proof *is*. `income >= 30000 implies approved` and
@@ -410,7 +413,9 @@ def _check_declared_directions(node: ast.AST, scope: _Scope, computes: set[str])
     `docs/semantics.md` §3.5.
     """
     names = signal_names(node)
-    unknown = sorted(name for name in names if name not in scope.var_types)
+    unknown = sorted(
+        name for name in names if name not in scope.var_types and name not in computes
+    )
     if unknown:
         raise UnsupportedConstructError(
             "the property reads "
@@ -738,12 +743,12 @@ def _verify_counterexample(
                     False,
                     "System under test provides no decide() method to verify counterexample",
                 )
-            temp_adapter = RulesAdapter(
-                rules=logic_data.get("rules", []),
-                variables=logic_data.get("variables"),
-                constraints=logic_data.get("constraints"),
-                computes=logic_data.get("computes"),
-            )
+            # The rules alone, because `decide()` executes nothing else: the type table and the
+            # constraint list reach only `logic()`, which nothing here calls, while handing them
+            # over lets a declaration mismatch that has nothing to do with replaying a
+            # counterexample refuse the interpreter construction and report a reproducible
+            # violation not evaluated.
+            temp_adapter = RulesAdapter(rules=logic_data.get("rules", []))
             output_rec = temp_adapter.decide(ce_inputs)
             ran_against = (
                 "the declared logic from sut.logic(), executed by the reference rule "
@@ -816,6 +821,15 @@ class ProvedEngine:
             tname = type(logic_data).__name__
             return not_evaluated(
                 f"Not evaluated: sut.logic() returned unexpected type {tname}.", {}
+            )
+
+        if isinstance(declared_computes, (str, bytes)):
+            return not_evaluated(
+                "Not evaluated: sut.logic() declares `computes` as a string rather than a "
+                "collection of names, and read as one it is a set of characters naming nothing "
+                "the system computes. Silently accepted it would read every declared variable as "
+                "an input, which is the reading the declaration exists to replace.",
+                {"computes": repr(declared_computes)},
             )
 
         scope = _Scope(variables)

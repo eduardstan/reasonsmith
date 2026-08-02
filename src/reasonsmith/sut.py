@@ -30,7 +30,13 @@ What a reader must not break:
     system *produces*, as against the ones its decision situation supplies. Nothing here requires
     it, and logic that omits it is answered by the proved engine's older sort heuristic rather than
     refused — but an adapter exposing logic and declaring no directions is leaving that engine
-    guessing, so `RulesAdapter` derives the declaration rather than let one go missing.
+    guessing, so `RulesAdapter` derives the declaration rather than let one go missing. It must be
+    a collection of names and never a bare string, which reads as its own characters; the proved
+    engine reports such logic not evaluated rather than take the reading. Declaring a computed name
+    in `variables` too is the sound habit — that is where its sort comes from, and `RulesAdapter`
+    refuses to construct without it — but the engine takes either list as saying the system has the
+    name, so a computed name absent from the type table is an output at the default sort and never
+    one the system has no notion of.
     Why this matters: the proved engine declares a free constant for every name it meets, so
     without directions a property naming something the system has no notion of is answered from
     numbers nobody computed. `variables` cannot carry it — it is a type table, and `approved` sits
