@@ -25,19 +25,22 @@ jobs:
       - run: pip install -e ".[dev]" build
       - run: ruff check .
       - run: pytest --cov=reasonsmith --cov-report=term-missing
+      # A release that is not tagged `v` + the version in pyproject.toml would publish a
+      # number nobody chose, and a PyPI version can never be reused. The tag is the one GitHub
+      # fired this workflow for, and it must agree with the version being built. It reaches the
+      # script through `env:` so a tag value is data, never shell.
+      - name: Verify the release tag matches the version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")"
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::release tag '$TAG' does not match version 'v$version' in pyproject.toml"
+            exit 1
+          fi
       # A release that fails its own tests must not reach PyPI, where a version number can never
       # be reused. The dist is built only after the suite passes, and the publish job uploads
       # exactly these files.
-      # A release that is not tagged `v` + the version in pyproject.toml would publish a
-      # number nobody chose, and a PyPI version can never be reused. The tag is the one GitHub
-      # fired this workflow for, and it must agree with the version being built.
-      - name: Verify the release tag matches the version
-        run: |
-          version="$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")"
-          if [ "${{ github.event.release.tag_name }}" != "v$version" ]; then
-            echo "::error::release tag '${{ github.event.release.tag_name }}' does not match version 'v$version' in pyproject.toml"
-            exit 1
-          fi
       - name: Build the distributions
         run: python -m build
       - uses: actions/upload-artifact@v4

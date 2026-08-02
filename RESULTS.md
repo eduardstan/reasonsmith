@@ -54,7 +54,7 @@ The hash changed, the content did not: both commits' `git cat-file -p <sha> | gr
 
 On 2026-07-31, `nesyarena` 0.1.0 was published to PyPI. `pyproject.toml` was updated from the git SHA dependency (`nesyarena @ git+https://github.com/eduardstan/nesyarena@57720fa212834689692e171882272140f1d1fed7`) to the exact PyPI release pin `nesyarena==0.1.0`.
 
-PyPI 0.1.0 was built from `nesyarena` commit `22b539bad6c3510fe457aa751141c5c4aa1483ea` ("build(nesyarena): prepare 0.1.0 PyPI release and widen CI matrix ([#3](https://github.com/eduardstan/nesyarena/pull/3))"), two commits ahead of the pin it replaces: `57720fa212834689692e171882272140f1d1fed7` → `782a135bd5fbfcde4c663beea74e71c61cee8157` ("ci: add GitHub Actions workflow to run test suite on push and PR ([#2](https://github.com/eduardstan/nesyarena/pull/2))") → `22b539ba…`.
+PyPI 0.1.0 was built from `nesyarena` commit `22b539bad6c3510fe457aa751141c5c4aa1483ea` (`build(nesyarena): prepare 0.1.0 PyPI release and widen CI matrix (#3)`), two commits ahead of the pin it replaces: `57720fa212834689692e171882272140f1d1fed7` → `782a135bd5fbfcde4c663beea74e71c61cee8157` (`ci: add GitHub Actions workflow to run test suite on push and PR (#2)`) → `22b539ba…`.
 
 That commit is identified, not assumed, and both published artifacts were checked with `git hash-object` against the tree the GitHub API reports for that SHA:
 

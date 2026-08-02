@@ -79,9 +79,9 @@ To release: bump `version` in `pyproject.toml`, close the `[Unreleased]` heading
 version, and publish a GitHub Release whose tag is `v<version>`. `.github/workflows/publish.yml`
 does the PyPI upload by trusted publishing; there is no token anywhere.
 
-`tests/test_release_discipline.py` holds `version` in `pyproject.toml` to the topmost released
-`CHANGELOG.md` heading, and `publish.yml` refuses to build a release whose tag is not `v` plus
-that version.
+`tests/test_release_discipline.py` holds `version` in `pyproject.toml`, the topmost released
+`CHANGELOG.md` heading, and `__version__` in `src/reasonsmith/__init__.py` to one another, and
+`publish.yml` refuses to build a release whose tag is not `v` plus that version.
 
 ## Reporting Issues
 
