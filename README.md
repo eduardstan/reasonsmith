@@ -180,7 +180,7 @@ pip install -e ".[dev]"
 ruff check .
 pytest
 python -m reasonsmith.demo
-reasonsmith check --system docs/sample_decisions.jsonl --pack ecoa
+reasonsmith check --system docs/sample_decisions.jsonl --pack ecoa --system-domain consumer-credit
 ```
 
 Every command in the source block runs from a fresh clone in that order; the `ecoa` run above exits 0.

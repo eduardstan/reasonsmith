@@ -102,9 +102,10 @@ the only thing keeping the pack attached to the paper.
 `docs/refinement.md` is the refinement record: one row per shipped requirement giving the clause,
 the informal duty, the formal property, and what the formalisation deliberately left out. A new
 requirement means a new row in the same commit — `tests/test_docs_refinement.py` reads the packs and
-fails if one gains a requirement the record does not name. It also carries the one gap that has no
-partial fix: nothing in a pack can say which *decision domain* a duty is about, so a duty with
-`scope = ""` reaches every system (finding 3 of `docs/findings-nesyarena.md`).
+fails if one gains a requirement the record does not name. It also carries, once rather than
+eighteen times, what the two applicability gates still do not reach — *Two axes of reach are
+modelled, and the trigger is still not one*, whose largest remaining item is the trigger inside a
+decision that no system-level gate can close.
 
 The first shipped duty whose verdict comes from a value a system declares about its own approximation
 error is `gdpr_recital71_error_risk_minimised`. It compares
@@ -145,9 +146,11 @@ byte-for-byte. Anything that moves `render_text`'s wording, the nesyarena versio
 own constants means regenerating with `python docs/build_nesyarena_report.py`. Like
 `docs/index.html`, it names its build command and deliberately carries no commit hash; reproducibility
 is owned by the byte-for-byte builder test, so do not add a hash back. Its adapter declares only
-signals a provenance genuinely emits, so ten pack signals are deliberately undeclared and no
-regulatory class is declared; the resulting unattainable and not-applicable verdicts are the
-finding, not a gap to close.
+signals a provenance genuinely emits, so ten pack signals are deliberately undeclared, and neither a
+regulatory class nor a decision domain is declared — these systems decide graph reachability and
+Sudoku validity, so there is nothing to declare; the resulting unattainable and not-applicable
+verdicts are the finding, not a gap to close, and naming a domain to make the ECOA rows evaluate
+again would put finding 3's false positive back by hand.
 `docs/findings-nesyarena.md` is the written account and is hand-maintained — every number in it
 comes from that report, so regenerating one means rereading the other.
 
