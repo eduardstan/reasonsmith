@@ -113,7 +113,7 @@ than saying "some aspects are not captured".
 
 **Depends on.** Proposals, which is the one item on this list a stranger unblocks rather than
 waits on. The intake is the Discussion
-[*Which regulation should the next pack cover?*](https://github.com/eduardstan/reasonsmith/discussions)
+[*Which regulation should the next pack cover?*](https://github.com/eduardstan/reasonsmith/discussions/54)
 and the [pack proposal template](.github/ISSUE_TEMPLATE/pack_proposal.yml); the rules a pack must
 satisfy are in [`docs/authoring-packs.md`](docs/authoring-packs.md).
 

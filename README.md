@@ -303,7 +303,7 @@ for one of those gets an answer rather than silence.
 The repository has [`good first issue`](https://github.com/eduardstan/reasonsmith/labels/good%20first%20issue)
 work sized for a first contribution, and the question that most needs outside answers — *which
 regulation should the next pack cover?* — is open in
-[Discussions](https://github.com/eduardstan/reasonsmith/discussions). [`CONTRIBUTING.md`](CONTRIBUTING.md)
+[Discussions](https://github.com/eduardstan/reasonsmith/discussions/54). [`CONTRIBUTING.md`](CONTRIBUTING.md)
 has the setup, the verification commands and the standing rules.
 
 ## Limits
