@@ -151,7 +151,10 @@ substituted nothing and left the front page showing a verdict the tool no longer
 Table 7 run declared into the high-risk class, beside the demonstration's key finding, which no
 report the CLI writes may carry — and `test_docs_index_html_matches_the_renderer` holds the
 committed page byte-for-byte to that script. Touching the renderer means regenerating the page with
-`python docs/build_example.py`, the command the page names as its own provenance. The website
+`python docs/build_example.py`, the command the page names as its own provenance. The renderer
+itself lives in `render.py` — module-level `render_text`/`render_html`, with the presentation
+constants and `_source_checkout` — and `ConformanceReport`'s methods of the same names are thin
+delegates to it, so a rendering edit is a `render.py` edit and nothing in `report.py`. The website
 (landing, vendored libraries, fonts, assets) lives in the separate private `reasonsmith-site`
 repo and deploys to Vercel — see [#35](https://github.com/eduardstan/reasonsmith/pull/35); this
 repo only generates the dossier that gets published there as `report.html`.

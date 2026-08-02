@@ -16,6 +16,7 @@ What this module is for:
     spec.py         requirements with verbatim provenance, loaded from packs/*.toml
     sut.py          the system-under-test protocol: capabilities, a decision trace, exposed logic
     report.py       the unattainable analysis and the conformance report
+    render.py       the report's text and HTML renderings, which report.py delegates to
     rulelang.py     the whitelisted mini-language rules and properties are parsed and run in
     adapters/       JSONL decision-log, Python-callable and rule-based-system adapters
     engines/        record completeness, rtamt monitors of temporal and state properties,
