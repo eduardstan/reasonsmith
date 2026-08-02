@@ -483,7 +483,11 @@ verdict may present it otherwise (`test_probed_never_rounds_up_to_proved`). It a
 about inputs for which `decide()` or property evaluation raised: both are aggregated into the
 budget's `inputs_errored` count and skipped, not read as passes
 (`test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass`,
-`test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass`).
+`test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass`). One refusal is
+not an errored input: where a replayed decision records something that is not a statement for a
+signal a `contains()` atom reads, the whole run is reported not evaluated rather than counted and
+passed over — the same answer the observed engine gives for that shape off a trace, so the stronger
+rung is never the easier one to satisfy (`test_a_non_text_value_is_not_evaluated_on_every_rung`).
 
 > **If it reports `violated` at strength `probed`, then:** one replayed input produced a decision
 > failing `req.spec`, and that same input, replayed a second time through `decide()`, failed again.
@@ -905,6 +909,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | The budget counts the inputs the system was actually run on | `test_the_engine_replays_exactly_the_planned_inputs` |
 | Probed never rounds up to proved, in any count, headline or rendering | `test_probed_never_rounds_up_to_proved` |
 | An input whose `decide()` or property evaluation raises is counted, not read as a pass | `test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass`, `test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass` |
+| A value that is not a statement is not evaluated on the probed rung as it is on the observed one, never counted and passed over | `test_a_non_text_value_is_not_evaluated_on_every_rung` |
 | `probed violated` ⇒ the counterexample reproduced on a second replay | `test_a_genuine_counterexample_is_reported_violated_with_the_input` |
 | A counterexample that does not reproduce is not evaluated, never violated | `test_a_counterexample_that_does_not_reproduce_is_not_evaluated` |
 | No `decide()`, no trace, no budget, or an inexpressible property ⇒ not evaluated | `test_a_system_without_decide_is_not_evaluated_never_satisfied`, `test_an_empty_trace_gives_the_search_nothing_to_probe_around`, `test_nonpositive_trial_budget_is_not_confused_with_an_empty_trace`, `test_the_complete_property_must_be_expressible_and_boolean` |

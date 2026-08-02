@@ -113,6 +113,22 @@ class UnsupportedConstructError(Exception):
     pass
 
 
+class NotAStatementError(UnsupportedConstructError):
+    """Raised when `contains()` meets a value that is present but is not a statement.
+
+    A subclass, so every engine that already refuses an inexpressible construct keeps refusing
+    this one unchanged. Separate, because the two meanings are not the same thing: an ordinary
+    refusal says the property cannot be read here at all, while this one says one decision carried
+    a kind that is no evidence about what a statement says. `engines/observed.py` reports the
+    second NOT EVALUATED, and `engines/probed.py` must reach the same answer rather than fold it
+    into the errored-input count and go on to report `satisfied` — a stronger rung that is easier
+    to satisfy than a weaker one inverts the lattice. The type is what carries the distinction; a
+    message string is not an interface, and nothing may tell the two apart by reading one.
+    """
+
+    pass
+
+
 def fold_ascii_case(text: str) -> str:
     """Lowercase the twenty-six ASCII capitals and change nothing else.
 
@@ -145,7 +161,8 @@ def contains_literal(haystack: Any, needle: str) -> bool:
       says. The parts are searched separately and never joined: joining them would let a phrase
       match across a boundary between two reasons that never appeared together.
 
-    Anything else present raises. Answering `False` for a value nothing read would report a system
+    Anything else present raises `NotAStatementError`, which every engine reading this atom answers
+    NOT EVALUATED. Answering `False` for a value nothing read would report a system
     satisfied on evidence that was never examined, which is the overclaim this package exists to
     refuse — and a number or a mapping is not a statement in any case.
     """
@@ -158,7 +175,7 @@ def contains_literal(haystack: Any, needle: str) -> bool:
         isinstance(part, str) for part in haystack
     ):
         return any(folded_needle in fold_ascii_case(part) for part in haystack)
-    raise UnsupportedConstructError(
+    raise NotAStatementError(
         f"{CONTAINS_CALL}() reads a recorded statement — text, or a list of text given in parts — "
         f"but this decision carries {type(haystack).__name__} {haystack!r}. A value that is not a "
         "statement is not evidence about what one says, so it is refused rather than read as "

@@ -34,6 +34,13 @@ What a reader must not break:
     decision to perturb are all reported NOT EVALUATED (`verdict=INCONCLUSIVE`, `strength=None`),
     naming which of the three happened, and never `satisfied`.
     Why this matters: absent evidence is not evidence of compliance.
+  - So is a replayed decision that records something which is not a statement where a
+    `contains()` atom reads one (`rulelang.NotAStatementError`). That refusal is a property that
+    could not be evaluated, not an input the system failed to decide, so it is never absorbed
+    into `inputs_errored` and skipped.
+    Why this matters: `engines/observed.py` reports the same shape NOT EVALUATED off a trace. A
+    rung that answers `satisfied` where a weaker one answers *not evaluated* would make the
+    stronger claim the easier one to earn, which inverts the strength lattice.
 """
 
 from __future__ import annotations
@@ -46,6 +53,7 @@ from typing import Any, Optional
 
 from reasonsmith.report import PROBE_BUDGET_KEY, RequirementResult
 from reasonsmith.rulelang import (
+    NotAStatementError,
     UnsupportedConstructError,
     eval_expression,
     expression_kind,
@@ -605,6 +613,19 @@ class ProbedEngine:
             try:
                 record = _as_record(case_snapshot, decide(first_input))
                 satisfied = holds(record)
+            except NotAStatementError as exc:
+                return not_evaluated(
+                    f"Not evaluated: {req.spec!r} asks what a statement says, but replaying input "
+                    f"{case_snapshot} produced a decision recording something that is not text. A "
+                    "non-text value is not evidence about the wording of a statement, so the "
+                    f"property was not read over this search. {exc}.{kind_limit}",
+                    {
+                        "engine": "probed",
+                        "reason": "signal_without_text_in_replay",
+                        "error": f"{type(exc).__name__}: {exc}",
+                        PROBE_BUDGET_KEY: budget(index, errored),
+                    },
+                )
             except Exception as exc:  # the system, or the property, has nothing to say here
                 errored += 1
                 first_error = first_error or f"{type(exc).__name__}: {exc}"

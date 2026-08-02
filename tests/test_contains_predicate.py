@@ -20,7 +20,12 @@ What a reader must not break:
     above. A non-ASCII phrase is refused at load time rather than folded approximately.
   - A value that is present but is not text is NOT read as carrying no phrase. Answering `False`
     there would report a system satisfied on a field nothing read, which is the overclaim this
-    package exists to refuse.
+    package exists to refuse. The rule holds on every rung, not only the one it was written for:
+    a refusal is `rulelang.NotAStatementError` rather than a bare unsupported construct precisely
+    so the probed engine can report it *not evaluated* instead of counting it as an errored input
+    and going on to report `satisfied`
+    (`test_a_non_text_value_is_not_evaluated_on_every_rung`). A rung that is easier to satisfy
+    than the weaker one below it inverts the strength lattice.
 """
 
 from __future__ import annotations
@@ -31,6 +36,7 @@ import pytest
 import z3
 
 from reasonsmith.engines.observed import ObservedEngine, to_stl
+from reasonsmith.engines.probed import ProbedEngine
 from reasonsmith.engines.proved import _contains_string_z3
 from reasonsmith.report import evaluate_requirement
 from reasonsmith.rulelang import (
@@ -224,6 +230,40 @@ def test_a_non_text_value_makes_the_duty_not_evaluated_never_satisfied():
     assert result.strength is None
     assert "not text" in result.evidence_summary
     assert result.details["signals_without_text_in_trace"] == {REASON: 1}
+
+
+def test_a_non_text_value_is_not_evaluated_on_every_rung():
+    """The observed and probed rungs answer the same shape the same way, or the lattice inverts.
+
+    A run the property could not be evaluated over cannot be reported `satisfied` at `probed`
+    while the weaker `observed` rung reports it not evaluated: that would make the stronger claim
+    the easier one to earn. Both must answer *not evaluated*, which is not *violated* — the
+    property was not read, and that is a different thing from failing.
+    """
+    trace = [{REASON: "length of credit history"}, {REASON: {"code": "n/a"}}]
+
+    class ReplayableSUT(BaseSUT):
+        def decisions(self):
+            return [dict(record) for record in trace]
+
+        def decide(self, case):
+            return dict(case)
+
+    watched = ObservedEngine.evaluate(
+        _requirement(f'always(not contains({REASON}, "n/a"))', "temporal", (REASON,)),
+        BaseSUT({REASON}),
+        [dict(record) for record in trace],
+    )
+    searched = ProbedEngine.evaluate(
+        _requirement(f'not contains({REASON}, "n/a")', "logical", (REASON,)),
+        ReplayableSUT({REASON}),
+    )
+
+    assert watched.verdict == Verdict.INCONCLUSIVE
+    assert watched.strength is None
+    assert searched.verdict == Verdict.INCONCLUSIVE
+    assert searched.strength is None
+    assert searched.details["reason"] == "signal_without_text_in_replay"
 
 
 def test_a_call_head_a_phrase_merely_quotes_is_not_rewritten():
