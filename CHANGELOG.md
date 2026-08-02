@@ -8,6 +8,17 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The version guard reaches the fourth place it lives.** `CITATION.cff` carried `0.3.0` against a
+  0.4.0 package: it was already stale when `tests/test_release_discipline.py` locked
+  `pyproject.toml`, the topmost released `CHANGELOG.md` heading and `__version__` to one another,
+  so the guard was written around the one file that had drifted. `CITATION.cff` is now `0.4.0` and
+  `test_pyproject_changelog_and_package_version_agree` reads it too — by a regex anchored at column
+  zero over its one top-level `version:` line, so one field costs no YAML dependency.
+  `CONTRIBUTING.md`, *Versioning and Releases*, lists all four places as the release procedure.
+  ([#67](https://github.com/eduardstan/reasonsmith/pull/67))
+
 ## [0.4.0] - 2026-08-02
 
 ### Added
