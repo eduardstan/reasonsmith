@@ -57,7 +57,9 @@ What a reader must not break:
     strengths, five artefacts. Omitting it renders the full report, which is byte-for-byte the
     report this CLI printed before the flag existed and is what every generated document under
     `docs/` is pinned to. `--json` is deliberately unprojected: it is the complete machine
-    record, and a consumer parsing it must not have fields disappear under a display flag.
+    record, and a consumer parsing it must not have fields disappear under a display flag. That
+    envelope names its own shape in `schema_version` (`reasonsmith.report.JSON_SCHEMA_VERSION`),
+    which is not the package version and moves only when a key is removed, renamed or retyped.
     Why this matters: a reader handed a narrower artefact has been shown less, and must never
     have been told something different — and a reader who reaches for the flag by habit must not
     silently lose fields from a pipeline's JSON.

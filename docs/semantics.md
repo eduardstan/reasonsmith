@@ -1242,4 +1242,8 @@ the reader would like:
   redaction. Redaction is a security property; this is a presentation one, and the two must not
   be confused. `ConformanceReport.decisions` is not in it either, for the opposite reason: the
   JSON is the findings record, and the decisions are an input the run read, not a finding it
-  made.
+  made. The envelope carries its own shape version, `schema_version`, so a consumer can tell one
+  release's shape from another's without inferring it from the package version. It increments
+  when a key is removed, renamed, or changes type or meaning, and not when one is added;
+  `test_version_1_is_this_shape` pins the key set at each level to the current number, so a
+  shape change made without moving it fails the suite.
