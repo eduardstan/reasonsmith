@@ -369,13 +369,22 @@
       gap: var(--space-s);
       flex-wrap: wrap;
     }
-    .req-title-group { flex: 1; min-width: 16rem; }
+    /* `flex: 1 1 20rem` and not `flex: 1; min-width: 16rem`. With a zero basis and a floor
+       narrower than a requirement identifier, this item was handed less width than its own
+       content between roughly 768px and 1000px — wide enough for the desktop row, too narrow
+       for a long identifier beside three badges — and the identifier overflowed *under* the
+       badges instead of the badges wrapping. The basis is the width below which the row is
+       not worth keeping, so the badge group drops to its own line before anything collides.
+       `overflow-wrap` on the identifier is the backstop: an identifier is one unbreakable
+       token, so at a real phone width no reflow can help and it must be allowed to break. */
+    .req-title-group { flex: 1 1 26rem; min-width: 0; }
     .req-id {
       font-size: var(--step-0);
       font-weight: 700;
       font-family: var(--font-mono);
       color: var(--ink);
       letter-spacing: -0.01em;
+      overflow-wrap: anywhere;
     }
     .req-clause {
       font-size: var(--step--1);

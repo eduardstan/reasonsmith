@@ -10,6 +10,18 @@ releases before it predate the file and are not reconstructed here.
 
 ### Fixed
 
+- **A requirement identifier no longer renders under its own badges** ([#90](https://github.com/eduardstan/reasonsmith/pull/90)).
+  The requirement card header is one flex row — identifier and citation left, badges right — and
+  its left item had a zero flex basis with a 16rem floor, narrower than a requirement identifier.
+  Between roughly 768px and 1000px the desktop row still applied and there was no room for a long
+  identifier beside three badges, so the identifier overflowed *under* them and the two printed on
+  top of each other. A tablet, a half-width desktop window and every frame in
+  `docs/audiences.html` are in that band. The left item now has a real basis (`flex: 1 1 26rem`),
+  so the badge group drops to its own line before anything can collide, and the identifier carries
+  `overflow-wrap: anywhere` as the backstop for a phone width no reflow can rescue. Measured in
+  Chrome from 375px to 1440px on both generated pages: no overlap at any width, no card overflow,
+  no horizontal page scroll. `docs/report.html` and `docs/audiences.html` are regenerated.
+
 - **The audience gallery opens where the documents differ** ([#90](https://github.com/eduardstan/reasonsmith/pull/90)).
   `docs/audiences.html` embeds one run rendered for five readers, and every frame opened at the top
   of its document — where the masthead, the headline banner and the dashboard are chrome no audience

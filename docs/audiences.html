@@ -369,13 +369,22 @@
       gap: var(--space-s);
       flex-wrap: wrap;
     }
-    .req-title-group { flex: 1; min-width: 16rem; }
+    /* `flex: 1 1 20rem` and not `flex: 1; min-width: 16rem`. With a zero basis and a floor
+       narrower than a requirement identifier, this item was handed less width than its own
+       content between roughly 768px and 1000px — wide enough for the desktop row, too narrow
+       for a long identifier beside three badges — and the identifier overflowed *under* the
+       badges instead of the badges wrapping. The basis is the width below which the row is
+       not worth keeping, so the badge group drops to its own line before anything collides.
+       `overflow-wrap` on the identifier is the backstop: an identifier is one unbreakable
+       token, so at a real phone width no reflow can help and it must be allowed to break. */
+    .req-title-group { flex: 1 1 26rem; min-width: 0; }
     .req-id {
       font-size: var(--step-0);
       font-weight: 700;
       font-family: var(--font-mono);
       color: var(--ink);
       letter-spacing: -0.01em;
+      overflow-wrap: anywhere;
     }
     .req-clause {
       font-size: var(--step--1);
@@ -702,7 +711,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>auditor</span>
-            <span>36,040 characters</span>
+            <span>36,816 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: nothing. This is the full report.</p>
           <iframe title="The auditor rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -1076,13 +1085,22 @@
       gap: var(--space-s);
       flex-wrap: wrap;
     }
-    .req-title-group { flex: 1; min-width: 16rem; }
+    /* `flex: 1 1 20rem` and not `flex: 1; min-width: 16rem`. With a zero basis and a floor
+       narrower than a requirement identifier, this item was handed less width than its own
+       content between roughly 768px and 1000px — wide enough for the desktop row, too narrow
+       for a long identifier beside three badges — and the identifier overflowed *under* the
+       badges instead of the badges wrapping. The basis is the width below which the row is
+       not worth keeping, so the badge group drops to its own line before anything collides.
+       `overflow-wrap` on the identifier is the backstop: an identifier is one unbreakable
+       token, so at a real phone width no reflow can help and it must be allowed to break. */
+    .req-title-group { flex: 1 1 26rem; min-width: 0; }
     .req-id {
       font-size: var(--step-0);
       font-weight: 700;
       font-family: var(--font-mono);
       color: var(--ink);
       letter-spacing: -0.01em;
+      overflow-wrap: anywhere;
     }
     .req-clause {
       font-size: var(--step--1);
@@ -1565,7 +1583,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>developer</span>
-            <span>35,600 characters</span>
+            <span>36,376 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">legal_metadata</span></p>
           <iframe title="The developer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -1939,13 +1957,22 @@
       gap: var(--space-s);
       flex-wrap: wrap;
     }
-    .req-title-group { flex: 1; min-width: 16rem; }
+    /* `flex: 1 1 20rem` and not `flex: 1; min-width: 16rem`. With a zero basis and a floor
+       narrower than a requirement identifier, this item was handed less width than its own
+       content between roughly 768px and 1000px — wide enough for the desktop row, too narrow
+       for a long identifier beside three badges — and the identifier overflowed *under* the
+       badges instead of the badges wrapping. The basis is the width below which the row is
+       not worth keeping, so the badge group drops to its own line before anything collides.
+       `overflow-wrap` on the identifier is the backstop: an identifier is one unbreakable
+       token, so at a real phone width no reflow can help and it must be allowed to break. */
+    .req-title-group { flex: 1 1 26rem; min-width: 0; }
     .req-id {
       font-size: var(--step-0);
       font-weight: 700;
       font-family: var(--font-mono);
       color: var(--ink);
       letter-spacing: -0.01em;
+      overflow-wrap: anywhere;
     }
     .req-clause {
       font-size: var(--step--1);
@@ -2428,7 +2455,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>deployer</span>
-            <span>34,982 characters</span>
+            <span>35,758 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">witnesses</span></p>
           <iframe title="The deployer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -2802,13 +2829,22 @@
       gap: var(--space-s);
       flex-wrap: wrap;
     }
-    .req-title-group { flex: 1; min-width: 16rem; }
+    /* `flex: 1 1 20rem` and not `flex: 1; min-width: 16rem`. With a zero basis and a floor
+       narrower than a requirement identifier, this item was handed less width than its own
+       content between roughly 768px and 1000px — wide enough for the desktop row, too narrow
+       for a long identifier beside three badges — and the identifier overflowed *under* the
+       badges instead of the badges wrapping. The basis is the width below which the row is
+       not worth keeping, so the badge group drops to its own line before anything collides.
+       `overflow-wrap` on the identifier is the backstop: an identifier is one unbreakable
+       token, so at a real phone width no reflow can help and it must be allowed to break. */
+    .req-title-group { flex: 1 1 26rem; min-width: 0; }
     .req-id {
       font-size: var(--step-0);
       font-weight: 700;
       font-family: var(--font-mono);
       color: var(--ink);
       letter-spacing: -0.01em;
+      overflow-wrap: anywhere;
     }
     .req-clause {
       font-size: var(--step--1);
@@ -3283,7 +3319,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>regulator</span>
-            <span>34,649 characters</span>
+            <span>35,425 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">witnesses</span></p>
           <iframe title="The regulator rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -3657,13 +3693,22 @@
       gap: var(--space-s);
       flex-wrap: wrap;
     }
-    .req-title-group { flex: 1; min-width: 16rem; }
+    /* `flex: 1 1 20rem` and not `flex: 1; min-width: 16rem`. With a zero basis and a floor
+       narrower than a requirement identifier, this item was handed less width than its own
+       content between roughly 768px and 1000px — wide enough for the desktop row, too narrow
+       for a long identifier beside three badges — and the identifier overflowed *under* the
+       badges instead of the badges wrapping. The basis is the width below which the row is
+       not worth keeping, so the badge group drops to its own line before anything collides.
+       `overflow-wrap` on the identifier is the backstop: an identifier is one unbreakable
+       token, so at a real phone width no reflow can help and it must be allowed to break. */
+    .req-title-group { flex: 1 1 26rem; min-width: 0; }
     .req-id {
       font-size: var(--step-0);
       font-weight: 700;
       font-family: var(--font-mono);
       color: var(--ink);
       letter-spacing: -0.01em;
+      overflow-wrap: anywhere;
     }
     .req-clause {
       font-size: var(--step--1);
@@ -4138,7 +4183,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>affected-individual</span>
-            <span>27,849 characters</span>
+            <span>28,625 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">overview</span><span class="signal-tag">strength</span><span class="signal-tag">legal_metadata</span><span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">evidence_summary</span><span class="signal-tag">probe_budget</span><span class="signal-tag">witnesses</span></p><p class="text-muted">Drawn only for this reader: <span class="signal-tag">plain_account</span></p>
           <iframe title="The affected-individual rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -4512,13 +4557,22 @@
       gap: var(--space-s);
       flex-wrap: wrap;
     }
-    .req-title-group { flex: 1; min-width: 16rem; }
+    /* `flex: 1 1 20rem` and not `flex: 1; min-width: 16rem`. With a zero basis and a floor
+       narrower than a requirement identifier, this item was handed less width than its own
+       content between roughly 768px and 1000px — wide enough for the desktop row, too narrow
+       for a long identifier beside three badges — and the identifier overflowed *under* the
+       badges instead of the badges wrapping. The basis is the width below which the row is
+       not worth keeping, so the badge group drops to its own line before anything collides.
+       `overflow-wrap` on the identifier is the backstop: an identifier is one unbreakable
+       token, so at a real phone width no reflow can help and it must be allowed to break. */
+    .req-title-group { flex: 1 1 26rem; min-width: 0; }
     .req-id {
       font-size: var(--step-0);
       font-weight: 700;
       font-family: var(--font-mono);
       color: var(--ink);
       letter-spacing: -0.01em;
+      overflow-wrap: anywhere;
     }
     .req-clause {
       font-size: var(--step--1);
