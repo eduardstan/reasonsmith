@@ -190,8 +190,12 @@ record and reaches the monitor as a synthetic flag, which is what keeps its mean
 (`test_a_forbidden_phrase_in_the_trace_is_an_observed_violation`). That rewriting is textual, and a
 call head a phrase merely quotes is skipped rather than rewritten
 (`test_a_call_head_a_phrase_merely_quotes_is_not_rewritten`). Z3 encodes it as a bracketed regular
-language, character by character, and a generated corpus checks that the solver's fold is the
-interpreter's fold (`test_the_solvers_fold_is_the_interpreters_fold`) — the counterpart of what
+language, character by character, conjoined with the blankness language `present()` already uses —
+a substring search alone would find a phrase of blanks in a string of blanks, where the interpreter
+says the record carries nothing
+(`test_the_solver_finds_no_phrase_in_a_string_the_record_does_not_carry`). A generated corpus,
+blank haystacks included, checks that the solver's answer is the interpreter's
+(`test_the_solvers_fold_is_the_interpreters_fold`) — the counterpart of what
 `test_the_solvers_blank_string_is_pythons_blank_string` does for `present()`.
 
 ### `temporal` — Signal Temporal Logic, monitored by rtamt
@@ -816,7 +820,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | The solver's blank string is Python's blank string, so a provable blank reason is a violation | `test_the_solvers_blank_string_is_pythons_blank_string`, `test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose` |
 | `contains()` takes a signal name and a literal ASCII phrase, and every other shape is refused | `test_a_malformed_contains_atom_is_refused_rather_than_guessed_at`, `test_a_contains_atom_is_a_boolean_property_outside_the_record_fragment`, `test_the_phrase_is_not_a_signal_the_property_reads` |
 | The solver's ASCII case fold is the interpreter's, over a generated corpus | `test_the_solvers_fold_is_the_interpreters_fold`, `test_the_fold_is_ascii_case_and_reaches_no_further` |
-| A record carrying no statement carries no phrase; a statement in parts is read part by part and never joined; any other present value is refused | `test_a_record_carrying_no_statement_carries_no_phrase`, `test_a_statement_given_in_parts_is_read_part_by_part`, `test_the_parts_of_a_statement_are_never_joined`, `test_a_present_value_that_is_not_a_statement_is_refused`, `test_a_non_text_value_makes_the_duty_not_evaluated_never_satisfied` |
+| A record carrying no statement carries no phrase, for the solver too; a statement in parts is read part by part and never joined; any other present value is refused | `test_a_record_carrying_no_statement_carries_no_phrase`, `test_the_solver_finds_no_phrase_in_a_string_the_record_does_not_carry`, `test_a_statement_given_in_parts_is_read_part_by_part`, `test_the_parts_of_a_statement_are_never_joined`, `test_a_present_value_that_is_not_a_statement_is_refused`, `test_a_non_text_value_makes_the_duty_not_evaluated_never_satisfied` |
 | A forbidden phrase in the trace is an observed violation, and a statement naming a factor is satisfied | `test_a_forbidden_phrase_in_the_trace_is_an_observed_violation`, `test_a_statement_naming_a_factor_is_observed_satisfied` |
 | Rewriting for rtamt skips a call head a phrase merely quotes | `test_a_call_head_a_phrase_merely_quotes_is_not_rewritten` |
 | Exposed rules that can write a forbidden phrase are proved to violate; a signal the rules do not type as text is refused | `test_a_forbidden_phrase_the_rules_can_write_is_proved_to_violate`, `test_rules_that_never_write_a_forbidden_phrase_are_proved_to_satisfy`, `test_the_solver_refuses_a_signal_it_cannot_read_as_text` |

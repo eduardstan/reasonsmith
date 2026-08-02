@@ -204,7 +204,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 | `src/reasonsmith/report.py` | Conformance report skeleton, headline builder, static unattainable analysis, and the text/JSON/self-contained-HTML renderers |
 | `src/reasonsmith/rulelang.py` | The whitelisted mini-language rule and specification text is parsed and executed in, shared by the rule adapter and the proved engine |
 | `src/reasonsmith/adapters/` | SUT protocol adapters for JSONL decision logs, Python callables, and rule-based systems that expose their decision logic |
-| `src/reasonsmith/engines/` | Verification engines: `record` completeness check, `observed` rtamt temporal monitor, `probed` perturb-and-replay search, and `proved` Z3 solver |
+| `src/reasonsmith/engines/` | Verification engines: `record` completeness check, `observed` rtamt monitor over a trace (temporal formulas and per-record state properties), `probed` perturb-and-replay search, and `proved` Z3 solver |
 | `src/reasonsmith/cli.py` | Command-line interface (`reasonsmith` / `python -m reasonsmith.cli`): `check --system /path/to/your-decisions.jsonl --pack gdpr --capabilities /path/to/capabilities.txt` and `validate-pack gdpr` |
 | `src/reasonsmith/drift.py` | Statute drift check (`python -m reasonsmith.drift`): re-fetches the official legal sources and re-verifies every pack quote, reporting `match` / `differ` / `could-not-verify` without ever editing a pack |
 | `src/reasonsmith/packs/table7.toml` | Table 7 rows restated as a formal requirement pack |
@@ -267,8 +267,7 @@ graph-reachability benchmark that issues no credit ([`docs/findings-nesyarena.md
 finding 3; `ROADMAP.md` §1). Missing too: authority over the refinement. Which formula stands for a
 clause is a judgement made in this repository and recorded as such — the `scope_statements_local_vs_global`
 proxy carried by 12 CFR 1002.9(b)(2) is the pack author's, and the regulation names nothing of the
-kind
-([`docs/refinement.md`](docs/refinement.md)). The false positive this section used to report is
+kind ([`docs/refinement.md`](docs/refinement.md)). The false positive this section used to report is
 gone: 12 CFR 1002.9(a)(2) is formalised as the either/or it is, and (b)(2) now carries the trigger
 the clause states in its own first words — it governs the statement *required by paragraph
 (a)(2)(i)* — so a creditor lawfully using the disclosure alternative is no longer reported violated.
@@ -298,7 +297,8 @@ are still presence checks, against two `logical` and two `temporal` ones, so a b
 mostly agrees by construction. The one duty that moved shows both what closes this gap and how
 narrow the opening is: 12 CFR 1002.9(b)(2) can now be *failed* by a plain decision log, because the
 clause supplies its own list of statements that are insufficient — which is available only where a
-clause does that, and still establishes nothing about whether what was said instead was adequate. Missing also: independence. The packs are authored here, so a cross-system
+clause does that, and still establishes nothing about whether what was said instead was adequate.
+Missing also: independence. The packs are authored here, so a cross-system
 comparison measures this repository's refinement as much as it measures the systems — a benchmark
 needs a pack set whose fourth column someone other than its author has reviewed
 ([`docs/refinement.md`](docs/refinement.md)).
