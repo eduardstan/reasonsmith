@@ -34,6 +34,12 @@ Neural, probabilistic or symbolic — a system is fed in by writing an adapter t
 for s in neural_scorer probabilistic_scorer symbolic_rules; do python docs/adapters/$s.py; done
 ```
 
+The CLI reaches the same three systems against a whole pack, no Python needed — `--system-module` **imports the named module, which executes it**, and takes the attribute after the colon as the system under test (the `module:attribute` spelling pytest's `-p` and gunicorn's application path use):
+
+```sh
+reasonsmith check --system-module docs.adapters.symbolic_rules:system_under_test --pack ecoa
+```
+
 All three verdicts are `satisfied`. The rung is not a score and not a grade of compliance: it is how far the claim reaches — three logged decisions, 200 replayed inputs, or every input the declared constraints admit. The neural system **cannot** reach `probed` or `proved` as built, and no adapter can change that; a test pins that ceiling. Full walkthrough, with the three transcripts and why this duty was chosen over a recital: [`docs/three-systems.md`](docs/three-systems.md).
 
 ## What a verdict is worth
@@ -139,6 +145,14 @@ reasonsmith check --system /path/to/your-decisions.jsonl --pack gdpr --html repo
 ```
 
 `check` runs one of the four shipped packs (Table 7, EU AI Act, GDPR, ECOA/Reg B) against your JSONL decision log, printing the report as text, JSON (`--json`), or a self-contained HTML report (`--html FILE`). It exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise.
+
+A decision log exposes neither `decide()` nor `logic()`, so a `--system` run cannot rise above `observed`. To check the system itself, name an adapter instead:
+
+```sh
+reasonsmith check --system-module your_package.audit:system_under_test --pack gdpr
+```
+
+**`--system-module` imports the named module, which executes it**, and takes the attribute after the colon — a `SystemUnderTest` or a zero-argument factory returning one — as the system under test. The module is searched from the current directory. It refuses `--system` and `--capabilities`, which name a different system and speak for a log's adapter respectively. Three worked examples: [`docs/three-systems.md`](docs/three-systems.md).
 
 Contributors and developers install from source instead, running the full verification suite and demonstration from the checkout:
 

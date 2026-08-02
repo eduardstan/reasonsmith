@@ -6,6 +6,8 @@ Covers:
   change), and malformed declarations rejected naming the file and the line
 - `validate-pack`: accepts every shipped pack and prints what it contains; rejects a broken
   pack naming the file and the requirement id at fault
+- `--system-module module:attribute`: the two shipped adapters that expose `decide()` and
+  `logic()` reaching `probed` and `proved` from the CLI, and every refusal the flag makes
 """
 
 from __future__ import annotations
@@ -52,6 +54,22 @@ def jsonl_fixture_file(tmp_path: Path) -> Path:
         "\n".join(json.dumps(record) for record in records) + "\n", encoding="utf-8"
     )
     return log_file
+
+
+@pytest.fixture
+def write_module(tmp_path: Path, monkeypatch):
+    """Write a throwaway importable module and return its module name.
+
+    `--system-module` imports whatever it is named, so the refusal tests need modules that fail
+    in specific ways. Each gets a unique name, since a module imported once stays imported.
+    """
+    monkeypatch.syspath_prepend(str(tmp_path))
+
+    def write(name: str, source: str) -> str:
+        (tmp_path / f"{name}.py").write_text(source, encoding="utf-8")
+        return name
+
+    return write
 
 
 TRACE_ONLY_SIGNALS = [
@@ -276,6 +294,152 @@ class TestCapabilityDeclaration:
         assert rc == 1
         captured = capsys.readouterr()
         assert "capability declaration ''" in captured.err
+
+
+class TestSystemModule:
+    """`--system-module module:attribute`: the shell's way to a system, not just a log file.
+
+    The two rungs a decision log cannot reach — `probed` and `proved` — are reachable from a
+    shell exactly when the imported system exposes `decide()` or `logic()`, so the two shipped
+    adapters that do are checked end to end here. Every refusal exits 1 and names what is wrong.
+    """
+
+    def test_symbolic_adapter_reaches_proved(self, capsys):
+        rc = cli_main(
+            [
+                "check",
+                "--system-module",
+                "docs.adapters.symbolic_rules:system_under_test",
+                "--pack",
+                "ecoa",
+            ]
+        )
+        assert rc == 0
+        assert "[PROVED] ecoa_reg_b_1002_9_b_2_specific_reasons" in capsys.readouterr().out
+
+    def test_probabilistic_adapter_reaches_probed(self, capsys):
+        rc = cli_main(
+            [
+                "check",
+                "--system-module",
+                "docs.adapters.probabilistic_scorer:system_under_test",
+                "--pack",
+                "ecoa",
+            ]
+        )
+        assert rc == 0
+        out = capsys.readouterr().out
+        assert "[PROBED] ecoa_reg_b_1002_9_b_2_specific_reasons" in out
+        assert "probe budget:" in out
+
+    def test_an_instance_attribute_is_accepted_without_being_called(self, capsys, write_module):
+        """An already-built SystemUnderTest is taken as-is; only a non-SUT callable is called."""
+        module = write_module(
+            "instance_system",
+            "from docs.adapters.symbolic_rules import system_under_test\n"
+            "system = system_under_test()\n",
+        )
+        rc = cli_main(["check", "--system-module", f"{module}:system", "--pack", "ecoa"])
+        assert rc == 0
+        assert "[PROVED] ecoa_reg_b_1002_9_b_2_specific_reasons" in capsys.readouterr().out
+
+    def test_a_module_that_does_not_import_names_the_module(self, capsys, write_module):
+        module = write_module("broken_system", "raise RuntimeError('boom')\n")
+        rc = cli_main(["check", "--system-module", f"{module}:system", "--pack", "ecoa"])
+        assert rc == 1
+        err = capsys.readouterr().err
+        assert module in err
+        assert "RuntimeError: boom" in err
+
+        rc = cli_main(["check", "--system-module", "no_such_module:system", "--pack", "ecoa"])
+        assert rc == 1
+        assert "no_such_module" in capsys.readouterr().err
+
+    def test_a_missing_attribute_names_attribute_and_module(self, capsys):
+        rc = cli_main(
+            [
+                "check",
+                "--system-module",
+                "docs.adapters.symbolic_rules:no_such_attribute",
+                "--pack",
+                "ecoa",
+            ]
+        )
+        assert rc == 1
+        err = capsys.readouterr().err
+        assert "'no_such_attribute'" in err
+        assert "docs.adapters.symbolic_rules" in err
+
+    def test_a_non_sut_object_names_the_missing_protocol_method(self, capsys, write_module):
+        module = write_module(
+            "half_a_system",
+            "class HalfASystem:\n"
+            "    def capabilities(self):\n"
+            "        return set()\n"
+            "    def decisions(self):\n"
+            "        return []\n"
+            "system = HalfASystem()\n",
+        )
+        rc = cli_main(["check", "--system-module", f"{module}:system", "--pack", "ecoa"])
+        assert rc == 1
+        err = capsys.readouterr().err
+        assert "HalfASystem" in err
+        assert "missing logic" in err
+
+    def test_a_spec_without_a_colon_is_refused(self, capsys):
+        rc = cli_main(
+            ["check", "--system-module", "docs.adapters.symbolic_rules", "--pack", "ecoa"]
+        )
+        assert rc == 1
+        assert "module:attribute" in capsys.readouterr().err
+
+    def test_a_decisions_file_and_a_module_are_a_contradiction(
+        self, jsonl_fixture_file: Path, capsys
+    ):
+        rc = cli_main(
+            [
+                "check",
+                "--system",
+                str(jsonl_fixture_file),
+                "--system-module",
+                "docs.adapters.symbolic_rules:system_under_test",
+                "--pack",
+                "ecoa",
+            ]
+        )
+        assert rc == 1
+        err = capsys.readouterr().err
+        assert str(jsonl_fixture_file) in err
+        assert "two different systems" in err
+
+    def test_a_capability_declaration_and_a_module_are_a_contradiction(self, capsys, tmp_path):
+        caps = tmp_path / "caps.txt"
+        caps.write_text("provenance_model_version\n", encoding="utf-8")
+        rc = cli_main(
+            [
+                "check",
+                "--system-module",
+                "docs.adapters.symbolic_rules:system_under_test",
+                "--capabilities",
+                str(caps),
+                "--pack",
+                "ecoa",
+            ]
+        )
+        assert rc == 1
+        assert "declares its own capabilities" in capsys.readouterr().err
+
+    def test_no_system_at_all_is_a_usage_error(self, capsys):
+        rc = cli_main(["check", "--pack", "ecoa"])
+        assert rc == 1
+        assert "--system-module" in capsys.readouterr().err
+
+    def test_help_says_the_flag_imports_and_executes(self, capsys):
+        with pytest.raises(SystemExit):
+            cli_main(["check", "--help"])
+        assert "IMPORTS AND EXECUTES the named Python module" in " ".join(
+            capsys.readouterr().out.split()
+        )
 
 
 class TestValidatePack:

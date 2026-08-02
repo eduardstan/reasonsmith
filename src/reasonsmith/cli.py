@@ -8,6 +8,7 @@ What this module is for:
   Usage:
       reasonsmith check --system <decisions.jsonl> --pack <pack_name>
           [--system-name <name>] [--system-scope <class>] [--capabilities <file>] [--json]
+      reasonsmith check --system-module <module>:<attribute> --pack <pack_name> [...]
       reasonsmith validate-pack <pack_name_or_file> [...]
 
 What a reader must not break:
@@ -29,6 +30,20 @@ What a reader must not break:
     neither may read as the other.
     Why this matters: trace-derived capability names come from one sample log, while a declared
     set is an authoritative system claim, and a finding must say which one it rests on.
+  - `--system-module <module>:<attribute>` imports the named module, which executes it, and takes
+    the attribute as the system under test — the `module:attribute` spelling pytest's `-p` and
+    gunicorn's application path use. It is the only way a shell run reaches a system that exposes
+    `decide()` or `logic()`, and so the only way `probed` and `proved` are reachable without
+    writing Python. It must read as a code-loading flag everywhere it is named: `--help` says it
+    imports and executes, and so do README and `docs/three-systems.md`.
+    Why this matters: a flag that loads and runs the user's code must never read as an innocuous
+    file argument.
+  - `--system-module` refuses `--system` and `--capabilities`: a decision log names a second,
+    different system, and a capability declaration file speaks for that log's adapter, while an
+    imported system declares its own capabilities. Neither is merged into the imported system,
+    and neither is silently dropped.
+    Why this matters: a run that silently ignored one of the two would report on a system the
+    caller did not ask about, or on a capability set the system never claimed.
   - `validate-pack` prints what the pack contains and exits 0, or exits 1 naming the file and
     the requirement at fault for a pack the loader refuses. It reuses the pack loader exactly,
     so the packs a `check` run can load are exactly the packs `validate-pack` accepts.
@@ -40,14 +55,23 @@ What a reader must not break:
 from __future__ import annotations
 
 import argparse
+import importlib
+import os
 import shlex
 import sys
 from pathlib import Path
+from typing import Any
 
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import REGULATORY_CLASSES, Pack, list_packs, load_pack
+from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Verdict
+
+#: The methods `reasonsmith.sut.SystemUnderTest` requires, in the order a refusal names them.
+#: `isinstance` against the runtime-checkable protocol is the gate; this list exists only so the
+#: refusal can say *which* method is missing instead of "not a SystemUnderTest".
+_SUT_METHODS = ("capabilities", "decisions", "logic")
 
 
 def read_capability_declaration(path: str | Path) -> set[str]:
@@ -85,6 +109,64 @@ def read_capability_declaration(path: str | Path) -> set[str]:
     return names
 
 
+def load_system_module(spec: str) -> Any:
+    """Import `module:attribute` and return the system under test it names.
+
+    Importing a module executes it — that is what this function is for, and every message it
+    raises names the module path it was told to load, so a reader at 2am can see what ran.
+
+    The attribute may be either a `SystemUnderTest` instance or a zero-argument factory returning
+    one; the three systems in `docs/adapters/` expose a `system_under_test()` factory. An object
+    that already satisfies the protocol is taken as-is and never called, so an adapter that also
+    happens to be callable is not mistaken for its own factory.
+    """
+    module_name, separator, attribute_name = spec.rpartition(":")
+    if not separator or not module_name or not attribute_name:
+        raise ValueError(
+            f"--system-module {spec!r}: expected 'module:attribute', for example "
+            "'docs.adapters.symbolic_rules:system_under_test'. The part before the colon is an "
+            "importable module path (dots, not slashes, and no '.py'), the part after it is the "
+            "name of a SystemUnderTest or of a factory returning one."
+        )
+
+    try:
+        module = importlib.import_module(module_name)
+    except Exception as exc:
+        raise ValueError(
+            f"--system-module {spec!r}: importing module {module_name!r} failed with "
+            f"{type(exc).__name__}: {exc}. Importing a module runs it, so this is either the "
+            "module not being found on sys.path (it is searched from the current directory) or "
+            "an error raised while it executed."
+        ) from exc
+
+    try:
+        obj = getattr(module, attribute_name)
+    except AttributeError as exc:
+        raise ValueError(
+            f"--system-module {spec!r}: module {module_name!r} imported, but has no attribute "
+            f"{attribute_name!r} (loaded from {getattr(module, '__file__', 'an unknown file')!r})."
+        ) from exc
+
+    if not isinstance(obj, SystemUnderTest) and callable(obj):
+        try:
+            obj = obj()
+        except Exception as exc:
+            raise ValueError(
+                f"--system-module {spec!r}: calling {module_name}.{attribute_name}() raised "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+
+    if not isinstance(obj, SystemUnderTest):
+        missing = [name for name in _SUT_METHODS if not callable(getattr(obj, name, None))]
+        raise ValueError(
+            f"--system-module {spec!r}: {module_name}.{attribute_name} is a "
+            f"{type(obj).__name__}, which is not a reasonsmith.sut.SystemUnderTest: it is missing "
+            f"{', '.join(missing)}. A system under test must define "
+            f"{', '.join(f'{name}()' for name in _SUT_METHODS)}."
+        )
+    return obj
+
+
 def format_pack(pack: Pack) -> str:
     """Render a validated pack as the one-line-per-fact summary `validate-pack` prints."""
     lines = [
@@ -115,8 +197,10 @@ def main(args: list[str] | None = None) -> int:
             "     the report for them.\n"
             "  2  at least one requirement is violated.\n"
             "  1  usage or input error (unknown pack, unreadable system log, unreadable or\n"
-            "     malformed capability declaration, or a --system-scope that is not a known\n"
-            "     regulatory class).\n"
+            "     malformed capability declaration, a --system-scope that is not a known\n"
+            "     regulatory class, no system given, --system-module combined with --system or\n"
+            "     --capabilities, or a --system-module that does not import, names no such\n"
+            "     attribute, or is not a SystemUnderTest).\n"
             "exit codes for validate-pack:\n"
             "  0  every pack loaded and printed.\n"
             "  1  a pack the loader refuses, naming the file and the requirement at fault."
@@ -128,8 +212,22 @@ def main(args: list[str] | None = None) -> int:
     check_parser.add_argument(
         "--system",
         "-s",
-        required=True,
+        default=None,
         help="Path to JSONL decision log file or system specification",
+    )
+    check_parser.add_argument(
+        "--system-module",
+        default=None,
+        metavar="MODULE:ATTRIBUTE",
+        help=(
+            "IMPORTS AND EXECUTES the named Python module, and takes ATTRIBUTE from it as the "
+            "system under test — the same module:attribute loading pytest's -p and gunicorn's "
+            "application path do. The module is searched from the current directory. ATTRIBUTE "
+            "may be a SystemUnderTest or a zero-argument factory returning one, e.g. "
+            "'docs.adapters.symbolic_rules:system_under_test'. A system imported this way can "
+            "expose decide() and logic(), so it reaches the probed and proved rungs a decision "
+            "log cannot. Mutually exclusive with --system and --capabilities"
+        ),
     )
     check_parser.add_argument(
         "--pack",
@@ -200,6 +298,30 @@ def main(args: list[str] | None = None) -> int:
         return 0
 
     if parsed.command == "check":
+        if parsed.system is None and parsed.system_module is None:
+            print(
+                "Error: give a system to check — either --system <decisions.jsonl> (a decision "
+                "log) or --system-module <module>:<attribute> (imports and executes the module).",
+                file=sys.stderr,
+            )
+            return 1
+        if parsed.system is not None and parsed.system_module is not None:
+            print(
+                f"Error: --system {parsed.system!r} and --system-module "
+                f"{parsed.system_module!r} name two different systems: one a decision log, the "
+                "other a module to import and run. Nothing here merges them. Give one.",
+                file=sys.stderr,
+            )
+            return 1
+        if parsed.system_module is not None and parsed.capabilities is not None:
+            print(
+                f"Error: --capabilities {parsed.capabilities!r} declares the signals for a "
+                "decision log's adapter, but --system-module imports a system that declares its "
+                "own capabilities. Nothing here overrides those. Drop --capabilities.",
+                file=sys.stderr,
+            )
+            return 1
+
         try:
             pack = load_pack(parsed.pack)
         except Exception as exc:
@@ -217,13 +339,25 @@ def main(args: list[str] | None = None) -> int:
                 )
                 return 1
 
-        try:
-            sut = JSONLAdapter(
-                parsed.system, declared_capabilities=declared_capabilities
-            )
-        except Exception as exc:
-            print(f"Error loading system log {parsed.system!r}: {exc}", file=sys.stderr)
-            return 1
+        if parsed.system_module is not None:
+            # The module path is resolved from the caller's working directory, the way pytest and
+            # gunicorn resolve theirs; a console script's sys.path does not carry it.
+            cwd = os.getcwd()
+            if cwd not in sys.path:
+                sys.path.insert(0, cwd)
+            try:
+                sut = load_system_module(parsed.system_module)
+            except ValueError as exc:
+                print(f"Error: {exc}", file=sys.stderr)
+                return 1
+        else:
+            try:
+                sut = JSONLAdapter(
+                    parsed.system, declared_capabilities=declared_capabilities
+                )
+            except Exception as exc:
+                print(f"Error loading system log {parsed.system!r}: {exc}", file=sys.stderr)
+                return 1
 
         try:
             report = check_conformance(
