@@ -11,7 +11,7 @@ releases before it predate the file and are not reconstructed here.
 ### Fixed
 
 - **The documented commands run for someone who only ran `pip install reasonsmith`**
-  ([#PRNUMBER](https://github.com/eduardstan/reasonsmith/pull/PRNUMBER)). Three commands on the
+  ([#77](https://github.com/eduardstan/reasonsmith/pull/77)). Three commands on the
   README's first screens failed for exactly the audience the README is written for: the wheel
   shipped `table7.toml` and the packs and nothing else, so the sample decision log and the three
   example systems — the *one duty, three systems, three rungs* demonstration the project's
@@ -25,7 +25,7 @@ releases before it predate the file and are not reconstructed here.
   `tests/test_packaged_examples.py` builds the wheel and reads what is inside it, because from a
   checkout every missing file was right there and nothing could see the defect.
 - **`reasonsmith --version` prints the version instead of exiting 2**
-  ([#PRNUMBER](https://github.com/eduardstan/reasonsmith/pull/PRNUMBER)). It reports
+  ([#77](https://github.com/eduardstan/reasonsmith/pull/77)). It reports
   `reasonsmith.__version__`, the number `tests/test_release_discipline.py` already holds to
   `pyproject.toml`, the changelog and `CITATION.cff`, so it cannot print a version the tree is not.
 
