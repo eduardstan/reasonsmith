@@ -27,6 +27,16 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **The README's social card is pinned to the card the website serves**
+  ([#76](https://github.com/eduardstan/reasonsmith/pull/76)). `docs/assets/og.png` still carried
+  the retired `eduardstan.github.io/reasonsmith` URL in its footer while the byte-identical file
+  served live as the site's OpenGraph and Twitter card had been rebuilt with `reasonsmith.dev`;
+  nothing checked that the two copies agree. The corrected image is copied across from
+  `eduardstan/reasonsmith-site`, and `tests/test_social_card.py` pins its SHA-256 — the site
+  repository is not available in CI, so the digest is the checkable side of the pair, and the
+  failure message states the procedure: regenerate the card from `brand/og.html` in the site
+  repository first, copy the result here, update the digest.
+
 - **An engine and a pack can be installed rather than vendored**
   ([#74](https://github.com/eduardstan/reasonsmith/pull/74)). Engines and packs are discovered
   through `importlib.metadata.entry_points` — groups `reasonsmith.engines` and `reasonsmith.packs` —
