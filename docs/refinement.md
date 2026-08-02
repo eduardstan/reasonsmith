@@ -1,0 +1,141 @@
+# The refinement record: from a clause of law to a formal property
+
+Every requirement in this repository was written by someone reading a clause of law and deciding
+what formula stands for it. That step — refinement — is where the legal meaning is either preserved
+or quietly lost, and it is the step no pack file records. `docs/authoring-packs.md` documents the
+*fields* of a requirement. This document is the record of the *judgement*: for each of the 18 shipped
+requirements, the clause, the duty it states, the property it became, and — the column that matters —
+what the refinement deliberately did not capture.
+
+**What this document is not.** It does not restate what a verdict means. `docs/semantics.md` is the
+authority on that, one engine at a time, with every claim naming the test that fails if it becomes
+false. Where the fourth column below leans on a limit that document already states, it cites the
+section rather than paraphrasing it. Where this document and `docs/semantics.md` appear to disagree,
+`docs/semantics.md` is right.
+
+`tests/test_docs_refinement.py` reads the shipped packs and fails if a pack gains a requirement this
+record does not name, or if this record names one no pack ships.
+
+---
+
+## How to read column four
+
+A `satisfied` verdict is a statement about a formula, never about a duty. reasonsmith does not
+determine whether a legal duty is discharged — that is in `reasonsmith.report.LIMITS`, it travels on
+every emitted report, and `docs/semantics.md` §5 states it. The distance between the formula and the
+duty is different for every requirement, and column four is where it is written down.
+
+Four kinds of gap recur, and naming them once keeps the table short:
+
+- **Presence is not adequacy.** Fifteen of the eighteen shipped duties are `record` duties: a
+  conjunction of `present(signal)` atoms. A reason field containing `"n/a"` is present
+  (`docs/semantics.md` §3, *record*). Every clause whose content is an adjective — *meaningful*,
+  *specific*, *suitable*, *concise, complete, correct and clear* — meets a check that can see only
+  whether a field is non-empty.
+- **The trace is a sample.** An `observed` or `record` verdict covers exactly the records supplied,
+  and nothing establishes that they are representative, complete or unfiltered
+  (`docs/semantics.md` §1). Any clause whose duty runs over the lifetime of a system —
+  record retention, continuous monitoring — is met by a check over one supplied run.
+- **Organisational facts are outside every engine.** A controller's legal basis, a staffed appeals
+  desk, a signed instruction manual: no decision record witnesses these. Where a clause turns on
+  one, the property reads a flag the system sets about itself, and reasonsmith checks what a system
+  says, not whether it was honest (`docs/semantics.md` §3, *the assumption all four share*).
+- **The property's reach is not the clause's scope.** Most clauses below are triggered — by adverse
+  action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
+  evaluated over every record in a trace is checked outside that trigger too. Only the regulatory
+  class is modelled (`scope`), and only six of the eighteen duties use it.
+
+## The gap that has no partial fix: no model of decision domain
+
+Twelve of the eighteen shipped duties carry `scope = ""`, so they are not class-limited and reach
+every system that is run against their pack. Six use `scope`, and that gate is a *regulatory class*
+(`high-risk`, and the rest of `REGULATORY_CLASSES`) — not a subject matter.
+
+There is no field in a pack that can say *this duty is about consumer credit*. So an adverse-action
+notice duty under 12 CFR 1002.9 reaches a graph-reachability benchmark that issues no credit and
+notifies nobody, and reports it `satisfied`. That is not hypothetical: it happened in the run behind
+`docs/findings-nesyarena.md`, finding 3, and the only signal in the output that the domain did not
+fit was an unattainable verdict on a *different* requirement, arriving for the wrong reason — a
+missing signal, not a missing domain.
+
+Every row in the ECOA and GDPR tables below inherits this. It is stated once, here, rather than
+eighteen times. Fixing it means a decision-domain model — a second gate beside the regulatory class,
+with its own vocabulary, its own not-applicable outcome and its own way of being declared — which is
+a second architecture and deliberately not attempted. Naming the gap in the refinement record is
+worth more than a partial fix that would make some domain mismatches invisible instead of all of
+them.
+
+---
+
+## GDPR (Regulation (EU) 2016/679) — `src/reasonsmith/packs/gdpr.toml`
+
+| The clause | The informal duty | The formal property | What was deliberately not captured |
+|---|---|---|---|
+| GDPR Article 22(1)<br>`gdpr_art22_1_automated_decision_prohibition` | A person has the right not to be subject to a decision based solely on automated processing that produces legal or similarly significant effects. | `record`: `present(artifact_logs_decision_record) and present(provenance_active_exceptions)` | The prohibition itself. This property witnesses that the system keeps a decision record and records which exceptions were active — it is a logging duty standing in for a substantive one. A system that makes exactly the decision Article 22(1) protects against satisfies it, provided it logs that decision. Nothing here witnesses the data subject's right, its exercise, or the controller's response. The prohibition is carried by the next row, and only against a system that exposes its rules. |
+| GDPR Article 22(1)<br>`gdpr_art22_1_no_prohibited_decision_for_any_input` | Same clause, read as a constraint on the decision rules: no admissible input may yield a solely-automated, significantly-affecting decision without an Article 22(2) basis, and under points (a) and (c) without the Article 22(3) route open. | `logical`: `Implies(artifact_logs_solely_automated and artifact_logs_significant_effect, (provenance_basis_contract or provenance_basis_union_or_member_state_law or provenance_basis_explicit_consent) and Implies(provenance_basis_contract or provenance_basis_explicit_consent, artifact_logs_human_intervention_route))` | Whether any of those flags is true of the world. Each Article 22(2) basis is a legal fact about the controller — a contract that is necessary, a Union or Member State law that authorises, consent that is explicit and freely given — and the property reads a Boolean the system sets about itself. The pack description says so; `docs/semantics.md` §3 (*proved*) states that a proof is a claim about the logic exposed through `logic()`, not about the deployed artifact. Also not captured: Article 22(3)'s *suitable measures* collapse to one flag, so a route that is unstaffed, untimely or powerless to change the decision reads the same as a real one; Article 22(2)(b)'s requirement that the authorising law itself lay down safeguards is not modelled; Article 22(4)'s restriction on special-category data is not formalised anywhere in this pack. |
+| GDPR Article 22(3)<br>`gdpr_art22_3_safeguards_human_intervention` | The controller must implement suitable measures safeguarding the data subject — at least human intervention, expressing a point of view, and contesting the decision. | `record`: `present(artifact_logs_decision_record) and present(scope_statements_local_vs_global)` | All three named rights. Neither conjunct witnesses human intervention, a point of view or a contest; `scope_statements_local_vs_global` is a statement of explanation scope, chosen by the pack author as a proxy for *the safeguard can say what this decision rested on*. That proxy is editorial and the clause does not name it. *Suitable* is an adequacy judgement no engine here makes. And the clause is limited to cases under points (a) and (c) of Article 22(2), while the property is checked against every record in the trace — its reach is wider than the clause's. |
+| GDPR Recital 71<br>`gdpr_recital71_meaningful_explanation` | Suitable safeguards should include specific information, human intervention, a point of view, an explanation of the decision reached, and a challenge to it. | `record`: `present(artifact_logs_reason_explanation) and present(scope_statements_explanation_scope) and present(provenance_model_version)` | *Meaningful*, which is the entire content of the recital. Presence sees a non-empty string; `"n/a"` is present (`docs/semantics.md` §3, *record*). Nothing checks that the explanation is about the decision it accompanies, that a lay reader could act on it, or that the model version named is the one that ran. A recital creates no obligation of its own, which is what `binding = false` records — the row is an interpretive reading, not a duty. As above, the reach is every record rather than only Article 22 processing. |
+| GDPR Recital 71<br>`gdpr_recital71_error_risk_minimised` | The controller should use appropriate procedures and measures so that inaccuracies are corrected, the risk of errors is minimised, data is secured, and discriminatory effects on the listed protected grounds are prevented. | `temporal`: `always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` | Every limb but one. The property formalises *the risk of errors is minimised* and nothing else: correcting inaccuracies in personal data, security, and the prevention of discriminatory effects on racial or ethnic origin, political opinion, religion, trade union membership, genetic or health status or sexual orientation are not formalised here or anywhere in the shipped packs — **no fairness property is checked by any requirement in this repository.** What the error limb itself does and does not claim is stated in full in `docs/semantics.md` §3 (*the first shipped duty that reads a declared approximation error*), including that the deviation is a self-declaration no engine verifies, that the bound is the system's own margin and not a figure the recital states, and that an exact tie is reported satisfied. |
+
+## EU AI Act (Regulation (EU) 2024/1689) — `src/reasonsmith/packs/eu_ai_act.toml`
+
+All four duties carry `scope = "high-risk"`. A system that declares no class is reported
+`not_applicable` on all four, and reasonsmith never infers the class (`docs/semantics.md` §4).
+
+| The clause | The informal duty | The formal property | What was deliberately not captured |
+|---|---|---|---|
+| EU AI Act Article 12(1)<br>`eu_ai_act_art12_1_automatic_logging` | A high-risk system must technically allow automatic recording of events over the system's lifetime. | `record`: `present(artifact_logs_event_log) and present(provenance_model_version)` | *Over the lifetime of the system*, and *automatic*. The check reads the trace supplied for one run — a sample chosen by whoever produced it (`docs/semantics.md` §1) — so retention period, log durability and whether records survive a model update are all outside it. A log hand-assembled for the audit is indistinguishable from an automatically recorded one. Article 12(3)'s minimum content for the logs, and Article 19's retention obligation, are not formalised. |
+| EU AI Act Article 12(2)<br>`eu_ai_act_art12_2_traceability_monitoring` | Logging must enable recording of events relevant to identifying risk situations and substantial modifications, to post-market monitoring, and to Article 26(5) operation monitoring. | `record`: `present(artifact_logs_event_log) and present(provenance_model_version)` | The three limbs, individually and together. The property is byte-identical to the Article 12(1) property, so **no system can satisfy one of these two duties and violate the other** — they cannot come apart in any report, and the extra information the clause asks for (which events, relevant to what) is not represented at all. *Appropriate to the intended purpose* is an adequacy judgement nothing here makes. |
+| EU AI Act Article 13(1)<br>`eu_ai_act_art13_1_transparency_deployers` | Operation must be sufficiently transparent for deployers to interpret the output and use it appropriately. | `record`: `present(scope_statements_explanation_scope) and present(artifact_logs_reason_explanation) and present(provenance_model_version)` | *Sufficiently transparent to enable deployers to interpret* — a claim about a human reader's comprehension, which no engine here evaluates. Presence of a scope statement is not comprehension of it. The clause's second sentence ties the required degree of transparency to compliance with the provider's and deployer's Section 3 obligations; none of those obligations is in this pack, so the cross-reference is not modelled. |
+| EU AI Act Article 13(2)<br>`eu_ai_act_art13_2_instructions_for_use` | The system must be accompanied by instructions for use containing concise, complete, correct and clear information, relevant, accessible and comprehensible to deployers. | `record`: `present(scope_statements_approximation_vs_guarantee) and present(provenance_constraint_set)` | Every adjective in the clause — concise, complete, correct, clear, relevant, accessible, comprehensible — all seven of which are adequacy judgements presence cannot see. More structurally: instructions for use are a *document accompanying the system*, not a per-decision record, and this property reads per-decision signals. A system shipping no instruction manual at all satisfies it if its decision records carry those two fields. Article 13(3)'s enumerated contents (provider identity, performance characteristics, human oversight measures, expected lifetime, and the rest) are not formalised. |
+
+## ECOA / Regulation B (12 CFR § 1002.9) — `src/reasonsmith/packs/ecoa.toml`
+
+All three duties carry `scope = ""` and inherit the decision-domain gap above.
+
+| The clause | The informal duty | The formal property | What was deliberately not captured |
+|---|---|---|---|
+| 12 CFR 1002.9(a)(1)<br>`ecoa_reg_b_1002_9_a_1_timing_of_notice` | A creditor must notify an applicant of action taken within 30 days of a completed application, an incomplete application, or an existing account — or within 90 days of a counteroffer the applicant did not accept. | `temporal`: `always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))` | When the clock started. The clause counts from three different events; the property reads one latency number the system computes about itself, so which event it was measured from is the system's own claim and no engine checks it. The paragraph (ii) exception — *unless notice is provided in accordance with paragraph (c)* — is not modelled, so a lawful incomplete-application notice under 1002.9(c) is still held to the 30-day bound. `artifact_logs_counteroffer_not_accepted` is read under the flag encoding of `docs/semantics.md` §2, where any present non-numeric value becomes true, so a record that carries prose in that field takes the 90-day branch. Both numbers are the clause's own, not this pack's (`docs/authoring-packs.md`, *a number in a spec*). |
+| 12 CFR 1002.9(a)(2)<br>`ecoa_reg_b_1002_9_a_2_written_statement` | An adverse-action notification must be in writing and contain the action taken, the creditor's name and address, the ECOA § 701(a) statement, the administering federal agency's name and address, and either specific reasons or a disclosure of the right to obtain them. | `record`: `present(artifact_logs_reason_explanation) and present(artifact_logs_decision_record) and present(provenance_model_version)` | Four of the five enumerated contents. The creditor's name and address, the § 701(a) statement and the federal agency's details are not represented by any signal. *In writing* is not modelled. The clause is an **either/or**: point (ii), a disclosure of the right to request the reasons, is a lawful alternative to point (i) — the property demands the reasons branch unconditionally, so a creditor lawfully using (ii) is reported violated. And the whole clause is triggered only when adverse action is taken, while the property runs over every record in the trace, approvals included. |
+| 12 CFR 1002.9(b)(2)<br>`ecoa_reg_b_1002_9_b_2_specific_reasons` | The statement of reasons must be specific and indicate the principal reasons for the adverse action. | `record`: `present(artifact_logs_reason_explanation) and present(provenance_model_version) and present(scope_statements_local_vs_global)` | *Specific* and *principal*, which are the whole clause. A reason string of `"credit policy"` or `"n/a"` is present. `scope_statements_local_vs_global` is the pack author's proxy for specificity — a local explanation being about *this* decision rather than the model in general — and the regulation names nothing of the kind. The official commentary's requirement that the reasons relate to and accurately describe the factors actually scored, and its position on generic reason lists, is not formalised. As written, this property differs from the (a)(2) row by one signal, so the two rows say almost the same thing about a system. |
+
+## Table 7 — `src/reasonsmith/packs/table7.toml`
+
+This pack is different in kind, and the difference is the largest single item in its column four.
+Its rows are transcribed from Table 7 of *Symbols and Neurons* (Stan, Sciavicco & Napoletano, JAIR
+2026, p. 36:22), not from a statute. So:
+
+- `verbatim_text` is the table's **Requirement** cell — a duty *label* such as "Record–keeping (event
+  logging)" — not statutory text. A quotation here cannot be checked against a print of the law,
+  and `drift.py` does not check these rows against a live source the way it checks the three
+  statutory packs.
+- `requires` is the paper's own **evidence-field keys**, in the printed order, held there by
+  `test_pack_matches_table7_transcription`. Each `spec` is therefore the presence of the paper's
+  *minimal evidence checklist* for that duty — deliberately a restatement of a checklist, and never
+  a formalisation of the underlying clause.
+- The refinement step for this pack was largely performed by the paper's authors, in choosing which
+  evidence fields stand for which duty. Only `stakeholder` and `spec` are editorial here; the pack
+  header says so.
+
+| The clause | The informal duty | The formal property | What was deliberately not captured |
+|---|---|---|---|
+| EU AI Act Art. 13<br>`eu_ai_act_art13_transparency` | Transparency and information to deployers. | `record`: presence of `model_and_data_version_ids`, `extraction_timestamp`, `dataset_snapshot_hash`, `fidelity_coverage_metrics`, `explanation_scope`, `linkage_from_decision_to_artifact` | Transparency, as distinct from the retained evidence of it: satisfying this row says the six artefacts exist, not that any deployer could interpret anything. `fidelity_coverage_metrics` present means a fidelity number was recorded, not that it is *high* — there is no threshold, deliberately, since a threshold here would be the pack author's figure presented as the Act's (`docs/authoring-packs.md`). `linkage_from_decision_to_artifact` present means a link field is filled, not that the link resolves to the artefact that produced that decision. This row and `eu_ai_act_art13_1_transparency_deployers` formalise the same Article over disjoint signal vocabularies and can disagree about one system. |
+| EU AI Act Art. 12<br>`eu_ai_act_art12_record_keeping` | Record-keeping (event logging). | `record`: `present(automatic_event_logs) and present(retention_schedule) and present(signer)` | Whether anything was retained or signed. `retention_schedule` present means a schedule was declared, not that it was honoured or that its period is long enough for the Act. `signer` present means a signer field is non-empty; **no cryptographic signature is verified anywhere in this repository**, so a signer name typed into a field is evidence of the same weight as a real one. *Automatic* is not distinguishable from hand-assembled, as in the statutory Article 12 row above. |
+| GDPR Art. 22 (and Rec. 71)<br>`gdpr_art22_meaningful_information` | Automated decisions: "meaningful information about the logic involved". | `record`: `present(per_decision_reason_string) and present(feature_to_named_concept_mapping) and present(dpia_cross_reference)` | *Meaningful*, again, and the accuracy of the mapping: `feature_to_named_concept_mapping` present means a mapping exists, not that its named concepts correspond to what the model uses. `dpia_cross_reference` present is a pointer to a data protection impact assessment — not evidence that the assessment exists, is current, or reached any conclusion. The row cites Article 22 and Recital 71 together, as the paper prints it, and carries `binding = true` because Article 22 is directly applicable; the clause-by-clause split, and the recital's non-binding status, live in `packs/gdpr.toml`. |
+| ECOA / Reg B 12 CFR 1002.9<br>`ecoa_reg_b_adverse_action` | Adverse action reasons in credit decisions. | `record`: presence of `stored_reasons_per_decision`, `model_version`, `score_factors`, `audit_ids`, `retention_for_regulatory_lookback` | Specificity, as in the statutory ECOA rows: `score_factors` present is not a check that the factors stored are the *principal* reasons for the action. `retention_for_regulatory_lookback` present means the record names a retention arrangement, not that a record actually survives the 25-month period of 1002.12(b). The adverse-action trigger is not modelled, so the row is checked over approvals too. And the decision-domain gap above applies in full: this row reaches any system it is run against. |
+| FDA GMLP, agency transparency guidance<br>`fda_gmlp_samd` | Good Machine Learning Practice and transparency for Software as a Medical Device. | `record`: `present(design_history_links) and present(verification_logs) and present(change_control)` | The guidance itself. GMLP is a set of guiding principles, not a rule with a compliance test, which is what `binding = false` records; none of the ten principles — multidisciplinary expertise, good software engineering practice, representative data sets, independence of training and test sets, and the rest — is formalised. `article_clause` here is a description, not a citation: there is no clause to quote, so `verbatim_text` cannot be verified against a print and the drift check has no source to re-fetch. `change_control` present means a field is filled, not that a change went through a predetermined change control plan. |
+| NIST AI RMF 1.0<br>`nist_ai_rmf_risk_evidence` | Risk evidence and continuous monitoring. | `record`: presence of `continuous_monitoring_logs`, `metric_thresholds_and_alerts`, `reviews_and_sign_offs`, `incident_tickets` | *Continuous*, and the framework's structure. The AI RMF is voluntary and organised around the GOVERN, MAP, MEASURE and MANAGE functions rather than testable duties, so `article_clause = "1.0"` is a framework version, not a clause — the same non-citation problem as the row above, and `binding = false` records the voluntariness. `metric_thresholds_and_alerts` present means thresholds were declared, not that any of them is appropriate or that an alert ever fired; `reviews_and_sign_offs` present means a sign-off field is non-empty, not that a reviewer with authority read anything. Continuity cannot be established from a supplied trace at all (`docs/semantics.md` §1). |
+
+---
+
+## What this record obliges an author to do
+
+A new requirement is not finished when the loader accepts it. Before shipping one, write its row
+here: the clause, the duty, the property, and what the property does not capture. If the fourth
+column is hard to write, that is the refinement being examined for the first time, which is the
+point. If it comes out as "some aspects are not captured", it is not written yet — name the aspect.
+
+Two things belong elsewhere, not in this column. A property that cannot be written in the language
+at all is a finding for `docs/semantics.md` (`docs/authoring-packs.md`, *one property language*). A
+threshold that is the pack author's rather than the regulation's must be declared in the pack
+description as well as here (`docs/authoring-packs.md`, *a number in a spec*).

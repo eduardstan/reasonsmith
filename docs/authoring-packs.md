@@ -5,6 +5,12 @@ A requirement pack is a TOML file the loader reads into `Requirement` and `Pack`
 the point of a pack, and it is why the loader refuses a pack that omits or adds a field rather
 than guessing what a missing or unread field meant.
 
+This guide documents the *fields*. The *method* — how a clause of law becomes a formula, and what
+that formula does not discharge — is in [`refinement.md`](refinement.md), which carries one row per
+shipped requirement and a fourth column naming what the refinement deliberately left out. Read it
+before writing a `spec`, and add your requirement's row in the same commit: a test fails if a pack
+gains a requirement that record does not name.
+
 Validate your pack before shipping it — the CLI accepts the same names and files a `check` run
 loads, because both go through the same loader:
 

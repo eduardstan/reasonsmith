@@ -31,6 +31,8 @@ Every evaluated result records its evidence strength, on one lattice:
 
 Combining zero verdicts is `inconclusive`, never vacuously `satisfied`. A requirement no engine here can evaluate is reported with no strength, rather than judged by a weaker check. What each verdict means — and does not mean — is stated one engine at a time in [`docs/semantics.md`](docs/semantics.md); every soundness claim there names the test that fails if the claim becomes false.
 
+How each shipped requirement got from a clause of law to a formula — and, in a fourth column, what that refinement deliberately did not capture — is recorded in [`docs/refinement.md`](docs/refinement.md), one row per requirement across all four packs.
+
 ## Key Finding: Form Completeness Does Not Imply Reason Fidelity
 
 Evaluating structural form alone can launder severe compliance and reasoning gaps into documents that appear authoritative. In the ECOA/Reg B credit demonstration (`python -m reasonsmith.demo`), `reasonsmith` emits an evidence record that reads **`COMPLETE`** while its paired certificate reads **`FAIL`** because four of its five principal reasons were dropped by proof truncation:

@@ -69,6 +69,13 @@ quoted text character-for-character, both halves of the legal source, and the pa
 evidence-field keys as the signal names. Do not rename a signal to something tidier — that test is
 the only thing keeping the pack attached to the paper.
 
+`docs/refinement.md` is the refinement record: one row per shipped requirement giving the clause,
+the informal duty, the formal property, and what the formalisation deliberately left out. A new
+requirement means a new row in the same commit — `tests/test_docs_refinement.py` reads the packs and
+fails if one gains a requirement the record does not name. It also carries the one gap that has no
+partial fix: nothing in a pack can say which *decision domain* a duty is about, so a duty with
+`scope = ""` reaches every system (finding 3 of `docs/findings-nesyarena.md`).
+
 The first shipped duty whose verdict comes from a value a system declares about its own approximation
 error is `gdpr_recital71_error_risk_minimised`. It compares
 `scope_statements_declared_deviation` against `artifact_logs_decision_margin`, so a nonzero declared
