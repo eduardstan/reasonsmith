@@ -5,10 +5,12 @@ What this module is for:
     reader can follow it. Commits are squash-merged with `(#NN)` subjects, so the reference
     class is wide and mechanical, and a bare reference is a merge that silently strands a link
     nobody can follow.
-  - `version` in `pyproject.toml`, the topmost released heading in `CHANGELOG.md`, and
-    `__version__` in `src/reasonsmith/__init__.py` must agree: the changelog is the release
-    record and the tree's version is the release number. One number kept in several places
-    drifts by omission, and a drift is how a changelog describes a release the tree never was.
+  - `version` in `pyproject.toml`, the topmost released heading in `CHANGELOG.md`,
+    `__version__` in `src/reasonsmith/__init__.py` and `version` in `CITATION.cff` must agree:
+    the changelog is the release record and the tree's version is the release number. One
+    number kept in several places drifts by omission, and a drift is how a changelog describes
+    a release the tree never was. `CITATION.cff` is the fourth place and was the one this guard
+    originally missed — it was already stale when the first three were locked together.
 
 What a reader must not break:
   - The markdown sweep reads the tracked set from `git ls-files`, never a hand-copied list — the
@@ -20,6 +22,10 @@ What a reader must not break:
     rather than derived from installed metadata: deriving would report whatever distribution
     happens to be installed — a stale PyPI release, or none at all in the no-install import
     setup `tests/conftest.py` exists for — instead of the tree's own number.
+  - `CITATION.cff` is read with a regex over its one top-level `version:` line, not a YAML
+    parser: one field is not worth a dependency this package otherwise does not have. The
+    pattern is anchored at column zero so `cff-version:` and the indented fields under
+    `preferred-citation:` cannot match it.
 """
 
 from __future__ import annotations
@@ -90,9 +96,18 @@ def _topmost_released_version() -> str:
     raise AssertionError("CHANGELOG.md has no released (non-[Unreleased]) version heading")
 
 
+def _citation_version() -> str:
+    """The one top-level `version:` in `CITATION.cff`, read without a YAML dependency."""
+    citation = (REPO_ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    match = re.search(r'^version:\s*"?(\d+\.\d+\.\d+)"?\s*$', citation, re.MULTILINE)
+    assert match, "CITATION.cff has no top-level `version:` line"
+    return match.group(1)
+
+
 def test_pyproject_changelog_and_package_version_agree():
-    """The tree's version and the changelog's newest release are the same number, and so is
-    the package's own `__version__` literal — three places, one number, nothing to drift."""
+    """The tree's version and the changelog's newest release are the same number, and so are
+    the package's own `__version__` literal and `CITATION.cff` — four places, one number,
+    nothing to drift."""
     pyproject_version = _pyproject_version()
     changelog_version = _topmost_released_version()
     assert pyproject_version == changelog_version, (
@@ -103,5 +118,11 @@ def test_pyproject_changelog_and_package_version_agree():
 
     assert reasonsmith.__version__ == pyproject_version, (
         f"src/reasonsmith/__init__.py __version__ {reasonsmith.__version__} disagrees with "
-        f"pyproject.toml version {pyproject_version}. Bump all three in the same change."
+        f"pyproject.toml version {pyproject_version}. Bump all four in the same change."
+    )
+
+    citation_version = _citation_version()
+    assert citation_version == pyproject_version, (
+        f"CITATION.cff version {citation_version} disagrees with pyproject.toml version "
+        f"{pyproject_version}. Bump all four in the same change."
     )

@@ -75,13 +75,19 @@ project is not ready to make it.** The absence of a 1.0.0 is a decision, not an 
 
 Every `CHANGELOG.md` entry links the pull request that introduced it.
 
-To release: bump `version` in `pyproject.toml`, close the `[Unreleased]` heading into the new
-version, and publish a GitHub Release whose tag is `v<version>`. `.github/workflows/publish.yml`
+The version lives in **four** places and they are bumped together, in one change:
+
+1. `version` in `pyproject.toml`
+2. the topmost released heading in `CHANGELOG.md` — close `[Unreleased]` into the new version
+   and open a fresh `[Unreleased]`
+3. `__version__` in `src/reasonsmith/__init__.py`
+4. `version` in `CITATION.cff`
+
+Then publish a GitHub Release whose tag is `v<version>`. `.github/workflows/publish.yml`
 does the PyPI upload by trusted publishing; there is no token anywhere.
 
-`tests/test_release_discipline.py` holds `version` in `pyproject.toml`, the topmost released
-`CHANGELOG.md` heading, and `__version__` in `src/reasonsmith/__init__.py` to one another, and
-`publish.yml` refuses to build a release whose tag is not `v` plus that version.
+`tests/test_release_discipline.py` holds all four to one another, and `publish.yml` refuses to
+build a release whose tag is not `v` plus that version.
 
 ## Reporting Issues
 
