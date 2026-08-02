@@ -267,10 +267,12 @@ graph-reachability benchmark that issues no credit ([`docs/findings-nesyarena.md
 finding 3; `ROADMAP.md` §1). Missing too: authority over the refinement. Which formula stands for a
 clause is a judgement made in this repository and recorded as such — the proxy chosen for
 *specific* in 12 CFR 1002.9(b)(2) is the pack author's, and the regulation names nothing of the kind
-([`docs/refinement.md`](docs/refinement.md)). One shipped property is known to be wider than its
-clause: 12 CFR 1002.9(a)(2) is an either/or, and the property demands the reasons branch
-unconditionally, so a creditor lawfully using the disclosure alternative is reported violated. A
-false positive against a lawful practice disqualifies a tool from supervisory use until it is fixed.
+([`docs/refinement.md`](docs/refinement.md)). One shipped property is still known to be wider than
+its clause: 12 CFR 1002.9(a)(2) is now formalised as the either/or it is, and either lawful branch
+satisfies it, but (b)(2) is triggered only where (a)(2)(i) requires a statement of reasons, and that
+trigger is not modelled — so a creditor lawfully using the disclosure alternative is reported
+violated on (b)(2). A false positive against a lawful practice disqualifies a tool from supervisory
+use until it is fixed.
 
 **Auditors** running this against a client's system. Missing: reach into systems that are only logs.
 For any system exposing nothing but a decision trace, `observed` is the ceiling whatever the pack
