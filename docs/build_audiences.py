@@ -29,6 +29,13 @@ What a reader must not break:
     the documents they are, and the comparison a reader actually needs — what this reader is
     not shown that the next one is — is answered by the legend above each frame, which is read
     off the projection rather than off the pixels.
+  - **A frame opens where the documents differ, and holds all of the one it shows.** See
+    `FRAME_ANCHOR` and `FRAME_HEIGHT`. The frames used to open at the top and be tall, which
+    put five copies of the same masthead, headline and dashboard on the screen and the first
+    real difference below every frame's visible area: the page claimed a difference it did not
+    show. The only mechanism here is a scroll position set on load — one anchor and one height
+    for all five, nothing cropped, nothing restyled, nothing reordered, and with scripting off
+    the frames open at the top exactly as they did.
   - **What each reader loses is derived, never asserted.** `_suppressed` reads the
     `AudienceProjection` dataclass itself, so a projection that gains, loses or renames a field
     changes this page rather than making it wrong.
@@ -72,7 +79,40 @@ AUDIENCES_HTML = ROOT / "docs" / "audiences.html"
 
 #: How tall each embedded document is drawn. One number, so no frame is given more room than
 #: another and a document's length on the page is its own length and not a layout decision.
-FRAME_HEIGHT = "44rem"
+#:
+#: It is short on purpose. Paired with `FRAME_ANCHOR`, one 24rem window opens on the requirement
+#: findings and holds the band where the projections show — the identifier, the badges, the
+#: lattice, the signals — and stops before the evidence paragraph, which is the same wall of
+#: prose in four of the five documents. Two frames then fit one screen at a normal window size,
+#: so the comparison is made by looking rather than by remembering: a taller frame shows more of
+#: one document and less of the next, and reading the difference becomes reading every word
+#: twice.
+FRAME_HEIGHT = "24rem"
+
+#: The element every rendering carries and every rendering draws differently, and the one place
+#: a frame may be opened at instead of the top.
+#:
+#: Opened at the top, four of the five frames are byte-identical for their whole first screen —
+#: the masthead, the headline banner and the dashboard are chrome the projection does not touch,
+#: so a page whose whole argument is that these documents differ opened on five copies of the
+#: same picture. `id="findings"` is the anchor `render_html` already puts on the requirement
+#: findings heading for its own skip link, it exists in all five renderings, and it is where the
+#: projections start to show: the auditor's cards carry the lattice, the signals, the evidence
+#: sentence and the witnesses; the regulator's carry no signals and no missing-capability
+#: finding; the affected individual's carry the verdict alone, under two plain-language sections
+#: no expert reading has.
+#:
+#: One anchor for all five, so this is a scroll position and not a crop: nothing is hidden, each
+#: frame still holds the whole document, and scrolling up inside one reaches the masthead it
+#: opened past. Without scripting the frames simply open at the top, which is where they were.
+FRAME_ANCHOR = "findings"
+
+#: Scroll the frame to `FRAME_ANCHOR` on load. `scrollTo` on the frame's own window rather than
+#: `scrollIntoView`, which would also scroll the page holding the frame.
+FRAME_ONLOAD = (
+    "var w=this.contentWindow,e=w.document.getElementById('" + FRAME_ANCHOR + "');"
+    "if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)"
+)
 
 
 def gallery_report() -> ConformanceReport:
@@ -144,6 +184,7 @@ def _card(name: str, document: str) -> str:
         "          </div>\n"
         f"          {legend}\n"
         f'          <iframe title="The {html.escape(name)} rendering of this run" '
+        f'onload="{html.escape(FRAME_ONLOAD, quote=True)}" '
         'loading="lazy" style="width: 100%; height: '
         f"{FRAME_HEIGHT}; margin-top: var(--space-xs); border: 1px solid var(--line); "
         'border-radius: var(--radius); background: var(--paper);" '
@@ -172,12 +213,21 @@ def gallery_html(report: ConformanceReport) -> str:
       which parts of the one report are drawn, listed above each frame as the field names of
       the projection that produced it. The page you are reading is that same run once more, at
       full width, with nothing withheld.</p>
+      <p class="limits-text">Each frame is <em>scrolled</em> to the requirement findings, not
+      cropped to them: the masthead, the headline and the dashboard above them are the same in
+      every rendering because a projection does not touch them, and five copies of one picture
+      demonstrate nothing. Every frame holds its whole document and scrolling up inside one
+      reaches the part it opened past. The findings are where the projections show: what a card
+      carries below its verdict — the strength lattice, the signals, the engine's sentence, the
+      witnesses — is exactly what the fields listed above each frame decide.</p>
       <p class="limits-text">The affected individual's document is the shortest here, and one of
       its sections reports that nothing in this run measured whether the reasons the system
       stated were all the reasons it acted on. Both are correct output. A document that is short
       because its reader is not owed solver input, and that says plainly what was not measured
       rather than leaving silence to be read as a clean result, is the result this tool is for —
-      not a rendering that failed to fill.</p>
+      not a rendering that failed to fill. Its two plain-language sections — the decisions the
+      system recorded, and the reasons nothing here measured — sit immediately above the findings
+      its frame opens on, and no other reader on this page is shown them.</p>
       <div class="split-grid" style="grid-template-columns: 1fr;">
 {cards}      </div>
     </section>

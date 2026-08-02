@@ -683,12 +683,21 @@
       which parts of the one report are drawn, listed above each frame as the field names of
       the projection that produced it. The page you are reading is that same run once more, at
       full width, with nothing withheld.</p>
+      <p class="limits-text">Each frame is <em>scrolled</em> to the requirement findings, not
+      cropped to them: the masthead, the headline and the dashboard above them are the same in
+      every rendering because a projection does not touch them, and five copies of one picture
+      demonstrate nothing. Every frame holds its whole document and scrolling up inside one
+      reaches the part it opened past. The findings are where the projections show: what a card
+      carries below its verdict — the strength lattice, the signals, the engine's sentence, the
+      witnesses — is exactly what the fields listed above each frame decide.</p>
       <p class="limits-text">The affected individual's document is the shortest here, and one of
       its sections reports that nothing in this run measured whether the reasons the system
       stated were all the reasons it acted on. Both are correct output. A document that is short
       because its reader is not owed solver input, and that says plainly what was not measured
       rather than leaving silence to be read as a clean result, is the result this tool is for —
-      not a rendering that failed to fill.</p>
+      not a rendering that failed to fill. Its two plain-language sections — the decisions the
+      system recorded, and the reasons nothing here measured — sit immediately above the findings
+      its frame opens on, and no other reader on this page is shown them.</p>
       <div class="split-grid" style="grid-template-columns: 1fr;">
         <div class="split-card">
           <div class="split-card-header">
@@ -696,7 +705,7 @@
             <span>36,040 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: nothing. This is the full report.</p>
-          <iframe title="The auditor rendering of this run" loading="lazy" style="width: 100%; height: 44rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
+          <iframe title="The auditor rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;UTF-8&quot;&gt;
@@ -1559,7 +1568,7 @@
             <span>35,600 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">legal_metadata</span></p>
-          <iframe title="The developer rendering of this run" loading="lazy" style="width: 100%; height: 44rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
+          <iframe title="The developer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;UTF-8&quot;&gt;
@@ -2422,7 +2431,7 @@
             <span>34,982 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">witnesses</span></p>
-          <iframe title="The deployer rendering of this run" loading="lazy" style="width: 100%; height: 44rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
+          <iframe title="The deployer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;UTF-8&quot;&gt;
@@ -3277,7 +3286,7 @@
             <span>34,649 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">witnesses</span></p>
-          <iframe title="The regulator rendering of this run" loading="lazy" style="width: 100%; height: 44rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
+          <iframe title="The regulator rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;UTF-8&quot;&gt;
@@ -4132,7 +4141,7 @@
             <span>27,849 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">overview</span><span class="signal-tag">strength</span><span class="signal-tag">legal_metadata</span><span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">evidence_summary</span><span class="signal-tag">probe_budget</span><span class="signal-tag">witnesses</span></p><p class="text-muted">Drawn only for this reader: <span class="signal-tag">plain_account</span></p>
-          <iframe title="The affected-individual rendering of this run" loading="lazy" style="width: 100%; height: 44rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
+          <iframe title="The affected-individual rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;UTF-8&quot;&gt;
