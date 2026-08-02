@@ -64,10 +64,13 @@ case the ladder does not resolve (exposed logic disagreeing with the trace).
 `requires` is a conjunctive gate, so a branch of an either/or clause must not be listed in it: the
 loader (`spec._check_spec`, via `rulelang.unconditional_signal_names`) exempts a signal read only
 inside a disjunction, because gating one branch reports a system that lawfully took the other
-`unattainable` without running it. `ecoa_reg_b_1002_9_a_2_written_statement` is the worked example
-and `docs/authoring-packs.md`, *An either/or clause*, is the rule, including the two costs it buys:
-a system declaring neither branch is judged on its trace rather than reported unattainable, and a
-typo inside a disjunct is not caught at load time.
+`unattainable` without running it. The exemption is narrow on purpose — every branch must be
+settled by `present()` atoms, and a name every branch reads stays gated — so a disjunction over
+magnitudes does not quietly widen the gate. `ecoa_reg_b_1002_9_a_2_written_statement` is the worked
+example and `docs/authoring-packs.md`, *An either/or clause*, is the rule, including the three costs
+it buys: a system declaring neither branch is judged on its trace rather than reported unattainable,
+a typo inside a disjunct is not caught at load time, and the duty leaves the `record` fragment, so
+a log holding a single decision is reported not evaluated on it.
 
 `src/reasonsmith/packs/*.toml` are derived, not authored. The EU AI Act, GDPR and ECOA packs quote
 `docs/legal-sources.md`, which is the retrieval record for the official statutory text and the one

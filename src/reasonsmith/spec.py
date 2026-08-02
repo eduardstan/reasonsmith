@@ -19,7 +19,8 @@ What a reader must not break:
     under `formalism = "record"` and an STL formula could be labelled `record` and silently
     downgraded. The check is what makes the field mean something.
   - Every signal name a `spec` reads *unconditionally* must appear in `requires`. A name read only
-    inside a disjunction is exempt, and deliberately so.
+    inside a disjunction whose every branch is settled by `present()` atoms, and which does not
+    occur in all of those branches, is exempt, and deliberately so.
     Why this matters: `requires` is the capability gate that decides whether a duty is attainable
     at all, and it is a conjunction — a system missing any one of its names is reported
     unattainable without being run. An unconditional name that is not gated is a signal no
@@ -277,9 +278,9 @@ def _check_spec(req: Requirement, where: str) -> None:
             f"{where}: field 'spec' reads signal(s) not named in 'requires': "
             f"{', '.join(unrequired)}. `requires` is the capability gate that decides whether "
             "this duty is attainable, so a signal the property cannot be settled without must be "
-            "listed there. A signal read only inside a disjunction is an alternative branch and "
-            "is exempt: gating it would report a system that lawfully took the other branch "
-            "unattainable."
+            "listed there. Only a signal standing for one branch of an either/or is exempt: the "
+            "disjunction's every branch must be settled by present() atoms, and a name every "
+            "branch reads is needed whichever one settles the formula, so it stays gated."
         )
 
 

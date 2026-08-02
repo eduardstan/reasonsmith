@@ -98,12 +98,23 @@ creditor that took the other. List only what the clause demands whichever branch
 loader knows the difference and exempts a signal read only inside a disjunction; everything else is
 gated as before.
 
-Two consequences to write down rather than discover. A branch signal no `requires` names is never
+The exemption is an either/or exemption, not an `or` exemption. Two conditions narrow it, and both
+are checked by `rulelang.unconditional_signal_names`. Every branch of the disjunction must be
+settled by `present()` atoms alone: `(latency <= 30) or (latency <= 90)` gates `latency`, because a
+magnitude has to be readable before either operand exists, and a system that cannot emit it belongs
+in the unattainable answer rather than in a run that comes back not evaluated. And a name occurring
+in *every* branch is needed whichever branch settles the formula, so it stays gated — the exemption
+is the disjunction's names minus the names common to all of its branches.
+
+Three consequences to write down rather than discover. A branch signal no `requires` names is never
 asked for by the unattainable analysis, so a system that declares *neither* branch is judged on its
 trace and reported violated rather than unattainable — say so in the pack description, as
-`packs/ecoa.toml` does. And a typo inside a disjunct is not caught at load time; it becomes a
-branch nothing can ever satisfy. `ecoa_reg_b_1002_9_a_2_written_statement` is the worked example,
-and `docs/refinement.md` records what its disjunction still does not capture.
+`packs/ecoa.toml` does. A typo inside a disjunct is not caught at load time; it becomes a branch
+nothing can ever satisfy. And a disjunction is not a conjunction of `present()` atoms, so the duty
+leaves the `record` fragment: written as `temporal`, it is quantified over the trace, and the
+observed engine reports a log holding a single decision not evaluated rather than satisfied or
+violated. `ecoa_reg_b_1002_9_a_2_written_statement` is the worked example, and `docs/refinement.md`
+records what its disjunction still does not capture.
 
 Two load-time checks make `formalism` mean something:
 

@@ -149,6 +149,22 @@ def test_the_content_duty_and_the_specificity_duty_can_come_apart():
     assert specificity.verdict == Verdict.VIOLATED
 
 
+def test_a_single_decision_trace_is_not_evaluated_never_satisfied():
+    """What holding the either/or costs: a log of one decision no longer answers this duty.
+
+    A disjunction is not a conjunction of `present()` atoms, so the property is quantified over the
+    trace, and a discrete-time monitor cannot read a sampling period off one sample. The duty was a
+    `record` duty before the clause's `either` was formalised, and one record was enough then.
+    Reporting such a log satisfied would be the overclaim: nothing was monitored.
+    """
+    sut = BaseSUT(set(EVERY_SIGNAL))
+    records = [notification(**{REASONS: "insufficient recent repayment history"})]
+    result = evaluate_requirement(requirement(), sut, records)
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert "Not evaluated" in result.evidence_summary
+
+
 def test_the_quotation_carries_both_branches_of_the_clause():
     """A quotation showing only point (i) is what made the either/or invisible to a reader."""
     verbatim = requirement().verbatim_text

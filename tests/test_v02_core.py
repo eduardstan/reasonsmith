@@ -1288,6 +1288,54 @@ def test_the_loader_lets_a_disjunct_go_ungated_but_not_the_rest_of_the_property(
         )
 
 
+def test_a_disjunction_of_magnitudes_gates_its_signals(tmp_path):
+    """The exemption is for an either/or, not for every `or`.
+
+    A branch that reads a magnitude cannot be settled by which signals a record carries: the value
+    has to be readable before the comparison exists at all. A system that cannot emit it belongs in
+    the pre-execution unattainable answer, not in a run that comes back not evaluated.
+    """
+    with pytest.raises(ValueError, match="not named in 'requires': signal_b, signal_c"):
+        load_pack(
+            _spec_pack(
+                tmp_path,
+                "logical",
+                "present(signal_a) and ((signal_b <= 30) or (signal_c <= 90))",
+                requires='["signal_a"]',
+            )
+        )
+
+    gated = _spec_pack(
+        tmp_path,
+        "logical",
+        "present(signal_a) and ((signal_b <= 30) or (signal_c <= 90))",
+        requires='["signal_a", "signal_b", "signal_c"]',
+    )
+    assert load_pack(gated).requirements[0].requires == ("signal_a", "signal_b", "signal_c")
+
+
+def test_a_name_every_disjunct_reads_is_still_gated(tmp_path):
+    """A name both branches read is needed whichever branch settles the formula."""
+    with pytest.raises(ValueError, match="not named in 'requires': signal_a"):
+        load_pack(
+            _spec_pack(
+                tmp_path,
+                "logical",
+                "(present(signal_a) and present(signal_b)) or "
+                "(present(signal_a) and present(signal_c))",
+                requires='["signal_b"]',
+            )
+        )
+
+    common_only = _spec_pack(
+        tmp_path,
+        "logical",
+        "(present(signal_a) and present(signal_b)) or (present(signal_a) and present(signal_c))",
+        requires='["signal_a"]',
+    )
+    assert load_pack(common_only).requirements[0].requires == ("signal_a",)
+
+
 def test_every_shipped_duty_is_a_formula_and_carries_its_english(tmp_path):
     """No shipped pack keeps prose in `spec`, and every one of them explains itself in words."""
     for name in list_packs():

@@ -30,7 +30,11 @@ is a conjunction, so gating one branch of an either/or clause reports a system t
 the other branch `unattainable` without running it — which is a wrong answer arrived at by a
 different route than a wrong verdict
 (`test_the_loader_lets_a_disjunct_go_ungated_but_not_the_rest_of_the_property`,
-`test_neither_branch_signal_gates_the_content_duty`). The cost is that an ungated branch signal is
+`test_neither_branch_signal_gates_the_content_duty`). The exemption reaches an either/or and
+nothing wider: every branch of the disjunction must be settled by `present()` atoms alone, and a
+name occurring in every branch is needed whichever one settles the formula, so it stays gated
+(`test_a_disjunction_of_magnitudes_gates_its_signals`,
+`test_a_name_every_disjunct_reads_is_still_gated`). The cost is that an ungated branch signal is
 never asked for by the unattainable analysis, so a system declaring neither branch is judged on its
 trace and can be reported `violated` there
 (`test_a_creditor_giving_neither_branch_is_violated`).
@@ -316,6 +320,13 @@ monitor cannot read a sampling period off one sample
 (`test_trace_too_short_names_the_trace_not_the_formula`); rtamt cannot parse the formula
 (`test_unexpressible_formula_reports_not_evaluated`); or any record carries no finite real number for
 a variable the formula treats as a magnitude (`test_quantitative_bound_needs_a_measurement`).
+
+The two-record floor is what holding an either/or costs `ecoa_reg_b_1002_9_a_2_written_statement`.
+A disjunction is not a conjunction of `present()` atoms, so the duty is quantified over the trace
+rather than checked record by record, and a log holding exactly one decision is reported not
+evaluated on it — not satisfied, not violated — and leaves the binding headline counts
+(`test_a_single_decision_trace_is_not_evaluated_never_satisfied`). A one-record log was enough
+while it was a `record` duty; the pack description and `docs/refinement.md` carry the same limit.
 
 ### The first shipped duty that reads a declared approximation error — `gdpr_recital71_error_risk_minimised`
 
@@ -648,7 +659,9 @@ Two consequences of that report text, followed by a separate package-level termi
 | One property language: the loader classifies the fragment and refuses a mismatch, prose and definitely non-Boolean roots included | `test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment`, `test_the_loader_refuses_prose_where_a_property_belongs`, `test_the_loader_refuses_quoted_prose_as_a_non_boolean_property`, `test_the_loader_refuses_arithmetic_as_a_non_boolean_property` |
 | A signal the property reads unconditionally must be gated by `requires` | `test_the_loader_refuses_a_spec_reading_an_ungated_signal` |
 | A branch of an either/or is not gated, so neither branch alone makes the duty unattainable | `test_the_loader_lets_a_disjunct_go_ungated_but_not_the_rest_of_the_property`, `test_neither_branch_signal_gates_the_content_duty` |
+| The exemption reaches an either/or only: a disjunction over magnitudes gates its names, and a name every branch reads stays gated | `test_a_disjunction_of_magnitudes_gates_its_signals`, `test_a_name_every_disjunct_reads_is_still_gated` |
 | Either lawful branch of 12 CFR 1002.9(a)(2) satisfies the content duty, and neither branch violates it | `test_a_creditor_giving_the_specific_reasons_is_satisfied`, `test_a_creditor_disclosing_the_right_to_request_reasons_is_satisfied`, `test_a_creditor_giving_neither_branch_is_violated` |
+| Quantified over the trace, the 12 CFR 1002.9(a)(2) content duty is not evaluated on a single-decision log rather than satisfied | `test_a_single_decision_trace_is_not_evaluated_never_satisfied` |
 | The same presence property is observed off a trace, probed against `decide()`, and proved against `logic()` | `test_a_record_duty_reaches_proved_when_the_system_exposes_its_logic`, `test_a_record_duty_reaches_probed_when_the_system_can_only_be_re_run` |
 | The ladder takes the strongest evidence produced, not the strongest engine available | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can` |
 | An engine whose interface raises establishes nothing, and the duty still lands on the rung that answered | `test_a_record_duty_survives_a_system_whose_logic_raises`, `test_a_logical_duty_names_the_logic_failure_rather_than_propagating_it`, `test_a_raising_logic_is_attempted_once_per_evaluation` |

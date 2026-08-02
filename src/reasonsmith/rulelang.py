@@ -426,29 +426,62 @@ def presence_atoms(node: ast.AST) -> tuple[str, ...] | None:
     return None
 
 
+def _is_presence_only(node: ast.AST) -> bool:
+    """True when a node is settled by `present()` atoms and boolean connectives over them alone.
+
+    This is the shape a disjunct must have for the either/or exemption to reach it: whether such a
+    branch holds is decided by which signals a record carries, so a system that supplies the other
+    branch instead settles the formula without ever reading this one.
+    """
+    if isinstance(node, ast.Expression):
+        return _is_presence_only(node.body)
+    if isinstance(node, ast.BoolOp):
+        return all(_is_presence_only(value) for value in node.values)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        return _is_presence_only(node.operand)
+    return presence_atoms(node) is not None
+
+
 def unconditional_signal_names(node: ast.AST) -> tuple[str, ...]:
     """The signal names a property cannot be evaluated without, sorted.
 
-    Every name `signal_names` reports, except those read only inside a disjunction. A disjunct is
-    an *alternative*: `present(a) or present(b)` is settled by whichever of the two a system
-    supplies, so neither `a` nor `b` alone is a signal the property needs. The pack loader uses
-    this, not `signal_names`, to decide which names a requirement's `requires` must gate — because
-    `requires` is a conjunctive gate, and listing an alternative there reports a system that
-    lawfully took the *other* branch unattainable without running it.
+    Every name `signal_names` reports, except those a disjunction makes into an *alternative*:
+    `present(a) or present(b)` is settled by whichever of the two a system supplies, so neither `a`
+    nor `b` alone is a signal the property needs. The pack loader uses this, not `signal_names`, to
+    decide which names a requirement's `requires` must gate — because `requires` is a conjunctive
+    gate, and listing an alternative there reports a system that lawfully took the *other* branch
+    unattainable without running it.
 
-    Only `or` makes a name conditional, and the walk reaches it through the boolean connectives and
-    the calls — `always(a and (b or c))` exempts `b` and `c`, because a temporal operator quantifies
-    its argument over the trace without making the signals inside it optional. An implication is not
-    treated as conditional either: `Implies(a, b)` still needs `b` to be readable before it can be
-    settled at all, and narrowing the gate on evaluation order would be a claim this language does
-    not make. A disjunction standing as an operand of a comparison or of arithmetic is not exempt
-    for the same reason: that value has to be computed before the operand exists.
+    Two conditions narrow the exemption, and neither is optional:
+
+    - **Every disjunct must be settled by `present()` atoms alone** (`_is_presence_only`), or the
+      disjunction exempts nothing. `(latency <= 30) or (latency <= 90)` gates `latency`: a magnitude
+      has to be readable before either operand exists, so a system that cannot emit it is
+      unattainable on the whole clause rather than run and reported not evaluated.
+    - **A name occurring in every disjunct stays gated.** `(present(a) and present(b)) or
+      (present(a) and present(c))` needs `a` whichever branch settles it, so only `b` and `c` are
+      alternatives. The exemption is the names of the disjunction minus the names common to all of
+      its branches.
+
+    The rest of the walk reaches disjunctions through the boolean connectives and through calls —
+    `always(a and (b or c))` exempts `b` and `c`, because a temporal operator quantifies its
+    argument over the trace without making the signals inside it optional. An implication is not
+    treated as conditional: `Implies(a, b)` still needs `b` to be readable before it can be settled
+    at all, and narrowing the gate on evaluation order would be a claim this language does not make.
+    A disjunction standing as an operand of a comparison or of arithmetic is not exempt for the same
+    reason: that value has to be computed before the operand exists.
     """
     if isinstance(node, ast.Expression):
         return unconditional_signal_names(node.body)
     if isinstance(node, ast.BoolOp):
         if isinstance(node.op, ast.Or):
-            return ()
+            if not all(_is_presence_only(value) for value in node.values):
+                return signal_names(node)
+            common: set[str] | None = None
+            for value in node.values:
+                branch = set(signal_names(value))
+                common = branch if common is None else common & branch
+            return tuple(sorted(common or set()))
         names: list[str] = []
         for value in node.values:
             names.extend(unconditional_signal_names(value))
