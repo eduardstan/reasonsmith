@@ -172,6 +172,10 @@ delegates to it, so a rendering edit is a `render.py` edit and nothing in `repor
 repo and deploys to Vercel — see [#35](https://github.com/eduardstan/reasonsmith/pull/35); this
 repo only generates the dossier that gets published there as `report.html`.
 
+`docs/assets/og.png` is generated from `brand/og.html` in the site repository, is served live as the
+site's social card, and must never be edited here — regenerate there, copy here, update the pinned
+digest in `tests/test_social_card.py`.
+
 `docs/three-systems.md` and the three files in `docs/adapters/` are the answer to "how does any
 model get into this tool?": a neural black box (`JSONLAdapter`, log only), a probabilistic scorer
 (`CallableAdapter`, replayable) and a rule set (`RulesAdapter`, logic exposed), all checked against
