@@ -306,16 +306,18 @@ def main(args: list[str] | None = None) -> int:
             )
             return 1
         if parsed.system is not None and parsed.system_module is not None:
+            # Paths are quoted plainly, never through repr: on Windows repr doubles every
+            # backslash, so a reader is shown a path they did not type and cannot paste back.
             print(
-                f"Error: --system {parsed.system!r} and --system-module "
-                f"{parsed.system_module!r} name two different systems: one a decision log, the "
+                f"Error: --system '{parsed.system}' and --system-module "
+                f"'{parsed.system_module}' name two different systems: one a decision log, the "
                 "other a module to import and run. Nothing here merges them. Give one.",
                 file=sys.stderr,
             )
             return 1
         if parsed.system_module is not None and parsed.capabilities is not None:
             print(
-                f"Error: --capabilities {parsed.capabilities!r} declares the signals for a "
+                f"Error: --capabilities '{parsed.capabilities}' declares the signals for a "
                 "decision log's adapter, but --system-module imports a system that declares its "
                 "own capabilities. Nothing here overrides those. Drop --capabilities.",
                 file=sys.stderr,

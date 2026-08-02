@@ -427,7 +427,10 @@ class TestSystemModule:
             ]
         )
         assert rc == 1
-        assert "declares its own capabilities" in capsys.readouterr().err
+        err = capsys.readouterr().err
+        # The literal path, not its repr: repr doubles a Windows path's backslashes.
+        assert str(caps) in err
+        assert "declares its own capabilities" in err
 
     def test_no_system_at_all_is_a_usage_error(self, capsys):
         rc = cli_main(["check", "--pack", "ecoa"])
