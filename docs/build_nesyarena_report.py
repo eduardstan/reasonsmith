@@ -44,6 +44,14 @@ What a reader must not break:
     Why this matters: declaring a class that does not fit would be a worse error than reporting
     less, and the not-applicable results are themselves a finding about what the tool can say
     about an unclassified system.
+  - `system_domains` stays `None`, for exactly the same reason and with the same standing. These
+    provenances decide graph reachability and Sudoku validity; they issue no credit, hire nobody
+    and treat no patient, so there is no decision domain to declare and the ECOA duties come back
+    not applicable.
+    Why this matters: this is the run that produced finding 3 of `docs/findings-nesyarena.md` —
+    an adverse-action notice duty reported `satisfied` against a graph-reachability benchmark.
+    Naming a domain here to make those rows evaluate again would put that false positive back by
+    hand. The not-applicable rows *are* the fix working.
 """
 
 from __future__ import annotations
@@ -380,6 +388,7 @@ def render() -> str:
                 pack,
                 system_name=f"nesyarena:{sut.name}",
                 system_scope=None,
+                system_domains=None,
             )
             lines.extend(
                 [

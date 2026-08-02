@@ -95,6 +95,25 @@ it buys: a system declaring neither branch is judged on its trace rather than re
 a typo inside a disjunct is not caught at load time, and the duty leaves the `record` fragment, so
 a log holding a single decision is reported not evaluated on it.
 
+A duty reaches a system through **two** gates, on two axes that are not the same question, and both
+are required fields with no default (`spec.REQUIREMENT_FIELDS`). `scope` is a regulatory class from
+`REGULATORY_CLASSES` — the EU AI Act's own five-member vocabulary. `domains` is the *kind of
+decision* the duty is about, from `DECISION_DOMAINS`, matched by intersection against what a system
+declares (`--system-domain`, or a `system_domains` attribute on an adapter), with `[]` meaning "not
+domain-limited" and reaching every system. `report._inapplicability` is the one place both are
+decided, so `check_conformance`'s plan and `evaluate_requirement` cannot drift apart, and
+`evaluate_requirement` stamps `domains` onto the result once rather than threading it through four
+engines. An undeclared system is `not_applicable`, never `satisfied` — the argument for that over
+`inconclusive` is in `docs/semantics.md` §4, and `tests/test_domain_gate.py` holds all of it.
+The one thing to keep straight before touching any of it: **`DECISION_DOMAINS` is this repository's
+list and no regulation's**, because no statute defines one. A pack limiting a duty to a domain owes
+its description a sentence saying so — `test_every_shipped_pack_classifies_every_requirement`
+enforces it — the same discipline `docs/authoring-packs.md` applies to an invented threshold. What
+the gate buys is exactly one guarantee, and not a taxonomy: a system that has not declared its
+domain is never reported satisfied on a domain-limited duty. It does not model the *trigger* inside
+a decision (12 CFR 1002.9 fires on adverse action, not on being a creditor), and it does not check
+that a system declaring `consumer-credit` issues credit.
+
 `src/reasonsmith/packs/*.toml` are derived, not authored. The EU AI Act, GDPR and ECOA packs quote
 `docs/legal-sources.md`, which is the retrieval record for the official statutory text and the one
 place a quote is checked against the law. The Table 7 pack restates the rows of
@@ -106,9 +125,10 @@ the only thing keeping the pack attached to the paper.
 `docs/refinement.md` is the refinement record: one row per shipped requirement giving the clause,
 the informal duty, the formal property, and what the formalisation deliberately left out. A new
 requirement means a new row in the same commit — `tests/test_docs_refinement.py` reads the packs and
-fails if one gains a requirement the record does not name. It also carries the one gap that has no
-partial fix: nothing in a pack can say which *decision domain* a duty is about, so a duty with
-`scope = ""` reaches every system (finding 3 of `docs/findings-nesyarena.md`).
+fails if one gains a requirement the record does not name. It also carries, once rather than
+eighteen times, what the two applicability gates still do not reach — *Two axes of reach are
+modelled, and the trigger is still not one*, whose largest remaining item is the trigger inside a
+decision that no system-level gate can close.
 
 The first shipped duty whose verdict comes from a value a system declares about its own approximation
 error is `gdpr_recital71_error_risk_minimised`. It compares
@@ -149,9 +169,11 @@ byte-for-byte. Anything that moves `render_text`'s wording, the nesyarena versio
 own constants means regenerating with `python docs/build_nesyarena_report.py`. Like
 `docs/index.html`, it names its build command and deliberately carries no commit hash; reproducibility
 is owned by the byte-for-byte builder test, so do not add a hash back. Its adapter declares only
-signals a provenance genuinely emits, so ten pack signals are deliberately undeclared and no
-regulatory class is declared; the resulting unattainable and not-applicable verdicts are the
-finding, not a gap to close.
+signals a provenance genuinely emits, so ten pack signals are deliberately undeclared, and neither a
+regulatory class nor a decision domain is declared — these systems decide graph reachability and
+Sudoku validity, so there is nothing to declare; the resulting unattainable and not-applicable
+verdicts are the finding, not a gap to close, and naming a domain to make the ECOA rows evaluate
+again would put finding 3's false positive back by hand.
 `docs/findings-nesyarena.md` is the written account and is hand-maintained — every number in it
 comes from that report, so regenerating one means rereading the other.
 
@@ -178,7 +200,7 @@ Before editing the CLI, read the maintenance contracts in `src/reasonsmith/cli.p
 docstring. README, "The CLI", owns user-facing usage, and `docs/authoring-packs.md` owns the
 pack-authoring rules.
 
-`ROADMAP.md` is the public backlog and the one document that may state what is *missing*: five
+`ROADMAP.md` is the public backlog and the one document that may state what is *missing*: four
 numbered objectives, each citing the committed document that names the gap, with a measurable
 outcome that fails today and its dependencies. Nothing goes on it that no document already states —
 find the gap in `docs/refinement.md`, `docs/semantics.md` or `docs/findings-nesyarena.md` first, or

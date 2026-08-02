@@ -130,6 +130,7 @@ class TestJSONLAdapter:
             requires=("artifact_logs_reason_explanation",),
             binding=True,
             scope="",
+            domains=(),
         )
         result = evaluate_requirement(req, sut)
         assert result.verdict == Verdict.VIOLATED
@@ -154,6 +155,7 @@ class TestJSONLAdapter:
             requires=("scope_statements_explanation_scope",),
             binding=True,
             scope="",
+            domains=(),
         )
         result = evaluate_requirement(req, sut)
         assert result.strength == Strength.UNATTAINABLE
@@ -183,6 +185,7 @@ class TestJSONLAdapter:
             requires=("scope_statements_explanation_scope",),
             binding=True,
             scope="",
+            domains=(),
         )
         result = evaluate_requirement(req, sut)
         assert result.strength == Strength.UNATTAINABLE
@@ -281,6 +284,7 @@ def test_record_and_temporal_formalisms_route_through_report():
             requires=("signal_a", "signal_b"),
             binding=True,
             scope="",
+            domains=(),
         )
 
     record = evaluate_requirement(
@@ -314,6 +318,7 @@ def test_temporal_presence_agrees_with_record_presence_for_falsy_values(value):
         "requires": ("signal_a",),
         "binding": True,
         "scope": "",
+        "domains": (),
     }
     record = Requirement(
         id="record_presence", formalism="record", spec="present(signal_a)", **fields
@@ -346,6 +351,7 @@ class TestRecordEngine:
             requires=("provenance_model_version", "artifact_logs_event_log"),
             binding=True,
             scope="",
+            domains=(),
         )
         records = list(sut.decisions())
         result = RecordEngine.evaluate(req, sut, records)
@@ -369,6 +375,7 @@ class TestRecordEngine:
             requires=("provenance_model_version", "artifact_logs_reason_explanation"),
             binding=True,
             scope="",
+            domains=(),
         )
         records = list(sut.decisions())
         result = RecordEngine.evaluate(req, sut, records)
@@ -404,6 +411,7 @@ class TestRecordEngine:
                     requires=("provenance_model_version", "artifact_logs_event_log"),
                     binding=True,
                     scope="",
+                    domains=(),
                 ),
                 sut,
                 records,
@@ -451,6 +459,7 @@ class TestObservedEngine:
             requires=("signal_a", "signal_b"),
             binding=True,
             scope="",
+            domains=(),
         )
         records = [
             {"signal_a": True, "signal_b": True},
@@ -474,6 +483,7 @@ class TestObservedEngine:
             requires=("signal_a",),
             binding=True,
             scope="",
+            domains=(),
         )
         records = [{"signal_a": True}, {"signal_a": False}]
 
@@ -496,6 +506,7 @@ class TestObservedEngine:
             requires=("approved",),
             binding=True,
             scope="",
+            domains=(),
         )
 
         satisfied = ObservedEngine.evaluate(
@@ -524,6 +535,7 @@ class TestObservedEngine:
             requires=("approved",),
             binding=True,
             scope="",
+            domains=(),
         )
 
         result = ObservedEngine.evaluate(
@@ -550,6 +562,7 @@ class TestObservedEngine:
             requires=("signal_a",),
             binding=True,
             scope="",
+            domains=(),
         )
 
         result = ObservedEngine.evaluate(
@@ -573,6 +586,7 @@ class TestObservedEngine:
             requires=("signal_a",),
             binding=True,
             scope="",
+            domains=(),
         )
 
         result = ObservedEngine.evaluate(
@@ -596,6 +610,7 @@ class TestObservedEngine:
             "requires": ("signal_a",),
             "binding": True,
             "scope": "",
+            "domains": (),
         }
         presence = Requirement(
             id="temp_present_false", spec="always(present(signal_a))", **fields
@@ -619,6 +634,7 @@ class TestObservedEngine:
             requires=("signal_a", "signal_b"),
             binding=True,
             scope="",
+            domains=(),
         )
         records = [
             {"signal_a": True, "signal_b": True, "id": 0},
@@ -651,6 +667,7 @@ class TestObservedEngine:
             requires=("signal_a",),
             binding=True,
             scope="",
+            domains=(),
         )
         result = ObservedEngine.evaluate(req, sut, records)
         assert result.verdict == Verdict.INCONCLUSIVE
@@ -674,6 +691,7 @@ class TestObservedEngine:
             requires=("signal_a",),
             binding=True,
             scope="",
+            domains=(),
         )
         records = [{"signal_a": True}, {"signal_a": float("nan")}]
         result = ObservedEngine.evaluate(req, sut, records)
@@ -708,6 +726,7 @@ class TestObservedEngine:
             requires=("signal_a", "signal_b"),
             binding=True,
             scope="",
+            domains=(),
         )
         result = ObservedEngine.evaluate(req, sut, [{"signal_b": 0.2}, {"signal_b": 0.3}])
         assert result.verdict == Verdict.INCONCLUSIVE
@@ -728,6 +747,7 @@ class TestObservedEngine:
             requires=("signal_a",),
             binding=True,
             scope="",
+            domains=(),
         )
         records = [{"signal_a": True}, {"signal_a": True}]
         result = ObservedEngine.evaluate(req, sut, records)

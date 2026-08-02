@@ -44,12 +44,19 @@ INDEX_HTML = ROOT / "docs" / "report.html"
 
 
 def example_report() -> ConformanceReport:
-    """The Table 7 run behind the page: the committed trace, declared into the high-risk class."""
+    """The Table 7 run behind the page: the committed trace, declared into the high-risk class.
+
+    The domain declaration is `consumer-credit` and nothing else, which is what a credit-scoring
+    pipeline decides. It is the whole reason the page's FDA GMLP row now reads *not applicable*:
+    that duty is about medical-device software, and this system is not one. Declaring the domain
+    of every duty in the pack would have kept the old page and made the declaration meaningless.
+    """
     return check_conformance(
         JSONLAdapter(str(SAMPLE_LOG)),
         load_pack("table7"),
         system_name="CreditScoringPipeline",
         system_scope="high-risk",
+        system_domains=("consumer-credit",),
     )
 
 

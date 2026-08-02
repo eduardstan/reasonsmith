@@ -36,9 +36,16 @@ from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import load_pack
 
-#: The duty all three systems in `docs/adapters/` are checked against. Binding, and limited to no
-#: regulatory class, so it reaches every system without a declared scope.
+#: The duty all three systems in `docs/adapters/` are checked against. Binding, limited to no
+#: regulatory class, and limited to the consumer-credit decision domain — which all three of these
+#: systems are in, and which each of them declares below through `system_domains`. A system that
+#: declared nothing would be reported not applicable on this duty rather than judged on its trace.
 REQUIREMENT_ID = "ecoa_reg_b_1002_9_b_2_specific_reasons"
+
+#: What kind of decision this system makes. Not inferred by reasonsmith from anything: an
+#: undeclared system is never reported satisfied on a domain-limited duty, so the declaration is
+#: what puts this system within the duty's reach at all.
+DECLARED_DOMAINS = ("consumer-credit",)
 
 #: The signals the vendor's data sheet says the serving stack writes for every scored application.
 #: Declared, not inferred from the log below.
@@ -73,7 +80,9 @@ EXPORTED_LOG = "\n".join(
 
 def system_under_test() -> JSONLAdapter:
     """The system as reasonsmith sees it: an exported log and a declared capability set."""
-    return JSONLAdapter(EXPORTED_LOG, declared_capabilities=DECLARED_CAPABILITIES)
+    sut = JSONLAdapter(EXPORTED_LOG, declared_capabilities=DECLARED_CAPABILITIES)
+    sut.system_domains = DECLARED_DOMAINS
+    return sut
 
 
 def main() -> None:

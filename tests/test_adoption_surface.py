@@ -186,7 +186,10 @@ class TestCapabilityDeclaration:
 
     def test_no_declaration_keeps_trace_derived_basis(self, jsonl_fixture_file: Path, capsys):
         """Without --capabilities the CLI must behave exactly as before: derive from the trace."""
-        rc = cli_main(["check", "--system", str(jsonl_fixture_file), "--pack", "ecoa"])
+        rc = cli_main(
+            ["check", "--system", str(jsonl_fixture_file), "--pack", "ecoa",
+             "--system-domain", "consumer-credit"]
+        )
         assert rc == 0
         captured = capsys.readouterr()
         assert "Unattainable on the evidence supplied" in captured.out
@@ -204,6 +207,8 @@ class TestCapabilityDeclaration:
                 str(jsonl_fixture_file),
                 "--pack",
                 "ecoa",
+                "--system-domain",
+                "consumer-credit",
                 "--capabilities",
                 str(caps),
             ]
@@ -227,6 +232,8 @@ class TestCapabilityDeclaration:
                 str(jsonl_fixture_file),
                 "--pack",
                 "ecoa",
+                "--system-domain",
+                "consumer-credit",
                 "--capabilities",
                 str(caps),
             ]
@@ -252,6 +259,8 @@ class TestCapabilityDeclaration:
                 str(jsonl_fixture_file),
                 "--pack",
                 "ecoa",
+                "--system-domain",
+                "consumer-credit",
                 "--capabilities",
                 str(caps),
             ]

@@ -68,6 +68,7 @@ rationale = "Why this duty exists."
 requires = ["artifact_logs_event_log"]
 binding = true
 scope = ""
+domains = []
 """,
         encoding="utf-8",
     )

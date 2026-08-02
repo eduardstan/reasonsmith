@@ -61,6 +61,7 @@ def _requirement(spec: str, formalism: str, requires: tuple[str, ...]) -> Requir
         requires=requires,
         binding=True,
         scope="",
+        domains=(),
     )
 
 

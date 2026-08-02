@@ -37,9 +37,16 @@ from reasonsmith.adapters.callable import CallableAdapter
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import load_pack
 
-#: The duty all three systems in `docs/adapters/` are checked against. Binding, and limited to no
-#: regulatory class, so it reaches every system without a declared scope.
+#: The duty all three systems in `docs/adapters/` are checked against. Binding, limited to no
+#: regulatory class, and limited to the consumer-credit decision domain — which all three of these
+#: systems are in, and which each of them declares below through `system_domains`. A system that
+#: declared nothing would be reported not applicable on this duty rather than judged on its trace.
 REQUIREMENT_ID = "ecoa_reg_b_1002_9_b_2_specific_reasons"
+
+#: What kind of decision this system makes. Not inferred by reasonsmith from anything: an
+#: undeclared system is never reported satisfied on a domain-limited duty, so the declaration is
+#: what puts this system within the duty's reach at all.
+DECLARED_DOMAINS = ("consumer-credit",)
 
 MODEL_VERSION = "bayes-risk-2026.04.7"
 
@@ -112,7 +119,7 @@ class BayesRiskScorer:
 
 def system_under_test() -> CallableAdapter:
     """The system as reasonsmith sees it: a replayable model and a declared capability set."""
-    return CallableAdapter(
+    sut = CallableAdapter(
         BayesRiskScorer(),
         declared_capabilities={
             "applicant_id",
@@ -124,6 +131,8 @@ def system_under_test() -> CallableAdapter:
         },
         test_inputs=SCORED_APPLICATIONS,
     )
+    sut.system_domains = DECLARED_DOMAINS
+    return sut
 
 
 def main() -> None:

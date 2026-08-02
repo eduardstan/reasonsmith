@@ -50,32 +50,69 @@ Four kinds of gap recur, and naming them once keeps the table short:
   says, not whether it was honest (`docs/semantics.md` §3, *the assumption all four share*).
 - **The property's reach is not the clause's scope.** Most clauses below are triggered — by adverse
   action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
-  evaluated over every record in a trace is checked outside that trigger too. Only the regulatory
-  class is modelled (`scope`), and only six of the eighteen duties use it.
+  evaluated over every record in a trace is checked outside that trigger too. Two axes of a
+  clause's scope are modelled — the regulatory class (`scope`, used by six of the eighteen duties)
+  and the decision domain (`domains`, used by four) — and both are gates about the *system*. A
+  trigger *inside* a decision is not a gate at all: one duty carries its own in the property
+  (12 CFR 1002.9(b)(2)), at the price of being satisfied vacuously where it never fires.
 
-## The gap that has no partial fix: no model of decision domain
+## Two axes of reach are modelled, and the trigger is still not one
 
-Twelve of the eighteen shipped duties carry `scope = ""`, so they are not class-limited and reach
-every system that is run against their pack. Six use `scope`, and that gate is a *regulatory class*
-(`high-risk`, and the rest of `REGULATORY_CLASSES`) — not a subject matter.
+A duty reaches a system when it passes two gates. `scope` is a *regulatory class* from the EU AI
+Act's own five-member vocabulary; six duties use it. `domains` is the *kind of decision* the duty is
+about — the ECOA rows and the Table 7 ECOA and FDA rows use it, four duties in all — and it is
+matched by intersection against what the system declares. A system that declares neither is reported
+`not_applicable` on every duty that limits either, never `satisfied`, and reasonsmith infers neither
+(`docs/semantics.md` §4).
 
-There is no field in a pack that can say *this duty is about consumer credit*. So an adverse-action
-notice duty under 12 CFR 1002.9 reaches a graph-reachability benchmark that issues no credit and
-notifies nobody, and reports it `satisfied`. That is not hypothetical: it happened in the run behind
-`docs/findings-nesyarena.md`, finding 3, and the only signal in the output that the domain did not
-fit was an unattainable verdict on a *different* requirement, arriving for the wrong reason — a
-missing signal, not a missing domain.
+The domain gate closed a specific defect. An adverse-action notice duty under 12 CFR 1002.9 used to
+reach a graph-reachability benchmark that issues no credit and notifies nobody and report it
+`satisfied`; that was not hypothetical, it happened in the run behind
+`docs/findings-nesyarena.md`, finding 3, and the only hint in the output was an unattainable verdict
+on a *different* requirement, arriving for the wrong reason. Those three ECOA duties now come back
+not applicable against all five of that run's systems.
 
-Every row in the ECOA and GDPR tables below inherits this. It is stated once, here, rather than
-eighteen times. Fixing it means a decision-domain model — a second gate beside the regulatory class,
-with its own vocabulary, its own not-applicable outcome and its own way of being declared — which is
-a second architecture and deliberately not attempted. Naming the gap in the refinement record is
-worth more than a partial fix that would make some domain mismatches invisible instead of all of
-them.
+**What the gate still does not do, and every row in the ECOA and GDPR tables below inherits it.**
+It is stated once, here, rather than eighteen times:
+
+- **The vocabulary is this repository's, not any regulation's.** `DECISION_DOMAINS` is a coarse,
+  openly-authored list, and it is wrong somewhere: no statute defines a list of decision domains,
+  the GDPR is not domain-limited at all, and the AI Act works from Annex III use-cases. Placing
+  `ecoa_reg_b_1002_9_a_2_written_statement` in `consumer-credit` is *this pack author's* reading of
+  the clause, published in the pack description as such (`docs/authoring-packs.md`, *the
+  decision-domain vocabulary is yours, not the regulation's*). A verdict of not applicable is
+  therefore a statement about a classification someone here made, not a finding that Regulation B
+  does not govern a particular lender.
+- **What the system declares is a self-declaration.** Nothing checks that a system that says
+  `consumer-credit` issues credit, the same way nothing checks the flags of the Article 22(2) bases
+  (`docs/semantics.md` §3, *the assumption all four share*). The gate stops a duty reaching a system
+  that said nothing; it does not stop one that said the wrong thing.
+- **The trigger inside a decision is still not modelled *as a gate*, and that is the larger
+  remaining gap.** 12 CFR 1002.9 is triggered by *adverse action having been taken*, not by the
+  creditor being in consumer credit. A domain declaration puts the whole trace within the clause's
+  subject matter and the property is then evaluated over every record in it, approvals included.
+  Every "the clause is triggered, the property is not" note in column four below is untouched by
+  this gate — see the (a)(2) row in particular.
+
+  One trigger *is* now carried, and only because the property language could express it, not
+  because a gate learned to. 12 CFR 1002.9(b)(2) governs the statement of reasons *required by
+  paragraph (a)(2)(i)*, so the (b)(2) property is an implication whose antecedent is
+  `present(artifact_logs_reason_explanation)`, and a creditor lawfully on the disclosure branch is
+  no longer reported violated. That is worth having and it is not the gate the bullet asks for:
+  where the antecedent never holds, the duty is reported **satisfied vacuously**, and none of the
+  four report outcomes distinguishes a duty that imposed nothing from one that was checked and met
+  (`docs/semantics.md` §4). A real per-decision applicability gate would need a `not_applicable`
+  verdict a *record* can carry, which is a change to the result model rather than to a pack.
 
 ---
 
 ## GDPR (Regulation (EU) 2016/679) — `src/reasonsmith/packs/gdpr.toml`
+
+All five duties carry `scope = ""` and `domains = []`. The empty domain list is a classification
+and not an omission: Article 22 governs a solely-automated decision with legal or similarly
+significant effects *whatever the decision is about*, so these duties reach every system they are
+run against, including one that has declared no domain. Limiting them would be this pack author
+narrowing a regulation that does not narrow itself.
 
 | The clause | The informal duty | The formal property | What was deliberately not captured |
 |---|---|---|---|
@@ -99,7 +136,10 @@ All four duties carry `scope = "high-risk"`. A system that declares no class is 
 
 ## ECOA / Regulation B (12 CFR § 1002.9) — `src/reasonsmith/packs/ecoa.toml`
 
-All three duties carry `scope = ""` and inherit the decision-domain gap above.
+All three duties carry `scope = ""` — Regulation B knows nothing of the AI Act's classes — and
+`domains = ["consumer-credit"]`. A system that declares no decision domain is reported
+`not_applicable` on all three, and the limits of that classification are in *two axes of reach are
+modelled* above.
 
 | The clause | The informal duty | The formal property | What was deliberately not captured |
 |---|---|---|---|
@@ -130,8 +170,8 @@ Its rows are transcribed from Table 7 of *Symbols and Neurons* (Stan, Sciavicco 
 | EU AI Act Art. 13<br>`eu_ai_act_art13_transparency` | Transparency and information to deployers. | `record`: presence of `model_and_data_version_ids`, `extraction_timestamp`, `dataset_snapshot_hash`, `fidelity_coverage_metrics`, `explanation_scope`, `linkage_from_decision_to_artifact` | Transparency, as distinct from the retained evidence of it: satisfying this row says the six artefacts exist, not that any deployer could interpret anything. `fidelity_coverage_metrics` present means a fidelity number was recorded, not that it is *high* — there is no threshold, deliberately, since a threshold here would be the pack author's figure presented as the Act's (`docs/authoring-packs.md`). `linkage_from_decision_to_artifact` present means a link field is filled, not that the link resolves to the artefact that produced that decision. This row and `eu_ai_act_art13_1_transparency_deployers` formalise the same Article over disjoint signal vocabularies and can disagree about one system. |
 | EU AI Act Art. 12<br>`eu_ai_act_art12_record_keeping` | Record-keeping (event logging). | `record`: `present(automatic_event_logs) and present(retention_schedule) and present(signer)` | Whether anything was retained or signed. `retention_schedule` present means a schedule was declared, not that it was honoured or that its period is long enough for the Act. `signer` present means a signer field is non-empty; **no cryptographic signature is verified anywhere in this repository**, so a signer name typed into a field is evidence of the same weight as a real one. *Automatic* is not distinguishable from hand-assembled, as in the statutory Article 12 row above. |
 | GDPR Art. 22 (and Rec. 71)<br>`gdpr_art22_meaningful_information` | Automated decisions: "meaningful information about the logic involved". | `record`: `present(per_decision_reason_string) and present(feature_to_named_concept_mapping) and present(dpia_cross_reference)` | *Meaningful*, again, and the accuracy of the mapping: `feature_to_named_concept_mapping` present means a mapping exists, not that its named concepts correspond to what the model uses. `dpia_cross_reference` present is a pointer to a data protection impact assessment — not evidence that the assessment exists, is current, or reached any conclusion. The row cites Article 22 and Recital 71 together, as the paper prints it, and carries `binding = true` because Article 22 is directly applicable; the clause-by-clause split, and the recital's non-binding status, live in `packs/gdpr.toml`. |
-| ECOA / Reg B 12 CFR 1002.9<br>`ecoa_reg_b_adverse_action` | Adverse action reasons in credit decisions. | `record`: presence of `stored_reasons_per_decision`, `model_version`, `score_factors`, `audit_ids`, `retention_for_regulatory_lookback` | Specificity, as in the statutory ECOA rows: `score_factors` present is not a check that the factors stored are the *principal* reasons for the action. `retention_for_regulatory_lookback` present means the record names a retention arrangement, not that a record actually survives the 25-month period of 1002.12(b). The adverse-action trigger is not modelled, so the row is checked over approvals too. And the decision-domain gap above applies in full: this row reaches any system it is run against. |
-| FDA GMLP, agency transparency guidance<br>`fda_gmlp_samd` | Good Machine Learning Practice and transparency for Software as a Medical Device. | `record`: `present(design_history_links) and present(verification_logs) and present(change_control)` | The guidance itself. GMLP is a set of guiding principles, not a rule with a compliance test, which is what `binding = false` records; none of the ten principles — multidisciplinary expertise, good software engineering practice, representative data sets, independence of training and test sets, and the rest — is formalised. `article_clause` here is a description, not a citation: there is no clause to quote, so `verbatim_text` cannot be verified against a print and the drift check has no source to re-fetch. `change_control` present means a field is filled, not that a change went through a predetermined change control plan. |
+| ECOA / Reg B 12 CFR 1002.9<br>`ecoa_reg_b_adverse_action` | Adverse action reasons in credit decisions. | `record`: presence of `stored_reasons_per_decision`, `model_version`, `score_factors`, `audit_ids`, `retention_for_regulatory_lookback` | Specificity, as in the statutory ECOA rows: `score_factors` present is not a check that the factors stored are the *principal* reasons for the action. `retention_for_regulatory_lookback` present means the record names a retention arrangement, not that a record actually survives the 25-month period of 1002.12(b). The adverse-action trigger is not modelled, so the row is checked over approvals too. And this row carries `domains = ["consumer-credit"]`, so it no longer reaches a system that has not said it decides in consumer credit — but the adverse-action trigger it does not model is the part of the clause's reach that gate cannot recover. |
+| FDA GMLP, agency transparency guidance<br>`fda_gmlp_samd` | Good Machine Learning Practice and transparency for Software as a Medical Device. | `record`: `present(design_history_links) and present(verification_logs) and present(change_control)` | The guidance itself. GMLP is a set of guiding principles, not a rule with a compliance test, which is what `binding = false` records; none of the ten principles — multidisciplinary expertise, good software engineering practice, representative data sets, independence of training and test sets, and the rest — is formalised. `article_clause` here is a description, not a citation: there is no clause to quote, so `verbatim_text` cannot be verified against a print and the drift check has no source to re-fetch. `change_control` present means a field is filled, not that a change went through a predetermined change control plan. This row carries `domains = ["healthcare"]` — the paper's Table 7 has no such column, so the classification is this pack author's, and it means a system that has not declared a healthcare decision domain is reported not applicable here rather than judged against guidance for medical-device software. |
 | NIST AI RMF 1.0<br>`nist_ai_rmf_risk_evidence` | Risk evidence and continuous monitoring. | `record`: presence of `continuous_monitoring_logs`, `metric_thresholds_and_alerts`, `reviews_and_sign_offs`, `incident_tickets` | *Continuous*, and the framework's structure. The AI RMF is voluntary and organised around the GOVERN, MAP, MEASURE and MANAGE functions rather than testable duties, so `article_clause = "1.0"` is a framework version, not a clause — the same non-citation problem as the row above, and `binding = false` records the voluntariness. `metric_thresholds_and_alerts` present means thresholds were declared, not that any of them is appropriate or that an alert ever fired; `reviews_and_sign_offs` present means a sign-off field is non-empty, not that a reviewer with authority read anything. Continuity cannot be established from a supplied trace at all (`docs/semantics.md` §1). |
 
 ---

@@ -55,12 +55,20 @@ def _notification(**overrides) -> dict:
 
 
 def _log(tmp_path: Path, records: list[dict]) -> JSONLAdapter:
-    """A plain decision log on disk, read by the adapter a reader would use for a black box."""
+    """A plain decision log on disk, read by the adapter a reader would use for a black box.
+
+    It declares `consumer-credit`, which is what puts it inside these duties at all: 12 CFR 1002.9
+    is limited to that decision domain, and a system declaring none is reported not applicable
+    rather than judged (`tests/test_domain_gate.py`). Every case here is about *what a creditor's
+    notification said*, so each has to be a creditor first.
+    """
     path = tmp_path / "decisions.jsonl"
     path.write_text(
         "\n".join(json.dumps(record) for record in records) + "\n", encoding="utf-8"
     )
-    return JSONLAdapter(path, declared_capabilities=DECLARED)
+    adapter = JSONLAdapter(path, declared_capabilities=DECLARED)
+    adapter.system_domains = ("consumer-credit",)
+    return adapter
 
 
 def _check(tmp_path: Path, records: list[dict]):
@@ -178,6 +186,7 @@ def test_a_duty_whose_trigger_never_fires_is_satisfied_vacuously_and_the_report_
     from reasonsmith.sut import BaseSUT
 
     sut = BaseSUT(set(DECLARED))
+    sut.system_domains = ("consumer-credit",)
     checked = [
         _notification(**{REASONS: "C03 length of credit history"}),
         _notification(**{REASONS: "C03 length of credit history"}),

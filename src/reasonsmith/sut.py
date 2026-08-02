@@ -16,6 +16,15 @@ What a reader must not break:
     explicit declarations represent an authoritative system claim. A trace-reading adapter that
     misses the attribute has its finding worded "Unattainable as built ... the system was not
     executed" — a claim about the system, made from one sample trace.
+  - `system_domains` is the second plain instance attribute the report reads off an adapter, the
+    way `system_scope` already was: a collection of `spec.DECISION_DOMAINS` names saying what kind
+    of decision this system makes. It is outside the protocol for the same reason `system_scope`
+    is — an adapter that declares nothing is a system whose domain is undeclared, which is a
+    lawful state and not a broken adapter.
+    Why this matters: a system that declares no domain is never reported `satisfied` on a
+    domain-limited duty. An adapter that sets the attribute to a domain its system does not
+    decide in is claiming reach it does not have, and the report will answer duties that do not
+    govern it — the false positive the gate exists to stop, reintroduced from the adapter side.
   - A capability set is the enabled signal names and nothing else: `_validate_capability_collection`
     rejects a bare string, a mapping, a non-iterable, and any blank or non-string name, at both
     sites capabilities cross into reasonsmith.
@@ -33,9 +42,10 @@ What a reader must not break:
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from functools import lru_cache
 from typing import Any, Optional, Protocol, runtime_checkable
 
-from reasonsmith.spec import load_pack
+from reasonsmith.spec import Pack, load_pack
 
 #: Section 6.3 top-level taxonomy for capability signals supplied through the SUT protocol
 #: (Stan, Sciavicco & Napoletano, JAIR 2026, Section 6.3, p. 36:24):
@@ -124,6 +134,17 @@ class BaseSUT:
         return None
 
 
+@lru_cache(maxsize=1)
+def _table7_pack() -> Pack:
+    """The shipped Table 7 pack, parsed once for every derivation below.
+
+    Cached because both derivations are read in the same constructor, and a reference system
+    is built many times over a run: `load_pack` re-reads and re-parses the TOML on every call.
+    The pack is frozen, so a shared instance cannot be edited by one caller under another.
+    """
+    return load_pack("table7")
+
+
 def _table7_signals() -> set[str]:
     """Every signal the shipped Table 7 pack asks for, read from the pack itself.
 
@@ -131,7 +152,18 @@ def _table7_signals() -> set[str]:
     changes, and a reference system that declares stale signal names would make the
     unattainable analysis look wrong when it is right.
     """
-    return {signal for req in load_pack("table7").requirements for signal in req.requires}
+    return {signal for req in _table7_pack().requirements for signal in req.requires}
+
+
+def _table7_domains() -> tuple[str, ...]:
+    """Every decision domain the shipped Table 7 pack targets, read from the pack itself.
+
+    The same reasoning as `_table7_signals`: these reference systems exist to be the case where
+    nothing is missing, so what they declare is read off the pack rather than typed out beside
+    it. A hand-written list would make the domain gate look wrong the first time a row of the
+    pack changed domain.
+    """
+    return tuple(sorted({d for req in _table7_pack().requirements for d in req.domains}))
 
 
 #: The Table 7 evidence fields that carry a per-decision reason. Row 3 (GDPR Art. 22)
@@ -159,12 +191,18 @@ class FullCapabilitySUT(BaseSUT):
     """Reference SUT declaring every signal the Table 7 pack requires."""
 
     def __init__(
-        self, extra_capabilities: Optional[set[str]] = None, system_scope: str = "high-risk"
+        self,
+        extra_capabilities: Optional[set[str]] = None,
+        system_scope: str = "high-risk",
+        system_domains: Optional[Iterable[str]] = None,
     ):
         declared = _table7_signals() | {"decision", "timestamp"} | (extra_capabilities or set())
         super().__init__(declared)
         self.execution_count = 0
         self.system_scope = system_scope
+        self.system_domains = (
+            _table7_domains() if system_domains is None else tuple(system_domains)
+        )
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         self.execution_count += 1
@@ -183,10 +221,15 @@ class NoReasonsSUT(BaseSUT):
     unattainable analysis answered without running the system.
     """
 
-    def __init__(self, system_scope: str = "high-risk"):
+    def __init__(
+        self, system_scope: str = "high-risk", system_domains: Optional[Iterable[str]] = None
+    ):
         super().__init__((_table7_signals() | {"decision", "timestamp"}) - REASON_SIGNALS)
         self.was_executed = False
         self.system_scope = system_scope
+        self.system_domains = (
+            _table7_domains() if system_domains is None else tuple(system_domains)
+        )
 
     def decisions(self) -> Iterable[dict[str, Any]]:
         self.was_executed = True

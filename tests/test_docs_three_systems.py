@@ -140,6 +140,12 @@ def test_each_adapter_reports_only_the_duty_it_names():
 def test_the_chosen_duty_is_binding_and_reaches_an_undeclared_system():
     """Why this duty and not `gdpr_recital71_meaningful_explanation`, asserted where it can rot.
 
+    "Undeclared" is now about the regulatory class only. The duty is limited to the
+    `consumer-credit` decision domain, so each of the three systems declares that domain — which
+    is what puts it inside a duty about adverse-action reasons. A system that declared nothing
+    would be reported not applicable here rather than judged, and the artefact would demonstrate
+    nothing; that is the gate working, not a way around it.
+
     The fragment changed from `record` to `logical` when the duty gained the (a)(2)(i) trigger and
     the clause's own negative constraint: an implication is not a conjunction of `present()` atoms.
     Both are `STATE_FRAGMENTS` — properties of a single decision record — which is what keeps all
@@ -150,5 +156,9 @@ def test_the_chosen_duty_is_binding_and_reaches_an_undeclared_system():
     req = load_pack("ecoa").get_requirement("ecoa_reg_b_1002_9_b_2_specific_reasons")
     assert req.binding is True
     assert req.scope == ""
+    assert req.domains == ("consumer-credit",)
     assert req.formalism == "logical"
     assert req.formalism in STATE_FRAGMENTS
+    for name in ("neural_scorer", "probabilistic_scorer", "symbolic_rules"):
+        module = _load(name)
+        assert module.system_under_test().system_domains == ("consumer-credit",)
