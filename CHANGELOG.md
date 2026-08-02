@@ -64,6 +64,27 @@ for the log's directory.
 
 ### Documentation
 
+- **The empty `stability_signals_` category is recorded rather than filled**
+  ([#83](https://github.com/eduardstan/reasonsmith/pull/83)). `docs/authoring-packs.md` names four
+  Section 6.3 signal-name prefixes; three are exercised by the shipped packs — `provenance_` by
+  fourteen distinct signals, `artifact_logs_` by nineteen, `scope_statements_` by five — and
+  `stability_signals_` by none, while `src/reasonsmith/examples/sample_decisions.jsonl` emits
+  `stability_signals_artifact_drift` that no duty reads. `docs/refinement.md` now says why: **no
+  statute this repository can source obliges stability, drift or consistency as a property of a
+  decision record.** EU AI Act Articles 15(1), 15(3), 72(1)–(2) and 26(5), GDPR Recital 71 and
+  Article 5(1)(d), and 12 CFR 1002.9 and 1002.12 were each read against the live official text and
+  rejected — every one binds the design of a system, an accompanying document, or an organisation
+  over time, never one decision. Recital 71 carries no regular-checking language; it was read in
+  full for it.
+
+  The section states the three things that would change the answer — a statute obliging a
+  per-decision stability figure, a result model that can read an artefact that is not a decision
+  record, or a verdict that is a property of a trace rather than of the records in it — and why a
+  duty written today would be worse than the empty category: it would read a figure the system
+  declares about itself with no clause requiring the figure, which is
+  `gdpr_recital71_error_risk_minimised`'s documented weakness without that duty's saving grace of
+  being bounded by another quantity the same record supplies. No pack changed, no signal was
+  renamed, and the unread signal stays in the sample log.
 - **The front page shows the audience view and says the tool is extensible**
   ([#78](https://github.com/eduardstan/reasonsmith/pull/78)). Two capabilities shipped and were
   invisible on `README.md`: `--audience` appeared nowhere on it, and neither did the engine and pack
