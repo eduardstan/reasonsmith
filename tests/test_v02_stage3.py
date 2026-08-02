@@ -15,6 +15,7 @@ import z3
 from reasonsmith import report as report_module
 from reasonsmith.adapters.rules import RulesAdapter
 from reasonsmith.engines import proved
+from reasonsmith.engines import temporal as temporal_engine
 from reasonsmith.engines.proved import ProvedEngine
 from reasonsmith.report import check_conformance, evaluate_requirement
 from reasonsmith.rulelang import (
@@ -1156,36 +1157,104 @@ def test_a_raising_logic_is_attempted_once_per_evaluation():
     assert sut.logic_calls == 1
 
 
-def test_a_temporal_duty_never_rises_above_observed():
-    """No engine in this build reasons about a formula quantified over a trace.
-
-    A system exposing `logic()` and `decide()` still gets `observed` for a temporal duty, because
-    inventing a stronger rung for a claim no engine established is the overclaim this package
-    exists to refuse.
-    """
-    req = Requirement(
-        id="temporal_r1",
+def _temporal_req(
+    spec: str = "always(present(artifact_logs_reason_explanation))",
+    req_id: str = "temporal_r1",
+    requires: tuple[str, ...] = ("artifact_logs_reason_explanation",),
+) -> Requirement:
+    return Requirement(
+        id=req_id,
         source_document="Internal Policy",
         article_clause="Section 4.1",
         verbatim_text="A reason must accompany every decision, always.",
         stakeholder="affected individual",
         formalism="temporal",
-        spec="always(present(artifact_logs_reason_explanation))",
+        spec=spec,
         rationale="At every step of the log, a reason was recorded.",
-        requires=("artifact_logs_reason_explanation",),
+        requires=requires,
         binding=True,
         scope="",
         domains=(),
     )
-    sut = RulesAdapter(
-        rules=_REASON_RULES,
+
+
+def _reason_sut(rules: list[str] | None = None) -> RulesAdapter:
+    return RulesAdapter(
+        rules=rules if rules is not None else _REASON_RULES,
         variables=_REASON_VARIABLES,
         declared_capabilities={"artifact_logs_reason_explanation"},
         test_inputs=[{"credit_score": 700}, {"credit_score": 500}],
     )
-    result = evaluate_requirement(req, sut)
-    assert result.verdict == Verdict.SATISFIED
+
+
+def test_only_always_reaches_the_temporal_proof_rung():
+    """The replacement ceiling: `always(f)` proves, and every other temporal shape does not.
+
+    This is what became of `test_a_temporal_duty_never_rises_above_observed`. The old ceiling was
+    "no temporal duty ever rises above `observed`"; the new one is narrower and has to be checked
+    from both sides, because a ceiling only stated for the case that passes is not a ceiling.
+    `always(f)` reduces exactly — over a finite trace it holds iff `f` holds at every position, and
+    every position is a decision the exposed logic admits — so it reaches `proved`. `eventually(f)`
+    does not reduce: it asserts that some position *exists*, which is a fact about the trace a
+    system emitted and not about the decisions its logic admits, so it stays where it was.
+    """
+    sut = _reason_sut()
+
+    always = evaluate_requirement(_temporal_req(), sut)
+    assert always.verdict == Verdict.SATISFIED
+    assert always.strength == Strength.PROVED
+    assert always.details["reduction"] == "always"
+
+    eventually = evaluate_requirement(
+        _temporal_req(spec="eventually(present(artifact_logs_reason_explanation))"), sut
+    )
+    assert eventually.verdict == Verdict.SATISFIED
+    assert eventually.strength == Strength.OBSERVED
+
+
+def test_a_nested_temporal_operator_does_not_reduce():
+    """`always(eventually(f))` is not `always` over a state property, so the solver is not asked.
+
+    The operand of the `always` has to be a property of one decision, or what the solver decides is
+    not what the duty says. A shape check that only looked at the outermost call would hand Z3 an
+    `eventually` it has no encoding for and read the refusal as an ordinary unsupported construct.
+    """
+    assert (
+        temporal_engine.state_property_under_always(
+            "always(eventually(present(artifact_logs_reason_explanation)))"
+        )
+        is None
+    )
+    result = evaluate_requirement(
+        _temporal_req(spec="always(eventually(present(artifact_logs_reason_explanation)))"),
+        _reason_sut(),
+    )
     assert result.strength == Strength.OBSERVED
+
+
+def test_a_temporal_violation_names_the_trace_it_is_and_is_not_about():
+    """A `proved` temporal violation is existential, and the verdict has to say so.
+
+    Satisfied quantifies universally and covers every trace the system can emit. Violated does not:
+    the solver found one admissible input whose decision breaches the property, so *some* trace the
+    system admits breaches the duty — which is a finding about the system as built, not about the
+    trace this run read. Both halves of that asymmetry travel on the result, or a reader takes the
+    two verdicts to be mirror images.
+    """
+    rules = [
+        "approved = credit_score >= 650",
+        "if approved:\n"
+        '    artifact_logs_reason_explanation = "approved on score"\n'
+        "else:\n"
+        '    artifact_logs_reason_explanation = ""\n',
+    ]
+    result = evaluate_requirement(_temporal_req(), _reason_sut(rules))
+
+    assert result.verdict == Verdict.VIOLATED
+    assert result.strength == Strength.PROVED
+    assert "counterexample" in result.details
+    assert result.details["trace_semantics"] == temporal_engine.TRACE_SEMANTICS
+    assert "not a finding about the trace supplied here" in result.evidence_summary
 
 
 def test_the_solvers_blank_string_is_pythons_blank_string():

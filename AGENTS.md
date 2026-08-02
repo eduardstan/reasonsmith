@@ -59,8 +59,13 @@ collects every engine the fragment *and* the exposed surface allow and takes the
 produced: `logic()` gets Z3, `decide()` gets the replay search, and a trace gets the record engine
 for a presence conjunction and the observed engine for **every other fragment, `logical`
 included** — a state property is a property of one decision record, so a trace of them is evidence
-about it, and declining to read one was a defect the label caused rather than the evidence. Temporal
-still never rises above `observed`; that is a separate claim and untouched. Two limits of the trace
+about it, and declining to read one was a defect the label caused rather than the evidence. A
+temporal duty reaches Z3 in exactly one shape: `engines/temporal.py` reduces `always(f)` — with `f`
+free of temporal operators — to `f` and hands it to the proved engine, which is exact because over a
+finite trace `always(f)` holds iff `f` holds at every position and every position is a decision the
+exposed logic admits. `eventually(f)` and every nested shape stay at `observed`, deliberately, and
+the asymmetry between a universal satisfied verdict and an existential violated one travels on the
+result as `TRACE_SEMANTICS` (`docs/semantics.md` §3, *`proved`, over a trace*). Two limits of the trace
 rung are stated rather than silent: rtamt cannot render a comparison against a Boolean constant, and
 it reads the `spec` as written, so implication in a pack must be spelled `->` and never
 `Implies(...)`. Read `docs/semantics.md` §2 and §3.5 before editing any of it — they state the rule,

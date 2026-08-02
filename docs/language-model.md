@@ -32,7 +32,7 @@ inputs, not proved; and here is the duty it could not answer at all.
 
 | duty | outcome | why that one |
 |---|---|---|
-| `1002.9(a)(1)` timing of notice | `observed` | temporal property — no engine here reasons over a trace-wide formula above `observed`, whatever the system exposes ([`semantics.md`](semantics.md) §3.5) |
+| `1002.9(a)(1)` timing of notice | `observed` | temporal property — the one rung above `observed` for a temporal duty reduces `always(f)` against exposed `logic()`, and a model you can only call exposes none ([`semantics.md`](semantics.md) §3.5) |
 | `1002.9(a)(2)` written statement | `observed` | same |
 | `1002.9(b)(2)` specific reasons | `probed`, carrying its budget | a state property, and the model is callable, so the replay search runs |
 | `1002.9(b)(2)` principal reasons complete | `unattainable` | needs an inference artefact the system has none of |

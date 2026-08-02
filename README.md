@@ -332,7 +332,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 | `src/reasonsmith/plugins.py` | Discovery of engines and packs installed as separate pip packages, through the `reasonsmith.engines` and `reasonsmith.packs` entry-point groups ([`docs/authoring-engines.md`](docs/authoring-engines.md)) |
 | `src/reasonsmith/rulelang.py` | The whitelisted mini-language rule and specification text is parsed and executed in, shared by the rule adapter and the proved engine |
 | `src/reasonsmith/adapters/` | SUT protocol adapters for JSONL decision logs, Python callables, and rule-based systems that expose their decision logic |
-| `src/reasonsmith/engines/` | Verification engines: `record` completeness check, `observed` rtamt monitor over a trace (temporal formulas and per-record state properties), `probed` perturb-and-replay search, and `proved` Z3 solver |
+| `src/reasonsmith/engines/` | Verification engines: `record` completeness check, `observed` rtamt monitor over a trace (temporal formulas and per-record state properties), `probed` perturb-and-replay search, `proved` Z3 solver, and `temporal` — the same solver, over an `always(f)` reduced to a property of one decision |
 | `src/reasonsmith/examples/` | The four runnable example systems and `sample_decisions.jsonl`, shipped in the wheel so every documented command runs after `pip install`; `python -m reasonsmith.examples` prints the directory they installed into |
 | `src/reasonsmith/cli.py` | Command-line interface (`reasonsmith` / `python -m reasonsmith.cli`): `check --system /path/to/your-decisions.jsonl --pack gdpr --capabilities /path/to/capabilities.txt` and `validate-pack gdpr` |
 | `src/reasonsmith/drift.py` | Statute drift check (`python -m reasonsmith.drift`): re-fetches the official legal sources and re-verifies every pack quote, reporting `match` / `differ` / `could-not-verify` without ever editing a pack |
@@ -394,10 +394,14 @@ document states and this page may not manufacture, or drop `insurers`, who read 
 
 
 **Insurers** pricing exposure on an automated decision system. Missing: a claim that survives past
-the trace. `observed` covers exactly the records supplied and establishes nothing about decisions
-outside them, and no engine here reasons over a trace-wide formula, so every duty about behaviour
-*over a lifetime* — retention, continuous monitoring — is met today by a check over one supplied run
-([`docs/refinement.md`](docs/refinement.md), *the trace is a sample*; `ROADMAP.md` §1). Also missing:
+the trace, for most systems and most duties. `observed` covers exactly the records supplied and
+establishes nothing about decisions outside them. One escape now exists and is narrow on both axes:
+an `always(f)` whose `f` is a property of one decision is proved over every input a system's exposed
+`logic()` admits, so it covers every trace that system can emit — but a system exposing no logic gets
+no escape at all, and neither does a duty written in any other temporal shape
+([`docs/refinement.md`](docs/refinement.md), *the trace is a sample*; `ROADMAP.md` §1). Every duty
+about behaviour *over a lifetime* — retention, continuous monitoring — is still met by a check over
+one supplied run wherever that escape does not reach. Also missing:
 any defence against the insured. The one duty that reads an approximation error reads a number the
 system declares about itself, which nothing verifies — it rewards the measurement, not the accuracy,
 and a system that under-reports passes ([`docs/findings-nesyarena.md`](docs/findings-nesyarena.md),

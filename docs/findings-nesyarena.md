@@ -306,7 +306,7 @@ Three things this did not fix, in descending order of how much they should worry
 - **A declaration is a self-declaration.** Nothing checks that a system declaring `consumer-credit`
   issues credit. The gate stops a duty reaching a system that said nothing; it does nothing about
   one that said the wrong thing — the same standing as the Article 22(2) basis flags
-  (`docs/semantics.md` §3, *the assumption all four share*).
+  (`docs/semantics.md` §3, *the assumption all six share*).
 - **The trigger inside a decision is still not modelled.** 12 CFR 1002.9 is triggered by adverse
   action having been taken, not by the creditor being in consumer credit. Against a system that
   *does* declare `consumer-credit`, the property still runs over every record in the trace,

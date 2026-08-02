@@ -31,6 +31,22 @@ What a reader must not break:
   - `CONSTRAINTS` bound the input space the proof quantifies over, so they are part of what the
     verdict claims. Widening them weakens nothing; narrowing them to dodge a counterexample would
     make the proof true of a system nobody deployed.
+  - The rules that carry this system past the *state* duties and into the two `temporal` ones —
+    the notification block and the margin block — are ordinary rules and are held to the same bar.
+    Two of them state a policy commitment rather than measure anything, and a reader must be able
+    to see which:
+      * `notification_queue_days` is a free input the system's own operations bound
+        (`CONSTRAINTS`: at most a seven-day batch window), and the notice lands a day after the
+        batch runs. The proof of 12 CFR 1002.9(a)(1) is exactly as good as that bound: widen it to
+        `<= 45` and the duty comes back `violated` with a counterexample, which is the tool
+        working. No engine checks that the deployed batch honours the seven days.
+      * `artifact_logs_decision_margin` is the distance the deciding factor stands from *its own*
+        threshold, in that factor's own units, because each branch is decided by one factor. An
+        approval has no adverse factor, so it states the credit score's distance from the score
+        threshold; that choice is this example's, not a fact about margins.
+      * `scope_statements_declared_deviation` is `0.0` because an exact rule set approximates
+        nothing. It is a self-declaration and no engine verifies it — see `docs/semantics.md` §3,
+        *the first shipped duty that reads a declared approximation error*.
 """
 
 from __future__ import annotations
@@ -74,8 +90,37 @@ RULES = [
         "else:\n"
         '    artifact_logs_reason_explanation = "C00 no adverse factor"\n'
     ),
+    (
+        "if adverse_action:\n"
+        '    artifact_logs_decision_record = "adverse action taken on this application"\n'
+        "else:\n"
+        '    artifact_logs_decision_record = "credit granted on this application"\n'
+    ),
+    # The notice goes out one day after the nightly batch that queues it, and the batch window is
+    # bounded in CONSTRAINTS. No counteroffer is ever made by this policy, so 1002.9(a)(1)(iv) —
+    # the only branch the 90-day deadline reaches — never applies to it.
+    "artifact_logs_notification_latency_days = notification_queue_days + 1",
+    "artifact_logs_counteroffer_not_accepted = 0.0",
+    # The margin of this decision from the threshold that decided it, in that factor's own units.
+    (
+        "if over_leveraged:\n"
+        "    artifact_logs_decision_margin = debt_to_income - 0.43\n"
+        "elif delinquent:\n"
+        "    artifact_logs_decision_margin = delinquencies_24m\n"
+        "elif low_score:\n"
+        "    artifact_logs_decision_margin = 640 - credit_score\n"
+        "elif thin_file:\n"
+        "    artifact_logs_decision_margin = 24 - credit_history_months\n"
+        "else:\n"
+        "    artifact_logs_decision_margin = credit_score - 640\n"
+    ),
+    "scope_statements_declared_deviation = 0.0",
     'provenance_model_version = "underwriting-rules-2026.05.0"',
     'scope_statements_local_vs_global = "global: the rule set below decided this application"',
+    (
+        "scope_statements_approximation_vs_guarantee = "
+        '"guarantee: these rules are the decision procedure, not an approximation of one"'
+    ),
 ]
 
 #: Declared types for every variable the rules read or write. The solver reasons over these.
@@ -84,14 +129,21 @@ VARIABLES = {
     "debt_to_income": "real",
     "delinquencies_24m": "int",
     "credit_history_months": "int",
+    "notification_queue_days": "int",
     "over_leveraged": "bool",
     "thin_file": "bool",
     "delinquent": "bool",
     "low_score": "bool",
     "adverse_action": "bool",
     "artifact_logs_reason_explanation": "str",
+    "artifact_logs_decision_record": "str",
+    "artifact_logs_notification_latency_days": "int",
+    "artifact_logs_counteroffer_not_accepted": "real",
+    "artifact_logs_decision_margin": "real",
+    "scope_statements_declared_deviation": "real",
     "provenance_model_version": "str",
     "scope_statements_local_vs_global": "str",
+    "scope_statements_approximation_vs_guarantee": "str",
 }
 
 #: The inputs the system admits. The proof quantifies over exactly these, and no further.
@@ -102,6 +154,8 @@ CONSTRAINTS = [
     "debt_to_income <= 1.0",
     "delinquencies_24m >= 0",
     "credit_history_months >= 0",
+    "notification_queue_days >= 0",
+    "notification_queue_days <= 7",
 ]
 
 #: A handful of applications, so the weaker rungs have a trace to read if the proof rung ever
@@ -112,12 +166,14 @@ TEST_INPUTS = [
         "debt_to_income": 0.21,
         "delinquencies_24m": 0,
         "credit_history_months": 96,
+        "notification_queue_days": 1,
     },
     {
         "credit_score": 602,
         "debt_to_income": 0.48,
         "delinquencies_24m": 2,
         "credit_history_months": 19,
+        "notification_queue_days": 6,
     },
 ]
 
@@ -132,8 +188,14 @@ def system_under_test() -> RulesAdapter:
             "decision",
             "adverse_action",
             "artifact_logs_reason_explanation",
+            "artifact_logs_decision_record",
+            "artifact_logs_notification_latency_days",
+            "artifact_logs_counteroffer_not_accepted",
+            "artifact_logs_decision_margin",
+            "scope_statements_declared_deviation",
             "provenance_model_version",
             "scope_statements_local_vs_global",
+            "scope_statements_approximation_vs_guarantee",
         },
         test_inputs=TEST_INPUTS,
     )
