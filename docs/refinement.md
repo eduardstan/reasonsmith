@@ -52,7 +52,7 @@ Four kinds of gap recur, and naming them once keeps the table short:
   action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
   evaluated over every record in a trace is checked outside that trigger too. Two axes of a
   clause's scope are modelled — the regulatory class (`scope`, used by six of the eighteen duties)
-  and the decision domain (`domains`, used by four) — and both are gates about the *system*. A
+  and the decision domain (`domains`, used by five) — and both are gates about the *system*. A
   trigger *inside* a decision is not a gate at all: one duty carries its own in the property
   (12 CFR 1002.9(b)(2)), at the price of being satisfied vacuously where it never fires.
 

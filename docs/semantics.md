@@ -183,10 +183,12 @@ statements that are insufficient, and this is the narrowest atom that expresses 
   `test_the_parts_of_a_statement_are_never_joined`).
 - **Any other present value is refused, not read as carrying nothing.** A number or a mapping is
   not a statement, and answering `False` there would report a system satisfied on a field nothing
-  read. The interpreter raises, and the observed engine reports the whole requirement not
-  evaluated, naming the signal — the same discipline an unmeasured magnitude gets
-  (`test_a_present_value_that_is_not_a_statement_is_refused`,
-  `test_a_non_text_value_makes_the_duty_not_evaluated_never_satisfied`).
+  read. The interpreter raises, and every engine that reads the atom — the trace monitor and the
+  replay search alike — reports the whole requirement not evaluated, naming the signal, so the
+  stronger rung is never the easier one to satisfy. That is the same discipline an unmeasured
+  magnitude gets (`test_a_present_value_that_is_not_a_statement_is_refused`,
+  `test_a_non_text_value_makes_the_duty_not_evaluated_never_satisfied`,
+  `test_a_non_text_value_is_not_evaluated_on_every_rung`).
 - **It is a substring test and claims to be nothing more.** It answers whether a phrase occurs. It
   does not model whether a statement is *specific*, does not paraphrase, and catches no wording but
   the one the pack names. A duty built on it can establish that a statement the clause itself calls

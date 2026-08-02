@@ -143,6 +143,10 @@ is in `docs/semantics.md` §3; why it exists is finding 1 of `docs/findings-nesy
 block in it and compares stdout byte-for-byte, and cross-checks the header's line count and
 `md5sum` against RESULTS.md. So anything that changes what the demo or the CLI prints — a wording
 tweak included — means regenerating the transcripts and updating both files' headers together.
+The README's own CLI block is derived too and is the one derived transcript **no test pins**:
+regenerate it with `python docs/build_readme_transcripts.py`, which raises rather than writing when
+a command it names matches no block, because the ad-hoc helper it replaced reported success having
+substituted nothing and left the front page showing a verdict the tool no longer prints.
 `docs/report.html` is generated as well, but not by the CLI: `docs/build_example.py` composes it — the
 Table 7 run declared into the high-risk class, beside the demonstration's key finding, which no
 report the CLI writes may carry — and `test_docs_index_html_matches_the_renderer` holds the
