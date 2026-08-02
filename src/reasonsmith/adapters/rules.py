@@ -6,7 +6,8 @@ What this module is for:
 
 What a reader must not break:
   - `logic()` must return an honest representation of the system's decision logic (variables,
-    rules, and constraints) without hiding or simplifying active constraints.
+    rules, constraints, and the `computes` directions below) without hiding or simplifying active
+    constraints.
     Why this matters: Formal proofs hold relative to the logic exposed; an incomplete or inaccurate
     logic representation produces false proof verdicts.
   - `decide(inputs)` must evaluate the exact same rules as exposed by `logic()`, and must refuse
