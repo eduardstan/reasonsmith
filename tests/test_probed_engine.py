@@ -528,7 +528,7 @@ def test_trace_established_kind_propagates_through_arithmetic_operands():
 
     sut = SearchTrackingSUT()
     result = ProbedEngine.evaluate(
-        _req(spec="True or (reason + 1 > 0)", requires=("reason",)),
+        _req(spec="approved or (reason + 1 > 0)", requires=("approved", "reason")),
         sut,
     )
 
