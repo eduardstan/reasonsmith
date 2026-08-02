@@ -8,7 +8,50 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Added
+
+- **The `--json` envelope names its own shape** ([#88](https://github.com/eduardstan/reasonsmith/pull/88)).
+  `reasonsmith check --json` emitted eight keys and no version, so a consumer building on it could
+  not tell one release's shape from another's. The envelope now leads with `schema_version`, an
+  integer starting at `1`. It is deliberately not the package version — pinning it there would
+  make every release look like a shape change to someone diffing it. It increments when a key is
+  removed, renamed, or changes type or meaning, and not when one is added, because a parser
+  reading the keys it knows is unaffected by a key it has never seen.
+  `tests/test_json_schema_version.py` writes out the key set at both levels beside the number and
+  checks set equality, so a shape change made without moving the version fails the suite. What
+  that does not catch — a key whose meaning drifts while its name and type hold — is stated on
+  `JSON_SCHEMA_VERSION` rather than built around.
+
+### Fixed
+
+- **The stylesheet comment explaining the report's serif is in English** ([#88](https://github.com/eduardstan/reasonsmith/pull/88)).
+  It was written in Italian, alone in the repository. Translated with its reasoning and its
+  upgrade path intact — it says why the report uses a system serif rather than the landing page's
+  Newsreader, and what inlining that font would cost. A grep found no other non-English comment.
+
 ### Changed
+
+- **The generated report dims** ([#88](https://github.com/eduardstan/reasonsmith/pull/88)).
+  The dossier is the artefact people read at length and was the only document on their screen with
+  no dark scheme. The palette was already token-driven, so this is a second set of values under
+  `@media screen and (prefers-color-scheme: dark)` rather than a second stylesheet. `screen` is
+  load-bearing and pinned by a test: the `@media print` block assumes the light token values, so a
+  dark override matching print media would have printed white text on a white sheet. Two token
+  pairs moved first. The report header was `background: var(--ink); color: var(--surface)` — an
+  inversion of the page, which inverts back into a *light* band on a dark page — so it gains its
+  own `--band`/`--band-ink`/`--band-faint`/`--band-line`/`--band-accent` tokens and stays a dark
+  band in both schemes; the three hardcoded `oklch(...)` values inside it were the same assumption
+  spelled literally and now read those tokens. Solid chips — the strength lattice's active step,
+  the binding badge, the skip link — paired a solid fill with `color: var(--surface)`, which puts
+  near-white text on a light green fill in a dark scheme, and now pair with `var(--paper)`, which
+  inverts correctly in both directions. The key-finding section's own stylesheet in `demo.py` had
+  both defects, plus a subtitle grey hardcoded for a dark band that landed on a light card; fixed
+  there too. Satisfied-green and violated-red carry meaning in this document, so the dark values
+  keep their hues (155 and 25) at chroma 0.13-0.14 against tinted grounds rather than desaturating
+  toward a common grey, and `test_both_schemes_keep_the_verdict_colours_apart` pins the hue
+  channel of `--ok` and `--accent-deep` in both blocks — a scheme collapsing the two hues would
+  pass any contrast check and would still have destroyed the distinction the reader uses. Nothing
+  external was added: `test_the_dark_page_is_still_self_contained` holds that.
 
 - **The affected-individual report is derived for its reader, not the expert report with parts
   removed** ([#84](https://github.com/eduardstan/reasonsmith/pull/84)).
