@@ -8,6 +8,23 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Changed
+
+- **The dossier's key finding is a conformance run, not a narrated pair**
+  ([#75](https://github.com/eduardstan/reasonsmith/pull/75)). The exhibit beside `docs/report.html`
+  drew an evidence record marked `COMPLETE` next to a reason-deletion certificate marked `FAIL` —
+  computed live, so nothing on the page was false, but framed as it was before the certificate
+  became an engine. `reasonsmith.demo.render_key_finding_html` now renders an actual `ecoa` run
+  against the demonstration's own pipeline (`key_finding_report()`), and the two halves of 12 CFR
+  1002.9(b)(2) come apart as verdicts: `ecoa_reg_b_1002_9_b_2_specific_reasons` **satisfied** at
+  `observed` on the notice's form, `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` **violated**
+  at `probed` on its content, carrying the deleted reasons and the probe budget the run itself
+  produced. Every value is read off the run and none is typed beside it. The page's body is
+  unchanged — it is still the `table7` dossier — and the section is still an `extra_section_html`
+  the example page opts into rather than anything the CLI writes, for the reason it always was: it
+  is about another system's decision. It now says so on the page, so the violated verdict is not
+  read as belonging to the dossier's own system.
+
 ### Added
 
 - **An engine and a pack can be installed rather than vendored**
