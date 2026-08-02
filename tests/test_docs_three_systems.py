@@ -2,7 +2,7 @@
 
 What this module is for:
   `docs/three-systems.md` is the answer to "how does any model get fed into this tool and have a
-  legal property verified on it?": three genuinely different systems under `docs/adapters/`,
+  legal property verified on it?": three genuinely different systems under `reasonsmith.examples`,
   checked against one binding duty, reaching three different rungs. The claim is only worth
   anything while the printed output is the real output and the rungs are still three, so this
   module checks both.
@@ -18,6 +18,7 @@ What a reader must not break:
     hook makes the document overclaim, which is the exact failure this package exists to prevent.
 """
 
+import importlib
 import os
 import re
 import subprocess
@@ -33,19 +34,13 @@ from reasonsmith.verdict import Strength, Verdict
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 THREE_SYSTEMS = REPO_ROOT / "docs" / "three-systems.md"
-ADAPTERS = REPO_ROOT / "docs" / "adapters"
 
 PAIR_RE = re.compile(r"```sh\n(.*?)\n```\n\n```text\n(.*?)```\n", re.DOTALL)
 
 
 def _load(module_name: str):
-    """Import one adapter file the way a reader who copied it would run it."""
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(module_name, ADAPTERS / f"{module_name}.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """Import one example system the way a reader who installed the package would reach it."""
+    return importlib.import_module(f"reasonsmith.examples.{module_name}")
 
 
 def _duty(module):

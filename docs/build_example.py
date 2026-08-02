@@ -34,13 +34,13 @@ if str(ROOT / "src") not in sys.path:
 
 from reasonsmith.adapters.jsonl import JSONLAdapter  # noqa: E402
 from reasonsmith.demo import render_key_finding_html  # noqa: E402
+from reasonsmith.examples import SAMPLE_LOG  # noqa: E402
 from reasonsmith.report import ConformanceReport, check_conformance  # noqa: E402
 from reasonsmith.spec import load_pack  # noqa: E402
 
 #: The provenance the page reports, and the command that reproduces it byte-for-byte.
 BUILD_COMMAND = "python docs/build_example.py"
 
-SAMPLE_LOG = ROOT / "docs" / "sample_decisions.jsonl"
 INDEX_HTML = ROOT / "docs" / "report.html"
 
 

@@ -938,7 +938,8 @@ illustrative, not recommended values. Real monitoring faces unscripted drift on 
 
 ## 2. Conformance Report Output
 
-Both runs below read [`sample_decisions.jsonl`](sample_decisions.jsonl), the committed
+Both runs below read
+[`sample_decisions.jsonl`](../src/reasonsmith/examples/sample_decisions.jsonl), the committed
 three-record decision trace from a credit-scoring pipeline. Neither run declares capabilities, so
 both are read from that trace alone, and both reports say so on their face. Both do declare a
 decision domain, `--system-domain consumer-credit`, because that is what the pipeline decides:
@@ -948,7 +949,7 @@ the run in §2.2 below showing exactly that for a duty about medical-device soft
 ### 2.1 ECOA / Reg B pack — every requirement observed (exit code 0)
 
 ```sh
-python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline --system-domain consumer-credit
+python -m reasonsmith.cli check --system src/reasonsmith/examples/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline --system-domain consumer-credit
 ```
 
 ```text
@@ -1001,7 +1002,7 @@ scope and has them evaluated rather than set aside; that is the run behind the H
 because it also carries the demonstration's key finding.
 
 ```sh
-python -m reasonsmith.cli check --system docs/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline --system-domain consumer-credit
+python -m reasonsmith.cli check --system src/reasonsmith/examples/sample_decisions.jsonl --pack table7 --system-name CreditScoringPipeline --system-domain consumer-credit
 ```
 
 ```text

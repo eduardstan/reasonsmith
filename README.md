@@ -36,25 +36,28 @@ Neural, probabilistic or symbolic — a system is fed in by writing an adapter t
 
 | system | what it exposes | rung reached |
 |---|---|---|
-| [neural risk network](docs/adapters/neural_scorer.py), served behind an inference API | `decisions()` — an exported decision log, nothing else | `observed` |
-| [probabilistic log-odds scorer](docs/adapters/probabilistic_scorer.py), in-process | `decisions()` + `decide(case)` replay | `probed`, carrying its search budget |
-| [symbolic underwriting rule set](docs/adapters/symbolic_rules.py) | `decisions()` + `logic()` | `proved`, over every input the constraints admit |
+| [neural risk network](src/reasonsmith/examples/neural_scorer.py), served behind an inference API | `decisions()` — an exported decision log, nothing else | `observed` |
+| [probabilistic log-odds scorer](src/reasonsmith/examples/probabilistic_scorer.py), in-process | `decisions()` + `decide(case)` replay | `probed`, carrying its search budget |
+| [symbolic underwriting rule set](src/reasonsmith/examples/symbolic_rules.py) | `decisions()` + `logic()` | `proved`, over every input the constraints admit |
 
 All three also declare `system_domains = ("consumer-credit",)`, which is what puts them inside a duty about adverse-action reasons at all: 12 CFR 1002.9 is about consumer-credit decisions, and a system that has declared no decision domain is reported *not applicable* rather than judged. Raising a rung means changing the *system*; declaring a domain it is not in would be a different error entirely.
 
+These three systems ship *inside* the package, so the commands below run against a
+`pip install reasonsmith` with no checkout and no data of your own:
+
 ```sh
-for s in neural_scorer probabilistic_scorer symbolic_rules; do python docs/adapters/$s.py; done
+for s in neural_scorer probabilistic_scorer symbolic_rules; do python -m reasonsmith.examples.$s; done
 ```
 
 The CLI reaches the same three systems against a whole pack, no Python needed — `--system-module` **imports the named module, which executes it**, and takes the attribute after the colon as the system under test (the `module:attribute` spelling pytest's `-p` and gunicorn's application path use):
 
 ```sh
-reasonsmith check --system-module docs.adapters.symbolic_rules:system_under_test --pack ecoa
+reasonsmith check --system-module reasonsmith.examples.symbolic_rules:system_under_test --pack ecoa
 ```
 
 All three verdicts are `satisfied`, and the rung is what separates them: how far each claim reaches — three logged decisions, 200 replayed inputs, or every input the declared constraints admit. The neural system **cannot** reach `probed` or `proved` as built, and no adapter can change that; a test pins that ceiling. Full walkthrough, with the three transcripts and why this duty was chosen over a recital: [`docs/three-systems.md`](docs/three-systems.md).
 
-A fourth system — [a language model prompted to write the notice](docs/adapters/language_model_notices.py) — adds no rung: a model you can call sits at `probed`, where the probabilistic scorer already sits. It is worth a document of its own for the *other* axis, which duties can be answered about a system at all. Run against the whole `ecoa` pack it comes back `observed` on the notice's timing and contents, `probed` on 12 CFR 1002.9(b)(2)'s specific-reasons duty, and **`unattainable`** on the other half of that same clause, naming the signal it lacks — because reason fidelity is measured from an inference artefact and a decoder has none. reasonsmith refuses that duty rather than passing the system on the easier one beside it: [`docs/language-model.md`](docs/language-model.md).
+A fourth system — [a language model prompted to write the notice](src/reasonsmith/examples/language_model_notices.py) — adds no rung: a model you can call sits at `probed`, where the probabilistic scorer already sits. It is worth a document of its own for the *other* axis, which duties can be answered about a system at all. Run against the whole `ecoa` pack it comes back `observed` on the notice's timing and contents, `probed` on 12 CFR 1002.9(b)(2)'s specific-reasons duty, and **`unattainable`** on the other half of that same clause, naming the signal it lacks — because reason fidelity is measured from an inference artefact and a decoder has none. reasonsmith refuses that duty rather than passing the system on the easier one beside it: [`docs/language-model.md`](docs/language-model.md).
 
 ## Key Finding: form completeness does not imply reason fidelity — one system, two duties
 
@@ -114,10 +117,10 @@ How each shipped requirement got from a clause of law to a formula — and, in a
 
 ## Automated Conformance Checking
 
-A decision log is the commonest system and the weakest: it exposes no inference artefact, so the same pack that reported the adequacy duty *violated* above reports it *unattainable* here, naming the signal nothing in the log could supply — never returning it to the presence check. The committed sample log, against the same pack:
+A decision log is the commonest system and the weakest: it exposes no inference artefact, so the same pack that reported the adequacy duty *violated* above reports it *unattainable* here, naming the signal nothing in the log could supply — never returning it to the presence check. The committed sample log ships with the package, and `python -m reasonsmith.examples` prints the directory it was installed into, so this runs against the same pack with no data of your own:
 
 ```sh
-reasonsmith check --system docs/sample_decisions.jsonl --pack ecoa --system-name CreditScoringPipeline --system-domain consumer-credit
+reasonsmith check --system "$(python -m reasonsmith.examples)/sample_decisions.jsonl" --pack ecoa --system-name CreditScoringPipeline --system-domain consumer-credit
 ```
 
 ```text
@@ -195,7 +198,7 @@ pip install -e ".[dev]"
 ruff check .
 pytest
 python -m reasonsmith.demo
-reasonsmith check --system docs/sample_decisions.jsonl --pack ecoa --system-domain consumer-credit
+reasonsmith check --system src/reasonsmith/examples/sample_decisions.jsonl --pack ecoa --system-domain consumer-credit
 ```
 
 Every command in the source block runs from a fresh clone in that order; the `ecoa` run above exits 0.
@@ -245,6 +248,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
   reasonsmith check --system /path/to/your-decisions.jsonl --pack ecoa --system-domain consumer-credit
   reasonsmith check --system /path/to/your-decisions.jsonl --pack eu_ai_act --system-scope high-risk --html report.html
   reasonsmith validate-pack ecoa eu_ai_act gdpr table7
+  reasonsmith --version
   ```
 
   `check` exits 2 when a requirement is violated, 1 on a usage or input error, and 0 otherwise. Unattainable, not applicable and not evaluated are findings to read in the report, not breaches, so none of them changes the exit code. Reports render to plain text, structured JSON (`--json`), or a self-contained offline HTML report (`--html FILE`). By default the CLI reads capabilities from the supplied log, and a result resting on that says so rather than speaking for the system; pass `--capabilities /path/to/capabilities.txt` to instead have the system's maintainers declare what it can emit. The file has one signal name per line; blank lines and whole-line comments whose first nonblank character is `#` are ignored. The report then says the capabilities were declared. An empty declaration file declares nothing, which is a distinct claim from having no declaration at all, and a malformed line is refused naming the file and the line. `validate-pack` validates one or more requirement packs and prints what each contains, exiting 0 for any packs a `check` run could load and 1 at the first one the loader refuses, naming the file and the requirement at fault; the authoring guide is [`docs/authoring-packs.md`](docs/authoring-packs.md).

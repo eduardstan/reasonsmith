@@ -19,6 +19,7 @@ What a reader must not break:
     makes the document overclaim, which is the exact failure this package exists to prevent.
 """
 
+import importlib
 import os
 import re
 import subprocess
@@ -31,7 +32,6 @@ from reasonsmith.verdict import Strength, Verdict
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCUMENT = REPO_ROOT / "docs" / "language-model.md"
-ADAPTER = REPO_ROOT / "docs" / "adapters" / "language_model_notices.py"
 
 PAIR_RE = re.compile(r"```sh\n(.*?)\n```\n\n```text\n(.*?)```\n", re.DOTALL)
 
@@ -41,13 +41,8 @@ ADEQUACY_DUTY = "ecoa_reg_b_1002_9_b_2_principal_reasons_complete"
 
 
 def _adapter():
-    """Import the adapter file the way a reader who copied it would run it."""
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location("language_model_notices", ADAPTER)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """Import the example system the way a reader who installed the package would reach it."""
+    return importlib.import_module("reasonsmith.examples.language_model_notices")
 
 
 def test_committed_transcript_is_the_real_stdout():

@@ -30,6 +30,7 @@ from __future__ import annotations
 import io
 import os
 import re
+import shlex
 import sys
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -39,18 +40,25 @@ if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
 from reasonsmith.cli import main as cli_main  # noqa: E402
+from reasonsmith.examples import EXAMPLES_DIR  # noqa: E402
 
 #: The command that reproduces the README's transcripts.
 BUILD_COMMAND = "python docs/build_readme_transcripts.py"
 
 README = ROOT / "README.md"
 
+#: The one shell command substitution a README command uses, and what the shell would expand it
+#: to. The sample log ships inside the package, so a command naming it has to ask where the
+#: package was installed; `stdout_of` expands this itself because it runs the CLI in-process
+#: rather than through a shell.
+SAMPLE_LOG_SUBSTITUTION = ("$(python -m reasonsmith.examples)", str(EXAMPLES_DIR))
+
 #: Every README command whose stdout is committed beneath it, spelled as the README spells it.
 TRANSCRIPTS = (
     "reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa "
     "--system-name TruncatingCreditSystem",
-    "reasonsmith check --system docs/sample_decisions.jsonl --pack ecoa "
-    "--system-name CreditScoringPipeline --system-domain consumer-credit",
+    'reasonsmith check --system "$(python -m reasonsmith.examples)/sample_decisions.jsonl" '
+    "--pack ecoa --system-name CreditScoringPipeline --system-domain consumer-credit",
 )
 
 #: 0 is a clean run and 2 is a run reporting a violation; both are transcripts worth committing.
@@ -59,9 +67,10 @@ REPORTING_EXIT_CODES = (0, 2)
 
 def stdout_of(command: str) -> str:
     """The CLI's own stdout for `command`, run in-process from the repository root."""
+    expanded = command.replace(*SAMPLE_LOG_SUBSTITUTION)
     buffer = io.StringIO()
     with redirect_stdout(buffer):
-        exit_code = cli_main(command.split()[1:])
+        exit_code = cli_main(shlex.split(expanded)[1:])
     if exit_code not in REPORTING_EXIT_CODES:
         raise RuntimeError(
             f"{command!r} exited {exit_code}, which is a usage or input error rather than a "

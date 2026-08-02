@@ -11,7 +11,7 @@ What this module is for:
   system can hand that over, the duty stops being a question about the decisions it happened to
   log.
 
-  Run: `python docs/adapters/symbolic_rules.py`
+  Run: `python -m reasonsmith.examples.symbolic_rules`
 
 What a reader must not break:
   - `RULES` is the system's actual decision procedure, not a paraphrase of one. `RulesAdapter`
@@ -41,7 +41,7 @@ from reasonsmith.adapters.rules import RulesAdapter
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import load_pack
 
-#: The duty all three systems in `docs/adapters/` are checked against. Binding, limited to no
+#: The duty all three systems in `reasonsmith.examples` are checked against. Binding, limited to no
 #: regulatory class, and limited to the consumer-credit decision domain — which all three of these
 #: systems are in, and which each of them declares below through `system_domains`. A system that
 #: declared nothing would be reported not applicable on this duty rather than judged on its trace.

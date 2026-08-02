@@ -11,7 +11,7 @@ What this module is for:
   pushed hardest against the applicant. It lives in this process, so the auditor can hand it an
   input it has never seen and watch what it does.
 
-  Run: `python docs/adapters/probabilistic_scorer.py`
+  Run: `python -m reasonsmith.examples.probabilistic_scorer`
 
 What a reader must not break:
   - The model is reachable (`predict(case)`, the scikit-learn spelling `CallableAdapter` already
@@ -37,7 +37,7 @@ from reasonsmith.adapters.callable import CallableAdapter
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import load_pack
 
-#: The duty all three systems in `docs/adapters/` are checked against. Binding, limited to no
+#: The duty all three systems in `reasonsmith.examples` are checked against. Binding, limited to no
 #: regulatory class, and limited to the consumer-credit decision domain — which all three of these
 #: systems are in, and which each of them declares below through `system_domains`. A system that
 #: declared nothing would be reported not applicable on this duty rather than judged on its trace.

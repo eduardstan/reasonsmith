@@ -39,10 +39,12 @@ inputs, not proved; and here is the duty it could not answer at all.
 
 ## The system
 
-[`adapters/language_model_notices.py`](adapters/language_model_notices.py) is complete and
-runnable. It takes one argument — a `complete(prompt: str) -> str` — and that is the entire
+[`reasonsmith/examples/language_model_notices.py`](../src/reasonsmith/examples/language_model_notices.py)
+is complete and runnable, and ships inside the package, so the command below runs after
+`pip install reasonsmith` with no checkout. It takes one argument — a
+`complete(prompt: str) -> str` — and that is the entire
 interface to the model. There is no vendor SDK here, no client wrapper and no network call: a
-deterministic stub stands in so the transcript below is reproducible from a fresh clone, and a real
+deterministic stub stands in so the transcript below is reproducible from any install, and a real
 model is a two-line substitution at the call site, spelled out in the module docstring.
 
 The block below is stdout pasted unedited from a real run.
@@ -50,7 +52,7 @@ The block below is stdout pasted unedited from a real run.
 stdout, and asserts the ceiling separately.
 
 ```sh
-python docs/adapters/language_model_notices.py
+python -m reasonsmith.examples.language_model_notices
 ```
 
 ```text
@@ -108,7 +110,7 @@ enumerated from. Nothing in the adapter can do it, and nothing in the adapter sh
 The transcript above runs the system's own `main()`. The CLI reaches the same system:
 
 ```sh
-reasonsmith check --system-module docs.adapters.language_model_notices:system_under_test --pack ecoa
+reasonsmith check --system-module reasonsmith.examples.language_model_notices:system_under_test --pack ecoa
 ```
 
 **`--system-module` imports the named module, which executes it** — with the stub behind the call,

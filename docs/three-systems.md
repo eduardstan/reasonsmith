@@ -4,15 +4,17 @@ How does a model — neural, probabilistic, symbolic — get fed into this tool 
 property verified on it? By writing an adapter that says what the system exposes. Nothing else
 about the system matters, and nothing else is asked of it.
 
-The three files in [`docs/adapters/`](adapters/) are complete, runnable systems. Each is a
+The three files in [`reasonsmith.examples`](../src/reasonsmith/examples/) are complete, runnable
+systems, and they ship inside the package, so every command below runs after `pip install
+reasonsmith` with no checkout. Each is a
 plausible credit decisioner; each exposes a different surface; each is checked against the **same
 binding duty**. They come back at three different rungs of the evidence lattice.
 
 | system | file | what it exposes | rung reached |
 |---|---|---|---|
-| neural risk network, served behind an inference API | [`neural_scorer.py`](adapters/neural_scorer.py) | `decisions()` — an exported decision log, nothing else | `observed` |
-| probabilistic log-odds scorer, in-process | [`probabilistic_scorer.py`](adapters/probabilistic_scorer.py) | `decisions()` + `decide(case)` replay | `probed`, carrying its search budget |
-| symbolic underwriting rule set | [`symbolic_rules.py`](adapters/symbolic_rules.py) | `decisions()` + `logic()` | `proved`, over every input the constraints admit |
+| neural risk network, served behind an inference API | [`neural_scorer.py`](../src/reasonsmith/examples/neural_scorer.py) | `decisions()` — an exported decision log, nothing else | `observed` |
+| probabilistic log-odds scorer, in-process | [`probabilistic_scorer.py`](../src/reasonsmith/examples/probabilistic_scorer.py) | `decisions()` + `decide(case)` replay | `probed`, carrying its search budget |
+| symbolic underwriting rule set | [`symbolic_rules.py`](../src/reasonsmith/examples/symbolic_rules.py) | `decisions()` + `logic()` | `proved`, over every input the constraints admit |
 
 Every block below is stdout pasted unedited from a real run.
 `tests/test_docs_three_systems.py` re-runs all three commands and holds each committed block to
@@ -79,7 +81,7 @@ either, and not because the vendor is uncooperative — a weight matrix carries 
 solver to reason over.
 
 ```sh
-python docs/adapters/neural_scorer.py
+python -m reasonsmith.examples.neural_scorer
 ```
 
 ```text
@@ -109,7 +111,7 @@ arithmetic over calibrated weights, and a hand-written paraphrase handed to the 
 a property of the paraphrase.
 
 The same system, from a shell and against the whole `ecoa` pack, is
-`reasonsmith check --system-module docs.adapters.probabilistic_scorer:system_under_test --pack ecoa`
+`reasonsmith check --system-module reasonsmith.examples.probabilistic_scorer:system_under_test --pack ecoa`
 — which **imports and executes** that module. See [From a shell](#from-a-shell) below.
 
 Note what the transcript carries that the previous one did not: a **probe budget**. Trials, seed,
@@ -118,7 +120,7 @@ misread as `proved`, so a probed verdict cannot be constructed at all without th
 produced it.
 
 ```sh
-python docs/adapters/probabilistic_scorer.py
+python -m reasonsmith.examples.probabilistic_scorer
 ```
 
 ```text
@@ -149,7 +151,7 @@ different programs. The duty stops being a question about the decisions the syst
 log.
 
 The same system, from a shell and against the whole `ecoa` pack, is
-`reasonsmith check --system-module docs.adapters.symbolic_rules:system_under_test --pack ecoa`
+`reasonsmith check --system-module reasonsmith.examples.symbolic_rules:system_under_test --pack ecoa`
 — which **imports and executes** that module. See [From a shell](#from-a-shell) below.
 
 Read the last sentence of the summary. The proof holds over the rationals, not over the float64
@@ -157,7 +159,7 @@ arithmetic the system actually runs — the engine states its own limit rather t
 "proved" carry more than it earned.
 
 ```sh
-python docs/adapters/symbolic_rules.py
+python -m reasonsmith.examples.symbolic_rules
 ```
 
 ```text
@@ -184,16 +186,17 @@ The three transcripts above run each system's own `main()`, which narrows the pa
 so the reader sees one finding. The CLI reaches exactly the same systems, against a whole pack:
 
 ```sh
-reasonsmith check --system-module docs.adapters.symbolic_rules:system_under_test --pack ecoa
-reasonsmith check --system-module docs.adapters.probabilistic_scorer:system_under_test --pack ecoa
-reasonsmith check --system-module docs.adapters.neural_scorer:system_under_test --pack ecoa
+reasonsmith check --system-module reasonsmith.examples.symbolic_rules:system_under_test --pack ecoa
+reasonsmith check --system-module reasonsmith.examples.probabilistic_scorer:system_under_test --pack ecoa
+reasonsmith check --system-module reasonsmith.examples.neural_scorer:system_under_test --pack ecoa
 ```
 
 **`--system-module` imports the named module, which executes it**, and takes the attribute after
 the colon as the system under test — the `module:attribute` spelling pytest's `-p` and gunicorn's
-application path use. The module is searched from the current directory, so the paths above assume
-a checkout as the working directory. The attribute may be a `SystemUnderTest` or, as in all three
-files here, a zero-argument factory returning one.
+application path use. The module is searched on `sys.path`, which includes the current directory —
+the three modules above are installed with the package, so those commands need no checkout, and
+your own module resolves the same way from the directory you run in. The attribute may be a
+`SystemUnderTest` or, as in all three files here, a zero-argument factory returning one.
 
 That is what makes `probed` and `proved` reachable from a shell at all: `--system <decisions.jsonl>`
 constructs a log-reading adapter, which exposes neither `decide()` nor `logic()`, so it cannot rise

@@ -79,6 +79,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from reasonsmith import __version__
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.render import AUDIENCES
 from reasonsmith.report import check_conformance
@@ -134,16 +135,17 @@ def load_system_module(spec: str) -> Any:
     raises names the module path it was told to load, so a reader at 2am can see what ran.
 
     The attribute may be either a `SystemUnderTest` instance or a zero-argument factory returning
-    one; the three systems in `docs/adapters/` expose a `system_under_test()` factory. An object
-    that already satisfies the protocol is taken as-is and never called, so an adapter that also
-    happens to be callable is not mistaken for its own factory.
+    one; the example systems in `reasonsmith.examples` expose a `system_under_test()` factory. An
+    object that already satisfies the protocol is taken as-is and never called, so an adapter that
+    also happens to be callable is not mistaken for its own factory.
     """
     module_name, separator, attribute_name = spec.rpartition(":")
     if not separator or not module_name or not attribute_name:
         raise ValueError(
             f"--system-module {spec!r}: expected 'module:attribute', for example "
-            "'docs.adapters.symbolic_rules:system_under_test'. The part before the colon is an "
-            "importable module path (dots, not slashes, and no '.py'), the part after it is the "
+            "'reasonsmith.examples.symbolic_rules:system_under_test'. The part before the colon "
+            "is an importable module path (dots, not slashes, and no '.py'), the part after it is "
+            "the "
             "name of a SystemUnderTest or of a factory returning one."
         )
 
@@ -153,7 +155,7 @@ def load_system_module(spec: str) -> Any:
         raise ValueError(
             f"--system-module {spec!r}: importing module {module_name!r} failed with "
             f"{type(exc).__name__}: {exc}. Importing a module runs it, so this is either the "
-            "module not being found on sys.path (it is searched from the current directory) or "
+            "module not being found on sys.path (which includes the current directory) or "
             "an error raised while it executed."
         ) from exc
 
@@ -226,6 +228,12 @@ def main(args: list[str] | None = None) -> int:
             "  1  a pack the loader refuses, naming the file and the requirement at fault."
         ),
     )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"reasonsmith {__version__}",
+        help="Print the installed version and exit",
+    )
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")
 
     check_parser = subparsers.add_parser("check", help="Check SUT conformance against a pack")
@@ -242,9 +250,11 @@ def main(args: list[str] | None = None) -> int:
         help=(
             "IMPORTS AND EXECUTES the named Python module, and takes ATTRIBUTE from it as the "
             "system under test — the same module:attribute loading pytest's -p and gunicorn's "
-            "application path do. The module is searched from the current directory. ATTRIBUTE "
-            "may be a SystemUnderTest or a zero-argument factory returning one, e.g. "
-            "'docs.adapters.symbolic_rules:system_under_test'. A system imported this way can "
+            "application path do. The module is searched on sys.path, which includes the current "
+            "directory, so an installed module and one in the working directory both resolve. "
+            "ATTRIBUTE may be a SystemUnderTest or a zero-argument factory returning one, e.g. "
+            "'reasonsmith.examples.symbolic_rules:system_under_test' (shipped in the package). "
+            "A system imported this way can "
             "expose decide() and logic(), so it reaches the probed and proved rungs a decision "
             "log cannot. Mutually exclusive with --system and --capabilities"
         ),

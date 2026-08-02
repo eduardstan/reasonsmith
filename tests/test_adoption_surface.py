@@ -89,6 +89,20 @@ class TestConsoleEntryPoint:
         assert cli_main([]) == 1
         assert "usage" in capsys.readouterr().out.lower()
 
+    def test_version_flag_prints_the_package_version(self, capsys):
+        """`reasonsmith --version` is the first thing a stranger types, and it exited 2.
+
+        The number comes from `reasonsmith.__version__`, the one
+        `tests/test_release_discipline.py` holds to `pyproject.toml` and the changelog, so this
+        cannot print a version the tree is not.
+        """
+        from reasonsmith import __version__
+
+        with pytest.raises(SystemExit) as exit_info:
+            cli_main(["--version"])
+        assert exit_info.value.code == 0
+        assert capsys.readouterr().out.strip() == f"reasonsmith {__version__}"
+
     def test_html_provenance_distinguishes_console_and_module_invocations(
         self, jsonl_fixture_file: Path, monkeypatch, tmp_path: Path
     ):
@@ -318,7 +332,7 @@ class TestSystemModule:
             [
                 "check",
                 "--system-module",
-                "docs.adapters.symbolic_rules:system_under_test",
+                "reasonsmith.examples.symbolic_rules:system_under_test",
                 "--pack",
                 "ecoa",
             ]
@@ -331,7 +345,7 @@ class TestSystemModule:
             [
                 "check",
                 "--system-module",
-                "docs.adapters.probabilistic_scorer:system_under_test",
+                "reasonsmith.examples.probabilistic_scorer:system_under_test",
                 "--pack",
                 "ecoa",
             ]
@@ -345,7 +359,7 @@ class TestSystemModule:
         """An already-built SystemUnderTest is taken as-is; only a non-SUT callable is called."""
         module = write_module(
             "instance_system",
-            "from docs.adapters.symbolic_rules import system_under_test\n"
+            "from reasonsmith.examples.symbolic_rules import system_under_test\n"
             "system = system_under_test()\n",
         )
         rc = cli_main(["check", "--system-module", f"{module}:system", "--pack", "ecoa"])
@@ -369,7 +383,7 @@ class TestSystemModule:
             [
                 "check",
                 "--system-module",
-                "docs.adapters.symbolic_rules:no_such_attribute",
+                "reasonsmith.examples.symbolic_rules:no_such_attribute",
                 "--pack",
                 "ecoa",
             ]
@@ -377,7 +391,7 @@ class TestSystemModule:
         assert rc == 1
         err = capsys.readouterr().err
         assert "'no_such_attribute'" in err
-        assert "docs.adapters.symbolic_rules" in err
+        assert "reasonsmith.examples.symbolic_rules" in err
 
     def test_a_non_sut_object_names_the_missing_protocol_method(self, capsys, write_module):
         module = write_module(
@@ -397,7 +411,7 @@ class TestSystemModule:
 
     def test_a_spec_without_a_colon_is_refused(self, capsys):
         rc = cli_main(
-            ["check", "--system-module", "docs.adapters.symbolic_rules", "--pack", "ecoa"]
+            ["check", "--system-module", "reasonsmith.examples.symbolic_rules", "--pack", "ecoa"]
         )
         assert rc == 1
         assert "module:attribute" in capsys.readouterr().err
@@ -411,7 +425,7 @@ class TestSystemModule:
                 "--system",
                 str(jsonl_fixture_file),
                 "--system-module",
-                "docs.adapters.symbolic_rules:system_under_test",
+                "reasonsmith.examples.symbolic_rules:system_under_test",
                 "--pack",
                 "ecoa",
             ]
@@ -428,7 +442,7 @@ class TestSystemModule:
             [
                 "check",
                 "--system-module",
-                "docs.adapters.symbolic_rules:system_under_test",
+                "reasonsmith.examples.symbolic_rules:system_under_test",
                 "--capabilities",
                 str(caps),
                 "--pack",

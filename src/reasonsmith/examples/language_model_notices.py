@@ -20,7 +20,7 @@ What this module is for:
   The last of those is the finding. reasonsmith refuses the duty it cannot answer instead of
   passing the system on the easier one that shares the clause.
 
-  Run: `python docs/adapters/language_model_notices.py`
+  Run: `python -m reasonsmith.examples.language_model_notices`
 
 Connecting a real model:
   `NoticeWriter` takes one argument: a `complete(prompt: str) -> str`. `stub_model` below stands in

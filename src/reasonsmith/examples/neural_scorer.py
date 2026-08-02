@@ -10,7 +10,7 @@ What this module is for:
   separate host, against the decision log the serving stack exported. Nothing else crosses the
   boundary.
 
-  Run: `python docs/adapters/neural_scorer.py`
+  Run: `python -m reasonsmith.examples.neural_scorer`
 
 What a reader must not break:
   - This system exposes `decisions()` and nothing else, and that is the point, not an omission
@@ -36,7 +36,7 @@ from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import load_pack
 
-#: The duty all three systems in `docs/adapters/` are checked against. Binding, limited to no
+#: The duty all three systems in `reasonsmith.examples` are checked against. Binding, limited to no
 #: regulatory class, and limited to the consumer-credit decision domain — which all three of these
 #: systems are in, and which each of them declares below through `system_domains`. A system that
 #: declared nothing would be reported not applicable on this duty rather than judged on its trace.

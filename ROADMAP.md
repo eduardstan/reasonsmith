@@ -26,7 +26,7 @@ Stated in [`docs/semantics.md`](docs/semantics.md) §3.5, and pinned by
 `test_a_temporal_duty_never_rises_above_observed`.
 
 **Measurable outcome.** Both shipped temporal requirements report at `probed` or `proved` against
-`docs/adapters/symbolic_rules.py`, and `test_a_temporal_duty_never_rises_above_observed` is
+`reasonsmith.examples.symbolic_rules`, and `test_a_temporal_duty_never_rises_above_observed` is
 *replaced* by a test pinning the new ceiling rather than deleted — a removed ceiling test is how a
 ceiling stops being checked.
 

@@ -176,16 +176,28 @@ repo only generates the dossier that gets published there as `report.html`.
 site's social card, and must never be edited here — regenerate there, copy here, update the pinned
 digest in `tests/test_social_card.py`.
 
-`docs/three-systems.md` and the three files in `docs/adapters/` are the answer to "how does any
-model get into this tool?": a neural black box (`JSONLAdapter`, log only), a probabilistic scorer
-(`CallableAdapter`, replayable) and a rule set (`RulesAdapter`, logic exposed), all checked against
+`docs/three-systems.md` and the three files in `src/reasonsmith/examples/` are the answer to "how
+does any model get into this tool?": a neural black box (`JSONLAdapter`, log only), a probabilistic
+scorer (`CallableAdapter`, replayable) and a rule set (`RulesAdapter`, logic exposed), all checked against
 the one binding duty `ecoa_reg_b_1002_9_b_2_specific_reasons` and reaching `observed`, `probed` and
 `proved` respectively. `tests/test_docs_three_systems.py` holds each transcript byte-for-byte the
 way `test_docs_example_output.py` does, asserts the three rungs are still three, and pins the
 neural system's ceiling. That ceiling is the point of the artefact: raising it means changing the
 *system*, never the adapter, and the README's first screen carries the same table.
 
-`docs/language-model.md` and the fourth adapter `docs/adapters/language_model_notices.py` are a
+They live under `src/` and not under `docs/` for one reason: **a documented command must run for
+someone who only ran `pip install reasonsmith`**, and no wheel carries `docs/`. So a command a
+document prints names either a shipped module (`python -m reasonsmith.examples.<name>`,
+`--system-module reasonsmith.examples.<name>:system_under_test`) or a file inside the installed
+package, whose directory `python -m reasonsmith.examples` prints — which is why the README's
+sample-log command carries a `$(…)` substitution and why `docs/build_readme_transcripts.py`
+expands that one substitution before running the command in-process. A new data file the
+documentation names needs a pattern in `pyproject.toml`'s `package-data`; a `.py` module ships by
+being a module. `tests/test_packaged_examples.py` builds the wheel and reads what is in it,
+because this defect once shipped invisibly: from a checkout every missing file was right there.
+
+`docs/language-model.md` and the fourth adapter
+`src/reasonsmith/examples/language_model_notices.py` are a
 different axis, and the filename `three-systems.md` was left alone rather than made false. A
 language model you can call adds **no rung** — it sits at `probed` beside the probabilistic
 scorer — so do not write "four systems, four rungs". What it demonstrates is which duties a system

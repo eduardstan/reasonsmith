@@ -18,12 +18,12 @@ from pathlib import Path
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.cli import main as cli_main
 from reasonsmith.demo import render_key_finding_html
+from reasonsmith.examples import SAMPLE_LOG
 from reasonsmith.report import ConformanceReport, RequirementResult, check_conformance
 from reasonsmith.spec import load_pack
 from reasonsmith.verdict import Strength, Verdict
 
 ROOT = Path(__file__).resolve().parents[1]
-SAMPLE_LOG = ROOT / "docs" / "sample_decisions.jsonl"
 DOCS_INDEX = ROOT / "docs" / "report.html"
 
 

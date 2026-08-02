@@ -8,6 +8,27 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The documented commands run for someone who only ran `pip install reasonsmith`**
+  ([#PRNUMBER](https://github.com/eduardstan/reasonsmith/pull/PRNUMBER)). Three commands on the
+  README's first screens failed for exactly the audience the README is written for: the wheel
+  shipped `table7.toml` and the packs and nothing else, so the sample decision log and the three
+  example systems — the *one duty, three systems, three rungs* demonstration the project's
+  argument rests on — were not on disk after an install, and `docs.adapters.…` could never resolve
+  as a module from a distribution that carries no `docs/`. The four example systems and
+  `sample_decisions.jsonl` now live in `src/reasonsmith/examples/` and ship in the wheel, so
+  `python -m reasonsmith.examples.symbolic_rules`,
+  `--system-module reasonsmith.examples.symbolic_rules:system_under_test` and the sample-log run
+  all work with no checkout; `python -m reasonsmith.examples` prints the directory the log was
+  installed into, which is what lets the README's `--system` command stay a literal command.
+  `tests/test_packaged_examples.py` builds the wheel and reads what is inside it, because from a
+  checkout every missing file was right there and nothing could see the defect.
+- **`reasonsmith --version` prints the version instead of exiting 2**
+  ([#PRNUMBER](https://github.com/eduardstan/reasonsmith/pull/PRNUMBER)). It reports
+  `reasonsmith.__version__`, the number `tests/test_release_discipline.py` already holds to
+  `pyproject.toml`, the changelog and `CITATION.cff`, so it cannot print a version the tree is not.
+
 ### Changed
 
 - **The dossier's key finding is a conformance run, not a narrated pair**
