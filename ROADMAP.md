@@ -9,8 +9,8 @@ Each objective gives a **measurable outcome** — a check that fails today and w
 objective is met — and what it **depends on**. Where the honest answer is that an objective is
 blocked, or deliberately not started, that is written down rather than left as an implied "soon".
 
-Current state, for scale: **4 packs, 19 requirements, 5 engines** (`record`, `observed`, `probed`,
-`certificate` — also at `probed` — and `proved`). `reasonsmith validate-pack ecoa eu_ai_act gdpr table7` prints what each contains.
+Current state, for scale: **5 packs, 27 requirements, 5 engines** (`record`, `observed`, `probed`,
+`certificate` — also at `probed` — and `proved`). `reasonsmith validate-pack ecoa eu_ai_act gdpr gpai table7` prints what each contains.
 
 ---
 
@@ -79,11 +79,23 @@ signal in a decision record at all — and what it means for a property to read 
 It also depends on the four-outcome discipline of `docs/semantics.md` §4 holding: a fairness
 property that cannot be evaluated must report *not evaluated*, never `satisfied`.
 
-## 4. Breadth: more regulations than four
+## 4. Breadth: more regulations than five
 
-**The gap.** Four packs ship — Table 7, EU AI Act, GDPR, ECOA/Reg B — and only three of them quote
-statute at all. Whether a fifth is worth more than depth on the four is a judgement this project has
-not made in public.
+**The gap, and what a fifth pack did and did not settle.** Five packs now ship — Table 7, EU AI Act
+(Art. 12 & 13), GPAI (EU AI Act Art. 53 & 55), GDPR, ECOA/Reg B — and four of them quote statute.
+The GPAI pack met the outcome below in full and closed one thing the objective did not ask for: the
+`general-purpose` member of `spec.REGULATORY_CLASSES` was wired and used by zero shipped
+requirements, so the class gate had a member no run had ever exercised, and its eight duties are the
+first to exercise it.
+
+**What it did not settle, and the honest cost of it.** The judgement this objective names — whether
+another pack is worth more than depth on the ones that ship — is *less* settled than before, not
+more. Twenty-one of the twenty-seven shipped requirements are now presence checks, up from thirteen
+of nineteen, because Article 53 and Article 55 are document-production duties for which presence is
+the correct refinement and no stronger property exists to write
+([`docs/refinement.md`](docs/refinement.md), *presence is not adequacy*). Breadth bought that way is
+real breadth and it is not depth. **A sixth pack that is another eight presence checks makes this
+worse, and a proposal should say which of its duties reaches above `record`.**
 
 **Measurable outcome.** Each additional pack lands with: a retrieval record in
 [`docs/legal-sources.md`](docs/legal-sources.md); verbatim quotes that

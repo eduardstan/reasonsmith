@@ -270,7 +270,7 @@ def test_every_shipped_pack_classifies_every_requirement():
     the classification readable by someone checking it rather than merely well-formed.
     """
     described = {"ecoa", "table7"}
-    for name in ("ecoa", "eu_ai_act", "gdpr", "table7"):
+    for name in ("ecoa", "eu_ai_act", "gpai", "gdpr", "table7"):
         pack = load_pack(name)
         uses_a_domain = False
         for req in pack.requirements:

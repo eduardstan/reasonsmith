@@ -2,7 +2,7 @@
 
 The recorded fixtures under `tests/fixtures/drift/` are byte-faithful slices of the official
 documents fetched from the endpoints recorded in `docs/legal-sources.md` (see the run book kept in
-the drift check's commit message): the AI Act Article 12 and 13 divisions, GDPR Article 22
+the drift check's commit message): the AI Act Article 12, 13, 53 and 55 divisions, GDPR Article 22
 (consolidated) and Recital 71 (original), and the whole 12 CFR 1002.9 section. Tests substitute a
 fixture fetcher for the network, so the suite never touches the live sources.
 """
@@ -31,7 +31,7 @@ from reasonsmith.spec import load_pack
 FIXTURE_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "drift"
 
 FIXTURE_BY_KEY = {
-    "ai_act": "eu_ai_act_art12_art13.xhtml",
+    "ai_act": "eu_ai_act_art12_13_53_55.xhtml",
     "gdpr_consolidated": "gdpr_consolidated_art22.xhtml",
     "gdpr_original": "gdpr_original_rct71.xhtml",
     "ecoa": "ecoa_1002_9.xml",
