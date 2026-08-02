@@ -11,14 +11,24 @@
 
 [![Reasonsmith conformance dossier: headline, key finding and reason audit with the four deleted reasons struck](docs/report-preview.png)](https://reasonsmith.dev/report.html)
 
-## What question does reasonsmith answer?
+## The state of the art, the gap, and what this adds
 
-When a system makes a decision about a person, a regulatory duty often requires the reasons behind it to be recorded — and, on request, given to that person. reasonsmith answers two concrete questions about such a decision:
+**Where compliance tooling stands.** Checking an automated decision system against a regulatory duty is, in practice, checking a document. Model cards, datasheets, audit-log schemas, the EU AI Act's own Article 12 record-keeping duty: each names artefacts the system must produce, and a checker reads what was produced and reports which required fields are filled. That is a real check and it catches real gaps — a missing reason field is a missing reason field.
+
+**The gap.** Existing compliance tools check whether a log has the required fields. None of them states what *strength of evidence* stands behind the verdict. A checker reading a decision log can speak only about the decisions in that log; a checker reasoning over a system's decision rules can speak about every input those rules admit. Both report the same word. The reader of the report cannot tell which one happened, so a claim about three logged decisions and a claim about an unbounded input space arrive indistinguishable — and the weaker of the two is the one that is easy to produce.
+
+**What reasonsmith adds.** Every verdict carries the method that reached it, on a strict lattice — `unattainable < observed < probed < proved` — and a result no engine could establish carries no strength at all rather than a satisfied verdict. Which rung a duty reaches is a fact about the system under test, not about which word a pack author typed: the same property is read off a trace, searched by replay, or proved by a solver depending only on what the system exposes. `RequirementResult` refuses to be constructed claiming more than it has, so the bound travels into every rendering instead of being a convention some renderer might drop. The table in the next section is that claim under test — one duty, three systems, three different rungs — rather than an illustration of it.
+
+**What this does not claim.** A rung is not a compliance grade and not a confidence score: it ranks how a conclusion was reached, never what it was reached about, so a `proved` verdict over logic unrelated to the deployed system is worth less than an `observed` verdict over a year of production decisions, and the lattice cannot see that. Nothing here determines whether a legal duty is discharged. The full statement of what each rung does and does not mean, one engine at a time, is [`docs/semantics.md`](docs/semantics.md).
+
+### The two concrete questions
+
+Given a decision, the symbolic artifact behind it, and an applicable duty, reasonsmith answers:
 
 1. **Is the evidence record complete?** Does it carry every field the duty's formal specification requires?
 2. **Did the explanation engine keep the reasons it was supposed to give?** Or did it drop some on the way out?
 
-Given a decision, the symbolic artifact behind it, and an applicable regulatory duty, reasonsmith evaluates the record's structural completeness and compares actual engine behavior against ground-truth exact inference. Where the applicable requirement identifies reasons the statute obliges, its paired reason-deletion certificate shows which of them the engine dropped.
+The first is evaluated against the formal specification and reported with its strength. The second compares actual engine behavior against ground-truth exact inference: where the applicable requirement identifies reasons the statute obliges, its paired reason-deletion certificate shows which of them the engine dropped.
 
 ## Any model in: one duty, three systems, three rungs
 
@@ -40,7 +50,7 @@ The CLI reaches the same three systems against a whole pack, no Python needed �
 reasonsmith check --system-module docs.adapters.symbolic_rules:system_under_test --pack ecoa
 ```
 
-All three verdicts are `satisfied`. The rung is not a score and not a grade of compliance: it is how far the claim reaches — three logged decisions, 200 replayed inputs, or every input the declared constraints admit. The neural system **cannot** reach `probed` or `proved` as built, and no adapter can change that; a test pins that ceiling. Full walkthrough, with the three transcripts and why this duty was chosen over a recital: [`docs/three-systems.md`](docs/three-systems.md).
+All three verdicts are `satisfied`, and the rung is what separates them: how far each claim reaches — three logged decisions, 200 replayed inputs, or every input the declared constraints admit. The neural system **cannot** reach `probed` or `proved` as built, and no adapter can change that; a test pins that ceiling. Full walkthrough, with the three transcripts and why this duty was chosen over a recital: [`docs/three-systems.md`](docs/three-systems.md).
 
 ## What a verdict is worth
 
@@ -232,6 +242,69 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 The stratified rows are measured on frozen synthetic cohorts, built to separate the two mechanisms from each other. Whether real atypical cases trip more reasons than typical ones is an empirical question about data this table does not have, and the table does not answer it. Every figure in it is reproduced in **[RESULTS.md](RESULTS.md)**, along with the exact environment and versions, both suites' pass/fail/skip counts with `torch` installed, and a byte-for-byte diff of two demo runs.
 
 Figures this README takes from the paper rather than from running code — the 273 primary studies, the six Table 7 duties — and the rough `~1GB` size of the `torch` download are not measurements and are not reproduced there.
+
+## Who could use this, and what is missing first
+
+Four audiences this work is aimed at, and — for each — what is missing before the tool is usable to
+them. These are gaps, not wishes: every one is stated in a committed document, cited here. A reader
+from one of these groups should be able to recognise their own blocker.
+
+**Insurers** pricing exposure on an automated decision system. Missing: a claim that survives past
+the trace. `observed` covers exactly the records supplied and establishes nothing about decisions
+outside them, and no engine here reasons over a trace-wide formula, so every duty about behaviour
+*over a lifetime* — retention, continuous monitoring — is met today by a check over one supplied run
+([`docs/refinement.md`](docs/refinement.md), *the trace is a sample*; `ROADMAP.md` §2). Also missing:
+any defence against the insured. The one duty that reads an approximation error reads a number the
+system declares about itself, which nothing verifies — it rewards the measurement, not the accuracy,
+and a system that under-reports passes ([`docs/findings-nesyarena.md`](docs/findings-nesyarena.md),
+finding 1). And no requirement in any shipped pack checks a fairness property (`ROADMAP.md` §4),
+which is where a large share of the liability actually sits.
+
+**Regulators** wanting a report to stand as supervisory evidence. Missing: a decision-domain model.
+Twelve of eighteen shipped requirements are not class-limited, so a duty reaches systems in
+unrelated domains and reports them `satisfied` — an ECOA adverse-action duty cleared a
+graph-reachability benchmark that issues no credit ([`docs/findings-nesyarena.md`](docs/findings-nesyarena.md),
+finding 3; `ROADMAP.md` §1). Missing too: authority over the refinement. Which formula stands for a
+clause is a judgement made in this repository and recorded as such — the proxy chosen for
+*specific* in 12 CFR 1002.9(b)(2) is the pack author's, and the regulation names nothing of the kind
+([`docs/refinement.md`](docs/refinement.md)). One shipped property is known to be wider than its
+clause: 12 CFR 1002.9(a)(2) is an either/or, and the property demands the reasons branch
+unconditionally, so a creditor lawfully using the disclosure alternative is reported violated. A
+false positive against a lawful practice disqualifies a tool from supervisory use until it is fixed.
+
+**Auditors** running this against a client's system. Missing: reach into systems that are only logs.
+For any system exposing nothing but a decision trace, `observed` is the ceiling whatever the pack
+asks ([`docs/findings-nesyarena.md`](docs/findings-nesyarena.md), finding 2) — and most audited
+systems are logs. Missing also: an adversarial default. reasonsmith checks what a system says, not
+whether it was honest: a declared capability set, a trace and exposed logic are each taken at their
+word, and where exposed logic and the trace disagree the proof is reported and the trace is never
+read for that duty ([`docs/semantics.md`](docs/semantics.md) §3, §3.5). And no cryptographic
+signature is verified anywhere in this repository — a `signer` field is checked for being non-empty
+([`docs/refinement.md`](docs/refinement.md), Table 7 Art. 12 row), so the evidence chain is
+unattested.
+
+**Researchers** comparing systems or engines. This is the audience the tool is closest to usable
+for: [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) is a real run against five
+`nesyarena` provenances, and `docs/nesyarena-conformance-report.md` is its regenerable evidence.
+Missing: properties worth differentiating a system on. Fifteen of the eighteen shipped requirements
+are presence checks, against one `logical` and two `temporal` ones, so a battery of engines mostly
+agrees by construction. Missing also: independence. The packs are authored here, so a cross-system
+comparison measures this repository's refinement as much as it measures the systems — a benchmark
+needs a pack set whose fourth column someone other than its author has reviewed
+([`docs/refinement.md`](docs/refinement.md)).
+
+## Roadmap
+
+[**`ROADMAP.md`**](ROADMAP.md) is the public backlog: five numbered objectives, each with the gap
+it closes, a measurable outcome that fails today, and what it depends on — including the two that
+are deliberately blocked and why. It also lists what is deliberately *not* planned, so a proposal
+for one of those gets an answer rather than silence.
+
+The repository has [`good first issue`](https://github.com/eduardstan/reasonsmith/labels/good%20first%20issue)
+work sized for a first contribution, and the question that most needs outside answers — *which
+regulation should the next pack cover?* — is open in
+[Discussions](https://github.com/eduardstan/reasonsmith/discussions). [`CONTRIBUTING.md`](CONTRIBUTING.md)
+has the setup, the verification commands and the standing rules.
 
 ## Limits
 

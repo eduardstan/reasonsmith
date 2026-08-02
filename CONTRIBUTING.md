@@ -29,7 +29,9 @@ All three must pass cleanly with zero errors or warnings. Continuous integration
 
 ## Roadmap & What to Work On
 
-### Project Status & Roadmap
+**The roadmap lives in [`ROADMAP.md`](ROADMAP.md)**, not here: five numbered objectives, each with a measurable outcome that fails today and what it depends on, plus what is deliberately not planned. Read it before proposing work. What follows is the status summary and the smaller items that are not objectives in their own right.
+
+### Project Status
 
 | Category | Status | Details |
 |---|---|---|
@@ -40,7 +42,9 @@ All three must pass cleanly with zero errors or warnings. Continuous integration
 
 The demonstrations **Issue 6** asked for — rows 1, 2, 5 and 6 — have landed, so every Table 7 row now has one. What is still open:
 
-- **Wider temporal monitor rule sets** for the `observed` rtamt engine.
+- **The five numbered objectives in [`ROADMAP.md`](ROADMAP.md)**, which is where the substantial work is.
+- **Wider temporal monitor rule sets** for the `observed` rtamt engine — smaller than an objective, and a good way into the property language.
+- **Anything labelled [`good first issue`](https://github.com/eduardstan/reasonsmith/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)**, each one self-contained and stating what "done" looks like.
 
 Extending an engine, rather than adding another demo, is now the concrete, high-impact contribution.
 
