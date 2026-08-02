@@ -8,6 +8,24 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Documentation
+
+- **The nesyarena findings document can no longer go stale silently**
+  ([#82](https://github.com/eduardstan/reasonsmith/pull/82)).
+  `docs/findings-nesyarena.md` is hand-written prose that quotes counts living in generated
+  artefacts — the conformance report, the builder's `DECLARED_SIGNALS` / `UNDECLARED_SIGNALS`,
+  and the per-formalism requirement census of the packs — and nothing held the prose to those
+  sources, so every pack change sent the figures stale (three fix rounds in one earlier task,
+  and two stale figures that predated even those). `tests/test_findings_nesyarena.py` now
+  derives every quoted figure from the run the builder drives and fails when the prose
+  disagrees, naming the figure and what to regenerate. Finding 2 is re-derived against the
+  current counts: the ten unattainable results are the GDPR logical duty and the GDPR record
+  duty `gdpr_art22_1_automated_decision_prohibition`, not the GDPR logical and ECOA timing
+  duties the earlier account named, and the conclusion still holds — the Z3 proved engine and
+  the replay probed engine never ran, because no `logical` duty reaches an engine in this run
+  and the adapter exposes no real `logic()` or `decide()`. Finding 3's counterfactual is
+  corrected too: a `consumer-credit` run would leave two ECOA duties unattainable, not one.
+
 ## [0.5.0] - 2026-08-02
 
 **Breaking:** the example systems and the sample decision log moved from `docs/adapters/` and
