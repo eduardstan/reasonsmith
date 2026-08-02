@@ -194,6 +194,29 @@ delegates to it, so a rendering edit is a `render.py` edit and nothing in `repor
 repo and deploys to Vercel — see [#35](https://github.com/eduardstan/reasonsmith/pull/35); this
 repo only generates the dossier that gets published there as `report.html`.
 
+The page's stylesheet is two token blocks, and three rules keep them from drifting. The dark block
+is `@media screen and (prefers-color-scheme: dark)` — the `screen` is load-bearing, because the
+`@media print` block below it overrides a handful of declarations and otherwise assumes the light
+values, so a dark override reaching print media prints white on white
+(`test_the_dark_scheme_is_screen_only_so_print_stays_light`). A solid chip pairs its fill
+(`--ink`, `--ok`, `--warn`, `--accent`) with `var(--paper)`, never `var(--surface)`: that pairing
+inverts with the scheme, and `--surface` puts near-white text on a light green fill in the dark
+block. The report header is not an inversion of the page — it is a dark band in both schemes, so
+it and the key-finding banner read `--band`/`--band-ink`/`--band-faint`/`--band-line`/
+`--band-accent` rather than swapping `--ink` and `--surface`. Satisfied-green and violated-red
+carry meaning here, so `test_both_schemes_keep_the_verdict_colours_apart` pins the hue channel of
+`--ok` and `--accent-deep` in both blocks: a scheme that desaturates them toward a common grey
+passes every contrast check and still destroys the distinction. `demo.py` carries its own
+stylesheet for the key-finding section that `docs/build_example.py` composes in, and it is subject
+to all three rules.
+
+`ConformanceReport.to_dict()` leads with `schema_version` (`report.JSON_SCHEMA_VERSION`), the
+`--json` envelope's shape version. It is not the package version, it increments only when a key is
+removed, renamed or changes type or meaning, and `tests/test_json_schema_version.py` writes out the
+key set at both levels beside the number so a shape change without a bump fails. Adding a key fails
+it too, deliberately: the convention says that is not a bump, and the test exists to make the
+decision be made rather than skipped.
+
 `AudienceProjection` has one field that emits rather than suppresses: `plain_account`, on for
 `affected-individual` alone, turning on `render._lay_sections`. Everything it prints is quoted —
 the decision and the reason out of `ConformanceReport.decisions` (the trace `check_conformance`
