@@ -51,12 +51,12 @@ a measurement harness, not an AI system placed on the market in an Annex III use
 
 **No decision domain was declared either.** These provenances decide graph reachability and Sudoku
 validity. They issue no credit, hire nobody and treat no patient, so there is nothing to declare,
-and the three ECOA duties come back not applicable rather than checked. That is finding 3 below,
+and the four ECOA duties come back not applicable rather than checked. That is finding 3 below,
 and it is the reason the gate exists.
 
 ## The headline
 
-60 results — 5 systems × 12 requirements across the three packs:
+65 results — 5 systems × 13 requirements across the three packs:
 
 | outcome | count |
 | --- | ---: |
@@ -64,7 +64,7 @@ and it is the reason the gate exists.
 | violated, at strength `observed` | 3 |
 | inconclusive, `unattainable` | 10 |
 | not applicable (no class declared) | 20 |
-| not applicable (no decision domain declared) | 15 |
+| not applicable (no decision domain declared) | 20 |
 | satisfied at `probed` | 0 |
 | satisfied at `proved` | 0 |
 
@@ -76,7 +76,8 @@ after that run to read the declared deviation rather than the field that explain
 The whole ECOA column moved to *not applicable* when the decision-domain gate landed: 8 satisfied,
 2 violated and 5 unattainable results became 15 not-applicable ones. Nothing about these systems
 changed. What changed is that a duty about consumer credit stopped being answered against a graph
-solver — finding 3.
+solver — finding 3. The column is 20 results rather than 15 today only because the pack has since
+gained a fourth duty; the gate did what that sentence says it did to the three that existed then.
 
 ## The violation
 
@@ -245,7 +246,7 @@ Four of the five systems came back `satisfied` on `ecoa_reg_b_1002_9_a_2_written
 adverse-action notice duty under 12 CFR 1002.9 — for a graph-reachability benchmark that issues no
 credit and notifies nobody.
 
-The cause is structural: all three ECOA requirements and all five GDPR requirements carry
+The cause is structural: all four ECOA requirements and all five GDPR requirements carry
 `scope = ""`, so they are not class-limited and reach every system. Only the EU AI Act pack uses
 the regulatory-class gate. reasonsmith has no notion of *decision domain* at all — nothing in a
 pack can say "this duty is about consumer credit" — so a domain mismatch is invisible where a
@@ -257,12 +258,17 @@ signal, not a missing domain.
 
 **Fixed, and this is what fixing it cost.** A `domains` field now sits beside `scope` on every
 requirement, naming the kinds of decision a duty is about, and it is matched by intersection against
-what a system declares (`--system-domain`, or `system_domains` on an adapter). The three ECOA duties
-carry `domains = ["consumer-credit"]`; this run declares no domain; all fifteen ECOA results are now
+what a system declares (`--system-domain`, or `system_domains` on an adapter). The four ECOA duties
+carry `domains = ["consumer-credit"]`; this run declares no domain; all twenty ECOA results are now
 `not_applicable`, where four of the five systems were `satisfied` on
 `ecoa_reg_b_1002_9_a_2_written_statement` before. The GDPR results did **not** move, and that is the
 right answer rather than a gap: Article 22 governs a solely-automated decision whatever the decision
 is about, so the five GDPR duties carry `domains = []` and reach every system, including this one.
+The gate is not the only thing standing between these systems and the fourth of those duties:
+`ecoa_reg_b_1002_9_b_2_principal_reasons_complete` gates on `artifact_logs_deleted_reason_count`, a
+count reasonsmith *measures* from an inference artefact a system exposes through the optional
+`artifact()` method rather than reads from a log, so even a run declaring `consumer-credit` would
+report it `unattainable` on all five provenances, where the other three would become checkable.
 
 Three things this did not fix, in descending order of how much they should worry a reader:
 
@@ -284,12 +290,12 @@ Three things this did not fix, in descending order of how much they should worry
 
 And the observation this finding made about the *output* is now less true but not gone: the
 unattainable verdict on the timing requirement was the only hint the domain did not fit. It has been
-replaced by fifteen results that name the domain mismatch directly. What has not been replaced is
+replaced by twenty results that name the domain mismatch directly. What has not been replaced is
 any way to tell, from the report alone, whether the classification behind them was a good one.
 
 ### 4. The AI Act pack said nothing at all
 
-20 of the 60 results — every AI Act requirement for every system — are `not_applicable` because
+20 of the 65 results — every AI Act requirement for every system — are `not_applicable` because
 no regulatory class was declared. That is the designed behaviour and the report says so in full,
 but the honest summary is that running the AI Act pack against this system produced no
 information. The gate is binary: declare `high-risk` and all four duties are checked, declare
