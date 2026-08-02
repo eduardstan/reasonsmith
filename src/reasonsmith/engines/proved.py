@@ -51,11 +51,14 @@ import z3
 
 from reasonsmith.report import RequirementResult
 from reasonsmith.rulelang import (
+    CONTAINS_CALL,
     PRESENCE_CALL,
     UnsupportedConstructError,
     assignment_target,
+    contains_arguments,
     eval_expression,
     execute_statements,
+    fold_ascii_case,
     parse_expression,
     parse_property,
 )
@@ -218,6 +221,75 @@ def _present_to_z3(node: ast.Call, scope: _Scope) -> Any:
     return z3.BoolVal(True)
 
 
+def _any_string_re() -> Any:
+    """The Z3 regular language of every string, used to bracket a substring search.
+
+    `Full` rather than the equivalent `Star(AllChar(...))`: the two accept the same language, and
+    the solver reaches an answer about twice as fast on the one it recognises as a primitive. The
+    difference decides whether this engine finishes inside its own timeout, and a proof that
+    depends on how the same language was spelled is a proof that flakes.
+    """
+    return z3.Full(z3.ReSort(z3.StringSort()))
+
+
+def _case_folded_re(phrase: str) -> Any:
+    """The Z3 regular language of `phrase` under `fold_ascii_case`, character by character.
+
+    `z3.Contains` would be shorter and would be case-*sensitive*, which is not the predicate
+    `rulelang.contains_literal` implements: a notice reading "Failed to achieve a qualifying score"
+    is the same statement as the lower-case one, and a duty that misses it because of a capital
+    letter is theatre. Each character therefore becomes a regular language matching exactly one
+    character — itself, or either case where it is an ASCII letter. Exactly one character per
+    character is what makes this the same fold: the interpreter's is length-preserving by
+    construction (`fold_ascii_case`), and `contains_arguments` refuses a non-ASCII phrase rather
+    than let the two sides disagree about a fold only one of them can perform.
+    """
+    parts = []
+    for char in phrase:
+        lowered = fold_ascii_case(char)
+        if "a" <= lowered <= "z":
+            parts.append(
+                z3.Union(
+                    z3.Re(z3.StringVal(lowered)),
+                    z3.Re(z3.StringVal(chr(ord(lowered) - 32))),
+                )
+            )
+        else:
+            # `fold_ascii_case` changes nothing but the twenty-six capitals, so every other
+            # character stands for itself and for no other.
+            parts.append(z3.Re(z3.StringVal(char)))
+    return z3.Concat(*parts) if len(parts) > 1 else parts[0]
+
+
+def _contains_to_z3(node: ast.Call, scope: _Scope) -> Any:
+    """Encode `contains(signal, "phrase")` against the declared rules, or refuse it.
+
+    Two refusals, and both drop the duty to the strongest engine that *can* answer it rather than
+    losing its verdict, exactly as `_present_to_z3`'s refusal does:
+
+    - **The signal is a free input of the rules.** Read, never written. What a statement says is a
+      fact about what the system writes into it; the solver's free constant says nothing about that.
+    - **The signal is not declared a string.** The predicate reads recorded text, and a rule set
+      that gives this name a number or a Boolean is not one this property is about. Coercing a sort
+      would prove a property about a program nobody wrote.
+    """
+    signal, phrase = contains_arguments(node)
+    if not scope.is_definitely_assigned(signal):
+        raise UnsupportedConstructError(
+            f"{CONTAINS_CALL}({signal}, ...) cannot be proved: the declared rules do not assign "
+            f"{signal!r} on every path, so the exposed logic does not establish what every "
+            "decision says"
+        )
+    const = scope.read(signal)
+    if const.sort() != z3.StringSort():
+        raise UnsupportedConstructError(
+            f"{CONTAINS_CALL}({signal}, ...) reads recorded text, but the declared rules give "
+            f"{signal!r} sort {const.sort()}"
+        )
+    any_string = _any_string_re()
+    return z3.InRe(const, z3.Concat(any_string, _case_folded_re(phrase), any_string))
+
+
 def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
     """Recursively convert a Python AST node to a Z3 expression."""
     if isinstance(node, ast.Expression):
@@ -308,6 +380,9 @@ def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
 
         if func_name == PRESENCE_CALL:
             return _present_to_z3(node, scope)
+
+        if func_name == CONTAINS_CALL:
+            return _contains_to_z3(node, scope)
 
         if func_name in ("implies", "Implies"):
             if len(node.args) != 2:
@@ -667,11 +742,21 @@ class ProvedEngine:
                 )
             return not_evaluated(summary, {"solver": "z3", kind: message})
 
+        # The property is checked on a *fresh* solver carrying the same assertions, rather than by
+        # adding the negation to the one that just answered the premises. The assertions are
+        # identical, so nothing about the claim changes; what changes is that the solver is not
+        # already carrying the internal state it built to produce a premise model. For a property
+        # over string regular languages that state costs whole seconds — enough to turn this
+        # engine's own timeout into the answer — and a proof that depends on whether some earlier
+        # query happened to be asked first is a proof that flakes.
+        property_solver = z3.Solver()
+        property_solver.set("timeout", timeout_ms)
         try:
-            solver.add(z3.Not(spec_z3))
-            check_res = solver.check()
+            property_solver.add(*solver.assertions())
+            property_solver.add(z3.Not(spec_z3))
+            check_res = property_solver.check()
             unknown_reason = (
-                solver.reason_unknown() if check_res == z3.unknown else ""
+                property_solver.reason_unknown() if check_res == z3.unknown else ""
             ) or "solver returned unknown or timed out"
         except Exception as exc:
             return not_evaluated(
@@ -702,7 +787,7 @@ class ProvedEngine:
             )
 
         if check_res == z3.sat:
-            ce_inputs = _model_inputs(scope, solver.model())
+            ce_inputs = _model_inputs(scope, property_solver.model())
             reproduced, verif_msg = _verify_counterexample(sut, req, ce_inputs, logic_data)
             if reproduced:
                 return RequirementResult(

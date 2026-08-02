@@ -137,6 +137,57 @@ engine answers, and they answer it the same way because there is one definition
 (`rulelang.is_present`) rather than one per engine. Its argument is a signal name, never an
 expression: there is no such question about a computed value.
 
+### `contains(signal, "phrase")` — the phrase atom
+
+`contains(x, "p")` asks whether the text a record carries for `x` carries `p`. Like `present()`,
+its first argument is a signal name and never an expression, for the same reason: every engine has
+to bind it to one field of one decision record. Its second argument is a **string literal and never
+a name**, so the wording a duty forbids is fixed by the pack rather than supplied by the system
+being audited. Anything else — an arity other than two, a computed haystack, a name where the
+phrase belongs, an empty phrase, a non-ASCII phrase — is refused where it is written
+(`test_a_malformed_contains_atom_is_refused_rather_than_guessed_at`).
+
+**Why it exists.** Fifteen of the eighteen duties shipping before it were conjunctions of
+`present()`, so the strongest claim available about an explanation duty was *"for every admitted
+input the reason field is non-blank"* — which a reason string of `"n/a"` satisfies and
+12 CFR 1002.9(b)(2) does not accept. The clause supplies its own negative constraint, naming two
+statements that are insufficient, and this is the narrowest atom that expresses one.
+
+**What it means, exactly.**
+
+- **Comparison folds ASCII case and nothing else.** `fold_ascii_case` lowercases the twenty-six
+  ASCII capitals and leaves every other character alone. `str.lower()` is not length-preserving over
+  the whole of Unicode — `"İ".lower()` is two characters — and the Z3 encoding renders each phrase
+  character as a regular language matching *exactly one* character, so a fold that is not
+  one-to-one would make the solver and the interpreter disagree about the same string. A non-ASCII
+  phrase is therefore refused at load time rather than compared under a fold only one side can
+  perform (`test_the_fold_is_ascii_case_and_reaches_no_further`).
+- **A record carrying nothing carries no phrase.** Where `_is_present` says the signal is absent,
+  `contains()` is false. That is what lets an implication guarded by `present()` decide a duty that
+  only bites where a statement was made (`test_a_record_carrying_no_statement_carries_no_phrase`).
+- **A present value that is not text is not read as carrying nothing.** A list of reason codes is
+  not a statement, and answering `False` there would report a system satisfied on a field nothing
+  read. The interpreter raises, and the observed engine reports the whole requirement not
+  evaluated, naming the signal — the same discipline an unmeasured magnitude gets
+  (`test_a_present_non_text_value_is_refused_not_read_as_carrying_nothing`,
+  `test_a_non_text_value_makes_the_duty_not_evaluated_never_satisfied`).
+- **It is a substring test and claims to be nothing more.** It answers whether a phrase occurs. It
+  does not model whether a statement is *specific*, does not paraphrase, and catches no wording but
+  the one the pack names. A duty built on it can establish that a statement the clause itself calls
+  insufficient was made; it cannot establish that any other statement is sufficient.
+
+**The three encodings, and how they are held together.** `contains()` is evaluated in three places,
+and a predicate meaning one thing to the monitor and another to the solver would report `proved`
+about a property nobody wrote. The rulelang interpreter compares folded strings. rtamt cannot reason
+about text at all, so — exactly as `present()` already does — the atom is evaluated in Python per
+record and reaches the monitor as a synthetic flag, which is what keeps its meaning the one meaning
+(`test_a_forbidden_phrase_in_the_trace_is_an_observed_violation`). That rewriting is textual, and a
+call head a phrase merely quotes is skipped rather than rewritten
+(`test_a_call_head_a_phrase_merely_quotes_is_not_rewritten`). Z3 encodes it as a bracketed regular
+language, character by character, and a generated corpus checks that the solver's fold is the
+interpreter's fold (`test_the_solvers_fold_is_the_interpreters_fold`) — the counterpart of what
+`test_the_solvers_blank_string_is_pythons_blank_string` does for `present()`.
+
 ### `temporal` — Signal Temporal Logic, monitored by rtamt
 
 `ObservedEngine` renders the property in rtamt's syntax with `to_stl` and hands that to
@@ -212,7 +263,7 @@ never calls `eval`, `exec` or `compile`; the whitelist is the interpreter itself
 | Binary | `+`, `-`, `*`, `/`, `%` |
 | Boolean | `and`, `or` |
 | Comparison | `==`, `!=`, `<`, `<=`, `>`, `>=`, including chained |
-| Calls | `implies(a, b)` / `Implies(a, b)`, `abs(x)`, `min(a, b)`, `max(a, b)`, `present(signal)` — no keyword arguments |
+| Calls | `implies(a, b)` / `Implies(a, b)`, `abs(x)`, `min(a, b)`, `max(a, b)`, `present(signal)`, `contains(signal, "phrase")` — no keyword arguments |
 | Temporal | `always`, `eventually`, `once`, `historically`, `next`, `prev`, `rise`, `fall`, each over one operand |
 | Arrows | `<=>` and `<->` rewrite to `==`; `=>`, `->` and ` implies ` rewrite to `Implies(...)` |
 
@@ -553,6 +604,18 @@ answer rather than losing its verdict:
   path does not establish that every decision carries it
   (`test_presence_is_not_proved_when_only_one_branch_assigns_the_signal`).
 
+### When the phrase atom cannot be proved
+
+`contains()` refuses the same free-input case, for the same reason, and one of its own: a signal the
+declared rules give a sort other than string is not one this predicate reads, and coercing a sort
+would prove a property about a program nobody wrote
+(`test_the_solver_refuses_a_signal_it_cannot_read_as_text`). Both refusals drop the duty to the
+strongest engine that *can* answer it. Where the rules do write text, the duty is genuinely proved
+over every admitted input — a system whose rules can write a statement the clause calls
+insufficient is proved to violate it rather than watched until one turns up in a log
+(`test_a_forbidden_phrase_the_rules_can_write_is_proved_to_violate`,
+`test_rules_that_never_write_a_forbidden_phrase_are_proved_to_satisfy`).
+
 The signal's sort is not itself a reason for refusal. In particular, **a string is not refused**:
 `present()` over a string encodes as
   "not in the language of blanks" over `BLANK_CHARACTERS`, which is exactly the set `str.strip()`
@@ -671,6 +734,12 @@ Two consequences of that report text, followed by a separate package-level termi
 | A presence proof requires the rules to assign the signal on every path | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`, `test_presence_is_not_proved_when_only_one_branch_assigns_the_signal` |
 | A temporal duty never rises above observed | `test_a_temporal_duty_never_rises_above_observed` |
 | The solver's blank string is Python's blank string, so a provable blank reason is a violation | `test_the_solvers_blank_string_is_pythons_blank_string`, `test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose` |
+| `contains()` takes a signal name and a literal ASCII phrase, and every other shape is refused | `test_a_malformed_contains_atom_is_refused_rather_than_guessed_at`, `test_a_contains_atom_is_a_boolean_property_outside_the_record_fragment`, `test_the_phrase_is_not_a_signal_the_property_reads` |
+| The solver's ASCII case fold is the interpreter's, over a generated corpus | `test_the_solvers_fold_is_the_interpreters_fold`, `test_the_fold_is_ascii_case_and_reaches_no_further` |
+| A record carrying no statement carries no phrase, and a present non-text value is refused rather than read as carrying none | `test_a_record_carrying_no_statement_carries_no_phrase`, `test_a_present_non_text_value_is_refused_not_read_as_carrying_nothing`, `test_a_non_text_value_makes_the_duty_not_evaluated_never_satisfied` |
+| A forbidden phrase in the trace is an observed violation, and a statement naming a factor is satisfied | `test_a_forbidden_phrase_in_the_trace_is_an_observed_violation`, `test_a_statement_naming_a_factor_is_observed_satisfied` |
+| Rewriting for rtamt skips a call head a phrase merely quotes | `test_a_call_head_a_phrase_merely_quotes_is_not_rewritten` |
+| Exposed rules that can write a forbidden phrase are proved to violate; a signal the rules do not type as text is refused | `test_a_forbidden_phrase_the_rules_can_write_is_proved_to_violate`, `test_rules_that_never_write_a_forbidden_phrase_are_proved_to_satisfy`, `test_the_solver_refuses_a_signal_it_cannot_read_as_text` |
 | An absent or blank signal in an observed record is a violation, naming it | `test_record_engine_violated_on_blank_field`, `test_a_declared_signal_absent_from_the_trace_is_a_violation` |
 | Presence means non-empty, not merely keyed, in every engine | `test_a_present_but_empty_signal_does_not_count_as_evidence`, `test_a_falsy_but_real_signal_value_counts`, `test_temporal_presence_agrees_with_record_presence_for_falsy_values` |
 | An empty trace is not evaluated, never satisfied | `test_an_empty_trace_is_not_evidence` |

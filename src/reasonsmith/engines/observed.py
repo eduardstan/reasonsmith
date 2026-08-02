@@ -31,6 +31,7 @@ What a reader must not break:
 
 from __future__ import annotations
 
+import ast
 import math
 import re
 import sys
@@ -52,12 +53,15 @@ import rtamt
 
 from reasonsmith.report import RequirementResult
 from reasonsmith.rulelang import (
+    CONTAINS_CALL,
     FLAG_THRESHOLD,
     PRESENCE_CALL,
     UnsupportedConstructError,
     bare_boolean_names,
+    contains_literal,
     is_present,
     parse_property,
+    string_literal_mask,
     validate_temporal_property,
 )
 from reasonsmith.spec import Requirement
@@ -78,36 +82,66 @@ _IDENT = r"[a-zA-Z_][a-zA-Z0-9_]*"
 _OPERAND = rf"(?:{_NUMBER}|{_IDENT})"
 _COMPARISON = re.compile(rf"({_OPERAND})\s*(<=|>=|<|>|==|!=)\s*({_OPERAND})")
 
-_PRESENCE_CALL = re.compile(rf"\b{PRESENCE_CALL}\s*\(\s*({_IDENT})\s*\)")
+_STRING_LITERAL = r"(?:\"(?:[^\"\\]|\\.)*\"|'(?:[^'\\]|\\.)*')"
+_ATOM_CALL = re.compile(
+    rf"\b(?:{PRESENCE_CALL}\s*\(\s*(?P<present>{_IDENT})\s*\)"
+    rf"|{CONTAINS_CALL}\s*\(\s*(?P<signal>{_IDENT})\s*,\s*(?P<phrase>{_STRING_LITERAL})\s*\))"
+)
 _SYNTHETIC_PRESENCE_PREFIX = "__reasonsmith_present_"
+_SYNTHETIC_CONTAINS_PREFIX = "__reasonsmith_contains_"
 
 
 def _render_stl(
     spec: str, reserved_names: set[str] | None = None
-) -> tuple[str, dict[str, str]]:
-    """Render a property for rtamt and map each synthetic presence flag to its signal."""
+) -> tuple[str, dict[str, str], dict[str, tuple[str, str]]]:
+    """Render a property for rtamt, mapping each synthetic flag back to what computes it.
+
+    rtamt reasons over real-valued signals and nothing else, so neither atom that reads a *record*
+    rather than a magnitude can be handed to it directly. Both are therefore evaluated in Python,
+    per record, and reach the monitor as a synthetic flag: `present(x)` through `is_present`, and
+    `contains(x, "p")` through `contains_literal`. That is what keeps their meaning the one meaning
+    every other engine uses, instead of a second definition living inside an STL string.
+
+    Rewriting is textual, so a call head that a `contains()` phrase merely quotes is skipped:
+    `contains(reason, "present(x)")` forbids a phrase, it does not ask a presence question.
+    """
     used = set(re.findall(rf"\b{_IDENT}\b", spec)) | set(reserved_names or ())
     presence_signals: dict[str, str] = {}
-    next_index = 0
+    contains_signals: dict[str, tuple[str, str]] = {}
+    in_string = string_literal_mask(spec)
+    counter = 0
+
+    def fresh(prefix: str) -> str:
+        nonlocal counter
+        while f"{prefix}{counter}" in used:
+            counter += 1
+        synthetic = f"{prefix}{counter}"
+        counter += 1
+        used.add(synthetic)
+        return synthetic
 
     def replace(match: re.Match[str]) -> str:
-        nonlocal next_index
-        while f"{_SYNTHETIC_PRESENCE_PREFIX}{next_index}" in used:
-            next_index += 1
-        synthetic = f"{_SYNTHETIC_PRESENCE_PREFIX}{next_index}"
-        next_index += 1
-        used.add(synthetic)
-        presence_signals[synthetic] = match.group(1)
+        if in_string[match.start()]:
+            return match.group(0)
+        if match.group("present") is not None:
+            synthetic = fresh(_SYNTHETIC_PRESENCE_PREFIX)
+            presence_signals[synthetic] = match.group("present")
+        else:
+            synthetic = fresh(_SYNTHETIC_CONTAINS_PREFIX)
+            contains_signals[synthetic] = (
+                match.group("signal"),
+                ast.literal_eval(match.group("phrase")),
+            )
         return f"({synthetic} >= {PRESENCE_THRESHOLD})"
 
-    return _PRESENCE_CALL.sub(replace, spec), presence_signals
+    return _ATOM_CALL.sub(replace, spec), presence_signals, contains_signals
 
 
 def to_stl(spec: str) -> str:
     """Return a requirement property in rtamt syntax.
 
-    The synthetic flag named in the returned text is populated by `ObservedEngine`; callers that
-    only need the rendered formula can use this public view without depending on that mapping.
+    The synthetic flags named in the returned text are populated by `ObservedEngine`; callers that
+    only need the rendered formula can use this public view without depending on those mappings.
     """
     return _render_stl(spec)[0]
 
@@ -236,7 +270,9 @@ class ObservedEngine:
                 scope=req.scope,
             )
 
-        stl_text, presence_signals = _render_stl(req.spec, set(req.requires))
+        stl_text, presence_signals, contains_signals = _render_stl(
+            req.spec, set(req.requires)
+        )
 
         # Extract variable names from formula or req.requires
         var_names = set(req.requires)
@@ -250,17 +286,37 @@ class ObservedEngine:
         spec_vars = formula_vars | var_names
         magnitude_vars = _magnitude_vars(stl_text)
         magnitude_vars.difference_update(presence_signals)
+        magnitude_vars.difference_update(contains_signals)
 
         # Build dataset for rtamt
         time_series: dict[str, list[float]] = {"time": list(range(len(records)))}
         unmeasured: dict[str, int] = {}
         non_boolean_atoms: dict[str, int] = {}
+        non_text_atoms: dict[str, int] = {}
         for var in spec_vars:
             if var in presence_signals:
                 source = presence_signals[var]
                 time_series[var] = [
                     1.0 if is_present(rec.get(source)) else 0.0 for rec in records
                 ]
+                continue
+            if var in contains_signals:
+                # A record that carries no value for the signal contains no phrase, which is what
+                # lets an implication guarded by `present()` decide the duty. A record that carries
+                # something that is not text is a kind the trace never established, exactly as an
+                # unmeasured magnitude is, and it is counted rather than scored.
+                source, phrase = contains_signals[var]
+                found: list[float] = []
+                not_text = 0
+                for rec in records:
+                    try:
+                        found.append(1.0 if contains_literal(rec.get(source), phrase) else 0.0)
+                    except UnsupportedConstructError:
+                        not_text += 1
+                        found.append(0.0)
+                if not_text:
+                    non_text_atoms[source] = max(non_text_atoms.get(source, 0), not_text)
+                time_series[var] = found
                 continue
             values: list[float] = []
             not_measured = 0
@@ -293,6 +349,28 @@ class ObservedEngine:
                 else:
                     unmeasured[var] = not_measured
             time_series[var] = values
+
+        if non_text_atoms:
+            gaps = ", ".join(
+                f"{var} in {count} of {len(records)} decision(s)"
+                for var, count in sorted(non_text_atoms.items())
+            )
+            return RequirementResult(
+                requirement_id=req.id,
+                source_clause=clause,
+                verdict=Verdict.INCONCLUSIVE,
+                strength=None,
+                signals_required=tuple(req.requires),
+                evidence_summary=(
+                    f"Not evaluated: {req.spec!r} asks what a statement says, but the trace "
+                    f"records something that is not text — no textual value for {gaps}. A "
+                    "non-text value is not evidence about the wording of a statement, so the "
+                    "monitor was not run over this trace."
+                ),
+                details={"signals_without_text_in_trace": dict(sorted(non_text_atoms.items()))},
+                binding=req.binding,
+                scope=req.scope,
+            )
 
         if non_boolean_atoms:
             gaps = ", ".join(

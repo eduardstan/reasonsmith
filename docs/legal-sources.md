@@ -193,3 +193,18 @@
 - **What makes a statement of specific reasons sufficient:**
   - Operative phrases: *"must be specific and indicate the principal reason(s) for the adverse action"*.
   - Operative standard for insufficiency: *"Statements that the adverse action was based on the creditor's internal standards or policies or that the applicant, joint applicant, or similar party failed to achieve a qualifying score on the creditor's credit scoring system are insufficient"*.
+  - **Where this sentence lives, because it is easy to misattribute.** It is the second sentence of § 1002.9(b)(2) — the regulation itself, quoted verbatim above and re-verified against the eCFR API on 2026-08-02 — and **not** a comment in the Official Interpretation. That matters for what a pack quoting it is quoting: binding regulatory text, not agency interpretation of it. The Supplement I comments on this paragraph are recorded below and say something different.
+
+### Official Interpretation — Supplement I to Part 1002, Paragraph 9(b)(2)
+
+- **Document Identifier / Citation:** `12 CFR part 1002, Supplement I, comment 9(b)(2)`
+- **Direct eCFR API Endpoint:** `https://www.ecfr.gov/api/versioner/v1/full/2023-08-29/title-12.xml?chapter=X&part=1002`
+- **Retrieval Date & Time:** 2026-08-02
+- **Uncertainty / Status Flag:** Verified against the official eCFR API for Title 12, Part 1002 (same amendment date, 2023-08-29, as the section text above).
+- **Why it is recorded here:** no shipped pack quotes it. It is retrieved so that `docs/refinement.md` can name comment 9(b)(2)-2 as the part of this duty the formalisation deliberately leaves out, without that citation resting on memory.
+
+Comments 1 and 4-7 concern how many reasons to give and how to select them from a scoring or judgmental system. The two that bear on what is and is not formalised here:
+
+> 2. *Source of specific reasons.* The specific reasons disclosed under §§ 1002.9(a)(2) and (b)(2) must relate to and accurately describe the factors actually considered or scored by a creditor.
+
+> 3. *Description of reasons.* A creditor need not describe how or why a factor adversely affected an applicant. For example, the notice may say “length of residence” rather than “too short a period of residence.”
