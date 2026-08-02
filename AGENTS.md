@@ -126,7 +126,7 @@ byte-for-byte. Anything that moves `render_text`'s wording, the nesyarena versio
 own constants means regenerating with `python docs/build_nesyarena_report.py`. Like
 `docs/index.html`, it names its build command and deliberately carries no commit hash; reproducibility
 is owned by the byte-for-byte builder test, so do not add a hash back. Its adapter declares only
-signals a provenance genuinely emits, so nine pack signals are deliberately undeclared and no
+signals a provenance genuinely emits, so ten pack signals are deliberately undeclared and no
 regulatory class is declared; the resulting unattainable and not-applicable verdicts are the
 finding, not a gap to close.
 `docs/findings-nesyarena.md` is the written account and is hand-maintained — every number in it

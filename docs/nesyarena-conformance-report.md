@@ -48,12 +48,13 @@ Each carries a value computed from that system's own inference on that instance:
 
 ### Signals deliberately not declared
 
-The system genuinely cannot emit these, so the duties needing them are reported
-unattainable rather than filled in:
+The system genuinely cannot emit these, so a duty whose `requires` gates one is
+reported unattainable rather than filled in:
 
 - `provenance_active_exceptions` — the programs are definite Horn clauses over independent probabilistic facts; there is no defeater or exception mechanism for an inference to record as active
 - `artifact_logs_notification_latency_days` — the system computes a query value; it neither issues nor times a notification
 - `artifact_logs_counteroffer_not_accepted` — no counteroffer exists in this decision domain
+- `artifact_logs_right_to_reasons_disclosure` — the system issues no adverse-action notice, so no decision of its own carries a disclosure of a right to request reasons. It is one branch of the either/or of 12 CFR 1002.9(a)(2) and no `requires` gates it, so its absence makes no duty unattainable: that content duty is judged on the other branch, the reason explanation
 - `artifact_logs_solely_automated` — whether a human reviews the output afterwards is a property of the pipeline the system is embedded in, which the system cannot observe
 - `artifact_logs_significant_effect` — the effect of a decision on a person is a fact about the deployment, not about the inference
 - `artifact_logs_human_intervention_route` — an intervention route is an organisational arrangement, not an inference output

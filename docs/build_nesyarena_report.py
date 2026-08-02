@@ -82,7 +82,9 @@ REASON_RULE = (
 
 #: Pack signals this adapter deliberately does not declare, and why. Printed in the report so a
 #: reader can see that each unattainable verdict below is a genuine limit of the system rather
-#: than an omission in the adapter.
+#: than an omission in the adapter. Together with `DECLARED_SIGNALS` this must account for every
+#: signal the three packs read — including one that gates no duty, the ungated branch signal of
+#: the either/or in 12 CFR 1002.9(a)(2).
 UNDECLARED_SIGNALS = (
     (
         "provenance_active_exceptions",
@@ -96,6 +98,13 @@ UNDECLARED_SIGNALS = (
     (
         "artifact_logs_counteroffer_not_accepted",
         "no counteroffer exists in this decision domain",
+    ),
+    (
+        "artifact_logs_right_to_reasons_disclosure",
+        "the system issues no adverse-action notice, so no decision of its own carries a "
+        "disclosure of a right to request reasons. It is one branch of the either/or of 12 CFR "
+        "1002.9(a)(2) and no `requires` gates it, so its absence makes no duty unattainable: "
+        "that content duty is judged on the other branch, the reason explanation",
     ),
     (
         "artifact_logs_solely_automated",
@@ -335,8 +344,8 @@ def render() -> str:
             "",
             "### Signals deliberately not declared",
             "",
-            "The system genuinely cannot emit these, so the duties needing them are reported",
-            "unattainable rather than filled in:",
+            "The system genuinely cannot emit these, so a duty whose `requires` gates one is",
+            "reported unattainable rather than filled in:",
             "",
         ]
     )

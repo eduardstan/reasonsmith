@@ -88,6 +88,26 @@ resolved against the decision record the system produces, so the names in `spec`
 `requires` and the names the system's `logic()` declares are one vocabulary, not three — and the
 loader refuses a `spec` reading an *unconditional* signal `requires` does not gate.
 
+Two load-time checks make `formalism` mean something:
+
+- **The spec must be in the language.** Prose in `spec` is a load error. It used to be the norm for
+  a `record` duty — nothing parsed that field, so prose and an STL formula sat three lines apart in
+  packs and a reader could not tell which was checked.
+- **The declared fragment must be the one the formula belongs to**, exactly. An STL formula labelled
+  `record` is refused rather than silently answered by a presence check nobody wrote. The match is
+  exact and not merely compatible: a presence conjunction is also a well-formed `logical` property,
+  and accepting it as one would cost the record engine's per-signal, per-record diagnostics.
+
+**The fragment does not pick the engine.** How strongly a duty can be discharged is a fact about the
+system under test, not about the pack: `report._engine_ladder` collects every engine the fragment
+and the system's exposed surface allow, and takes the strongest evidence produced. A presence
+property is `observed` against a trace, `probed` against a system exposing `decide()`, and `proved`
+against one exposing `logic()`. `docs/semantics.md` §3.5 states the rule and its limits.
+
+If a duty cannot be written in this language, that is a finding to record in `docs/semantics.md` —
+not a reason to widen the language until it fits. Widening it to accommodate one stubborn duty is
+how a property language becomes an untyped string again.
+
 ## An either/or clause
 
 A clause that offers a lawful choice — "and either: (i) … or (ii) …" — becomes a disjunction in
@@ -115,26 +135,6 @@ leaves the `record` fragment: written as `temporal`, it is quantified over the t
 observed engine reports a log holding a single decision not evaluated rather than satisfied or
 violated. `ecoa_reg_b_1002_9_a_2_written_statement` is the worked example, and `docs/refinement.md`
 records what its disjunction still does not capture.
-
-Two load-time checks make `formalism` mean something:
-
-- **The spec must be in the language.** Prose in `spec` is a load error. It used to be the norm for
-  a `record` duty — nothing parsed that field, so prose and an STL formula sat three lines apart in
-  packs and a reader could not tell which was checked.
-- **The declared fragment must be the one the formula belongs to**, exactly. An STL formula labelled
-  `record` is refused rather than silently answered by a presence check nobody wrote. The match is
-  exact and not merely compatible: a presence conjunction is also a well-formed `logical` property,
-  and accepting it as one would cost the record engine's per-signal, per-record diagnostics.
-
-**The fragment does not pick the engine.** How strongly a duty can be discharged is a fact about the
-system under test, not about the pack: `report._engine_ladder` collects every engine the fragment
-and the system's exposed surface allow, and takes the strongest evidence produced. A presence
-property is `observed` against a trace, `probed` against a system exposing `decide()`, and `proved`
-against one exposing `logic()`. `docs/semantics.md` §3.5 states the rule and its limits.
-
-If a duty cannot be written in this language, that is a finding to record in `docs/semantics.md` —
-not a reason to widen the language until it fits. Widening it to accommodate one stubborn duty is
-how a property language becomes an untyped string again.
 
 ## binding and scope have no default
 

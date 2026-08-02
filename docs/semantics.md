@@ -123,8 +123,9 @@ because its kind is unknown until a system supplies a value and it may be Boolea
 `temporal` and `logical` it was a formula the engine evaluated; for `record` it was English prose
 that no engine read, so a reader met prose and an STL formula in the same field three lines apart,
 and `formalism` was doing two jobs under one name — saying what the property *is*, and deciding
-which engine was allowed to discharge it. Fifteen of eighteen shipped duties were labelled `record`
-and could therefore never exceed `observed`, whatever the system under test exposed. The English
+which engine was allowed to discharge it. Fifteen of the eighteen duties shipping then were
+labelled `record` and could therefore never exceed `observed`, whatever the system under test
+exposed. The English
 moved to `rationale`, the property became executable, and engine selection became the search in
 §3.5.
 
