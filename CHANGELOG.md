@@ -10,6 +10,23 @@ releases before it predate the file and are not reconstructed here.
 
 ### Documentation
 
+- **The published dossier says what it is, and states an origin claim a reader can check**
+  ([#85](https://github.com/eduardstan/reasonsmith/pull/85)).
+  `docs/report.html` is a fixed exhibit — the `table7` pack against the committed sample log,
+  and it stays that way — but nothing on the page said so, so a reader could not tell a
+  capability the engine lacks from one this run does not exercise. A short passage now names
+  four that are shipped and unexercised here, each beside the document that shows it: the
+  `proved` rung via Z3, the `--audience` projections, the packs beyond `table7` including the
+  EU AI Act's Articles 53 and 55, and engines and packs installed as plug-ins. The provenance
+  bar also stopped reading as a defect. It said `Generated without an identified source commit`
+  while a user's own `--html` run names one, and that gap cannot be closed with a hash: the
+  commit carrying the page does not exist while the page is rendered, so any hash written there
+  names another commit and breaks the byte-for-byte pin as soon as the page is committed. The
+  page now names the command and the test that fails if re-running it in any checkout does not
+  rewrite the page identically — the claim `docs/nesyarena-conformance-report.md` already
+  carries. `render_html` gained a caller-owned, escaped `provenance_note` for origin claims the
+  renderer cannot establish for itself.
+
 - **The nesyarena findings document can no longer go stale silently**
   ([#82](https://github.com/eduardstan/reasonsmith/pull/82)).
   `docs/findings-nesyarena.md` is hand-written prose that quotes counts living in generated
