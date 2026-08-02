@@ -31,7 +31,7 @@ import pytest
 import z3
 
 from reasonsmith.engines.observed import ObservedEngine, to_stl
-from reasonsmith.engines.proved import _any_string_re, _case_folded_re
+from reasonsmith.engines.proved import _contains_string_z3
 from reasonsmith.report import evaluate_requirement
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
@@ -238,14 +238,17 @@ def test_a_call_head_a_phrase_merely_quotes_is_not_rewritten():
 
 
 def _solver_says(haystack: str, needle: str) -> bool:
-    """Whether Z3's regular language for `needle` accepts `haystack`."""
+    """Whether the solver's whole `contains()` encoding accepts `haystack`.
+
+    The encoding the engine emits, not the regular language inside it: the blankness rule is part
+    of what `contains()` means to Z3, and a helper that reached past it would leave the one input
+    class where a substring search and `is_present` pull apart uncovered.
+    """
     text = z3.String("text")
     solver = z3.Solver()
     solver.set("timeout", 10000)
     solver.add(text == z3.StringVal(haystack))
-    solver.add(
-        z3.InRe(text, z3.Concat(_any_string_re(), _case_folded_re(needle), _any_string_re()))
-    )
+    solver.add(_contains_string_z3(text, needle))
     return solver.check() == z3.sat
 
 
@@ -257,18 +260,32 @@ def test_the_solvers_fold_is_the_interpreters_fold():
     agree only while that fold is one-to-one and reaches no further than A-Z, so this walks a
     generated corpus including non-ASCII text, digits, punctuation and both cases rather than
     asserting the property on the two examples a shipped pack happens to use.
+
+    Blank haystacks stay in the corpus: a phrase made of blanks occurs in a string of blanks as a
+    substring, and `contains_literal` still answers false there because the record carries nothing.
+    That is the one place the two sides agree only because the solver's encoding carries the same
+    blankness rule, so excluding it would leave the divergence it forbids untested.
     """
     rng = random.Random(20260802)
     alphabet = "aAbB Zz9_-.éİß"
     for _ in range(120):
         needle = "".join(rng.choice("aAbB Z9-.") for _ in range(rng.randint(1, 4)))
         haystack = "".join(rng.choice(alphabet) for _ in range(rng.randint(1, 8)))
-        if not haystack.strip():
-            continue
         assert contains_literal(haystack, needle) == _solver_says(haystack, needle), (
             haystack,
             needle,
         )
+
+
+def test_the_solver_finds_no_phrase_in_a_string_the_record_does_not_carry():
+    """The corpus reaches an all-blank string only by luck, and this is the case that matters.
+
+    `is_present` calls a whitespace-only string absent, so `contains_literal` answers false for a
+    phrase of blanks in a string of blanks. A bracketed regular language on its own answers true,
+    which would let the same value be `proved` violated and `observed` satisfied.
+    """
+    assert contains_literal("  ", " ") is False
+    assert _solver_says("  ", " ") is False
 
 
 def test_a_forbidden_phrase_the_rules_can_write_is_proved_to_violate():

@@ -261,6 +261,23 @@ def _case_folded_re(phrase: str) -> Any:
     return z3.Concat(*parts) if len(parts) > 1 else parts[0]
 
 
+def _contains_string_z3(const: Any, phrase: str) -> Any:
+    """The solver's `contains(const, phrase)`, blankness rule included.
+
+    Two conditions, and the first is the one a bracketed regular language alone would lose:
+    `rulelang.contains_literal` calls a value the record does not carry — a blank string among
+    them — a value that carries no phrase, so a phrase made of blanks must not be found in a
+    string of blanks. `_present_to_z3` already builds that language; this reuses it so the solver
+    and the interpreter cannot disagree about the one input class where a substring search and
+    `is_present` pull apart.
+    """
+    any_string = _any_string_re()
+    return z3.And(
+        z3.Not(z3.InRe(const, _blank_string_re())),
+        z3.InRe(const, z3.Concat(any_string, _case_folded_re(phrase), any_string)),
+    )
+
+
 def _contains_to_z3(node: ast.Call, scope: _Scope) -> Any:
     """Encode `contains(signal, "phrase")` against the declared rules, or refuse it.
 
@@ -286,8 +303,7 @@ def _contains_to_z3(node: ast.Call, scope: _Scope) -> Any:
             f"{CONTAINS_CALL}({signal}, ...) reads recorded text, but the declared rules give "
             f"{signal!r} sort {const.sort()}"
         )
-    any_string = _any_string_re()
-    return z3.InRe(const, z3.Concat(any_string, _case_folded_re(phrase), any_string))
+    return _contains_string_z3(const, phrase)
 
 
 def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:

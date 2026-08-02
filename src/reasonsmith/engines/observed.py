@@ -85,15 +85,19 @@ PRESENCE_THRESHOLD = FLAG_THRESHOLD
 MINIMUM_TRACE_LENGTH = 2
 
 
-def _property_noun(req: Requirement) -> str:
+def _property_noun(req: Requirement, noun: str = "property") -> str:
     """What to call the property in a summary, so the wording matches the duty it answered.
 
     This engine reads two fragments now: a `temporal` formula quantified over the trace, and a
     `logical` state property scored per record (`report._engine_ladder`). Calling both a "temporal
     monitor" would tell a reader that a duty about one decision was checked across the trace, which
     is the sort of small mis-description that becomes a misread verdict on a front page.
+
+    Summaries differ only in the noun they hang the adjective on, so the noun is the argument and
+    the fragment-to-adjective decision is made once. A second copy of that decision is how a new
+    fragment, or a rename, reintroduces exactly the mis-description this exists to prevent.
     """
-    return "temporal property" if req.formalism == "temporal" else "state property"
+    return f"{'temporal' if req.formalism == 'temporal' else 'state'} {noun}"
 
 
 _NUMBER = r"-?\d+(?:\.\d+)?"
@@ -499,7 +503,7 @@ class ObservedEngine:
             signals_required=tuple(req.requires),
             evidence_summary=(
                 f"Observed over {len(records)} decision(s): "
-                f"{'temporal monitor' if req.formalism == 'temporal' else 'state monitor'} for "
+                f"{_property_noun(req, 'monitor')} for "
                 f"{req.spec!r} satisfied at every decision step."
             ),
             details={"records_observed": len(records), "evaluation_scores": res},
