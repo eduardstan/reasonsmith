@@ -26,6 +26,17 @@ What a reader must not break:
     explicit declarations represent an authoritative system claim. A trace-reading adapter that
     misses the attribute has its finding worded "Unattainable as built ... the system was not
     executed" — a claim about the system, made from one sample trace.
+  - `logic()` may declare `computes` beside `variables`, `rules` and `constraints`: the names the
+    system *produces*, as against the ones its decision situation supplies. Nothing here requires
+    it, and logic that omits it is answered by the proved engine's older sort heuristic rather than
+    refused — but an adapter exposing logic and declaring no directions is leaving that engine
+    guessing, so `RulesAdapter` derives the declaration rather than let one go missing.
+    Why this matters: the proved engine declares a free constant for every name it meets, so
+    without directions a property naming something the system has no notion of is answered from
+    numbers nobody computed. `variables` cannot carry it — it is a type table, and `approved` sits
+    in it beside `income` — and `declared_capabilities` is what a system can *emit* into a decision
+    record, which is the opposite direction. `docs/semantics.md` §3.5, *When the magnitudes are not
+    the system's own*, states the three states the declaration makes readable.
   - `system_domains` is the second plain instance attribute the report reads off an adapter, the
     way `system_scope` already was: a collection of `spec.DECISION_DOMAINS` names saying what kind
     of decision this system makes. It is outside the protocol for the same reason `system_scope`

@@ -8,6 +8,53 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** **An adapter declares which variables the system computes, and the proof engine
+  uses that instead of guessing** ([#92](https://github.com/eduardstan/reasonsmith/pull/92)).
+  `sut.logic()` may now carry `computes` beside `variables`, `rules` and `constraints`: the names
+  the system *produces*, as against the ones its decision situation supplies. It is breaking
+  because it widens what an adapter exposing logic is expected to say about itself, and because a
+  system that declares it computes a name its exposed rules never settle now loses a proof it
+  previously got.
+
+  The gap it closes is in `_Scope.read`, which declares a free Z3 constant for any name it meets
+  and keeps no record of where the name came from. It runs while encoding the *property*, so a duty
+  that merely mentions a name manufactured an input out of nothing and everything downstream
+  reasoned about a constant nobody computed. That is how
+  `gdpr_recital71_error_risk_minimised` came to be reported `violated` at `proved` — the one
+  verdict that exits non-zero — against a system whose rules never touch the two magnitudes it
+  compares. Neither existing declaration could carry the fix: `variables` is a type table holding
+  computed names beside free ones, and `declared_capabilities` is what a system can *emit* into a
+  decision record, which is the opposite direction.
+
+  `variables` and `computes` together split every name into three states, and
+  `engines/proved.py`'s `_check_declared_directions` reads them: a name in `computes` is an output,
+  a name in `variables` but not in `computes` is an input, and a name in neither is one the system
+  has **no notion of**. A property reading a name in that third state is refused, and so is one
+  reading a declared output the exposed rules do not settle on every path. A declared *input* is
+  quantified over as it always was, flags and magnitudes alike, which is what keeps
+  `income >= 30000 implies approved` and `gdpr_art22_1_no_prohibited_decision_for_any_input`
+  provable — the latter's whole purpose being to range over flags no rule assigns.
+
+  `RulesAdapter` derives `computes` from its own rules' assignment targets unless the caller
+  overrides it, so no adapter in this repository is undeclared: the premise of that adapter is that
+  its rules *are* the decision procedure, under which the names they assign are exactly the names
+  the system computes. A declared name outside `variables` is refused at construction. Nothing
+  second-guesses a declaration beyond that — an adapter calling an output an input is answered
+  about the system it described, the same trust `system_domains` is given.
+
+  0.5.1's sort heuristic, `_check_magnitudes_are_computed`, is **kept and scoped** to logic that
+  declares no directions, rather than removed. It cuts along the wrong joint and its own docstring
+  said so, but the alternative for undeclared logic is worse in both directions: reading it as
+  "every variable is an input" hands back exactly the `violated`-at-`proved` verdict it was written
+  to stop, and refusing every proof to logic predating the declaration would withdraw verdicts for
+  a reason having nothing to do with the system. So undeclared logic gets the answer it has today
+  and never a wider one.
+
+  `docs/semantics.md` §3.5, *When the magnitudes are not the system's own*, is rewritten around the
+  declaration and names the test behind every claim.
+
 ## [0.5.1] - 2026-08-02
 
 ### Added

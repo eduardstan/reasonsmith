@@ -866,40 +866,68 @@ The signal's sort is not itself a reason for refusal. In particular, **a string 
 
 ### When the magnitudes are not the system's own
 
-The same free-constant argument reaches a third atom, and the guard enforcing it is a **heuristic**
-where the other two are not. `_check_magnitudes_are_computed` refuses a property when both of these
-hold: it reads **no** name the declared rules assign, and it reads at least one free name as a
-**magnitude** — an arithmetic sort. Such a property constrains nothing the system computes, so its
-verdict is a fact about the declared sorts and constraints and not about the system. Left unguarded,
-`always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` against a system whose
-rules decide on a score alone was reported `violated` at `proved` — the one verdict that exits
-non-zero — on the solver's own choice of `deviation = 1, margin = 0`. The counterexample
-verification does not catch that: the reference interpreter is handed the same free inputs, so the
-"violation" reproduces. Refused, the duty falls to the engine that reads the trace, which measures
-the magnitudes where the decisions carry them and reports them unmeasured where they do not
-(`test_a_magnitude_the_rules_never_compute_is_not_proved_violated`).
+The same free-constant argument reaches a third atom, and answering it needs something the sorts
+alone cannot say: whether a name is an **input the decision situation supplies** or an **output the
+system computes**. `sut.logic()` may now say so. Alongside `variables`, `rules` and `constraints` it
+may carry **`computes`**, the names the system produces, and the two together split every name into
+three states:
 
-Both conditions are load-bearing, and each names what a wider guard would destroy:
+| declaration | reading | the solver's free constant is |
+| --- | --- | --- |
+| in `computes` | an output the system produces | wrong unless the rules settle it |
+| in `variables`, not in `computes` | an input the situation supplies | exactly right |
+| in neither | a name the system has no notion of | an invention |
 
-- **Reads no assigned name.** `income >= 30000 and age >= 18 implies approved == True` reads three
-  free magnitudes and one computed `approved`. It is a claim about what the system *decides*, and
-  proving it is this engine's whole purpose (`test_property_holds_for_all_inputs_proved`).
-- **Reads a magnitude.** A property over free *Booleans* is left alone, because quantifying over
-  them is a reading duties genuinely take:
-  `gdpr_art22_1_no_prohibited_decision_for_any_input` asks whether any admissible input yields a
-  prohibited decision, and the Article 22 flags are exactly the free inputs that question ranges
-  over (`test_article_22_still_quantifies_over_flags_the_rules_never_assign`).
+`_check_declared_directions` reads that and refuses two things, neither of which is a judgement
+about the property:
 
-**Why it is a heuristic, and what the principled closure would be.** The distinction that actually
-matters is an *input to the decision situation* against an *output the system computes*, and
-`logic()` declares each variable's sort but not its direction, so no engine here can ask for it.
-Sort and reachability are the available proxies, and they cut along the wrong joint: a system that
-genuinely computes a margin but exposes it only as an input to a downstream rule set is refused a
-proof it could have had, and a duty comparing a free magnitude with a computed one is admitted. The
-closure is a protocol change — an adapter declaring, per variable, whether the situation supplies it
-or the system computes it — and it is deliberately **not** made here, because it widens the contract
-every existing adapter implements. Until it is made, read a refusal on this guard as "this engine
-could not tell whether the system computes these numbers", not as "it does not".
+- **A name the system has no notion of.** `_Scope.read` declares a constant for any name it meets,
+  so without this the encoding invents the very value the verdict is then about. Left unguarded,
+  `always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` against a system
+  whose rules decide on a score alone was reported `violated` at `proved` — the one verdict that
+  exits non-zero — on the solver's own choice of `deviation = 1, margin = 0`. The counterexample
+  verification does not catch that: the reference interpreter is handed the same free inputs, so
+  the "violation" reproduces. Refused, the duty falls to the engine that reads the trace, which
+  measures the magnitudes where the decisions carry them and reports them unmeasured where they do
+  not (`test_a_magnitude_the_rules_never_compute_is_not_proved_violated`).
+- **A declared output the exposed rules do not settle on every path.** The system says it computes
+  the name and the logic it handed over does not show how, so the constant standing in for it is
+  free after all (`test_a_declared_output_the_rules_never_settle_is_refused_a_proof`). `present()`
+  and `contains()` refuse the same thing for their own atoms and with their own wording, which is
+  why this guard runs after the property is encoded rather than before.
+
+**A declared input is quantified over, and that is the point.** `income >= 30000 and age >= 18
+implies approved == True` reads three free magnitudes and one computed `approved`
+(`test_property_holds_for_all_inputs_proved`), and
+`gdpr_art22_1_no_prohibited_decision_for_any_input` asks whether *any* admissible input yields a
+prohibited decision, ranging over Article 22 flags no rule assigns
+(`test_article_22_still_quantifies_over_flags_the_rules_never_assign`). Both are claims about what
+the system decides over its own input space, and proving them is this engine's whole purpose. A
+system declaring that its situation supplies both Recital 71 magnitudes gets the same treatment with
+numbers in place of flags, and is answered `violated` where the rules ignore them
+(`test_a_magnitude_declared_an_input_is_quantified_over_like_any_other`).
+
+**What this engine does not do is second-guess the declaration.** An adapter calling an output an
+input is claiming its situation supplies a value it in fact produces, and it will be answered about
+the system it described — the same trust `system_domains` is given, and the same false positive
+available from the adapter side. `RulesAdapter` derives `computes` from its own rules' assignment
+targets, so no adapter in this repository declares nothing and none can drift from the rules it
+exposes; a caller may override it, and a declared name outside `variables` is refused at
+construction (`test_computes_is_derived_from_the_rules_and_must_name_declared_variables`).
+
+**The heuristic stays, for logic that declares no directions.**
+`_check_magnitudes_are_computed` refuses a property that reads **no** name the declared rules assign
+and reads at least one free name as a **magnitude** — an arithmetic sort. Sort and reachability are
+proxies for direction and cut along the wrong joint: a system that genuinely computes a margin but
+exposes it only as an input to a downstream rule set is refused a proof it could have had, and a
+duty comparing a free magnitude with a computed one is admitted. It is kept rather than removed
+because the alternative for undeclared logic is worse. Reading it as "every variable is an input"
+hands back exactly the `violated`-at-`proved` verdict above, and refusing every proof to logic that
+predates the declaration would withdraw verdicts for a reason having nothing to do with the system.
+So logic carrying no `computes` gets the answer it has today and never a wider one
+(`test_logic_that_declares_no_directions_keeps_the_sort_heuristic`), and a refusal on that path
+still reads as "this engine could not tell whether the system computes these numbers", not as "it
+does not".
 
 ---
 
@@ -1088,6 +1116,9 @@ Two consequences of that report text, followed by a separate package-level termi
 | Quantified over the trace, the 12 CFR 1002.9(a)(2) content duty is not evaluated on a single-decision log rather than satisfied | `test_a_single_decision_trace_is_not_evaluated_never_satisfied` |
 | The same presence property is observed off a trace, probed against `decide()`, and proved against `logic()` | `test_a_record_duty_reaches_proved_when_the_system_exposes_its_logic`, `test_a_record_duty_reaches_probed_when_the_system_can_only_be_re_run` |
 | The ladder takes the strongest evidence produced, not the strongest engine available | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can` |
+| A name the declared directions give the system no notion of is refused a proof, and a declared output the rules never settle is too | `test_a_magnitude_the_rules_never_compute_is_not_proved_violated`, `test_a_declared_output_the_rules_never_settle_is_refused_a_proof` |
+| A declared input is quantified over, flags and magnitudes alike | `test_article_22_still_quantifies_over_flags_the_rules_never_assign`, `test_a_magnitude_declared_an_input_is_quantified_over_like_any_other` |
+| Directions are derived from the rules, must name declared variables, and logic declaring none keeps the sort heuristic | `test_computes_is_derived_from_the_rules_and_must_name_declared_variables`, `test_logic_that_declares_no_directions_keeps_the_sort_heuristic` |
 | An engine whose interface raises establishes nothing, and the duty still lands on the rung that answered | `test_a_record_duty_survives_a_system_whose_logic_raises`, `test_a_logical_duty_survives_a_system_whose_logic_raises`, `test_a_logic_failure_is_named_when_no_rung_produced_evidence`, `test_a_raising_logic_is_attempted_once_per_evaluation` |
 | Building the ladder reads the callable surface and never executes the system | `test_building_the_ladder_never_executes_the_system` |
 | An installed engine plug-in joins the ladder, discharges a duty, and names itself in the result | `test_an_installed_engine_joins_the_ladder_and_discharges_a_duty` |
