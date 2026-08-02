@@ -9,8 +9,8 @@ Each objective gives a **measurable outcome** — a check that fails today and w
 objective is met — and what it **depends on**. Where the honest answer is that an objective is
 blocked, or deliberately not started, that is written down rather than left as an implied "soon".
 
-Current state, for scale: **4 packs, 18 requirements, 4 engines** (`record`, `observed`, `probed`,
-`proved`). `reasonsmith validate-pack ecoa eu_ai_act gdpr table7` prints what each contains.
+Current state, for scale: **4 packs, 19 requirements, 5 engines** (`record`, `observed`, `probed`,
+`certificate` — also at `probed` — and `proved`). `reasonsmith validate-pack ecoa eu_ai_act gdpr table7` prints what each contains.
 
 ---
 

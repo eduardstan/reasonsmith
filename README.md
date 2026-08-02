@@ -116,7 +116,7 @@ system: CreditScoringPipeline
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 3 requirements · 3 binding: 3 observed
+headline: 4 requirements · 4 binding: 3 observed, 1 unattainable
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
@@ -131,6 +131,11 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
     domain limit: consumer-credit
     summary: Observed over 3 decision(s): state monitor for 'present(artifact_logs_reason_explanation) -> ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, "internal standards") and not contains(artifact_logs_reason_explanation, "internal policies") and not contains(artifact_logs_reason_explanation, "failed to achieve a qualifying score"))' satisfied at every decision step.
+  [UNATTAINABLE] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): inconclusive
+    requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
+    domain limit: consumer-credit
+    MISSING SIGNALS: artifact_logs_deleted_reason_count
+    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for artifact_logs_deleted_reason_count, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
@@ -303,12 +308,17 @@ unattested.
 **Researchers** comparing systems or engines. This is the audience the tool is closest to usable
 for: [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) is a real run against five
 `nesyarena` provenances, and `docs/nesyarena-conformance-report.md` is its regenerable evidence.
-Missing: properties worth differentiating a system on. Fourteen of the eighteen shipped requirements
-are still presence checks, against two `logical` and two `temporal` ones, so a battery of engines
-mostly agrees by construction. The one duty that moved shows both what closes this gap and how
-narrow the opening is: 12 CFR 1002.9(b)(2) can now be *failed* by a plain decision log, because the
+Missing: properties worth differentiating a system on. Fourteen of the nineteen shipped requirements
+are still presence checks, against three `logical` and three `temporal` ones, so a battery of engines
+mostly agrees by construction. The two duties that moved show both what closes this gap and how
+narrow each opening is. 12 CFR 1002.9(b)(2) can now be *failed* by a plain decision log, because the
 clause supplies its own list of statements that are insufficient — which is available only where a
 clause does that, and still establishes nothing about whether what was said instead was adequate.
+The same clause's second duty differentiates hardest and reaches fewest systems: it compares the
+reasons a notice states against the reasons the decision's own inference used, measured by the
+reason-deletion certificate over an artefact the system exposes, and a system that cannot be opened
+up is reported *unattainable* rather than returned to the presence check
+([`docs/semantics.md`](docs/semantics.md) §3, *certificate*).
 Missing also: independence. The packs are authored here, so a cross-system
 comparison measures this repository's refinement as much as it measures the systems — a benchmark
 needs a pack set whose fourth column someone other than its author has reviewed

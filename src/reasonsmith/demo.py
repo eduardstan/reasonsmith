@@ -1098,6 +1098,98 @@ def nist_demo() -> str:
     return "\n".join(out)
 
 
+# ----------------------------------------------- the deployed engine as a system ----
+
+#: The decisions the deployed top-1 engine made, in the order its log holds them. `APP-1043` trips
+#: a single reason, so keeping one proof keeps all of them and nothing is deleted; `APP-1042` is
+#: the demonstration's own case and trips five.
+DEPLOYED_CASES = (
+    build_case("APP-1043", "typical", CREDIT_QUERY, CREDIT_REASONS[:1], 0.80),
+    build_case("APP-1042", "typical", CREDIT_QUERY, CREDIT_REASONS, 0.88),
+)
+
+#: The engine actually deployed behind those decisions: it keeps the single best proof.
+DEPLOYED_ENGINE = ReferenceAdapter(TopK(1))
+
+
+class TruncatingCreditSystem:
+    """The demonstration's own adverse-action pipeline, as a system `reasonsmith check` can read.
+
+    It exists because the two halves of this package used to meet only here, and disagreed: the
+    Table 7 evidence record for `APP-1042` is COMPLETE while its reason-deletion certificate is
+    FAIL, so a conformance run reported the reason-giving duty satisfied on a decision this same
+    module proves has four reasons missing. This system is that decision handed to the report.
+
+    It exposes `artifact(decision)` — the optional hook of `sut.SystemUnderTest` — returning the
+    ground program, base interpretation, query and engine each decision came from, so reasonsmith
+    can enumerate the reasons exactly and switch each one off itself. It does *not* log a
+    completeness figure: a system that could settle the adequacy duty by writing a zero into its
+    own record would be grading its own homework, which is the substitution that duty refuses.
+    """
+
+    #: What this pipeline emits. `artifact_logs_deleted_reason_count` is declared because the
+    #: artefact is exposed, not because any record carries the number.
+    CAPABILITIES = frozenset({
+        "decision_id",
+        "artifact_logs_decision_record",
+        "artifact_logs_reason_explanation",
+        "artifact_logs_notification_latency_days",
+        "artifact_logs_counteroffer_not_accepted",
+        "artifact_logs_deleted_reason_count",
+        "provenance_model_version",
+        "scope_statements_local_vs_global",
+    })
+
+    system_domains = ("consumer-credit",)
+
+    def capabilities(self) -> set[str]:
+        return set(self.CAPABILITIES)
+
+    def decisions(self) -> list[dict]:
+        records = []
+        for case in DEPLOYED_CASES:
+            cert = certify_case(case, DEPLOYED_ENGINE)
+            records.append({
+                "decision_id": case.case_id,
+                "artifact_logs_decision_record": f"adverse action on {case.case_id}",
+                # The statement of reasons is what the deployed engine's answer depended on, which
+                # is exactly what a notice generated from that engine would say.
+                "artifact_logs_reason_explanation": "; ".join(
+                    v.label for v in sorted(cert.live, key=lambda v: v.label)
+                ),
+                "artifact_logs_notification_latency_days": 12,
+                "artifact_logs_counteroffer_not_accepted": 0,
+                "provenance_model_version": "credit-scoring-2026.03.1 / rules cs-rules-2026.03",
+                "scope_statements_local_vs_global": (
+                    "local: reasons for this application only"
+                ),
+            })
+        return records
+
+    def logic(self):
+        """No rule set to reason over: the deployed engine is proof search over a ground program."""
+        return None
+
+    def artifact(self, decision: dict) -> dict | None:
+        """The inference this decision came from, as the keyword arguments of `certify`."""
+        for case in DEPLOYED_CASES:
+            if case.case_id == decision.get("decision_id"):
+                return {
+                    "program": case.program,
+                    "base": case.base,
+                    "query": case.query,
+                    "adapter": DEPLOYED_ENGINE,
+                    "exact_depth": 1,
+                    "labels": case.labels,
+                }
+        return None
+
+
+def deployed_credit_system() -> TruncatingCreditSystem:
+    """The system under test for `reasonsmith check --system-module`."""
+    return TruncatingCreditSystem()
+
+
 def main() -> str:
     parts = [
         _head("0. TRACEABILITY — every schema entry against the Table 7 text it came from"),

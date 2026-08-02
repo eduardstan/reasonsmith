@@ -55,8 +55,11 @@ requirement ids are refused, because `get_requirement` returns the first match a
 be unreachable.
 
 **System under test** — `sut.py`, `SystemUnderTest`. A protocol with three methods —
-`capabilities()`, `decisions()`, `logic()` — and one optional method, `decide(case)`, deliberately
-outside the protocol because replay is optional. Four plain instance attributes outside that
+`capabilities()`, `decisions()`, `logic()` — and two optional methods deliberately outside it,
+because neither capability is one a system must have: `decide(case)` for replay, and
+`artifact(decision)` returning the *inputs* to `certificate.certify` for the inference a decision
+came from — never a verdict, which would be the system grading its own homework (§3,
+*certificate*). Four plain instance attributes outside that
 protocol are also semantic inputs. `evaluate_requirement` and `check_conformance` in `report.py`
 select `system_scope`, falling back to `declared_scope`, to decide applicability
 (`test_declared_scope_attribute_is_the_applicability_fallback`,
@@ -502,6 +505,84 @@ trace with nothing to perturb around (`test_an_empty_trace_gives_the_search_noth
 a non-positive trial budget (`test_nonpositive_trial_budget_is_not_confused_with_an_empty_trace`), and
 a property this engine cannot express (`test_the_complete_property_must_be_expressible_and_boolean`).
 
+### `certificate` — `engines/certificate.py`
+
+The second engine at `probed`, and the only one whose evidence comes from *exact* inference. It
+answers one duty — `ecoa_reg_b_1002_9_b_2_principal_reasons_complete`, whether the reasons a notice
+states are all the reasons the decision's inference used — by running the reason-deletion
+certificate of `certificate.py` over the artefact the system exposes through the optional
+`artifact(decision)` hook, and grounding the one signal
+`engines.certificate.DELETED_REASON_COUNT` with what the probes measured.
+
+Its reason for existing is a defect, and the defect is worth stating plainly. `certificate.py`,
+`conformance.py` and `drift.py` were reachable from no duty and no CLI verb. The two halves of this
+package met in exactly one place — `demo.render_key_finding_html`, on decision `APP-1042` — and
+there they disagreed: the Table 7 evidence record reports COMPLETE while the certificate reports
+FAIL. So `reasonsmith check` reported the reason-giving duty **satisfied** on a decision this same
+package proves has four of five legally owed reasons deleted. This engine is what closes that
+(`test_the_demonstrations_own_decision_is_reported_violated`,
+`test_form_completeness_and_reason_fidelity_are_now_separate_verdicts`).
+
+> **If the certificate engine reports `satisfied` at strength `probed`, then:** for every decision
+> the system exposed an artefact for, bounded proof enumeration to that artefact's own
+> `exact_depth` found the decision's reasons, and every reason holding a fact no other reason uses
+> was switched off alone and the system's own engine re-run on the perturbed interpretation. Each
+> such deletion moved the system's answer, so no reason was shown deleted, and the property held on
+> that decision's record with the measured count in place. The budget records how many inferences
+> were replayed, over how many decisions and how many switched-off reasons
+> (`test_the_certificate_verdict_carries_its_probe_budget`,
+> `test_an_engine_that_deletes_nothing_is_probed_and_never_proved`).
+
+*The domain, exactly.* The decisions the system's trace holds **and** for which `artifact()`
+returned an artefact rather than None. The enumeration is exact on *one* ground program and one
+base interpretation — `certificate.LIMITS` says so in its own words — so this rung is `probed` and
+never `proved`: nothing here establishes the property for a decision the system did not expose, or
+for a reason lying past the `exact_depth` the artefact itself supplied. A reason whose every fact
+is shared with another reason cannot be switched off alone, so its dependency is neither shown nor
+assumed; it is counted as deleted by nothing and as live by nothing, and the result reports how
+many there were.
+
+*What it does not tell you.* Nothing about whether the reasons are *correct*, only that the system
+used all of the ones exact inference found. Nothing about whether they are what a person would call
+principal. And nothing about a system that lies about its own artefact — a system that returns a
+program it did not run is a system misdescribing itself to its auditor, which *the assumption all
+four share* below already covers.
+
+> **If it reports `violated` at strength `probed`, then:** on at least one certified decision, the
+> deletion probe showed the system's answer does not depend on a reason exact inference found. The
+> result names the decision, the reasons, and the certificate's own attribution — which inference
+> setting the loss is consistent with (`test_the_demonstrations_own_decision_is_reported_violated`).
+
+**The count is measured, never read.** The engine builds the property's environment from the
+decision record and then writes the measured count over whatever that record claimed for it, so a
+system that logs its own zero is still judged on the measurement
+(`test_a_logged_completeness_count_never_settles_the_duty`). A `reasons_are_complete` flag the
+adapter sets about itself is the self-declaration this section refuses everywhere else, and this is
+the one duty where it would have been easy.
+
+**A system that cannot supply the oracle is `unattainable`, and is never returned to the presence
+check.** `report._engine_ladder` gives this duty a ladder of exactly one rung, so no trace, no
+replay and no proof over exposed rules can answer it in the weaker sibling duty's place — the
+substitution is the whole defect, and it is the kind that comes back as a convenience. The result
+names the signal that could not be measured and says why nothing weaker stands in for it
+(`test_a_system_exposing_no_oracle_is_unattainable_and_names_the_signal`,
+`test_the_adequacy_duty_is_never_downgraded_to_the_presence_check`).
+
+One consequence of that gate is worth stating rather than discovering: an adapter whose
+capabilities are derived from a trace can never declare `artifact_logs_deleted_reason_count`,
+because no record carries it, so a plain decision log is reported unattainable by the capability
+analysis with its generic wording — *a longer trace could show the system emitting these signals* —
+which is true of the mechanism and unhelpful about this signal. A log that does carry the key
+reaches this engine and gets the accurate message. Both end at `unattainable`; only the wording
+differs.
+
+Reported not evaluated, never satisfied: an empty trace, and a trace no decision of which the
+system could open up (`test_a_trace_with_no_artifact_is_not_evaluated_never_satisfied`); an
+`artifact()` that raises, returns something that is not a mapping, or returns arguments `certify`
+refuses (`test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`); and a property
+that never reads the one signal this engine measures
+(`test_the_engine_refuses_a_property_it_cannot_ground`).
+
 ### `proved` — `engines/proved.py`
 
 > **If the proved engine reports `satisfied` at strength `proved`, then:** Z3 found the conjunction of
@@ -546,7 +627,7 @@ that does not reproduce (`test_counterexample_verification_failure_reported_not_
 > exists, otherwise against the declared logic, and the summary names which
 > (`test_property_fails_with_verified_counterexample`).
 
-### The assumption all four share
+### The assumption all five share
 
 None of these engines defends against a system that is adversarial toward its own audit. The probed
 engine states the boundary and this document does not invent a second version of it — from
@@ -560,7 +641,7 @@ The isolation against *accidental* mutation is real and tested
 (`test_nested_mutation_cannot_change_the_verification_input_or_witness`,
 `test_uncloneable_probe_input_is_not_evaluated`). The defence against a deliberate one is not claimed.
 
-Read across all four engines, the same shape holds: a declared capability set is taken at its word, a
+Read across all five engines, the same shape holds: a declared capability set is taken at its word, a
 trace is taken as given, and exposed logic is taken as describing the system. reasonsmith checks
 what a system says against what a specification asks. It does not check whether the system was
 honest.
@@ -581,6 +662,16 @@ list, and the requirement supplies only one of them:
   fragment** (`test_every_valid_formalism_has_an_engine_that_reads_a_trace`). Which engine reads it
   depends on the shape: `RecordEngine` for a presence conjunction, `ObservedEngine` for everything
   else, temporal and `logical` alike.
+
+**One duty has a ladder of exactly one rung, and for the opposite reason to everything above.** A
+duty gating on `engines.certificate.DELETED_REASON_COUNT` asks whether the reasons a decision
+states are *all* the reasons its inference had. Every other rung would answer a weaker question off
+the system's own log — that the reason field is non-blank, or that the number the system wrote in
+it is small — so a system exposing no inference artefact is reported `unattainable` by the
+certificate engine rather than falling through to a presence check
+(`test_the_adequacy_duty_is_never_downgraded_to_the_presence_check`). Everywhere else on this page
+a weaker rung answers the *same* property with weaker evidence; here it would answer a *different*
+property under the same duty's name, which is the substitution §3 (*certificate*) exists to remove.
 
 The second bullet used to give `logical` nothing, and that contradicted the first. A `logical`
 property is a property of one decision record — that is what puts it in `STATE_FRAGMENTS` — so a
@@ -949,6 +1040,11 @@ Two consequences of that report text, followed by a separate package-level termi
 | A misspelled decision domain is refused on both sides, and a domain list is domain names and nothing else | `test_a_domain_outside_the_vocabulary_is_refused`, `test_a_domain_list_is_domain_names_and_nothing_else` |
 | The whole-pack plan and the single-requirement path give the same applicability answer, and neither runs an out-of-reach system | `test_the_two_domain_gates_never_disagree`, `test_an_undeclared_domain_never_runs_the_system` |
 | A run that skipped duties for an undeclared domain says so in every rendering, and a declared mismatch raises no such notice | `test_a_run_that_skipped_duties_for_a_missing_declaration_says_so` |
+| The certificate engine reaches a duty at all: the demonstration's own `APP-1042` is reported violated, and form completeness and reason fidelity are separate verdicts | `test_the_demonstrations_own_decision_is_reported_violated`, `test_form_completeness_and_reason_fidelity_are_now_separate_verdicts`, `test_the_cli_reports_the_demonstration_decision_violated` |
+| A system that cannot supply the oracle is unattainable, and the adequacy duty is never downgraded to the presence check | `test_a_system_exposing_no_oracle_is_unattainable_and_names_the_signal`, `test_the_adequacy_duty_is_never_downgraded_to_the_presence_check` |
+| The deleted-reason count is measured, never read from the system's own record | `test_a_logged_completeness_count_never_settles_the_duty` |
+| A certificate verdict carries its probe budget, and exact inference behind a decision still reaches probed and no higher | `test_the_certificate_verdict_carries_its_probe_budget`, `test_an_engine_that_deletes_nothing_is_probed_and_never_proved` |
+| No artefact, a broken artefact, or a property the engine cannot ground ⇒ not evaluated | `test_a_trace_with_no_artifact_is_not_evaluated_never_satisfied`, `test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`, `test_the_engine_refuses_a_property_it_cannot_ground` |
 | A reason-deletion certificate detects a dropped reason and excludes compliance certification beyond its measured input | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_limits_exclude_compliance_certification`, `test_certificate_carries_its_limits` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |

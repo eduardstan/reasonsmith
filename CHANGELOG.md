@@ -10,6 +10,28 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **The reason-deletion certificate is an engine.** `certificate.py` could measure which reasons an
+  engine's answer stopped depending on, and it was reachable from no duty and no CLI verb — its
+  only caller was the demonstration. The two halves of the package met in exactly one place, on
+  decision `APP-1042`, and there they disagreed: the Table 7 evidence record reports COMPLETE while
+  the certificate reports FAIL, so `reasonsmith check` reported the reason-giving duty *satisfied*
+  on a decision this package proves has four of five legally owed reasons missing. Three pieces
+  close it, and nothing else changes: one optional SUT method, `artifact(decision)`, returning the
+  *inputs* to `certificate.certify` for the inference a decision came from (never a verdict — a
+  self-declared completeness flag is what this refuses); one engine,
+  `engines/certificate.py`, at strength `probed`, carrying the probes it ran as its budget; and one
+  duty, `ecoa_reg_b_1002_9_b_2_principal_reasons_complete`, on the half of 12 CFR 1002.9(b)(2) that
+  asks for the principal reason**s**. `reasonsmith check --system-module
+  reasonsmith.demo:deployed_credit_system --pack ecoa` now reports that decision violated and exits
+  2. See [docs/semantics.md](docs/semantics.md) §3, *certificate*.
+
+  **What this means for an existing run:** the new duty is domain-limited to `consumer-credit` like
+  the rest of the ECOA pack, and it gates on `artifact_logs_deleted_reason_count` — a signal
+  reasonsmith *measures* rather than reads. A system that exposes no inference artefact is reported
+  `unattainable` on it, which is not a breach and does not change an exit code. It is never
+  silently downgraded to the presence check on the reason field: that substitution answers a
+  different question under the same duty's name, so the duty is given an engine ladder of exactly
+  one rung.
 - `contains(signal, "phrase")`, a property-language atom that reads *what a statement says* rather
   than whether a field is blank. Its first argument is a signal name and its second a string
   literal, so the wording a duty forbids is fixed by the pack and never supplied by the system

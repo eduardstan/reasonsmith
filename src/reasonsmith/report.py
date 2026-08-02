@@ -17,7 +17,9 @@ What a reader must not break:
     shipped duties could never exceed `observed` however much a system exposed — a fact about a
     word in a TOML file, reported as a fact about the system. Which rung a duty reaches must be a
     fact about the system. What a verdict *means* is untouched by this: see `docs/semantics.md`
-    §3.5, including the case where exposed logic and trace disagree.
+    §3.5, including the case where exposed logic and trace disagree. One duty has a single-rung
+    ladder, for the opposite reason: a weaker rung on a reason-adequacy duty would answer a
+    *different* property off the system's own log — see `_engine_ladder`.
   - Combining zero verdicts is `inconclusive`, never vacuously `satisfied`.
     Why this matters: Having checked nothing is not evidence that a requirement holds.
   - The unattainable analysis must NEVER execute the system (`sut.decisions()` is never called).
@@ -1921,7 +1923,29 @@ def _engine_ladder(
     and the replay search both reason about one decision at a time and have nothing to say about a
     formula quantified over the trace; there is no temporal engine above `observed` in this build,
     and inventing a rung for one would be the overclaim this package exists to refuse.
+
+    One duty is deliberately given a ladder of **one** rung: a duty gating on
+    `engines.certificate.DELETED_REASON_COUNT` asks whether the reasons a decision states are all
+    the reasons its inference had, and that is measured against the inference artefact or not at
+    all. Every other rung here would answer a weaker question off the system's own log — that the
+    reason field is non-blank, or that the number the system wrote in it is small — and reporting
+    either in place of the measurement is the substitution the certificate engine exists to
+    remove. A system exposing no artefact is therefore reported *unattainable* by that engine
+    rather than falling through to a presence check.
     """
+    from reasonsmith.engines.certificate import DELETED_REASON_COUNT
+
+    if DELETED_REASON_COUNT in req.requires:
+        from reasonsmith.engines.certificate import CertificateEngine
+        return [
+            (
+                Strength.PROBED,
+                lambda: CertificateEngine.evaluate(
+                    req, sut, records if records is not None else resources.trace()
+                ),
+            )
+        ]
+
     ladder: list[tuple[Strength, Any]] = []
 
     if req.formalism in STATE_FRAGMENTS:

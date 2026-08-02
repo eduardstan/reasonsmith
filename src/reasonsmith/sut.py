@@ -2,10 +2,20 @@
 
 What this module is for:
   Defines the required `SystemUnderTest` protocol interface (`capabilities()`, `decisions()`,
-  `logic()`), the optional `decide(case)` replay hook used for active probing, and
-  `CAPABILITY_TAXONOMY` categories for black-box models, rule engines, and log traces.
+  `logic()`), the two optional hooks — `decide(case)` for active probing and `artifact(decision)`
+  for the reason-deletion certificate — and `CAPABILITY_TAXONOMY` categories for black-box models,
+  rule engines, and log traces.
 
 What a reader must not break:
+  - `artifact(decision)` is the second optional hook, and it returns the *inputs* to
+    `certificate.certify` — `program`, `base`, `query`, `adapter`, `exact_depth`, and optionally
+    `tol` and `labels` — never a verdict. A decision this system cannot open up returns None.
+    Why this matters: an adapter that returned its own certificate, or a `reasons_are_complete`
+    flag, would be a system grading its own homework, and `docs/semantics.md` §3 refuses exactly
+    that. reasonsmith runs the enumeration and the deletion probes itself, over the artefact, so
+    the number in the verdict is measured rather than declared. It stays outside the protocol for
+    the reason `decide` does: a system that cannot expose its inference artefact is a lawful
+    system, reported unattainable on a reason-adequacy duty rather than broken.
   - BaseSUT requires explicit capability declarations; an adapter that instead derives them from a
     trace must say so by setting the plain instance attribute `capability_basis = "trace"`. It is
     not part of the protocol above: `report._unattainable_result` reads it with
@@ -94,9 +104,10 @@ def _validate_capability_collection(declared: Any, subject: str) -> None:
 class SystemUnderTest(Protocol):
     """Required protocol for a system under test in reasonsmith.
 
-    An adapter may additionally expose ``decide(case)``. It stays outside this protocol because
-    replay is optional: logical requirements use it for active probing only when no exposed
-    ``logic()`` is available.
+    An adapter may additionally expose ``decide(case)`` or ``artifact(decision)``. Both stay
+    outside this protocol because both are optional: ``decide`` is used for active probing only
+    when no exposed ``logic()`` is available, and ``artifact`` only by a reason-adequacy duty,
+    which reports a system exposing none unattainable rather than judging it on something weaker.
     """
 
     def capabilities(self) -> set[str]:

@@ -3,7 +3,7 @@
 Every requirement in this repository was written by someone reading a clause of law and deciding
 what formula stands for it. That step — refinement — is where the legal meaning is either preserved
 or quietly lost, and it is the step no pack file records. `docs/authoring-packs.md` documents the
-*fields* of a requirement. This document is the record of the *judgement*: for each of the 18 shipped
+*fields* of a requirement. This document is the record of the *judgement*: for each of the 19 shipped
 requirements, the clause, the duty it states, the property it became, and — the column that matters —
 what the refinement deliberately did not capture.
 
@@ -27,19 +27,26 @@ duty is different for every requirement, and column four is where it is written 
 
 Four kinds of gap recur, and naming them once keeps the table short:
 
-- **Presence is not adequacy.** Thirteen of the eighteen shipped duties are `record` duties: a
+- **Presence is not adequacy.** Thirteen of the nineteen shipped duties are `record` duties: a
   conjunction of `present(signal)` atoms, and a fourteenth is the same presence check quantified
   over the trace. A reason field containing `"n/a"` is present
   (`docs/semantics.md` §3, *record*). Every clause whose content is an adjective — *meaningful*,
   *suitable*, *concise, complete, correct and clear* — meets a check that can see only whether a
   field is non-empty.
 
-  **One duty is no longer among them, and only because its clause did the work.**
-  12 CFR 1002.9(b)(2) names two statements that are *insufficient*, so the property can check that
-  neither was made without anyone here defining *specific* (`contains()`, `docs/semantics.md` §2).
-  That is not a general escape from this gap: it is available exactly where a clause supplies its
-  own negative constraint, and it establishes only that a named insufficiency was avoided — never
-  that what was said instead was adequate.
+  **Two duties are no longer among them, and each escapes for its own reason.**
+  12 CFR 1002.9(b)(2) names two statements that are *insufficient*, so
+  `ecoa_reg_b_1002_9_b_2_specific_reasons` can check that neither was made without anyone here
+  defining *specific* (`contains()`, `docs/semantics.md` §2). That is not a general escape from
+  this gap: it is available exactly where a clause supplies its own negative constraint, and it
+  establishes only that a named insufficiency was avoided — never that what was said instead was
+  adequate. The same clause's `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` escapes by
+  measurement rather than by wording: it compares the reasons a notice states against the reasons
+  the decision's own inference used, counted by the reason-deletion certificate over an artefact
+  the system exposes (`docs/semantics.md` §3, *certificate*). That escape is available only to a
+  system that can be opened up, and every system that cannot is reported `unattainable` on it —
+  never returned to the presence check, which would answer a different question under the same
+  duty's name.
 - **The trace is a sample.** An `observed` or `record` verdict covers exactly the records supplied,
   and nothing establishes that they are representative, complete or unfiltered
   (`docs/semantics.md` §1). Any clause whose duty runs over the lifetime of a system —
@@ -51,16 +58,16 @@ Four kinds of gap recur, and naming them once keeps the table short:
 - **The property's reach is not the clause's scope.** Most clauses below are triggered — by adverse
   action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
   evaluated over every record in a trace is checked outside that trigger too. Two axes of a
-  clause's scope are modelled — the regulatory class (`scope`, used by six of the eighteen duties)
-  and the decision domain (`domains`, used by five) — and both are gates about the *system*. A
-  trigger *inside* a decision is not a gate at all: one duty carries its own in the property
-  (12 CFR 1002.9(b)(2)), at the price of being satisfied vacuously where it never fires.
+  clause's scope are modelled — the regulatory class (`scope`, used by six of the nineteen duties)
+  and the decision domain (`domains`, used by six) — and both are gates about the *system*. A
+  trigger *inside* a decision is not a gate at all: the two 12 CFR 1002.9(b)(2) duties carry their
+  own in the property, at the price of being satisfied vacuously where it never fires.
 
 ## Two axes of reach are modelled, and the trigger is still not one
 
 A duty reaches a system when it passes two gates. `scope` is a *regulatory class* from the EU AI
 Act's own five-member vocabulary; six duties use it. `domains` is the *kind of decision* the duty is
-about — the ECOA rows and the Table 7 ECOA and FDA rows use it, four duties in all — and it is
+about — the ECOA rows and the Table 7 ECOA and FDA rows use it, six duties in all — and it is
 matched by intersection against what the system declares. A system that declares neither is reported
 `not_applicable` on every duty that limits either, never `satisfied`, and reasonsmith infers neither
 (`docs/semantics.md` §4).
@@ -69,11 +76,11 @@ The domain gate closed a specific defect. An adverse-action notice duty under 12
 reach a graph-reachability benchmark that issues no credit and notifies nobody and report it
 `satisfied`; that was not hypothetical, it happened in the run behind
 `docs/findings-nesyarena.md`, finding 3, and the only hint in the output was an unattainable verdict
-on a *different* requirement, arriving for the wrong reason. Those three ECOA duties now come back
+on a *different* requirement, arriving for the wrong reason. Those four ECOA duties now come back
 not applicable against all five of that run's systems.
 
 **What the gate still does not do, and every row in the ECOA and GDPR tables below inherits it.**
-It is stated once, here, rather than eighteen times:
+It is stated once, here, rather than nineteen times:
 
 - **The vocabulary is this repository's, not any regulation's.** `DECISION_DOMAINS` is a coarse,
   openly-authored list, and it is wrong somewhere: no statute defines a list of decision domains,
@@ -136,9 +143,9 @@ All four duties carry `scope = "high-risk"`. A system that declares no class is 
 
 ## ECOA / Regulation B (12 CFR § 1002.9) — `src/reasonsmith/packs/ecoa.toml`
 
-All three duties carry `scope = ""` — Regulation B knows nothing of the AI Act's classes — and
+All four duties carry `scope = ""` — Regulation B knows nothing of the AI Act's classes — and
 `domains = ["consumer-credit"]`. A system that declares no decision domain is reported
-`not_applicable` on all three, and the limits of that classification are in *two axes of reach are
+`not_applicable` on all four, and the limits of that classification are in *two axes of reach are
 modelled* above.
 
 | The clause | The informal duty | The formal property | What was deliberately not captured |
@@ -146,6 +153,7 @@ modelled* above.
 | 12 CFR 1002.9(a)(1)<br>`ecoa_reg_b_1002_9_a_1_timing_of_notice` | A creditor must notify an applicant of action taken within 30 days of a completed application, an incomplete application, or an existing account — or within 90 days of a counteroffer the applicant did not accept. | `temporal`: `always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))` | When the clock started. The clause counts from three different events; the property reads one latency number the system computes about itself, so which event it was measured from is the system's own claim and no engine checks it. The paragraph (ii) exception — *unless notice is provided in accordance with paragraph (c)* — is not modelled, so a lawful incomplete-application notice under 1002.9(c) is still held to the 30-day bound. `artifact_logs_counteroffer_not_accepted` is read under the flag encoding of `docs/semantics.md` §2, where any present non-numeric value becomes true, so a record that carries prose in that field takes the 90-day branch. Both numbers are the clause's own, not this pack's (`docs/authoring-packs.md`, *a number in a spec*). |
 | 12 CFR 1002.9(a)(2)<br>`ecoa_reg_b_1002_9_a_2_written_statement` | An adverse-action notification must be in writing and contain the action taken, the creditor's name and address, the ECOA § 701(a) statement, the administering federal agency's name and address, and either specific reasons or a disclosure of the right to obtain them. | `temporal`: `always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))` | Four of the five enumerated contents, unchanged: the creditor's name and address, the § 701(a) statement and the federal agency's details are not represented by any signal, and *in writing* is not modelled. What the disjunction now captures is only that *one of* the two branches left a record; **which** branch was lawful for that notification is not checked, and nothing here reads point (ii)'s own contents — the 30-day and 60-day windows it names, or the name, address and telephone number the disclosure must carry, none of which has a signal. `artifact_logs_right_to_reasons_disclosure` is present when a field is non-empty, so a disclosure reading `"see letter"` discharges the branch. Neither branch signal appears in `requires`, because gating one would report a creditor that lawfully took the other unattainable; the cost is stated in the pack description — a system declaring neither branch signal is judged on its trace and reported violated rather than unattainable. Holding the disjunction also costs the short trace: the property is quantified over the trace, so the observed engine needs at least two decisions to establish the sampling period it reasons over, and a log holding exactly one decision is reported not evaluated rather than satisfied or violated — a one-record log was enough while this was a `record` duty (`test_a_single_decision_trace_is_not_evaluated_never_satisfied`). And the whole clause is triggered only when adverse action is taken, while the property runs over every record in the trace, approvals included. |
 | 12 CFR 1002.9(b)(2)<br>`ecoa_reg_b_1002_9_b_2_specific_reasons` | The statement of reasons required by (a)(2)(i) must be specific and indicate the principal reasons for the adverse action, and statements resting on the creditor's internal standards or policies, or on the applicant's failure to achieve a qualifying score, are insufficient. | `logical`: `present(artifact_logs_reason_explanation) -> (present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, "internal standards") and not contains(artifact_logs_reason_explanation, "internal policies") and not contains(artifact_logs_reason_explanation, "failed to achieve a qualifying score"))` | *Specific* and *principal*, still — the property does not define them and no engine here can. What it now checks is the clause's own **negative** constraint, quoted in `verbatim_text` and retrieved in `docs/legal-sources.md`: two named statements that are insufficient. So a reason reading `"failed to achieve a qualifying score"` is reported violated on a plain decision log, with no oracle, no exposed logic and no replay — but a reason reading `"n/a"` or `"credit policy"` is still satisfied, because it is neither of the statements the clause names and inventing a third would be this pack legislating (`test_the_property_does_not_decide_whether_any_other_statement_is_specific`). The check is a substring test with ASCII case folding and nothing more: it does not paraphrase, so `"you did not reach our cut-off"` says the same thing in the world and passes here, and it is not a defence against a creditor wording around it — reasonsmith checks what a system says, not whether it was honest (`docs/semantics.md` §3). One of the three phrases is a reading rather than a quotation: the clause writes `internal standards or policies`, one adjective over two coordinated nouns, and the property distributes it (`test_the_forbidden_wordings_are_the_clauses_own`). **Commentary not formalised:** Official Interpretation comment 9(b)(2)-2 requires the reasons to *relate to and accurately describe the factors actually considered or scored*. Nothing in a decision record witnesses which factors a model actually scored, so checking it needs an oracle over the system's own attributions and is out of scope here. Comments 9(b)(2)-1 and -4 to -7, on how many reasons to give and how to select them from a scoring or judgmental system, are likewise not formalised. **The rest of (a)(2) not formalised:** the four other enumerated contents of the notification — the action taken, the creditor's name and address, the § 701(a) statement and the federal agency's details — and *in writing*, all as recorded in the (a)(2) row above. **Retained from the previous refinement:** `scope_statements_local_vs_global` is the pack author's proxy for a reason being about *this* decision rather than the model in general, and the regulation names nothing of the kind. **The false violation this row used to record is gone.** (b)(2) is triggered only where a statement of reasons is *required by paragraph (a)(2)(i)*, and that trigger is now the property's antecedent, so a creditor lawfully on branch (ii) is no longer reported violated (`test_a_creditor_who_took_the_disclosure_branch_is_not_violated`). The previous entry rejected exactly this repair on the ground that it would be *vacuously satisfied* for a system that gives no reasons at all, and that objection was right about the fact and wrong about the remedy: the vacuity is real, it is reported `satisfied`, and no report outcome distinguishes it from a trace that was checked and found clean. That is now recorded as a gap in `docs/semantics.md` §4 with a test that pins it, which is a better trade than a standing false accusation on a binding duty. Modelling the trigger *properly* would still need a signal for the applicant's request under (a)(2)(ii) — a fact about correspondence after the notification that nothing in a decision record witnesses. **Two costs of leaving the record fragment:** the property is an implication, not a conjunction of `present()` atoms, so the record engine cannot name which signal was missing from which decision, and the monitor that answers it needs two samples, so a log holding one decision is reported not evaluated rather than satisfied or violated (`test_a_single_decision_log_is_not_evaluated_never_satisfied`). A one-record log answered this duty before the trigger was formalised. And the clause is triggered by adverse action, while the property runs over every record in the trace, approvals included. |
+| 12 CFR 1002.9(b)(2)<br>`ecoa_reg_b_1002_9_b_2_principal_reasons_complete` | The same clause, read on the other half of its first sentence: the statement must indicate the principal reason**s** for the adverse action — all of them, not one of them. | `logical`: `present(artifact_logs_reason_explanation) -> (artifact_logs_deleted_reason_count <= 0)` | **Whether the reasons are the right ones.** The count is measured by `engines/certificate.py`, which enumerates the decision's reasons exactly from the inference artefact the system exposes through `artifact()`, switches each one off in turn, and counts the reasons the system's own answer turns out not to depend on. So the property captures *the notice states every reason this decision's inference used* and nothing beyond it: it does not check that those reasons are correct, that they are the reasons a person would call principal, or that the enumeration found the reasons a different depth bound would find. The threshold is zero and is not this pack's invention — the clause asks for the principal reason(s) for the action taken — but the bound on the enumeration is the artefact's own `exact_depth`, supplied by the system, and a reason lying past it is a reason nothing here looks for. **A reason the probe could not isolate is counted neither way:** where every fact of a reason is shared with another reason it cannot be switched off alone, so dependency is neither shown nor assumed, and the result reports how many such reasons there were (`docs/semantics.md` §3, *certificate*). **What this row exists to remove:** the sibling `ecoa_reg_b_1002_9_b_2_specific_reasons` reads the same clause and answers a weaker question — that a statement is there and is none of the two wordings the clause calls insufficient — and on the demonstration's own decision `APP-1042` it is *satisfied* while four of five legally owed reasons are missing. This duty is what makes that decision report violated, and it is deliberately given a single-rung engine ladder so no trace, no replay and no proof over exposed rules can answer it in the weaker duty's place (`test_the_adequacy_duty_is_never_downgraded_to_the_presence_check`). **The cost:** a system that cannot expose an inference artefact is reported `unattainable` on it — every system a plain decision log describes, including the three shipped adapters of `docs/three-systems.md` and all five nesyarena provenances — so this duty is checkable on strictly fewer systems than any other in the pack. That is the intended trade: unattainable says *this system cannot show me*, and the presence check it replaces said *satisfied*. **The trigger, retained from the sibling row:** the antecedent is the statement of reasons paragraph (a)(2)(i) requires, so a creditor lawfully on the (a)(2)(ii) disclosure branch is not held to it, at the cost of vacuous satisfaction where no statement exists (`docs/semantics.md` §4). And the clause is triggered by adverse action, while the property runs over every decision the trace holds, approvals included. |
 
 ## Table 7 — `src/reasonsmith/packs/table7.toml`
 
