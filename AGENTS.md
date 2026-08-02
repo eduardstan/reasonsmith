@@ -181,13 +181,28 @@ substituted nothing and left the front page showing a verdict the tool no longer
 Table 7 run declared into the high-risk class, beside the demonstration's key finding, which no
 report the CLI writes may carry — and `test_docs_index_html_matches_the_renderer` holds the
 committed page byte-for-byte to that script. Touching the renderer means regenerating the page with
-`python docs/build_example.py`, the command the page names as its own provenance. The renderer
+`python docs/build_example.py`, the command the page names as its own provenance. That page names
+no commit and cannot be made to: the commit carrying it does not exist while it is rendered, so a
+hash written there would name another commit and break the byte pin the moment the page was
+committed. It names the check that reproduces it instead (`PROVENANCE_NOTE` in the builder), the
+same shape of claim `docs/nesyarena-conformance-report.md` carries — do not add a hash back to
+either. The renderer
 itself lives in `render.py` — module-level `render_text`/`render_html`, with the presentation
 constants and `_source_checkout` — and `ConformanceReport`'s methods of the same names are thin
 delegates to it, so a rendering edit is a `render.py` edit and nothing in `report.py`. The website
 (landing, vendored libraries, fonts, assets) lives in the separate private `reasonsmith-site`
 repo and deploys to Vercel — see [#35](https://github.com/eduardstan/reasonsmith/pull/35); this
 repo only generates the dossier that gets published there as `report.html`.
+
+`AudienceProjection` has one field that emits rather than suppresses: `plain_account`, on for
+`affected-individual` alone, turning on `render._lay_sections`. Everything it prints is quoted —
+the decision and the reason out of `ConformanceReport.decisions` (the trace `check_conformance`
+already read, carried on the report and deliberately absent from `to_dict`, which is the findings
+record), and a reason left unstated out of the certificate engine's own measurement. It paraphrases
+no statute and explains no decision; `docs/semantics.md` §7 is the rule and the four tests in
+`tests/test_audience_view.py` are the enforcement, including the one that fails if the view ever
+becomes a subset of an expert view again. The `--audience` transcripts in `README.md` are derived
+and no test pins them, so a wording change there means `python docs/build_readme_transcripts.py`.
 
 `docs/assets/og.png` is generated from `brand/og.html` in the site repository, is served live as the
 site's social card, and must never be edited here — regenerate there, copy here, update the pinned

@@ -27,6 +27,16 @@ What a reader must not break:
     (`test_two_audiences_differ_by_content_not_framing`).
     Why this matters: an implementation that renders one body under five titles would satisfy
     every other test here, and would be exactly the relabelling this feature is not.
+  - The affected-individual rendering is not a subset of any expert one: it emits words no
+    expert view carries (`test_the_lay_view_derives_content_no_expert_view_carries`), every
+    heading it emits has a line under it on every shape of run
+    (`test_the_lay_view_never_puts_a_heading_over_an_empty_box`), and the disclaimer it must
+    keep in full is not the largest thing on its page
+    (`test_the_lay_page_does_not_let_the_disclaimer_dominate`).
+    Why this matters: the first three rules bound what this artefact may not show, and three
+    exclusions are perfectly satisfied by an empty page. Built out of suppression alone the view
+    was a strict subset of the developer's with an empty difference — the expert report with
+    parts removed, handed to the reader least able to notice what was taken out.
 """
 
 from __future__ import annotations
@@ -37,9 +47,11 @@ import pytest
 
 from reasonsmith.render import _FULL, AUDIENCES, render_html, render_text
 from reasonsmith.report import (
+    CERTIFICATES_KEY,
     PROBE_BUDGET_KEY,
     UNDECLARED_DOMAIN_KEY,
     ConformanceReport,
+    DecisionAccount,
     RequirementResult,
 )
 from reasonsmith.verdict import Strength, Verdict
@@ -108,7 +120,19 @@ def _run() -> ConformanceReport:
                         "strategy": "seeded perturbation of recorded decisions",
                         "seed": 0,
                         "input_space": {"credit_score": 11},
-                    }
+                    },
+                    CERTIFICATES_KEY: [
+                        {
+                            "decision_index": 0,
+                            "certificate_verdict": "FAIL",
+                            "reasons_found": 3,
+                            "reasons_deleted": 1,
+                            "missing_reasons": [
+                                "C04 too many recent inquiries on credit bureau report"
+                            ],
+                            "attribution": "the engine kept the top 2 of 3 by score",
+                        }
+                    ],
                 },
                 binding=False,
             ),
@@ -120,6 +144,18 @@ def _run() -> ConformanceReport:
                 signals_required=("provenance_model_version",),
                 evidence_summary="Not applicable: the duty is limited to another domain.",
                 domains=("healthcare",),
+            ),
+        ),
+        # What the system itself recorded about the decision it made. Deliberately not the same
+        # strings as the witness record above: a witness is a field-by-field record shown as
+        # evidence that a duty was breached, and stays an internal; an account is what the system
+        # told the person, and is the one thing the lay artefact exists to carry. Keeping the two
+        # apart in the fixture is what lets one test exclude the first while another requires the
+        # second, without either passing by accident.
+        decisions=(
+            DecisionAccount(
+                decision="id: APP-7788, result: adverse_action",
+                reason="C01 income insufficient for amount requested",
             ),
         ),
     )
@@ -377,6 +413,111 @@ def test_two_audiences_differ_by_content_not_framing():
     # And no two of the five collapse onto one artefact.
     bodies = {audience: render_text(report, audience=audience) for audience in FIVE}
     assert len({body for name, body in bodies.items() if name != "auditor"}) == 4
+
+
+# --- Rule 4: the lay view derives, and is not a redaction -------------------------------------
+
+
+def _words(text: str) -> set[str]:
+    """The word set of a rendering, which is what a redaction cannot grow."""
+    return set(re.findall(r"[a-z][a-z'-]+", text.lower()))
+
+
+def test_the_lay_view_derives_content_no_expert_view_carries():
+    """The one property that makes this artefact worth rendering at all.
+
+    Every other test here bounds what the lay view may *not* show. This one is the converse, and
+    it is the whole point: a projection built only out of suppression flags produces a strict
+    subset of some expert rendering, and a strict subset is a report with parts taken out — four
+    machine identifiers, four statute citations, four verdict words and a disclaimer longer than
+    all of it, for the reader least able to fill in what is missing. The lay view must *add*.
+    """
+    report = _run()
+    lay = _words(render_text(report, audience="affected-individual"))
+    experts = [a for a in FIVE if a != "affected-individual"]
+    expert = set().union(*(_words(render_text(report, audience=a)) for a in experts))
+
+    assert lay - expert, (
+        "the lay view still adds nothing; it is a redaction, not a derivation. Every word it "
+        "emits already appears in an expert rendering of the same run, which means this reader "
+        "is being handed the expert report with parts removed and nothing put in."
+    )
+
+    # Named, so the difference cannot drift into an accident of wording. Each of the three is a
+    # thing the report already carried and no rendering said out loud: what the system decided,
+    # what it gave as the reason, and what the certificate engine measured about that reason.
+    text = render_text(report, audience="affected-individual")
+    assert 'the decision it recorded: "id: APP-7788, result: adverse_action"' in text
+    assert 'the reason it stated: "C01 income insufficient for amount requested"' in text
+    assert '"C04 too many recent inquiries on credit bureau report"' in text
+
+    # And none of it reaches an expert view, so this is content and not a re-wording.
+    for audience in experts:
+        assert "the reason it stated:" not in render_text(report, audience=audience)
+
+
+def test_the_lay_view_never_puts_a_heading_over_an_empty_box():
+    """Every emitted heading has a line under it, in both renderings and on every run shape.
+
+    The three shapes that would each have produced one: a run that read no decision, a run where
+    the certificate engine never measured the reasons, and a run where every duty was settled.
+    """
+    full = _run()
+    bare = ConformanceReport(
+        pack_id="ecoa",
+        system_name="log-only creditor",
+        results=(
+            RequirementResult(
+                requirement_id="settled_duty",
+                source_clause="12 CFR 1002.9(b)(2)",
+                verdict=Verdict.SATISFIED,
+                strength=Strength.OBSERVED,
+                signals_required=("artifact_logs_reason_explanation",),
+                evidence_summary="Observed over 1 decision.",
+            ),
+        ),
+    )
+    assert not bare.decisions, "the fixture must be the run that read no decision"
+
+    for report in (full, bare):
+        text = render_text(report, audience="affected-individual")
+        lines = text.splitlines()
+        for index, line in enumerate(lines):
+            if not line or line.startswith(" ") or not line.isupper():
+                continue
+            after = lines[index + 1] if index + 1 < len(lines) else ""
+            assert after.strip(), f"the heading {line!r} is followed by nothing"
+
+        page = _body(render_html(report, commit_hash="", audience="affected-individual"))
+        assert '<div class="callout-box callout-probe"></div>' not in page
+        assert '<div class="req-card-body">' not in page, (
+            "a suppressed card body is drawn as an empty box under a verdict chip"
+        )
+
+    # The run that read no decision says so, and the run nothing measured the reasons on says
+    # that too. Silence would read to this reader as a clean result.
+    assert "This run read no decision record" in render_text(
+        bare, audience="affected-individual"
+    )
+    assert "Nothing in this report measured that." in render_text(
+        bare, audience="affected-individual"
+    )
+
+
+def test_the_lay_page_does_not_let_the_disclaimer_dominate():
+    """The limits stay whole and stop being the largest thing on the page.
+
+    Kept in full — `test_every_audience_keeps_the_limits` is the rule and this does not soften
+    it — and folded into the page's own disclosure element for this reader only, so the account
+    above it is what the page opens on. No stylesheet is involved either way.
+    """
+    report = _run()
+    lay = render_html(report, commit_hash="", audience="affected-individual")
+    expert = render_html(report, commit_hash="", audience="regulator")
+
+    assert "<summary" in lay and "Limits of this report" in lay
+    assert "<summary" not in expert
+    assert '<h3 class="limits-header">Limits of this report</h3>' in expert
 
 
 def test_the_cli_offers_the_five_audiences_and_refuses_a_sixth(tmp_path, capsys):

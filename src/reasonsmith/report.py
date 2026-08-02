@@ -90,6 +90,22 @@ UNDECLARED_DOMAIN_KEY = "skipped_for_undeclared_domain"
 #: `reasonsmith.plugins` and `docs/authoring-engines.md`.
 ENGINE_PLUGIN_KEY = "engine_plugin"
 
+#: Where the certificate engine records one entry per decision it certified. Named here rather
+#: than spelled twice because a rendering reads it: a reader who is shown "the reasons stated were
+#: not all the reasons" is being shown this measurement and nothing else.
+CERTIFICATES_KEY = "certificates"
+
+#: The two signals a decision record is read for when a report is asked what the system itself
+#: said about a decision: what it recorded as the decision, and what it stated as the reason.
+#:
+#: Naming two pack signals here is a real coupling and is deliberate. It is the same coupling
+#: `engines/certificate.py` already carries for `artifact_logs_deleted_reason_count`, and it buys
+#: the one thing a lay rendering cannot do without: the system's own words. Anything wider — a
+#: rendering that guessed which of a record's fields is "the reason" — would be this package
+#: inventing an explanation, which is the line `docs/semantics.md` §7 refuses to cross.
+DECISION_RECORD_SIGNAL = "artifact_logs_decision_record"
+REASON_SIGNAL = "artifact_logs_reason_explanation"
+
 
 #: Re-exported so the engines and the JSONL adapter keep importing presence from one place. The
 #: definition lives in `rulelang` because `present(signal)` is an atom of the property language
@@ -331,8 +347,63 @@ def _category_counts(
 
 
 @dataclass(frozen=True)
+class DecisionAccount:
+    """What one decision record says the system decided, and the reason it stated for it.
+
+    Both fields are the system's own words, copied out of the trace this run already read and
+    never rewritten: `decision` is whatever the record carried under `DECISION_RECORD_SIGNAL`
+    and `reason` whatever it carried under `REASON_SIGNAL`, with a mapping flattened the way
+    every other rendering of a decision record in this package flattens one. Either may be the
+    empty string, which is the record saying nothing there — a distinct thing from a record this
+    run never read, and the renderings keep the two apart.
+
+    Nothing here is a measurement and nothing here is an explanation. A reader shown these two
+    strings has been shown the log, which is the only thing this package can honestly tell a
+    person about *why*; whether they are all the reasons is a separate finding, and only
+    `engines/certificate.py` produces it.
+    """
+
+    decision: str = ""
+    reason: str = ""
+
+
+def _account_text(value: Any) -> str:
+    """One decision-record field as text, or `""` when the record carried nothing there."""
+    if value is None:
+        return ""
+    if isinstance(value, Mapping):
+        return ", ".join(f"{key}: {item}" for key, item in value.items())
+    return str(value).strip()
+
+
+def decision_accounts(records: Iterable[Mapping[str, Any]]) -> tuple[DecisionAccount, ...]:
+    """The decisions a trace states, in trace order, skipping records that state neither.
+
+    A record carrying neither a decision nor a reason yields no account at all rather than an
+    empty one: a rendering that emitted a heading over a blank line would be reporting a decision
+    it does not have, which is the defect this type exists to remove rather than relocate.
+    """
+    accounts = []
+    for record in records:
+        account = DecisionAccount(
+            decision=_account_text(record.get(DECISION_RECORD_SIGNAL)),
+            reason=_account_text(record.get(REASON_SIGNAL)),
+        )
+        if account.decision or account.reason:
+            accounts.append(account)
+    return tuple(accounts)
+
+
+@dataclass(frozen=True)
 class ConformanceReport:
-    """Report summarizing conformance of a System Under Test against a Pack."""
+    """Report summarizing conformance of a System Under Test against a Pack.
+
+    `decisions` carries what the trace this run read said about each decision, in the system's
+    own words (`DecisionAccount`). It is an input this run already read and not a finding, which
+    is why it is not in `to_dict`: the JSON record is the findings record, and a conformance
+    document is not the place a production decision log gets republished. A rendering that shows
+    it — today only the affected-individual projection — is quoting the log, never summarising it.
+    """
 
     pack_id: str
     system_name: str
@@ -340,9 +411,11 @@ class ConformanceReport:
     system_scope: str | None = None
     system_domains: tuple[str, ...] = ()
     limits: str = LIMITS
+    decisions: tuple[DecisionAccount, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "system_domains", normalize_domains(self.system_domains))
+        object.__setattr__(self, "decisions", tuple(self.decisions))
 
     @property
     def counts(self) -> dict[str, int]:
@@ -446,6 +519,7 @@ class ConformanceReport:
         command: str | None = None,
         extra_section_html: str | None = None,
         audience: str | None = None,
+        provenance_note: str | None = None,
     ) -> str:
         """Self-contained HTML conformance report rendering.
 
@@ -468,6 +542,9 @@ class ConformanceReport:
         document handed to an auditor, is exactly the false completeness this package refuses.
         The caller that passes it owns the claim it makes and escapes its own content.
 
+        `provenance_note` is one caller-owned sentence appended to the provenance bar, for an
+        origin claim this package cannot establish for itself — see `render.render_html`.
+
         `audience` selects an audience projection, exactly as it does for `render_text`.
         """
         from reasonsmith.render import render_html
@@ -478,6 +555,7 @@ class ConformanceReport:
             command=command,
             extra_section_html=extra_section_html,
             audience=audience,
+            provenance_note=provenance_note,
         )
 
 
@@ -551,6 +629,18 @@ class _EvaluationResources:
                 self._records = None
         if self._trace_error is not None:
             raise self._trace_error
+        return cast(list[dict[str, Any]], self._records)
+
+    def records_read(self) -> list[dict[str, Any]]:
+        """The trace this run actually read, and never a read it did not need.
+
+        Deliberately not `trace()`: the promise that a run which needed no trace never executed
+        the system is the whole of `analyze_unattainable`'s guarantee, and a report asking after
+        the fact what the decisions were must not be what breaks it. A trace nothing read, and a
+        trace whose read raised, are both reported here as no decisions.
+        """
+        if self._records is _UNREAD or self._records is None:
+            return []
         return cast(list[dict[str, Any]], self._records)
 
     def logic(self) -> Any:
@@ -1035,4 +1125,5 @@ def check_conformance(
         system_scope=system_scope,
         system_domains=sys_domains,
         results=tuple(results),
+        decisions=decision_accounts(resources.records_read()),
     )

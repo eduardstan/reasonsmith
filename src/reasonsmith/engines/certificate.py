@@ -47,7 +47,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from reasonsmith.certificate import Certificate, certify
-from reasonsmith.report import PROBE_BUDGET_KEY, RequirementResult
+from reasonsmith.report import CERTIFICATES_KEY, PROBE_BUDGET_KEY, RequirementResult
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
     eval_expression,
@@ -267,7 +267,7 @@ class CertificateEngine:
             "decisions_certified": len(certified),
             "decisions_without_an_artifact": uncertifiable,
             "reasons_not_certifiable": uncertified_reasons,
-            "certificates": [
+            CERTIFICATES_KEY: [
                 {
                     "decision_index": index,
                     "certificate_verdict": cert.verdict,

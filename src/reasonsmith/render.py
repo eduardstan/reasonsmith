@@ -33,7 +33,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from reasonsmith.report import _CATEGORY_LABELS, PROBE_BUDGET_KEY, ConformanceReport
+from reasonsmith.report import (
+    _CATEGORY_LABELS,
+    CERTIFICATES_KEY,
+    PROBE_BUDGET_KEY,
+    ConformanceReport,
+)
 from reasonsmith.verdict import Strength, Verdict
 
 
@@ -44,6 +49,16 @@ class AudienceProjection:
     Every field selects a part of the report that already exists; nothing here computes anything
     about the system, and no field can change a verdict. A projection narrows a rendering and
     never widens it beyond what the full report carries.
+
+    Eight of the nine fields suppress: they default to shown and turning one off drops a part of
+    the page. `plain_account` is the one that emits, and it defaults to *off* so `_FULL` — and
+    with it every generated document under `docs/` — is untouched by its existence. It exists
+    because suppression alone produced an artefact defined only by what had been taken out of it:
+    a reader shown four requirement identifiers, four statute citations, four verdict words and
+    the limits, and not one sentence of what the system said about them. What it turns on is
+    `_lay_sections`, which restates parts of this same report — the decision accounts the run
+    read, the certificate engine's measurement, and the duties nothing settled — in the words the
+    system and the engines used. It derives no fact and paraphrases no statute.
     """
 
     #: The declared scope and domain lines, the headline and the per-category counts.
@@ -64,6 +79,9 @@ class AudienceProjection:
     probe_budget: bool = True
     #: Concrete decision records and solver inputs that witness a violation.
     witnesses: bool = True
+    #: The one field that *emits*: the plain-language account of `_lay_sections`, restating what
+    #: this report already carries for a reader who is not an engineer, a regulator or a lawyer.
+    plain_account: bool = False
 
 
 #: The full report: every part of it, and the rendering `audience=None` produces.
@@ -86,6 +104,7 @@ AUDIENCES: dict[str, AudienceProjection] = {
         evidence_summary=False,
         probe_budget=False,
         witnesses=False,
+        plain_account=True,
     ),
     "auditor": _FULL,
     "deployer": AudienceProjection(signals=False, witnesses=False),
@@ -108,6 +127,105 @@ def _projection(audience: str | None) -> AudienceProjection:
         raise ValueError(
             f"unknown audience {audience!r}; known audiences are {', '.join(sorted(AUDIENCES))}"
         ) from None
+
+
+def _duties(count: int) -> str:
+    return "duty" if count == 1 else "duties"
+
+
+def _lay_sections(report: ConformanceReport) -> list[tuple[str, list[str]]]:
+    """The plain-language account, as `(heading, lines)` pairs, for `plain_account` renderings.
+
+    Every line restates something this report already carries, and the two renderings share this
+    one derivation so the page and the console cannot come to say different things.
+
+    Three rules hold every line here, and each of them is the same rule seen from a different
+    side. **The system's own words only**: a decision and a reason are quoted out of the trace,
+    never rewritten, and a deleted reason is named with the label the certificate gave it. **No
+    heading without a line under it**: a section with nothing to say is either dropped or says
+    plainly that it has nothing, because a confident heading over an empty box is exactly the
+    defect this account exists to remove. **Absence of a finding is never completeness**: a run
+    where the certificate engine never measured whether the stated reasons were all the reasons
+    says so in its own section, rather than leaving a reader to read silence as a clean result.
+    """
+    sections: list[tuple[str, list[str]]] = []
+
+    account_lines: list[str] = []
+    for account in report.decisions:
+        if account.decision:
+            account_lines.append(f'the decision it recorded: "{account.decision}"')
+        if account.reason:
+            account_lines.append(f'the reason it stated: "{account.reason}"')
+        elif account.decision:
+            account_lines.append("it stated no reason for that decision.")
+    if not report.decisions:
+        heading = "WHAT THE SYSTEM RECORDED"
+        account_lines = [
+            "Nothing. This run read no decision record stating a decision or a reason, so this "
+            "report carries none of the system's own words about one."
+        ]
+    elif len(report.decisions) == 1:
+        heading = "WHAT THE SYSTEM RECORDED ABOUT THIS DECISION"
+    else:
+        heading = f"WHAT THE SYSTEM RECORDED ABOUT THE {len(report.decisions)} DECISIONS IT LOGGED"
+    sections.append((heading, account_lines))
+
+    certificates = [
+        certificate
+        for result in report.results
+        for certificate in (result.details.get(CERTIFICATES_KEY) or ())
+    ]
+    not_stated = [
+        str(name)
+        for certificate in certificates
+        for name in (certificate.get("missing_reasons") or ())
+    ]
+    if not certificates:
+        complete_lines = [
+            "Nothing in this report measured that. No finding here says the reasons above are "
+            "all the reasons, and nothing here should be read as saying they are."
+        ]
+    elif not not_stated:
+        complete_lines = [
+            f"{len(certificates)} decision(s) were re-run against the system's own inference. "
+            "Every reason it found there is one the answer depended on, so none was shown to "
+            "have been left unstated."
+        ]
+    else:
+        complete_lines = [
+            f"{len(not_stated)} further reason(s) the system's own answer depended on were not "
+            "stated. Measured by re-running its inference, not inferred from its log:"
+        ]
+        complete_lines += [f'"{name}"' for name in not_stated]
+    sections.append(("WHETHER THOSE WERE ALL THE REASONS", complete_lines))
+
+    unattainable = [r for r in report.results if r.strength == Strength.UNATTAINABLE]
+    unsettled = [
+        r
+        for r in report.results
+        if r.strength is None and r.verdict != Verdict.NOT_APPLICABLE
+    ]
+    inapplicable = [r for r in report.results if r.verdict == Verdict.NOT_APPLICABLE]
+    unchecked_lines = []
+    if unattainable:
+        unchecked_lines.append(
+            f"{len(unattainable)} {_duties(len(unattainable))}: the system supplied nothing any "
+            "check here could read, so it was not checked either way."
+        )
+    if unsettled:
+        unchecked_lines.append(
+            f"{len(unsettled)} {_duties(len(unsettled))}: no check in this report could settle "
+            "it, so it was left open rather than answered."
+        )
+    if inapplicable:
+        unchecked_lines.append(
+            f"{len(inapplicable)} {_duties(len(inapplicable))}: not one this run applies to this "
+            "system, so nothing here says it was met."
+        )
+    if unchecked_lines:
+        sections.append(("WHAT THIS REPORT COULD NOT CHECK", unchecked_lines))
+
+    return sections
 
 
 def _budget_line(budget: Mapping[str, Any]) -> str:
@@ -230,6 +348,9 @@ def render_text(report: ConformanceReport, audience: str | None = None) -> str:
         notice = report.undeclared_domain_notice
         if notice:
             lines.append(f"DUTIES NOT CHECKED: {notice}")
+        if view.plain_account:
+            for heading, body in _lay_sections(report):
+                lines += ["", heading, *(f"    {line}" for line in body)]
         lines += [
             "",
             "REQUIREMENT FINDINGS:",
@@ -272,6 +393,7 @@ def render_html(
     command: str | None = None,
     extra_section_html: str | None = None,
     audience: str | None = None,
+    provenance_note: str | None = None,
 ) -> str:
         """Self-contained HTML conformance report rendering.
 
@@ -293,6 +415,14 @@ def render_html(
         rendered by default: a narrative about another system's decision, sitting inside a
         document handed to an auditor, is exactly the false completeness this package refuses.
         The caller that passes it owns the claim it makes and escapes its own content.
+
+        `provenance_note` is one sentence appended to the provenance bar, escaped, and is empty
+        unless a caller supplies it. It exists for the caller that can establish something about
+        this report's origin that this module cannot: a page committed into the repository it
+        describes can never name the commit that carries it — that commit does not exist when the
+        page is rendered — but it can name the check that holds it to its command. The claim
+        belongs to the caller for the same reason `extra_section_html` does. Nothing is guessed
+        here and nothing is defaulted: a report whose caller says nothing says nothing.
 
         `audience` selects an `AudienceProjection` exactly as it does for `render_text`: it
         narrows which parts of this report are drawn and changes no verdict. `None` is the full
@@ -322,10 +452,11 @@ def render_html(
             origin = "from a modified working tree, which no commit identifies"
         else:
             origin = "without an identified source commit"
-        cmd_part = f" Command: <code>{html.escape(command)}</code>" if command else ""
+        cmd_part = f" Command: <code>{html.escape(command)}</code>." if command else ""
+        note_part = f" {html.escape(provenance_note)}" if provenance_note else ""
         provenance_html = (
             '<div class="provenance-bar">'
-            f'<strong>Report Provenance:</strong> Generated {origin}.{cmd_part}'
+            f'<strong>Report Provenance:</strong> Generated {origin}.{cmd_part}{note_part}'
             '</div>'
         )
 
@@ -607,6 +738,20 @@ def render_html(
                     "</div>"
                 )
 
+            # A projection that suppresses every part of a card's body leaves the body itself
+            # behind: a confident verdict chip over an empty box, which reads as a finding with
+            # nothing behind it rather than as a part deliberately not shown. The box is emitted
+            # only when something goes in it. Every audience that shows an evidence summary
+            # always fills it, so this changes no page that carries one — including the byte-
+            # pinned `docs/report.html`.
+            body_inner = f"{signal_block}\n{summary_block}\n            {details_html}"
+            body_block = (
+                '          <div class="req-card-body">\n'
+                f"{body_inner}\n"
+                "          </div>\n"
+                if body_inner.strip()
+                else ""
+            )
             req_html_blocks.append(f"""
         <article class="req-card {v_class}">
           <header class="req-card-header">
@@ -622,14 +767,43 @@ def render_html(
             </div>
           </header>
 {lattice_block}
-          <div class="req-card-body">
-{signal_block}
-{summary_block}
-            {details_html}
-          </div>
-        </article>""")
+{body_block}        </article>""")
 
         req_section_html = "\n".join(req_html_blocks)
+
+        # The plain-language account, drawn with the classes the page already defines so this
+        # carries no stylesheet of its own: the account is the neutral callout, the two sections
+        # about what was not established are the dashed one every other gap on this page uses.
+        account_html = ""
+        if view.plain_account:
+            blocks = []
+            for index, (heading, body) in enumerate(_lay_sections(report)):
+                tone = "callout-probe" if index == 0 else "callout-unattainable"
+                items = "".join(
+                    f"<p>{html.escape(line)}</p>" for line in body
+                )
+                blocks.append(
+                    f'    <h2 class="section-title">{html.escape(heading.capitalize())}</h2>\n'
+                    f'    <div class="callout-box {tone}">{items}</div>\n'
+                )
+            account_html = "".join(blocks)
+
+        # The limits are a real disclaimer and no audience may lose them, so they are never cut.
+        # For a lay reader they are also, unchanged, longer than everything else on the page put
+        # together — a page whose largest element is a legal caveat is one that has told this
+        # reader nothing. `<details>` keeps every word one click away and gives the account above
+        # the page; it is a native element, so this needs no CSS and cannot fight the stylesheet.
+        limits_block = (
+            '      <details>\n'
+            f'        <summary class="limits-header">Limits of this report</summary>\n'
+            f'        <p class="limits-text">{limits_esc}</p>\n'
+            "      </details>"
+            if view.plain_account
+            else (
+                '      <h3 class="limits-header">Limits of this report</h3>\n'
+                f'      <p class="limits-text">{limits_esc}</p>'
+            )
+        )
 
         return f"""<!DOCTYPE html>
 <html lang="en">
@@ -1248,14 +1422,13 @@ def render_html(
     {extra_section}
 
 {dashboard_block}
-    <h2 class="section-title" id="findings">Requirement Findings</h2>
+{account_html}    <h2 class="section-title" id="findings">Requirement Findings</h2>
     <main class="req-list">
 {req_section_html}
     </main>
 
     <section class="limits-card">
-      <h3 class="limits-header">Limits of this report</h3>
-      <p class="limits-text">{limits_esc}</p>
+{limits_block}
     </section>
     <footer class="dossier-foot">
       <span>reasonsmith &middot; audit-grade explanations</span>

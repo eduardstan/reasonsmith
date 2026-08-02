@@ -372,6 +372,34 @@ def test_clean_checkout_names_its_commit(monkeypatch):
     assert "from commit <code>0123456</code>" in html
 
 
+def test_a_provenance_note_is_the_callers_claim_and_is_escaped():
+    """The bar carries a caller's origin claim verbatim, and nothing when there is none."""
+    report = _docs_report()
+
+    assert "Command:" not in report.render_html(commit_hash="")
+    injected = report.render_html(
+        commit_hash="", provenance_note="<script>alert(1)</script>"
+    )
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in injected
+    assert "<script>alert(1)</script>" not in injected
+    assert "reproduces itself" in report.render_html(
+        commit_hash="", provenance_note="reproduces itself"
+    )
+
+
+def test_the_page_states_the_guarantee_it_carries_instead_of_a_commit():
+    """A page committed into this repository cannot name the commit that carries it.
+
+    That commit does not exist while the page is rendered, so the page names the check that
+    holds it to its build command instead — the property a hash was wanted for, and one a
+    reader with a checkout can run. Renaming that test means rewording this claim.
+    """
+    page = DOCS_INDEX.read_text(encoding="utf-8")
+
+    assert build_example.PROVENANCE_NOTE in page
+    assert "test_docs_index_html_matches_the_renderer" in build_example.PROVENANCE_NOTE
+
+
 def test_docs_index_html_matches_the_renderer():
     """The committed demo page is generated, not hand-maintained: it must match its build script.
 

@@ -150,10 +150,12 @@ LIMITS OF THIS REPORT
 ```
 
 And the same run for the **person the decision was about** — the narrowest artefact this tool
-renders, twelve lines against the full report's twenty-eight: which duties were checked, how each
-came out, and the limits, with no system internals at all. No signal names, no probe budget, no
-counterexamples, and no strength vocabulary, because being told a duty is `probed` hands a person
-this tool's evidence model instead of an answer.
+renders, and the only one that is *derived* rather than narrowed. It carries no system internals
+at all: no signal names, no probe budget, no counterexamples, and no strength vocabulary, because
+being told a duty is `probed` hands a person this tool's evidence model instead of an answer. What
+it carries instead is the part of this same run no other view says out loud — the decision the
+system recorded and the reason it stated, in its own words, and the reasons the certificate engine
+measured it used and did not state.
 
 ```sh
 reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa --system-name TruncatingCreditSystem --audience affected-individual
@@ -163,6 +165,19 @@ reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack
 CONFORMANCE REPORT
 system: TruncatingCreditSystem
 pack: ecoa
+
+WHAT THE SYSTEM RECORDED ABOUT THE 2 DECISIONS IT LOGGED
+    the decision it recorded: "adverse action on APP-1043"
+    the reason it stated: "C01 — Income insufficient for amount of credit requested"
+    the decision it recorded: "adverse action on APP-1042"
+    the reason it stated: "C01 — Income insufficient for amount of credit requested"
+
+WHETHER THOSE WERE ALL THE REASONS
+    4 further reason(s) the system's own answer depended on were not stated. Measured by re-running its inference, not inferred from its log:
+    "C05 — Insufficient number of credit references provided"
+    "C03 — Delinquent past or present credit obligations"
+    "C04 — Too many recent inquiries on credit bureau report"
+    "C02 — Length of time credit has been established is too short"
 
 REQUIREMENT FINDINGS:
   ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
@@ -174,19 +189,23 @@ LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
-**What that view does not carry, and this page will not pretend it does: the reasons.** A person
-refused credit wants the reasons they were refused. What is above is verdicts about duties — it
-says the creditor's statement of reasons was found incomplete, and it does not say which reasons
-were dropped. A conformance report does not hold the adverse-action statement a creditor owes
-them, and this projection will not manufacture one; closing that gap means a different artefact
-reading a different input, not a wider projection of this one. That limit and the full row-by-row
-table of what each of the five readers is shown — authored here, not derived from the law, so it
-can be argued with — are in [`docs/semantics.md`](docs/semantics.md) §7.
+**What that view is still not: an adverse-action notice.** Everything above is the system's own
+words and the engines' own measurements, quoted — the log said this, the certificate found these
+four reasons went unstated — and not one sentence of it paraphrases the statute, explains the
+decision, or advises. A conformance report does not hold the adverse-action statement a creditor
+owes a person and this projection will not write one. Where a run has less to quote it says so
+rather than going quiet: a run that read no decision record says that, and a run where nothing
+measured whether the stated reasons were complete says *that*, because silence there reads as a
+clean result to the reader least equipped to know otherwise. The full row-by-row table of what
+each of the five readers is shown — authored here, not derived from the law, so it can be argued
+with — is in [`docs/semantics.md`](docs/semantics.md) §7.
 
 `--audience` projects the text and HTML renderings only. `--json` stays the complete machine
 record, so a pipeline never loses fields to a display flag — and so `--audience
 affected-individual --json` is not a redaction. Redaction is a security property; this is a
-presentation one.
+presentation one. The decision accounts the lay view quotes are the one thing not in it, for the
+opposite reason: the JSON is the findings record, and what the system logged is an input the run
+read rather than a finding it made.
 
 ## What a verdict is worth
 
