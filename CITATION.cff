@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: "reasonsmith: evidence records and reason-deletion certificates for decision systems"
+authors:
+  - family-names: Stan
+    given-names: Ionel Eduard
+version: 0.2.0
+date-released: 2026-08-01
+url: https://reasonsmith.dev
+repository-code: https://github.com/eduardstan/reasonsmith
+license: MIT
+preferred-citation:
+  type: article
+  title: "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
+  authors:
+    - family-names: Stan
+      given-names: Ionel Eduard
+    - family-names: Sciavicco
+    - family-names: Napoletano
+  journal: Journal of Artificial Intelligence Research
+  volume: 86
+  year: 2026
+  month: 7
