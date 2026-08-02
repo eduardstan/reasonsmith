@@ -42,9 +42,10 @@ What a reader must not break:
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from functools import lru_cache
 from typing import Any, Optional, Protocol, runtime_checkable
 
-from reasonsmith.spec import load_pack
+from reasonsmith.spec import Pack, load_pack
 
 #: Section 6.3 top-level taxonomy for capability signals supplied through the SUT protocol
 #: (Stan, Sciavicco & Napoletano, JAIR 2026, Section 6.3, p. 36:24):
@@ -133,6 +134,17 @@ class BaseSUT:
         return None
 
 
+@lru_cache(maxsize=1)
+def _table7_pack() -> Pack:
+    """The shipped Table 7 pack, parsed once for every derivation below.
+
+    Cached because both derivations are read in the same constructor, and a reference system
+    is built many times over a run: `load_pack` re-reads and re-parses the TOML on every call.
+    The pack is frozen, so a shared instance cannot be edited by one caller under another.
+    """
+    return load_pack("table7")
+
+
 def _table7_signals() -> set[str]:
     """Every signal the shipped Table 7 pack asks for, read from the pack itself.
 
@@ -140,7 +152,7 @@ def _table7_signals() -> set[str]:
     changes, and a reference system that declares stale signal names would make the
     unattainable analysis look wrong when it is right.
     """
-    return {signal for req in load_pack("table7").requirements for signal in req.requires}
+    return {signal for req in _table7_pack().requirements for signal in req.requires}
 
 
 def _table7_domains() -> tuple[str, ...]:
@@ -151,7 +163,7 @@ def _table7_domains() -> tuple[str, ...]:
     it. A hand-written list would make the domain gate look wrong the first time a row of the
     pack changed domain.
     """
-    return tuple(sorted({d for req in load_pack("table7").requirements for d in req.domains}))
+    return tuple(sorted({d for req in _table7_pack().requirements for d in req.domains}))
 
 
 #: The Table 7 evidence fields that carry a per-decision reason. Row 3 (GDPR Art. 22)

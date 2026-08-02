@@ -1879,11 +1879,11 @@ def check_conformance(
 ) -> ConformanceReport:
     """Check conformance of a SUT against all requirements in a Pack.
 
-    Applicability and unattainability are resolved for every requirement first, and the
-    decision trace is read at most once — and not at all when nothing in the pack is
-    applicable, attainable and checkable here. That keeps "the unattainable analysis does not
-    run the system" a property of the code rather than of the order the requirements happen to
-    appear in.
+    Applicability and unattainability are resolved for a requirement before anything is run for
+    it, and the decision trace is read at most once — and not at all when nothing in the pack is
+    applicable, attainable and checkable here. Both are properties of `evaluate_requirement` and
+    of the shared, lazily read `_EvaluationResources`, so "the unattainable analysis does not run
+    the system" does not depend on the order the requirements happen to appear in.
 
     A declared class outside `REGULATORY_CLASSES`, or a decision domain outside
     `DECISION_DOMAINS`, is refused before any of that, so a misspelling cannot pass for a system
@@ -1892,15 +1892,8 @@ def check_conformance(
     reported not applicable as a declared mismatch.
     """
     system_scope = _declared_scope(sut, system_scope)
-    sys_norm = normalize_scope(system_scope, "declared system scope")
+    normalize_scope(system_scope, "declared system scope")
     sys_domains = _declared_domains(sut, system_domains)
-    eval_plan = []
-    for req in pack.requirements:
-        if _inapplicability(req, sys_norm, sys_domains, system_scope):
-            eval_plan.append((req, False, False, ()))
-        else:
-            eval_plan.append((req, True, *analyze_unattainable(req, sut)))
-
     resources = _EvaluationResources(sut)
     results = [
         evaluate_requirement(
@@ -1910,7 +1903,7 @@ def check_conformance(
             system_domains=sys_domains,
             _resources=resources,
         )
-        for req, _, _, _ in eval_plan
+        for req in pack.requirements
     ]
     return ConformanceReport(
         pack_id=pack.id,

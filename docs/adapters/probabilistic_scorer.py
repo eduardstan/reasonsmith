@@ -41,12 +41,12 @@ from reasonsmith.spec import load_pack
 #: regulatory class, and limited to the consumer-credit decision domain — which all three of these
 #: systems are in, and which each of them declares below through `system_domains`. A system that
 #: declared nothing would be reported not applicable on this duty rather than judged on its trace.
+REQUIREMENT_ID = "ecoa_reg_b_1002_9_b_2_specific_reasons"
 
 #: What kind of decision this system makes. Not inferred by reasonsmith from anything: an
 #: undeclared system is never reported satisfied on a domain-limited duty, so the declaration is
 #: what puts this system within the duty's reach at all.
 DECLARED_DOMAINS = ("consumer-credit",)
-REQUIREMENT_ID = "ecoa_reg_b_1002_9_b_2_specific_reasons"
 
 MODEL_VERSION = "bayes-risk-2026.04.7"
 
