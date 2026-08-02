@@ -105,7 +105,9 @@ Two load-time checks make `formalism` mean something:
 system under test, not about the pack: `report._engine_ladder` collects every engine the fragment
 and the system's exposed surface allow, and takes the strongest evidence produced. A presence
 property is `observed` against a trace, `probed` against a system exposing `decide()`, and `proved`
-against one exposing `logic()`. `docs/semantics.md` §3.5 states the rule and its limits.
+against one exposing `logic()`. `docs/semantics.md` §3.5 states the rule, its limits, and the one
+duty given a ladder of a single rung — where a weaker engine would answer a *different* property
+under the same duty's name rather than the same one with weaker evidence.
 
 If a duty cannot be written in this language, that is a finding to record in `docs/semantics.md` —
 not a reason to widen the language until it fits. Widening it to accommodate one stubborn duty is

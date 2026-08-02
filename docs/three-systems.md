@@ -203,8 +203,11 @@ system declares its own capabilities.
 
 The rungs are unchanged by the route: run against the whole `ecoa` pack, the symbolic system still
 comes back `proved` and the probabilistic one `probed` on `ecoa_reg_b_1002_9_b_2_specific_reasons`,
-with the pack's two other duties unattainable on systems that declare no
-`artifact_logs_decision_record`.
+with the pack's three other duties unattainable: two of them on systems that declare no
+`artifact_logs_decision_record`, and `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` on all
+three, because none of these adapters exposes the inference artefact its
+`artifact_logs_deleted_reason_count` is measured from — and that duty is never answered by
+anything weaker (`docs/semantics.md` §3, *certificate*).
 
 ## What the rung is, and what it is not
 
