@@ -9,3 +9,4 @@ dist/
 uv.lock
 pip-*/
 pytest-of-*/
+.hypothesis/
