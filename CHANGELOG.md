@@ -8,6 +8,26 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Added
+
+- **One differential test holds the two implementations of the property language to one semantics.**
+  `rulelang.eval_expression` and the Z3 encoding in `engines/proved.py` are two implementations of
+  one language — `rulelang`'s docstring says so, and says why a gap between them is the worst defect
+  available here: counterexample verification runs the interpreter against the solver's model, so a
+  construct one side models and the other drops makes verification agree with itself about the wrong
+  program. They were kept in step by hand and checked only by chosen examples.
+  `tests/test_semantics_agreement.py` generates specs from the accepted grammar with Hypothesis and
+  asserts both halves of the invariant — the same answer on the same assignment, and the same
+  accepted set, so a spec `parse_property` accepts may only make the encoder raise its own
+  deliberate `UnsupportedConstructError`. It drives the engine's own `_Scope`/`_encode_block`/
+  `_ast_to_z3` over a synthetic rule block rather than a second harness, because `present()` and
+  `contains()` both refuse a free input and so need an assignment to be reachable at all. A second
+  test compares arithmetic on the value rather than the property: a connective above a diverging
+  term hides it, and a deliberate break of `_python_mod` was invisible at 2000 property-level
+  examples and caught at 200 value-level ones. The temporal fragment, division and float values
+  whose rational and binary forms differ are out of scope and named in the test.
+  ([#69](https://github.com/eduardstan/reasonsmith/pull/69))
+
 ### Changed
 
 - **The front page carries both axes.** The three-rung table answers *how far a claim reaches* —
