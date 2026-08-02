@@ -194,7 +194,7 @@ build reasons about a formula quantified over a trace (`docs/semantics.md` §3.5
 here are the same either way — the five systems supply `artifact_logs_reason_explanation` or they
 do not, and none of them discloses a right to request reasons.
 
-That leaves the fourteen `record` duties, and there is a second cause behind them that this finding
+That leaves the eight `record` duties these three packs hold, and there is a second cause behind them that this finding
 originally mistook for the first. When this run was first made, a `record` duty could never exceed
 `observed` for *any* system: `formalism` both named the property and picked the engine, so a human
 typing `record` in a TOML file capped the rung regardless of what the system exposed. That defect

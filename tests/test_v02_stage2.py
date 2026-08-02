@@ -22,6 +22,7 @@ from reasonsmith.cli import main as cli_main
 from reasonsmith.engines.observed import ObservedEngine
 from reasonsmith.engines.record import RecordEngine
 from reasonsmith.report import check_conformance, evaluate_requirement
+from reasonsmith.rulelang import parse_property, signal_names
 from reasonsmith.spec import Requirement, list_packs, load_pack
 from reasonsmith.sut import CAPABILITY_TAXONOMY, BaseSUT
 from reasonsmith.verdict import Strength, Verdict
@@ -877,8 +878,12 @@ class TestRegulationPacks:
             assert req.verbatim_text.strip()
             assert req.source_document.strip()
             assert req.article_clause.strip()
-            # Verify Section 6.3 taxonomy prefixes or categories
-            for signal in req.requires:
+            # Verify Section 6.3 taxonomy prefixes or categories. Every name the property reads
+            # is checked, not only the gated ones: a signal read inside a disjunction is exempt
+            # from `requires` by design, so this is the only check standing between a typo there
+            # and a branch no system can ever satisfy.
+            checked = set(req.requires) | set(signal_names(parse_property(req.spec)))
+            for signal in sorted(checked):
                 assert any(
                     signal.startswith(cat) for cat in CAPABILITY_TAXONOMY
                 ), (
