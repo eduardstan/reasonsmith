@@ -63,32 +63,35 @@ _NOT_COPIED = shutil.ignore_patterns(
 )
 
 
+def _build(source: Path, destination: Path, isolated: bool) -> subprocess.CompletedProcess:
+    """One `pip wheel` run over `source`, with or without PEP 517 build isolation."""
+    command = [sys.executable, "-m", "pip", "wheel", str(source), "--no-deps", "--no-cache-dir"]
+    if not isolated:
+        command.append("--no-build-isolation")
+    command += ["--wheel-dir", str(destination)]
+    return subprocess.run(command, capture_output=True, text=True)
+
+
 def _built_wheel_members(destination: Path) -> set[str]:
     """Build a wheel from a clean copy of this tree and return the paths it carries.
 
-    Build isolation is off so the build needs no network: the dev install this suite runs under
-    already supplies the `setuptools` backend `pyproject.toml` names.
+    The first attempt is unisolated, which needs no network when the environment already has the
+    `setuptools` backend `pyproject.toml` names. A modern CI runner may not have it — a venv on
+    3.12+ ships without setuptools — so a failure falls back to an isolated build, which fetches
+    the backend. Only both failing is a failure: neither a missing backend nor a missing network
+    is this test's finding, but silently skipping would leave the wheel unchecked.
     """
     source = destination / "tree"
     shutil.copytree(REPO_ROOT, source, ignore=_NOT_COPIED, symlinks=True)
-    build = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "wheel",
-            str(source),
-            "--no-deps",
-            "--no-build-isolation",
-            "--no-cache-dir",
-            "--wheel-dir",
-            str(destination),
-        ],
-        capture_output=True,
-        text=True,
-    )
+    build = _build(source, destination, isolated=False)
     if build.returncode != 0:
-        pytest.fail(f"building the wheel failed:\n{build.stdout}\n{build.stderr}")
+        unisolated = build
+        build = _build(source, destination, isolated=True)
+        if build.returncode != 0:
+            pytest.fail(
+                "building the wheel failed, unisolated and isolated:\n"
+                f"{unisolated.stdout}\n{unisolated.stderr}\n{build.stdout}\n{build.stderr}"
+            )
     wheels = sorted(destination.glob("reasonsmith-*.whl"))
     assert len(wheels) == 1, f"expected exactly one reasonsmith wheel, got {wheels}"
     with zipfile.ZipFile(wheels[0]) as wheel:
