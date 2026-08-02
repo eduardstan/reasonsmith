@@ -169,7 +169,12 @@ substituted nothing and left the front page showing a verdict the tool no longer
 Table 7 run declared into the high-risk class, beside the demonstration's key finding, which no
 report the CLI writes may carry — and `test_docs_index_html_matches_the_renderer` holds the
 committed page byte-for-byte to that script. Touching the renderer means regenerating the page with
-`python docs/build_example.py`, the command the page names as its own provenance. The renderer
+`python docs/build_example.py`, the command the page names as its own provenance. That page names
+no commit and cannot be made to: the commit carrying it does not exist while it is rendered, so a
+hash written there would name another commit and break the byte pin the moment the page was
+committed. It names the check that reproduces it instead (`PROVENANCE_NOTE` in the builder), the
+same shape of claim `docs/nesyarena-conformance-report.md` carries — do not add a hash back to
+either. The renderer
 itself lives in `render.py` — module-level `render_text`/`render_html`, with the presentation
 constants and `_source_checkout` — and `ConformanceReport`'s methods of the same names are thin
 delegates to it, so a rendering edit is a `render.py` edit and nothing in `report.py`. The website

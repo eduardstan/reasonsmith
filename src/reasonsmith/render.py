@@ -272,6 +272,7 @@ def render_html(
     command: str | None = None,
     extra_section_html: str | None = None,
     audience: str | None = None,
+    provenance_note: str | None = None,
 ) -> str:
         """Self-contained HTML conformance report rendering.
 
@@ -293,6 +294,14 @@ def render_html(
         rendered by default: a narrative about another system's decision, sitting inside a
         document handed to an auditor, is exactly the false completeness this package refuses.
         The caller that passes it owns the claim it makes and escapes its own content.
+
+        `provenance_note` is one sentence appended to the provenance bar, escaped, and is empty
+        unless a caller supplies it. It exists for the caller that can establish something about
+        this report's origin that this module cannot: a page committed into the repository it
+        describes can never name the commit that carries it — that commit does not exist when the
+        page is rendered — but it can name the check that holds it to its command. The claim
+        belongs to the caller for the same reason `extra_section_html` does. Nothing is guessed
+        here and nothing is defaulted: a report whose caller says nothing says nothing.
 
         `audience` selects an `AudienceProjection` exactly as it does for `render_text`: it
         narrows which parts of this report are drawn and changes no verdict. `None` is the full
@@ -322,10 +331,11 @@ def render_html(
             origin = "from a modified working tree, which no commit identifies"
         else:
             origin = "without an identified source commit"
-        cmd_part = f" Command: <code>{html.escape(command)}</code>" if command else ""
+        cmd_part = f" Command: <code>{html.escape(command)}</code>." if command else ""
+        note_part = f" {html.escape(provenance_note)}" if provenance_note else ""
         provenance_html = (
             '<div class="provenance-bar">'
-            f'<strong>Report Provenance:</strong> Generated {origin}.{cmd_part}'
+            f'<strong>Report Provenance:</strong> Generated {origin}.{cmd_part}{note_part}'
             '</div>'
         )
 
