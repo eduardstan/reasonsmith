@@ -19,7 +19,7 @@ releases before it predate the file and are not reconstructed here.
   `python docs/build_readme_transcripts.py`, which now declares that command alongside the sample-log
   one; the hand-pasted evidence-record excerpt it replaces is unchanged in
   [docs/example-output.md](docs/example-output.md), where a builder test pins it byte-for-byte.
-  ([#67](https://github.com/eduardstan/reasonsmith/pull/67))
+  ([#68](https://github.com/eduardstan/reasonsmith/pull/68))
 
 ## [0.4.0] - 2026-08-02
 
