@@ -10,6 +10,31 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **An engine and a pack can be installed rather than vendored**
+  ([#74](https://github.com/eduardstan/reasonsmith/pull/74)). Engines and packs are discovered
+  through `importlib.metadata.entry_points` — groups `reasonsmith.engines` and `reasonsmith.packs` —
+  so a third party ships one as its own pip package and never touches this repository. The answer to
+  *can reasonsmith use Prolog, ASP, or a different solver?* is now **yes, as a package you install**,
+  not *send us a pull request*. `report._engine_ladder` merges discovered engines beside the four
+  built-ins, and `spec.load_pack` resolves an installed pack through the existing lookup, so an
+  externally provided pack is refused by exactly the checks an in-tree one is. The property language
+  is untouched; only the set of engines that may discharge a duty is open. The substance is the
+  discipline, because **reasonsmith does not audit a plug-in**: a plug-in declares its ceiling in
+  `max_strength` and cannot report above it, refused in `RequirementResult.__post_init__` beside the
+  probe-budget invariant so an overclaiming result cannot be constructed at all; a plug-in that
+  raises, exhausts its own time bound, returns the wrong type or cannot be imported reports *not
+  evaluated*, never satisfied and never violated, because a false violation from an unaudited
+  package is as bad as a false pass; a plug-in taking a built-in's name is refused rather than
+  namespaced, since a decorated name would leave the shadowing engine answering the same duty; and
+  every plug-in result names its plug-in in `details` and in the evidence summary, failures
+  included. There is no wall clock — killing a running call needs a subprocess and a serialisation
+  contract, which is the plug-in framework this deliberately is not — so a plug-in bounds its own
+  search, and the limit is stated in the new
+  [`docs/authoring-engines.md`](docs/authoring-engines.md) rather than implied. With nothing
+  installed, both groups are empty and the ladder is the built-in ladder, pinned by
+  `test_with_no_plugin_installed_the_ladder_is_the_builtin_ladder`; `docs/semantics.md` §3.5 carries
+  the four claims and names the test that falsifies each.
+
 - **One run, five artefacts: `reasonsmith check --audience {developer,deployer,auditor,regulator,affected-individual}`.**
   A conformance report had exactly one shape and every reader got it, but the questions differ — a
   regulator asks how far the claim reaches, a person refused credit asks what this does not tell
