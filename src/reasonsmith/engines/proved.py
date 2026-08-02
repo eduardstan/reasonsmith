@@ -34,6 +34,17 @@ What a reader must not break:
     `t = a + b; d = t - b` proves `d == a` and yet returns 0.10000000000000003 for a=0.1, b=0.2.
     Encoding IEEE floats would be a different engine; naming the abstraction on the result that
     makes the claim is what stops `proved` from being read as more than it is.
+  - A property reading a name the declared rules never assign MUST be refused where reading it is
+    a claim about what the system computed — `present`, `contains` and a comparison of magnitudes
+    alike (`_present_to_z3`, `_contains_to_z3`, `_check_magnitudes_are_computed`).
+    Why this matters: such a name is a free constant of this encoding. `deviation <= margin` over
+    two of them is arithmetic over numbers nobody computed, and the counterexample verification
+    cannot catch it because the reference interpreter is handed the same free inputs. The third
+    guard is narrow — it needs the property to read no assigned name at all, and to read some free
+    name as a magnitude — and both conditions are load-bearing: `income >= 30000 implies approved`
+    must stay provable, and a property over free *Booleans* is a reading duties genuinely take
+    (`gdpr_art22_1_no_prohibited_decision_for_any_input`). It is a heuristic, and
+    `_check_magnitudes_are_computed` says why it is the available one.
   - A counterexample model produced by Z3 MUST be verified to reproduce on the system under test
     before reporting `VIOLATED` at strength `PROVED`, and the evidence summary must say what that
     verification actually ran against.
@@ -61,6 +72,7 @@ from reasonsmith.rulelang import (
     fold_ascii_case,
     parse_expression,
     parse_property,
+    signal_names,
 )
 from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
@@ -304,6 +316,56 @@ def _contains_to_z3(node: ast.Call, scope: _Scope) -> Any:
             f"{signal!r} sort {const.sort()}"
         )
     return _contains_string_z3(const, phrase)
+
+
+def _check_magnitudes_are_computed(node: ast.AST, scope: _Scope) -> None:
+    """Refuse a property whose magnitudes are all free constants of this encoding.
+
+    The third call site of the refusal `_present_to_z3` and `_contains_to_z3` already make, resting
+    on the identical argument: a name the rules read and never write is a free constant of this
+    encoding, so `deviation <= margin` over two such names is arithmetic over numbers nobody
+    computed. The solver duly finds `deviation = 1, margin = 0`, and the counterexample
+    verification duly reproduces it, because the reference interpreter is handed the same free
+    inputs — so a system whose rules decide on a score alone is told it breaches a GDPR duty at the
+    highest strength this tool issues. Refused, the duty falls to the engine that reads the trace,
+    where an unmeasured magnitude is reported as an unmeasured magnitude.
+
+    The refusal is narrow, and both conditions are needed. It fires only when
+
+    - the property reads **no** name the rules assign, so it constrains nothing the system
+      computes and its verdict is a fact about the declared sorts and constraints alone; and
+    - at least one name it does read is a **magnitude** — an arithmetic sort. A property over
+      free *Booleans* is left alone, because quantifying over those is a reading duties genuinely
+      take: `gdpr_art22_1_no_prohibited_decision_for_any_input` asks whether any admissible input
+      yields a prohibited decision, and the Article 22 flags are exactly the free inputs that
+      question ranges over. Firing on every unassigned name would silence that duty.
+
+    Keeping the antecedent case is what the first condition buys: `income >= 30000 and age >= 18
+    implies approved == True` reads three free magnitudes and one computed `approved`, and it is a
+    claim about what the system decides. Proving it is the engine's whole purpose.
+
+    **It is a heuristic, and cuts along the wrong joint on purpose.** The distinction that matters
+    is an *input to the decision situation* versus an *output the system computes*, and `logic()`
+    declares variable sorts but not directions, so nothing here can ask it. The principled closure
+    is a protocol change — adapters declaring that direction per variable — and it is deliberately
+    not made here: it widens the adapter contract every existing adapter implements, which is a
+    decision above this guard. `docs/semantics.md` §3.5 states the same, for the reader.
+    """
+    names = signal_names(node)
+    if any(scope.is_definitely_assigned(name) for name in names):
+        return
+    free_magnitudes = [
+        name for name in names if isinstance(_declare(name, scope.var_types), z3.ArithRef)
+    ]
+    if not free_magnitudes:
+        return
+    raise UnsupportedConstructError(
+        "the property compares "
+        + ", ".join(repr(name) for name in free_magnitudes)
+        + " as magnitudes and reads nothing the declared rules assign, so no value in it is one "
+        "the system computes. Proving a property of the solver's free constants would report "
+        "arithmetic over numbers nobody computed as a fact about the system"
+    )
 
 
 def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
@@ -702,8 +764,13 @@ class ProvedEngine:
             for r_text in rules:
                 _encode_block(ast.parse(r_text, mode="exec").body, scope, solver)
 
+            # Every rule is encoded by now, so `scope` knows which names the rules assign — which
+            # is what the guard needs and why it is asked here rather than while the property is
+            # walked.
+            property_node = parse_property(req.spec)
+            _check_magnitudes_are_computed(property_node, scope)
             spec_z3 = _as_bool(
-                _ast_to_z3(parse_property(req.spec), scope),
+                _ast_to_z3(property_node, scope),
                 f"Requirement spec {req.spec!r}",
             )
 

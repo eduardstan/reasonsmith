@@ -190,6 +190,31 @@ releases before it predate the file and are not reconstructed here.
   say which of its duties reaches above `record`. The README's researcher paragraph carries the
   same number.
 
+### Fixed
+
+- **A proof needs a magnitude the system computes**
+  ([#86](https://github.com/eduardstan/reasonsmith/pull/86)).
+  `gdpr_recital71_error_risk_minimised` compares a declared deviation against a decision's own
+  margin. Against a rule set that decides on a score alone and assigns neither name, both were free
+  constants of the Z3 encoding, so the solver picked `deviation = 1, margin = 0` and the
+  counterexample verification reproduced it — the reference interpreter is handed the same free
+  inputs. A clean system was reported `violated` at `proved`, the one verdict that exits non-zero,
+  on arithmetic over numbers nobody computed. `engines/proved.py` already refuses exactly this for
+  `present()` and `contains()`, on the argument that a name the rules read and never write is a
+  fact about the encoding; `_check_magnitudes_are_computed` is the third call site of that refusal.
+  It is narrow — it fires only when the property reads no assigned name at all *and* reads some
+  free name as a magnitude — and both conditions are load-bearing: `income >= 30000 implies
+  approved == True` stays provable because it reads a computed `approved`, and
+  `gdpr_art22_1_no_prohibited_decision_for_any_input` keeps its proof because its free names are
+  Booleans, which that duty quantifies over on purpose. The refused duty falls to the engine that
+  reads the trace, which measures the magnitudes where the decisions carry them. The cut by sort is
+  a **heuristic**: the distinction that matters is an input to the decision situation against an
+  output the system computes, and `logic()` declares sorts but not directions. `docs/semantics.md`
+  §3.5, *When the magnitudes are not the system's own*, states that and states the principled
+  closure — an adapter declaring the direction per variable — which widens a contract every
+  existing adapter implements and is not made here. The temporal reduction that made this reachable
+  is sound and is untouched.
+
 ## [0.5.0] - 2026-08-02
 
 **Breaking:** the example systems and the sample decision log moved from `docs/adapters/` and

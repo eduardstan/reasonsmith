@@ -864,6 +864,43 @@ The signal's sort is not itself a reason for refusal. In particular, **a string 
   reason is therefore proved to *violate* the duty, not proved to satisfy it
   (`test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose`).
 
+### When the magnitudes are not the system's own
+
+The same free-constant argument reaches a third atom, and the guard enforcing it is a **heuristic**
+where the other two are not. `_check_magnitudes_are_computed` refuses a property when both of these
+hold: it reads **no** name the declared rules assign, and it reads at least one free name as a
+**magnitude** — an arithmetic sort. Such a property constrains nothing the system computes, so its
+verdict is a fact about the declared sorts and constraints and not about the system. Left unguarded,
+`always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` against a system whose
+rules decide on a score alone was reported `violated` at `proved` — the one verdict that exits
+non-zero — on the solver's own choice of `deviation = 1, margin = 0`. The counterexample
+verification does not catch that: the reference interpreter is handed the same free inputs, so the
+"violation" reproduces. Refused, the duty falls to the engine that reads the trace, which measures
+the magnitudes where the decisions carry them and reports them unmeasured where they do not
+(`test_a_magnitude_the_rules_never_compute_is_not_proved_violated`).
+
+Both conditions are load-bearing, and each names what a wider guard would destroy:
+
+- **Reads no assigned name.** `income >= 30000 and age >= 18 implies approved == True` reads three
+  free magnitudes and one computed `approved`. It is a claim about what the system *decides*, and
+  proving it is this engine's whole purpose (`test_property_holds_for_all_inputs_proved`).
+- **Reads a magnitude.** A property over free *Booleans* is left alone, because quantifying over
+  them is a reading duties genuinely take:
+  `gdpr_art22_1_no_prohibited_decision_for_any_input` asks whether any admissible input yields a
+  prohibited decision, and the Article 22 flags are exactly the free inputs that question ranges
+  over (`test_article_22_still_quantifies_over_flags_the_rules_never_assign`).
+
+**Why it is a heuristic, and what the principled closure would be.** The distinction that actually
+matters is an *input to the decision situation* against an *output the system computes*, and
+`logic()` declares each variable's sort but not its direction, so no engine here can ask for it.
+Sort and reachability are the available proxies, and they cut along the wrong joint: a system that
+genuinely computes a margin but exposes it only as an input to a downstream rule set is refused a
+proof it could have had, and a duty comparing a free magnitude with a computed one is admitted. The
+closure is a protocol change — an adapter declaring, per variable, whether the situation supplies it
+or the system computes it — and it is deliberately **not** made here, because it widens the contract
+every existing adapter implements. Until it is made, read a refusal on this guard as "this engine
+could not tell whether the system computes these numbers", not as "it does not".
+
 ---
 
 ## 4. The lattice
