@@ -10,6 +10,16 @@ releases before it predate the file and are not reconstructed here.
 
 ### Changed
 
+- **The rendering is out of `report.py`.** `ConformanceReport.render_html` was a ~1000-line method
+  and its sibling `render_text`, together half the file, and two upcoming packages both edit that
+  region. Their bodies move verbatim into the new `src/reasonsmith/render.py` as module-level
+  `render_text(report)` / `render_html(report, ...)`, with the rendering-only helpers
+  (`_budget_line`, `_source_checkout`, the presentation constants); the methods stay as thin
+  delegates, so the public API and every byte of output are unchanged — 457 tests pass, and
+  `docs/report.html`, the nesyarena report and the README transcripts all regenerate
+  byte-identical.
+  ([#70](https://github.com/eduardstan/reasonsmith/pull/70))
+
 - **The front page carries both axes.** The three-rung table answers *how far a claim reaches* —
   one duty, three systems — and it never showed the other question a report answers: *what the
   property actually says*. Beside it now sits the run that separates the two halves of 12 CFR
