@@ -546,7 +546,7 @@ many there were.
 used all of the ones exact inference found. Nothing about whether they are what a person would call
 principal. And nothing about a system that lies about its own artefact — a system that returns a
 program it did not run is a system misdescribing itself to its auditor, which *the assumption all
-four share* below already covers.
+five share* below already covers.
 
 > **If it reports `violated` at strength `probed`, then:** on at least one certified decision, the
 > deletion probe showed the system's answer does not depend on a reason exact inference found. The
@@ -579,9 +579,12 @@ differs.
 Reported not evaluated, never satisfied: an empty trace, and a trace no decision of which the
 system could open up (`test_a_trace_with_no_artifact_is_not_evaluated_never_satisfied`); an
 `artifact()` that raises, returns something that is not a mapping, or returns arguments `certify`
-refuses (`test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`); and a property
+refuses (`test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`); a property
 that never reads the one signal this engine measures
-(`test_the_engine_refuses_a_property_it_cannot_ground`).
+(`test_the_engine_refuses_a_property_it_cannot_ground`); and a property this engine cannot decide
+on a certified decision — a construct it does not interpret, or a second signal the record does not
+carry — where the measurement was made and the verdict is still withheld
+(`test_a_property_that_cannot_be_decided_on_a_record_is_not_evaluated`).
 
 ### `proved` — `engines/proved.py`
 

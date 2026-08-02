@@ -302,6 +302,44 @@ def test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated():
     assert "raised" in result.evidence_summary
 
 
+def test_a_property_that_cannot_be_decided_on_a_record_is_not_evaluated():
+    """The measurement can succeed and the property still fail to decide. Neither raises through.
+
+    Two ways in, both reachable from a pack: a construct this engine's interpreter does not
+    implement, and a second signal the certified record does not carry. The count was measured
+    either way, so the failure is reported as not evaluated rather than escaping the run as a
+    traceback the CLI does not catch.
+    """
+    from dataclasses import replace
+
+    sut = _CreditSystem(oracle=_artifact_of(ReferenceAdapter(TopK(1))))
+
+    temporal = replace(
+        _duty(),
+        spec=(
+            "always(present(artifact_logs_reason_explanation) -> "
+            "(artifact_logs_deleted_reason_count <= 0))"
+        ),
+        formalism="temporal",
+    )
+    result = CertificateEngine.evaluate(temporal, sut, sut.decisions())
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert "Not evaluated" in result.evidence_summary
+
+    unread = replace(
+        _duty(),
+        spec=(
+            "(artifact_logs_notification_latency_days <= 30) and "
+            "(artifact_logs_deleted_reason_count <= 0)"
+        ),
+    )
+    result = CertificateEngine.evaluate(unread, sut, sut.decisions())
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert "artifact_logs_notification_latency_days" in result.evidence_summary
+
+
 def test_the_engine_refuses_a_property_it_cannot_ground():
     """It measures one signal. A duty whose property never reads it is not evaluated, not passed.
 
