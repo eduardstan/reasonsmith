@@ -1470,6 +1470,29 @@ def test_computes_is_derived_from_the_rules_and_must_name_declared_variables():
         )
 
 
+def test_a_computes_that_is_not_a_collection_of_names_is_named_at_the_adapter():
+    """The misdeclaration is answered where it was made, not per character or as a parse error.
+
+    `set("approved")` and `set(True)` are a character soup and a `TypeError` respectively, and
+    both used to surface as something else — a variable-table complaint about `'a'`, `'d'`, `'e'`
+    …, or the engine's generic "error parsing decision logic or property". The engine refuses
+    both too (`_evaluate_proved`), because no adapter outside this repository goes through here.
+    """
+    with pytest.raises(ValueError, match="computes must be a collection of names"):
+        RulesAdapter(
+            rules=["approved = score >= 650"],
+            variables={"score": "int", "approved": "bool"},
+            computes="approved",
+        )
+
+    with pytest.raises(TypeError, match="cannot be iterated"):
+        RulesAdapter(
+            rules=["approved = score >= 650"],
+            variables={"score": "int", "approved": "bool"},
+            computes=True,
+        )
+
+
 class _ComputesOutsideTheTypeTableSUT(BaseSUT):
     """Third-party logic declaring a computed name the type table does not repeat.
 
@@ -1535,6 +1558,49 @@ def test_computes_declared_as_a_string_is_refused_rather_than_read_as_characters
     assert result.strength is None
     assert result.verdict == Verdict.INCONCLUSIVE
     assert "declares `computes` as a string" in result.evidence_summary
+
+
+class _UniterableComputesSUT(_ComputesOutsideTheTypeTableSUT):
+    """A declaration that is not a collection at all."""
+
+    def logic(self):
+        data = super().logic()
+        data["computes"] = True
+        return data
+
+
+class _NonNameComputesSUT(_ComputesOutsideTheTypeTableSUT):
+    """A collection whose entries name no variable."""
+
+    def logic(self):
+        data = super().logic()
+        data["computes"] = ["approved", 3]
+        return data
+
+
+@pytest.mark.parametrize(
+    ("sut", "expected"),
+    [
+        (_UniterableComputesSUT(), "not a collection of names at all"),
+        (_NonNameComputesSUT(), "entries that are not variable names"),
+    ],
+)
+def test_a_computes_that_cannot_be_read_as_names_is_refused_by_the_engine(sut, expected):
+    """The string guard's two neighbours, refused for the same reason and named as themselves.
+
+    Both are declarations the engine cannot read: a non-iterable used to reach `set()` inside the
+    encoding block and be reported as an error parsing the property, and an entry that is not a
+    name matches nothing in a property, so the output it was meant to declare would quietly read
+    as an input the situation supplies — the widening `docs/semantics.md` §3.5 says the
+    declaration exists to stop.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+
+    result = evaluate_requirement(req, sut)
+
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert expected in result.evidence_summary
 
 
 def test_article_22_still_quantifies_over_flags_the_rules_never_assign():

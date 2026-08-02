@@ -126,7 +126,22 @@ class RulesAdapter(BaseSUT):
         else:
             self._variables = {v: "real" for v in sorted(discovered_vars)}
 
-        self._computes = set(assigned_vars if computes is None else computes)
+        if isinstance(computes, (str, bytes)):
+            raise ValueError(
+                f"computes must be a collection of names, but {computes!r} is a string, and read "
+                "as one it is a set of characters naming nothing this system computes. Pass a "
+                "list, set or tuple, even for a single name"
+            )
+        if computes is None:
+            self._computes = set(assigned_vars)
+        else:
+            try:
+                self._computes = set(computes)
+            except TypeError as exc:
+                raise TypeError(
+                    "computes must be a collection of names, but "
+                    f"{type(computes).__name__} cannot be iterated"
+                ) from exc
         undeclared = sorted(self._computes - set(self._variables))
         if undeclared:
             raise ValueError(

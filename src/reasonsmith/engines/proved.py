@@ -832,6 +832,27 @@ class ProvedEngine:
                 {"computes": repr(declared_computes)},
             )
 
+        if declared_computes is not None:
+            try:
+                declared_computes = set(declared_computes)
+            except TypeError:
+                return not_evaluated(
+                    "Not evaluated: sut.logic() declares `computes` as "
+                    f"{type(declared_computes).__name__}, which is not a collection of names at "
+                    "all, so nothing here can read which variables the system computes. A "
+                    "direction declaration that cannot be read is refused rather than ignored.",
+                    {"computes": repr(declared_computes)},
+                )
+            not_names = sorted(repr(n) for n in declared_computes if not isinstance(n, str))
+            if not_names:
+                return not_evaluated(
+                    "Not evaluated: sut.logic() declares `computes` entries that are not variable "
+                    "names: " + ", ".join(not_names) + ". An entry naming no variable matches no "
+                    "name in the property, so accepting it would silently read a computed output "
+                    "as an input the situation supplies.",
+                    {"computes": ", ".join(not_names)},
+                )
+
         scope = _Scope(variables)
         solver = z3.Solver()
         solver.set("timeout", timeout_ms)
@@ -857,7 +878,7 @@ class ProvedEngine:
                 f"Requirement spec {req.spec!r}",
             )
             if declared_computes is not None:
-                _check_declared_directions(property_node, scope, set(declared_computes))
+                _check_declared_directions(property_node, scope, declared_computes)
 
             premise_check = solver.check()
             premise_reason = (
