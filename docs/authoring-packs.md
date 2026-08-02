@@ -68,7 +68,7 @@ codebase acts on when it does not.
 | `formalism` | Which **fragment** of the property language `spec` is written in: `record` (a conjunction of `present(signal)` atoms), `temporal` (anything using a temporal operator), `logical` (any other property of one decision record). It says what the property *is*; it does not decide which engine answers it. The loader parses `spec`, works out the fragment and refuses a mismatch. |
 | `spec` | The property, as a formula. Never prose — see "One property language" below. |
 | `rationale` | What the duty asks, in English, for a human reading the pack. Nothing derives a verdict from its wording. |
-| `requires` | The signal names the system must be capable of emitting for the requirement to be checkable at all. A system missing one is reported unattainable on the missing signal, without being run. |
+| `requires` | The signal names the system must be capable of emitting for the requirement to be checkable at all. A system missing one is reported unattainable on the missing signal, without being run. It is a conjunction — see "An either/or clause" below before listing a branch of one here. |
 | `binding` | Whether this duty is a legally binding obligation (`true`) or an interpretive recital/guidance item (`false`). |
 | `scope` | The regulatory class the duty is limited to, from the fixed vocabulary `prohibited`, `high-risk`, `limited-risk`, `minimal-risk`, `general-purpose`; `""` means the duty is not class-limited. |
 
@@ -86,7 +86,24 @@ presence atoms (`present(signal)`), comparisons over signal values, boolean conn
 the temporal operators, and the rulelang calls `implies`, `abs`, `min`, `max`. Every name in it is
 resolved against the decision record the system produces, so the names in `spec`, the names in
 `requires` and the names the system's `logic()` declares are one vocabulary, not three — and the
-loader refuses a `spec` reading a signal `requires` does not gate.
+loader refuses a `spec` reading an *unconditional* signal `requires` does not gate.
+
+## An either/or clause
+
+A clause that offers a lawful choice — "and either: (i) … or (ii) …" — becomes a disjunction in
+`spec`, and the disjuncts **must not** go in `requires`. `requires` is a conjunction: a system
+missing any one of its names is reported unattainable without being run, so gating both branches
+reports a system that lawfully supplied one of them unattainable, and gating one reports the
+creditor that took the other. List only what the clause demands whichever branch was taken. The
+loader knows the difference and exempts a signal read only inside a disjunction; everything else is
+gated as before.
+
+Two consequences to write down rather than discover. A branch signal no `requires` names is never
+asked for by the unattainable analysis, so a system that declares *neither* branch is judged on its
+trace and reported violated rather than unattainable — say so in the pack description, as
+`packs/ecoa.toml` does. And a typo inside a disjunct is not caught at load time; it becomes a
+branch nothing can ever satisfy. `ecoa_reg_b_1002_9_a_2_written_statement` is the worked example,
+and `docs/refinement.md` records what its disjunction still does not capture.
 
 Two load-time checks make `formalism` mean something:
 

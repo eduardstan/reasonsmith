@@ -1,7 +1,7 @@
 [pack]
 id = "ecoa"
 title = "ECOA / Regulation B (12 CFR 1002.9): Adverse Action Notices"
-description = "Requirements for adverse credit decision notifications, specific principal reasons, and record retention. The timing requirement needs artifact_logs_counteroffer_not_accepted to tell the 30-day deadline of 1002.9(a)(1)(i)-(iii) from the 90-day deadline of (iv); a log that never carries that field is reported unattainable on it rather than judged against a deadline the clause may not set."
+description = "Requirements for adverse credit decision notifications, specific principal reasons, and record retention. The timing requirement needs artifact_logs_counteroffer_not_accepted to tell the 30-day deadline of 1002.9(a)(1)(i)-(iii) from the 90-day deadline of (iv); a log that never carries that field is reported unattainable on it rather than judged against a deadline the clause may not set. The content requirement of 1002.9(a)(2) is an either/or, and neither branch signal gates it: requiring artifact_logs_reason_explanation would report a creditor lawfully disclosing the right to request reasons unattainable, and requiring artifact_logs_right_to_reasons_disclosure would do the same to a creditor that simply gave the reasons. Only artifact_logs_decision_record and provenance_model_version gate it, because the clause demands them of every branch. The price is stated rather than hidden: a system that declares neither branch signal is judged on its trace and reported violated, not reported unattainable, so a creditor that complies in the world but exposes nothing about the contents of its notifications is reported violated on this duty."
 
 [source]
 document = "CFPB Regulation B / Equal Credit Opportunity Act (12 CFR § 1002.9)"
@@ -36,16 +36,21 @@ id = "ecoa_reg_b_1002_9_a_2_written_statement"
 source_document = "ECOA / Regulation B (12 CFR 1002.9)"
 article_clause = "12 CFR 1002.9(a)(2)"
 verbatim_text = """A notification given to an applicant when adverse action is taken shall be in writing and shall contain a statement of the action taken; the name and address of the creditor; a statement of the provisions of section 701(a) of the Act; the name and address of the Federal agency that administers compliance with respect to the creditor; and either:
-(i) A statement of specific reasons for the action taken;"""
+(i) A statement of specific reasons for the action taken; or
+(ii) A disclosure of the applicant's right to a statement of specific reasons within 30 days, if the statement is requested within 60 days of the creditor's notification. The disclosure shall include the name, address, and telephone number of the person or office from which the statement of reasons can be obtained. If the creditor chooses to provide the reasons orally, the creditor shall also disclose the applicant's right to have them confirmed in writing within 30 days of receiving the applicant's written request for confirmation."""
 stakeholder = "affected individual"
-formalism = "record"
+formalism = "temporal"
 spec = """\
-present(artifact_logs_reason_explanation) and \
-present(artifact_logs_decision_record) and \
-present(provenance_model_version)"""
-rationale = "Written statement of reasons retaining decision record and model provenance."
+always(present(artifact_logs_decision_record) and \
+present(provenance_model_version) and \
+(present(artifact_logs_reason_explanation) or \
+present(artifact_logs_right_to_reasons_disclosure)))"""
+rationale = """Every decision the log records carries the decision record and the model version that \
+produced it, together with one of the two contents the clause accepts: a statement of specific \
+reasons under point (i), or a disclosure of the applicant's right to request one under point (ii). \
+The disjunction is the clause's own `either`, so a creditor that lawfully took one branch is not \
+held to the other."""
 requires = [
-    "artifact_logs_reason_explanation",
     "artifact_logs_decision_record",
     "provenance_model_version",
 ]

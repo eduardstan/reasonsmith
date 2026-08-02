@@ -1,7 +1,7 @@
 [pack]
 id = "eu_ai_act"
 title = "EU AI Act (Regulation (EU) 2024/1689): Articles 12 & 13"
-description = "Requirements for high-risk AI system record-keeping (Art. 12) and transparency to deployers (Art. 13)."
+description = "Requirements for high-risk AI system record-keeping (Art. 12) and transparency to deployers (Art. 13). Article 12(1) and Article 12(2) carry the same property, so no system can satisfy one and violate the other, and a reader must not take two agreeing verdicts here for two independent checks. They are not differentiated because nothing in the Section 6.3 signal vocabulary stands for the relevance of a logged event to identifying a risk situation or a substantial modification, to post-market monitoring, or to Article 26(5) operation monitoring; a signal invented for it would be this pack's own reading of the Article presented as the Article's. The overlap is recorded in docs/refinement.md instead."
 
 [source]
 document = "Regulation (EU) 2024/1689 of the European Parliament and of the Council"

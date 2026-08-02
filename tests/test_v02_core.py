@@ -1243,6 +1243,51 @@ def test_the_loader_refuses_a_spec_reading_an_ungated_signal(tmp_path):
     assert load_pack(ok).requirements[0].requires == ("signal_a", "signal_b")
 
 
+def test_the_loader_lets_a_disjunct_go_ungated_but_not_the_rest_of_the_property(tmp_path):
+    """A branch of an either/or is an alternative, so gating it is wrong, not merely cautious.
+
+    `requires` is a conjunction: a system missing any name in it is reported unattainable without
+    being run. Gating both branches of `present(a) or present(b)` therefore reports a system that
+    lawfully supplied one of them unattainable. The exemption reaches the disjunction and nothing
+    else — a signal read outside one is gated as before.
+    """
+    either_or = _spec_pack(
+        tmp_path,
+        "logical",
+        "present(signal_a) and (present(signal_b) or present(signal_c))",
+        requires='["signal_a"]',
+    )
+    assert load_pack(either_or).requirements[0].requires == ("signal_a",)
+
+    with pytest.raises(ValueError, match="reads signal.*not named in 'requires': signal_a"):
+        load_pack(
+            _spec_pack(
+                tmp_path,
+                "logical",
+                "present(signal_a) and (present(signal_b) or present(signal_c))",
+                requires='["signal_b"]',
+            )
+        )
+
+    inside_always = _spec_pack(
+        tmp_path,
+        "temporal",
+        "always(present(signal_a) and (present(signal_b) or present(signal_c)))",
+        requires='["signal_a"]',
+    )
+    assert load_pack(inside_always).requirements[0].requires == ("signal_a",)
+
+    with pytest.raises(ValueError, match="reads signal.*not named in 'requires': signal_a"):
+        load_pack(
+            _spec_pack(
+                tmp_path,
+                "temporal",
+                "always(present(signal_a) and (present(signal_b) or present(signal_c)))",
+                requires='["signal_c"]',
+            )
+        )
+
+
 def test_every_shipped_duty_is_a_formula_and_carries_its_english(tmp_path):
     """No shipped pack keeps prose in `spec`, and every one of them explains itself in words."""
     for name in list_packs():

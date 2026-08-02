@@ -426,6 +426,41 @@ def presence_atoms(node: ast.AST) -> tuple[str, ...] | None:
     return None
 
 
+def unconditional_signal_names(node: ast.AST) -> tuple[str, ...]:
+    """The signal names a property cannot be evaluated without, sorted.
+
+    Every name `signal_names` reports, except those read only inside a disjunction. A disjunct is
+    an *alternative*: `present(a) or present(b)` is settled by whichever of the two a system
+    supplies, so neither `a` nor `b` alone is a signal the property needs. The pack loader uses
+    this, not `signal_names`, to decide which names a requirement's `requires` must gate — because
+    `requires` is a conjunctive gate, and listing an alternative there reports a system that
+    lawfully took the *other* branch unattainable without running it.
+
+    Only `or` makes a name conditional, and the walk reaches it through the boolean connectives and
+    the calls — `always(a and (b or c))` exempts `b` and `c`, because a temporal operator quantifies
+    its argument over the trace without making the signals inside it optional. An implication is not
+    treated as conditional either: `Implies(a, b)` still needs `b` to be readable before it can be
+    settled at all, and narrowing the gate on evaluation order would be a claim this language does
+    not make. A disjunction standing as an operand of a comparison or of arithmetic is not exempt
+    for the same reason: that value has to be computed before the operand exists.
+    """
+    if isinstance(node, ast.Expression):
+        return unconditional_signal_names(node.body)
+    if isinstance(node, ast.BoolOp):
+        if isinstance(node.op, ast.Or):
+            return ()
+        names: list[str] = []
+        for value in node.values:
+            names.extend(unconditional_signal_names(value))
+        return tuple(sorted(set(names)))
+    if isinstance(node, ast.Call):
+        inner: list[str] = []
+        for arg in node.args:
+            inner.extend(unconditional_signal_names(arg))
+        return tuple(sorted(set(inner)))
+    return signal_names(node)
+
+
 def signal_names(node: ast.AST) -> tuple[str, ...]:
     """Every signal name a property reads, sorted, excluding the names of its function calls."""
     called = {

@@ -24,7 +24,16 @@ parses `spec`, classifies it and refuses a declared fragment that is not the one
 (`test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment`). It does **not**, by itself,
 decide which engine answers the duty — see §3.5. `requires` is the non-empty set of signal names a
 system must be able to emit for the duty to be checkable at all, and every signal the property reads
-must appear in it (`test_the_loader_refuses_a_spec_reading_an_ungated_signal`).
+*unconditionally* must appear in it (`test_the_loader_refuses_a_spec_reading_an_ungated_signal`). A
+signal read only inside a disjunction is exempt, and the exemption is not a convenience: `requires`
+is a conjunction, so gating one branch of an either/or clause reports a system that lawfully took
+the other branch `unattainable` without running it — which is a wrong answer arrived at by a
+different route than a wrong verdict
+(`test_the_loader_lets_a_disjunct_go_ungated_but_not_the_rest_of_the_property`,
+`test_neither_branch_signal_gates_the_content_duty`). The cost is that an ungated branch signal is
+never asked for by the unattainable analysis, so a system declaring neither branch is judged on its
+trace and can be reported `violated` there
+(`test_a_creditor_giving_neither_branch_is_violated`).
 `binding` separates a statutory obligation from an interpretive recital. `scope` is a regulatory
 class from `REGULATORY_CLASSES`, or empty for a duty that is not class-limited. A pack that omits a
 field, adds one, or leaves one blank is refused at load time rather than loaded with a guess
@@ -256,8 +265,10 @@ module docstring.
 
 The signals looked for are the property's, not the `requires` list's. `requires` is the capability
 gate that decides whether the duty is attainable at all; the formula is what is checked
-(`test_the_record_engine_evaluates_its_spec`). The two agree in the shipped packs because the loader
-refuses a property reading a signal `requires` does not name, but they are different questions and a
+(`test_the_record_engine_evaluates_its_spec`). The two agree on every conjunct in the shipped packs
+because the loader refuses a property reading an unconditional signal `requires` does not name, and
+they deliberately part company on a disjunction — `ecoa_reg_b_1002_9_a_2_written_statement` reads
+two branch signals its `requires` does not gate (§2, `requires`). They are different questions and a
 verdict answers only the second.
 
 The conjunction is walked directly rather than scored by the rtamt monitor, and that is a soundness
@@ -635,7 +646,9 @@ Two consequences of that report text, followed by a separate package-level termi
 | `record` and `temporal` route to their respective engine families | `test_record_and_temporal_formalisms_route_through_report` |
 | `logical` routes to proved with exposed logic, probed with only `decide()`, and no evidence with neither | `test_property_holds_for_all_inputs_proved`, `test_an_opaque_system_reaches_probed_through_the_report`, `test_system_without_logic_reported_not_evaluated` |
 | One property language: the loader classifies the fragment and refuses a mismatch, prose and definitely non-Boolean roots included | `test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment`, `test_the_loader_refuses_prose_where_a_property_belongs`, `test_the_loader_refuses_quoted_prose_as_a_non_boolean_property`, `test_the_loader_refuses_arithmetic_as_a_non_boolean_property` |
-| A signal the property reads must be gated by `requires` | `test_the_loader_refuses_a_spec_reading_an_ungated_signal` |
+| A signal the property reads unconditionally must be gated by `requires` | `test_the_loader_refuses_a_spec_reading_an_ungated_signal` |
+| A branch of an either/or is not gated, so neither branch alone makes the duty unattainable | `test_the_loader_lets_a_disjunct_go_ungated_but_not_the_rest_of_the_property`, `test_neither_branch_signal_gates_the_content_duty` |
+| Either lawful branch of 12 CFR 1002.9(a)(2) satisfies the content duty, and neither branch violates it | `test_a_creditor_giving_the_specific_reasons_is_satisfied`, `test_a_creditor_disclosing_the_right_to_request_reasons_is_satisfied`, `test_a_creditor_giving_neither_branch_is_violated` |
 | The same presence property is observed off a trace, probed against `decide()`, and proved against `logic()` | `test_a_record_duty_reaches_proved_when_the_system_exposes_its_logic`, `test_a_record_duty_reaches_probed_when_the_system_can_only_be_re_run` |
 | The ladder takes the strongest evidence produced, not the strongest engine available | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can` |
 | An engine whose interface raises establishes nothing, and the duty still lands on the rung that answered | `test_a_record_duty_survives_a_system_whose_logic_raises`, `test_a_logical_duty_names_the_logic_failure_rather_than_propagating_it`, `test_a_raising_logic_is_attempted_once_per_evaluation` |

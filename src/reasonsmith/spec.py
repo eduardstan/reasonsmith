@@ -18,10 +18,16 @@ What a reader must not break:
     Why this matters: `formalism` used to be a label nothing checked, so prose could sit in `spec`
     under `formalism = "record"` and an STL formula could be labelled `record` and silently
     downgraded. The check is what makes the field mean something.
-  - Every signal name a `spec` reads must appear in `requires`.
+  - Every signal name a `spec` reads *unconditionally* must appear in `requires`. A name read only
+    inside a disjunction is exempt, and deliberately so.
     Why this matters: `requires` is the capability gate that decides whether a duty is attainable
-    at all. A name in the formula that is not gated is a signal no unattainability analysis ever
-    asks for — usually a typo, and always a property evaluated against a field nothing promised.
+    at all, and it is a conjunction — a system missing any one of its names is reported
+    unattainable without being run. An unconditional name that is not gated is a signal no
+    unattainability analysis ever asks for, usually a typo. But a disjunct is an *alternative*:
+    where a clause is an either/or, gating both branches would report a system that lawfully took
+    one of them unattainable, which is a different way of getting the answer wrong. The price of
+    the exemption is that a typo inside a disjunct is not caught here — it becomes a branch nothing
+    can ever satisfy — so a pack author writing a disjunction owes the signal name a second look.
 """
 
 from __future__ import annotations
@@ -35,7 +41,7 @@ from reasonsmith.rulelang import (
     UnsupportedConstructError,
     classify_fragment,
     parse_property,
-    signal_names,
+    unconditional_signal_names,
 )
 
 VALID_FORMALISMS = ("record", "temporal", "logical")
@@ -121,7 +127,9 @@ class Requirement:
     `spec` is the property, written in the one language of `rulelang.py`; `formalism` names which
     fragment of that language it belongs to; `rationale` is the English explanation of the duty,
     and no verdict is derived from its wording. `requires` names the signals a system must be
-    capable of emitting for this requirement to be checkable at all.
+    capable of emitting for this requirement to be checkable at all. It is a conjunction, so a
+    branch of an either/or clause does not belong in it: see `_check_spec` and the module
+    docstring.
     `binding` indicates whether this duty is a legally binding obligation (true) or an
     interpretive recital/guidance item (false). `scope` records any regulatory class the duty
     is limited to; empty means the duty is not class-limited, and anything else must be a
@@ -263,12 +271,15 @@ def _check_spec(req: Requirement, where: str) -> None:
             "temporal operator; 'logical' — any other property of a single decision record."
         )
 
-    unrequired = sorted(set(signal_names(node)) - set(req.requires))
+    unrequired = sorted(set(unconditional_signal_names(node)) - set(req.requires))
     if unrequired:
         raise ValueError(
             f"{where}: field 'spec' reads signal(s) not named in 'requires': "
             f"{', '.join(unrequired)}. `requires` is the capability gate that decides whether "
-            "this duty is attainable, so a signal the property reads must be listed there."
+            "this duty is attainable, so a signal the property cannot be settled without must be "
+            "listed there. A signal read only inside a disjunction is an alternative branch and "
+            "is exempt: gating it would report a system that lawfully took the other branch "
+            "unattainable."
         )
 
 

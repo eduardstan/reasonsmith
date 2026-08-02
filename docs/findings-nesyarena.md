@@ -178,18 +178,23 @@ Zero results at `probed`, zero at `proved`. There is no probe budget to report i
 no probed verdict was produced.
 
 Across all three packs there is exactly one `logical` requirement
-(`gdpr_art22_1_no_prohibited_decision_for_any_input`) and two `temporal` requirements
-(`ecoa_reg_b_1002_9_a_1_timing_of_notice` and `gdpr_recital71_error_risk_minimised`). The logical
-duty and the ECOA temporal duty came back `unattainable` for all five systems, so the Z3 proved
-engine and the replay probed engine never ran. The logical duty needs six signals; the system can
-emit none of them, because five are facts about a controller's legal basis or about a
-human-intervention route and one is about the effect a decision has on a person. The ECOA temporal
-duty needs a notification latency the system has no concept of. The new GDPR temporal duty is
-checkable and produces `observed` verdicts; temporal monitoring does not reach either of the top two
-rungs, and no engine in this build reasons about a formula quantified over a trace
-(`docs/semantics.md` §3.5).
+(`gdpr_art22_1_no_prohibited_decision_for_any_input`) and three `temporal` requirements
+(`ecoa_reg_b_1002_9_a_1_timing_of_notice`, `ecoa_reg_b_1002_9_a_2_written_statement` and
+`gdpr_recital71_error_risk_minimised`). The logical duty and the ECOA *timing* duty came back
+`unattainable` for all five systems, so the Z3 proved engine and the replay probed engine never
+ran. The logical duty needs six signals; the system can emit none of them, because five are facts
+about a controller's legal basis or about a human-intervention route and one is about the effect a
+decision has on a person. The ECOA timing duty needs a notification latency the system has no
+concept of. The GDPR error-risk duty and the ECOA content duty are checkable and produce `observed`
+verdicts; temporal monitoring does not reach either of the top two rungs, and no engine in this
+build reasons about a formula quantified over a trace (`docs/semantics.md` §3.5).
 
-That leaves the fifteen `record` duties, and there is a second cause behind them that this finding
+`ecoa_reg_b_1002_9_a_2_written_statement` is temporal only since the either/or of 12 CFR
+1002.9(a)(2) was formalised; it was a `record` duty when this run was first made, and its verdicts
+here are the same either way — the five systems supply `artifact_logs_reason_explanation` or they
+do not, and none of them discloses a right to request reasons.
+
+That leaves the fourteen `record` duties, and there is a second cause behind them that this finding
 originally mistook for the first. When this run was first made, a `record` duty could never exceed
 `observed` for *any* system: `formalism` both named the property and picked the engine, so a human
 typing `record` in a TOML file capped the rung regardless of what the system exposed. That defect
