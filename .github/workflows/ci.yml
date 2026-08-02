@@ -25,5 +25,6 @@ jobs:
       # and a local one resolve to the same code. torch is deliberately not installed — see README.
       - run: pip install -e ".[dev]"
       - run: ruff check .
-      - run: pytest --cov=reasonsmith --cov-report=term-missing
+      # 93% is the suite's measured total today; a floor to be raised deliberately, never lowered.
+      - run: pytest --cov=reasonsmith --cov-report=term-missing --cov-fail-under=93
       - run: python -m reasonsmith.demo

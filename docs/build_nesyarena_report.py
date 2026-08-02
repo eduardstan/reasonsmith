@@ -14,7 +14,7 @@ What this module is for:
 
 What a reader must not break:
   - The report names `BUILD_COMMAND` as its provenance and deliberately carries no commit hash,
-    the same convention `docs/build_example.py` uses for `docs/index.html`. A hash embedded in
+    the same convention `docs/build_example.py` uses for `docs/report.html`. A hash embedded in
     the artifact cannot name the commit containing that artifact: writing the hash changes the
     file, which changes the commit, so the self-reference never closes. Naming the preceding
     builder-bearing commit instead does not close it either — it asserts something no reader can

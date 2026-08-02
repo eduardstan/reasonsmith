@@ -174,7 +174,7 @@ real system rather than a demonstration fixture: `docs/build_nesyarena_report.py
 and ECOA packs, and `test_nesyarena_report_matches_the_builder` holds the committed file to it
 byte-for-byte. Anything that moves `render_text`'s wording, the nesyarena version or the builder's
 own constants means regenerating with `python docs/build_nesyarena_report.py`. Like
-`docs/index.html`, it names its build command and deliberately carries no commit hash; reproducibility
+`docs/report.html`, it names its build command and deliberately carries no commit hash; reproducibility
 is owned by the byte-for-byte builder test, so do not add a hash back. Its adapter declares only
 signals a provenance genuinely emits, so ten pack signals are deliberately undeclared, and neither a
 regulatory class nor a decision domain is declared — these systems decide graph reachability and
