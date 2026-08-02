@@ -8,6 +8,30 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Changed
+
+- **The affected-individual report is derived for its reader, not the expert report with parts
+  removed** ([#84](https://github.com/eduardstan/reasonsmith/pull/84)).
+  `AudienceProjection` was eight booleans that only turned things off and `affected-individual`
+  set all eight, so the person whose credit was declined received four machine identifiers, four
+  statute citations, four verdict words, a 222-word disclaimer longer than all of it together,
+  and not one sentence about the decision — a word set that was a strict subset of the developer
+  view's, with an empty difference. In HTML every finding drew a verdict chip over an empty box.
+  The projection gains one field that **emits**, `plain_account`, turning on
+  `render._lay_sections`, and everything it prints is quoted rather than composed: the decision
+  and the reason out of the trace the run already read, now carried on the report as
+  `ConformanceReport.decisions`, and a reason left unstated out of the certificate engine's own
+  measurement. No statute is paraphrased and no decision explained. Where there is nothing to
+  quote it says so — a run that read no decision record, and a run where nothing measured whether
+  the stated reasons were complete, both say that rather than going quiet, because silence there
+  reads to this reader as a clean result. A card body is emitted only when something goes in it,
+  and the limits stay whole for every audience while folding into a native `<details>` on the lay
+  page alone, so a required disclaimer is no longer the largest thing on a page addressed to a
+  layperson. `test_the_lay_view_derives_content_no_expert_view_carries` keeps the subset
+  measurement as an assertion; the four expert projections are untouched, and every generated
+  document regenerates byte-for-byte. `docs/semantics.md` §7 loses the limit it used to state and
+  gains what replaces it.
+
 ### Documentation
 
 - **The nesyarena findings document can no longer go stale silently**
