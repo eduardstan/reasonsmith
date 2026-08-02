@@ -37,11 +37,15 @@ as a number. The decision margin and numeric deviation are the two signals added
 its property compares them, and its capability declaration also requires the existing approximation
 statement. The first run carried eight signals and no duty read the deviation at all.
 
-Nine further pack signals were **not** declared, because the system genuinely cannot emit them —
+Eleven further pack signals were **not** declared, because the system genuinely cannot emit them —
 `provenance_active_exceptions` (definite Horn programs have no defeater mechanism),
 `artifact_logs_notification_latency_days` and `artifact_logs_counteroffer_not_accepted` (no
-notification exists in this domain), and the six Article 22 signals that are facts about a
-controller's legal position or about the pipeline the system is embedded in, not about an
+notification exists in this domain), `artifact_logs_right_to_reasons_disclosure` (the system issues
+no adverse-action notice; it is the ungated branch of the either/or of 12 CFR 1002.9(a)(2), so its
+absence makes no duty unattainable), `artifact_logs_deleted_reason_count` (the one signal
+reasonsmith *measures* from an inference artefact rather than reads from a record, and no
+provenance here exposes one through `artifact()`), and the six Article 22 signals that are facts
+about a controller's legal position or about the pipeline the system is embedded in, not about an
 inference. Filling any of those in would have made a duty checkable that this system cannot
 discharge, which is the failure this whole exercise exists to avoid.
 
@@ -198,26 +202,30 @@ What has **not** changed, and what an adopter must still read the same way:
 Zero results at `probed`, zero at `proved`. There is no probe budget to report in this run because
 no probed verdict was produced.
 
-Across all three packs there is exactly one `logical` requirement
-(`gdpr_art22_1_no_prohibited_decision_for_any_input`) and three `temporal` requirements
+Across all three packs there are three `logical` requirements
+(`gdpr_art22_1_no_prohibited_decision_for_any_input`, `ecoa_reg_b_1002_9_b_2_specific_reasons` and
+`ecoa_reg_b_1002_9_b_2_principal_reasons_complete`) and three `temporal` requirements
 (`ecoa_reg_b_1002_9_a_1_timing_of_notice`, `ecoa_reg_b_1002_9_a_2_written_statement` and
-`gdpr_recital71_error_risk_minimised`). The logical duty and the ECOA *timing* duty came back
+`gdpr_recital71_error_risk_minimised`). The GDPR logical duty and the ECOA *timing* duty came back
 `unattainable` for all five systems, so the Z3 proved engine and the replay probed engine never
-ran. The logical duty needs six signals; the system can emit none of them, because five are facts
+ran. That GDPR duty needs six signals; the system can emit none of them, because five are facts
 about a controller's legal basis or about a human-intervention route and one is about the effect a
 decision has on a person. The ECOA timing duty needs a notification latency the system has no
 concept of. The GDPR error-risk duty and the ECOA content duty are checkable and produce `observed`
 verdicts; temporal monitoring does not reach either of the top two rungs, and no engine in this
 build reasons about a formula quantified over a trace (`docs/semantics.md` §3.5). (Since finding 3,
 the ECOA content duty no longer reaches this system at all — its ceiling is unchanged, but this run
-is no longer where it can be seen.)
+is no longer where it can be seen.) This account of why the top two rungs went unreached was
+written when `gdpr_art22_1_no_prohibited_decision_for_any_input` was the only `logical` duty in
+these packs; it does not cover the two ECOA `logical` duties added since, and why they also
+produce no `probed` or `proved` verdict here has not been re-derived.
 
 `ecoa_reg_b_1002_9_a_2_written_statement` is temporal only since the either/or of 12 CFR
 1002.9(a)(2) was formalised; it was a `record` duty when this run was first made, and its verdicts
 here are the same either way — the five systems supply `artifact_logs_reason_explanation` or they
 do not, and none of them discloses a right to request reasons.
 
-That leaves the eight `record` duties these three packs hold, and there is a second cause behind
+That leaves the seven `record` duties these three packs hold, and there is a second cause behind
 them that this finding originally mistook for the first. When this run was first made, a `record` duty could never exceed
 `observed` for *any* system: `formalism` both named the property and picked the engine, so a human
 typing `record` in a TOML file capped the rung regardless of what the system exposed. That defect

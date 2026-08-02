@@ -55,6 +55,7 @@ reported unattainable rather than filled in:
 - `artifact_logs_notification_latency_days` — the system computes a query value; it neither issues nor times a notification
 - `artifact_logs_counteroffer_not_accepted` — no counteroffer exists in this decision domain
 - `artifact_logs_right_to_reasons_disclosure` — the system issues no adverse-action notice, so no decision of its own carries a disclosure of a right to request reasons. It is one branch of the either/or of 12 CFR 1002.9(a)(2) and no `requires` gates it, so its absence makes no duty unattainable: that content duty is judged on the other branch, the reason explanation
+- `artifact_logs_deleted_reason_count` — unlike every other signal here, this one is not something the system emits into a record: reasonsmith measures it itself from an inference artefact the system exposes through the optional `artifact()` method. None of the five provenances exposes one, so there is nothing to measure and no longer trace could ever supply it
 - `artifact_logs_solely_automated` — whether a human reviews the output afterwards is a property of the pipeline the system is embedded in, which the system cannot observe
 - `artifact_logs_significant_effect` — the effect of a decision on a person is a fact about the deployment, not about the inference
 - `artifact_logs_human_intervention_route` — an intervention route is an organisational arrangement, not an inference output
