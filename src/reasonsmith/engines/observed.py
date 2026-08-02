@@ -1,11 +1,18 @@
 """Observed engine for reasonsmith v0.2.
 
 What this module is for:
-  Evaluates temporal properties (`formalism = "temporal"`) over decision traces using an rtamt
-  discrete-time STL monitor. The property is written in the shared language of `rulelang.py`;
-  `to_stl` renders it in rtamt's syntax. Each `present(x)` atom reaches rtamt through a synthetic
-  flag whose trace is computed with `rulelang.is_present`, so presence has the same meaning here
-  as it does in the record, replay and proof engines.
+  Evaluates properties over decision traces using an rtamt discrete-time STL monitor: `temporal`
+  formulas quantified over the trace, and `logical` state properties, which the monitor scores
+  pointwise so that each record is checked on its own (`report._engine_ladder`, and
+  `docs/semantics.md` §3.5 for why a state fragment admits a trace rung at all). A presence
+  conjunction does *not* come here — it keeps the record engine, whose per-signal, per-record
+  diagnostics this monitor cannot reproduce.
+
+  The property is written in the shared language of `rulelang.py`; `to_stl` renders it in rtamt's
+  syntax. Both atoms that read a *record* rather than a magnitude reach rtamt through a synthetic
+  flag computed in Python — `present(x)` through `rulelang.is_present` and `contains(x, "p")`
+  through `rulelang.contains_literal` — so each has the same meaning here as in the record, replay
+  and proof engines rather than a second definition living inside an STL string.
 
 What a reader must not break:
   - If rtamt cannot express a formula or trace is shorter than `MINIMUM_TRACE_LENGTH`, report
@@ -76,6 +83,18 @@ PRESENCE_THRESHOLD = FLAG_THRESHOLD
 #: one-sample dataset raises out of its own internals. That is a limit of what was observed,
 #: not a defect in the formula, and it is reported as one rather than blamed on the pack.
 MINIMUM_TRACE_LENGTH = 2
+
+
+def _property_noun(req: Requirement) -> str:
+    """What to call the property in a summary, so the wording matches the duty it answered.
+
+    This engine reads two fragments now: a `temporal` formula quantified over the trace, and a
+    `logical` state property scored per record (`report._engine_ladder`). Calling both a "temporal
+    monitor" would tell a reader that a duty about one decision was checked across the trace, which
+    is the sort of small mis-description that becomes a misread verdict on a front page.
+    """
+    return "temporal property" if req.formalism == "temporal" else "state property"
+
 
 _NUMBER = r"-?\d+(?:\.\d+)?"
 _IDENT = r"[a-zA-Z_][a-zA-Z0-9_]*"
@@ -262,8 +281,8 @@ class ObservedEngine:
                 strength=None,
                 signals_required=tuple(req.requires),
                 evidence_summary=(
-                    "Not evaluated: rtamt cannot express or parse temporal property "
-                    f"{req.spec!r}: {exc}"
+                    "Not evaluated: rtamt cannot express or parse "
+                    f"{_property_noun(req)} {req.spec!r}: {exc}"
                 ),
                 details={"error": str(exc)},
                 binding=req.binding,
@@ -436,8 +455,8 @@ class ObservedEngine:
                 strength=None,
                 signals_required=tuple(req.requires),
                 evidence_summary=(
-                    "Not evaluated: rtamt cannot express or parse temporal property "
-                    f"{req.spec!r}: {exc}"
+                    "Not evaluated: rtamt cannot express or parse "
+                    f"{_property_noun(req)} {req.spec!r}: {exc}"
                 ),
                 details={"error": str(exc)},
                 binding=req.binding,
@@ -459,7 +478,8 @@ class ObservedEngine:
                 strength=Strength.OBSERVED,
                 signals_required=tuple(req.requires),
                 evidence_summary=(
-                    f"Violated over {len(records)} decision(s): temporal property {req.spec!r} "
+                    f"Violated over {len(records)} decision(s): "
+                    f"{_property_noun(req)} {req.spec!r} "
                     f"failed at decision step(s) {violation_indices}."
                 ),
                 details={
@@ -478,8 +498,9 @@ class ObservedEngine:
             strength=Strength.OBSERVED,
             signals_required=tuple(req.requires),
             evidence_summary=(
-                f"Observed over {len(records)} decision(s): temporal monitor for {req.spec!r} "
-                "satisfied across all time steps."
+                f"Observed over {len(records)} decision(s): "
+                f"{'temporal monitor' if req.formalism == 'temporal' else 'state monitor'} for "
+                f"{req.spec!r} satisfied at every decision step."
             ),
             details={"records_observed": len(records), "evaluation_scores": res},
             binding=req.binding,

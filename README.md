@@ -118,13 +118,13 @@ headline: 3 requirements · 3 binding: 3 observed
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
     requires: artifact_logs_decision_record, artifact_logs_notification_latency_days, artifact_logs_counteroffer_not_accepted
-    summary: Observed over 3 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))' satisfied across all time steps.
+    summary: Observed over 3 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) -> ((artifact_logs_notification_latency_days <= 30) or ((artifact_logs_counteroffer_not_accepted >= 0.5) and (artifact_logs_notification_latency_days <= 90))))' satisfied at every decision step.
   [OBSERVED] ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
     requires: artifact_logs_decision_record, provenance_model_version
-    summary: Observed over 3 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied across all time steps.
+    summary: Observed over 3 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied at every decision step.
   [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
-    summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    summary: Observed over 3 decision(s): state monitor for 'present(artifact_logs_reason_explanation) -> ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, "internal standards") and not contains(artifact_logs_reason_explanation, "internal policies") and not contains(artifact_logs_reason_explanation, "failed to achieve a qualifying score"))' satisfied at every decision step.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
@@ -265,14 +265,19 @@ Twelve of eighteen shipped requirements are not class-limited, so a duty reaches
 unrelated domains and reports them `satisfied` — an ECOA adverse-action duty cleared a
 graph-reachability benchmark that issues no credit ([`docs/findings-nesyarena.md`](docs/findings-nesyarena.md),
 finding 3; `ROADMAP.md` §1). Missing too: authority over the refinement. Which formula stands for a
-clause is a judgement made in this repository and recorded as such — the proxy chosen for
-*specific* in 12 CFR 1002.9(b)(2) is the pack author's, and the regulation names nothing of the kind
-([`docs/refinement.md`](docs/refinement.md)). One shipped property is still known to be wider than
-its clause: 12 CFR 1002.9(a)(2) is now formalised as the either/or it is, and either lawful branch
-satisfies it, but (b)(2) is triggered only where (a)(2)(i) requires a statement of reasons, and that
-trigger is not modelled — so a creditor lawfully using the disclosure alternative is reported
-violated on (b)(2). A false positive against a lawful practice disqualifies a tool from supervisory
-use until it is fixed.
+clause is a judgement made in this repository and recorded as such — the `scope_statements_local_vs_global`
+proxy carried by 12 CFR 1002.9(b)(2) is the pack author's, and the regulation names nothing of the
+kind
+([`docs/refinement.md`](docs/refinement.md)). The false positive this section used to report is
+gone: 12 CFR 1002.9(a)(2) is formalised as the either/or it is, and (b)(2) now carries the trigger
+the clause states in its own first words — it governs the statement *required by paragraph
+(a)(2)(i)* — so a creditor lawfully using the disclosure alternative is no longer reported violated.
+What replaced it is smaller and is stated rather than hidden: where that creditor's log carries no
+statement of reasons, (b)(2) is `satisfied` **vacuously**, and no report outcome distinguishes a
+duty that imposed nothing from one that was checked and met
+([`docs/semantics.md`](docs/semantics.md) §4). Reporting a lawful practice compliant for the wrong
+reason is a far smaller defect than reporting it in breach, but a supervisor reading a verdict still
+cannot tell the two apart from the verdict alone.
 
 **Auditors** running this against a client's system. Missing: reach into systems that are only logs.
 For any system exposing nothing but a decision trace, `observed` is the ceiling whatever the pack
@@ -288,9 +293,12 @@ unattested.
 **Researchers** comparing systems or engines. This is the audience the tool is closest to usable
 for: [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) is a real run against five
 `nesyarena` provenances, and `docs/nesyarena-conformance-report.md` is its regenerable evidence.
-Missing: properties worth differentiating a system on. Fifteen of the eighteen shipped requirements
-are presence checks, against one `logical` and two `temporal` ones, so a battery of engines mostly
-agrees by construction. Missing also: independence. The packs are authored here, so a cross-system
+Missing: properties worth differentiating a system on. Fourteen of the eighteen shipped requirements
+are still presence checks, against two `logical` and two `temporal` ones, so a battery of engines
+mostly agrees by construction. The one duty that moved shows both what closes this gap and how
+narrow the opening is: 12 CFR 1002.9(b)(2) can now be *failed* by a plain decision log, because the
+clause supplies its own list of statements that are insufficient — which is available only where a
+clause does that, and still establishes nothing about whether what was said instead was adequate. Missing also: independence. The packs are authored here, so a cross-system
 comparison measures this repository's refinement as much as it measures the systems — a benchmark
 needs a pack set whose fourth column someone other than its author has reviewed
 ([`docs/refinement.md`](docs/refinement.md)).

@@ -1714,10 +1714,20 @@ def _engine_ladder(
     decide whether the proof rung belongs would let a system whose `logic()` raises abort a duty
     the record engine could have answered from its trace.
 
-    Temporal properties reach only the observed engine. The solver and the replay search both
-    reason about one decision at a time and have nothing to say about a formula quantified over
-    the trace; there is no temporal engine above `observed` in this build, and inventing a rung
-    for one would be the overclaim this package exists to refuse.
+    **Every state fragment admits a trace rung, `logical` included.** A `logical` property is a
+    property of one decision record — that is what puts it in `STATE_FRAGMENTS` — so a trace of
+    decision records is evidence about it, and a build that refused to read one reported *not
+    evaluated* while the evidence sat in front of it. That was a defect, not a policy: the label
+    on the fragment was deciding what could be checked, which is the thing fragment classification
+    was introduced to stop. Which engine reads the trace still depends on the shape: a presence
+    conjunction keeps the record engine and its per-signal, per-record diagnostics, and every other
+    state formula is monitored per record by `ObservedEngine`, whose rtamt monitor scores a
+    non-temporal formula pointwise and names the record positions that breached.
+
+    Temporal properties reach only the observed engine, and that ceiling is unchanged. The solver
+    and the replay search both reason about one decision at a time and have nothing to say about a
+    formula quantified over the trace; there is no temporal engine above `observed` in this build,
+    and inventing a rung for one would be the overclaim this package exists to refuse.
     """
     ladder: list[tuple[Strength, Any]] = []
 
@@ -1738,6 +1748,11 @@ def _engine_ladder(
                 )
             )
 
+    # `record` is checked first and keeps the record engine. That is not an ordering detail: the
+    # record engine walks a presence conjunction conjunct by conjunct and names *which* signal was
+    # missing from *which* record, and the rtamt monitor below cannot, because robustness is one
+    # number for the whole formula. Routing presence through the monitor to make the two branches
+    # look alike would trade that diagnostic away for nothing.
     if req.formalism == "record":
         from reasonsmith.engines.record import RecordEngine
         ladder.append(
@@ -1748,7 +1763,7 @@ def _engine_ladder(
                 ),
             )
         )
-    elif req.formalism == "temporal":
+    elif req.formalism in ("temporal", "logical"):
         from reasonsmith.engines.observed import ObservedEngine
         ladder.append(
             (
@@ -1758,12 +1773,6 @@ def _engine_ladder(
                 ),
             )
         )
-    elif not ladder:
-        # A logical duty against a system exposing neither `logic()` nor `decide()`. The proved
-        # engine is the one that can say which interface was missing, so it is reached to report
-        # no evidence rather than left out to produce none.
-        from reasonsmith.engines.proved import ProvedEngine
-        ladder.append((Strength.PROVED, lambda: ProvedEngine.evaluate(req, sut, records)))
 
     return ladder
 

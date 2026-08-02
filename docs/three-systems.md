@@ -24,7 +24,10 @@ its real stdout, and asserts the neural system's ceiling separately.
 `ecoa_reg_b_1002_9_b_2_specific_reasons` in the `ecoa` pack:
 
 > The statement of reasons for adverse action required by paragraph (a)(2)(i) of this section must
-> be specific and indicate the principal reason(s) for the adverse action.
+> be specific and indicate the principal reason(s) for the adverse action. Statements that the
+> adverse action was based on the creditor's internal standards or policies or that the applicant,
+> joint applicant, or similar party failed to achieve a qualifying score on the creditor's credit
+> scoring system are insufficient.
 
 Three things made it the right duty for this demonstration, and it is worth saying which:
 
@@ -35,13 +38,29 @@ Three things made it the right duty for this demonstration, and it is worth sayi
   none, and the same duty genuinely applies to all three systems below. A duty scoped to
   `high-risk` would have come back *not applicable* for any system that did not declare itself
   into that class, and the table would have been about a declaration rather than about evidence.
-- **Its property is a state property.** The spec is
-  `present(artifact_logs_reason_explanation) and present(provenance_model_version) and
-  present(scope_statements_local_vs_global)` — a formula about a single decision. That is what
-  lets all three rungs be in play: the solver and the replay search each reason about one decision
+- **Its property is a state property.** The spec is an implication about a *single decision*:
+  where that decision carries a statement of reasons, the statement names the model version and the
+  scope it speaks for and is not one of the two the clause itself calls insufficient. That is what
+  lets all three rungs be in play — the solver and the replay search each reason about one decision
   at a time. A temporal duty (`always(...)`) never rises above `observed` in this build, whatever
   the system exposes, because no engine here reasons over a trace-wide formula — see
   [`semantics.md`](semantics.md) §3.5.
+
+  It is worth knowing what this duty used to be, because the change is the reason the demonstration
+  is worth more than it was. Until recently the property was a conjunction of `present()` atoms:
+  *the reason field is not blank*, and nothing else. All three systems below satisfied it, and a
+  system whose every reason read `"n/a"` would have satisfied it too — so `proved` was a strong
+  claim about a weak property. The clause supplies its own **negative** constraint, naming two
+  statements that are insufficient, and the property now checks it, so the symbolic system's
+  `proved` verdict says something a reader should care about: over every input its constraints
+  admit, it never writes either of them. What no engine here decides is whether what it writes
+  instead is *specific* — see [`refinement.md`](refinement.md), the 12 CFR 1002.9(b)(2) row.
+
+  The antecedent is the trigger the clause states in its own first words: (b)(2) governs the
+  statement *required by paragraph (a)(2)(i)*, so a creditor that lawfully disclosed the right to
+  request reasons instead has none yet and is not in breach. Where that antecedent never holds the
+  duty is satisfied vacuously, which reads the same in a report as a log that was checked and found
+  clean — a gap recorded in [`semantics.md`](semantics.md) §4.
 
 ## 1. Neural — `observed`
 
@@ -64,7 +83,7 @@ headline: 1 requirements · 1 binding: 1 observed
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
-    summary: Observed over 3 decision(s): every required signal (artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    summary: Observed over 3 decision(s): state monitor for 'present(artifact_logs_reason_explanation) -> ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, "internal standards") and not contains(artifact_logs_reason_explanation, "internal policies") and not contains(artifact_logs_reason_explanation, "failed to achieve a qualifying score"))' satisfied at every decision step.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.
@@ -101,7 +120,7 @@ headline: 1 requirements · 1 binding: 1 probed
 REQUIREMENT FINDINGS:
   [PROBED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
-    summary: Probed: no counterexample to 'present(artifact_logs_reason_explanation) and present(provenance_model_version) and present(scope_statements_local_vs_global)' in 200 input(s) replayed through the system's own decide() (seed 0, generated by perturbing 2 recorded decision(s) over 10 field(s)). This is a bounded search, not a proof: the property is unchecked outside the inputs this budget names.
+    summary: Probed: no counterexample to 'present(artifact_logs_reason_explanation) -> ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, "internal standards") and not contains(artifact_logs_reason_explanation, "internal policies") and not contains(artifact_logs_reason_explanation, "failed to achieve a qualifying score"))' in 200 input(s) replayed through the system's own decide() (seed 0, generated by perturbing 2 recorded decision(s) over 10 field(s)). This is a bounded search, not a proof: the property is unchecked outside the inputs this budget names.
     probe budget: 200 input(s) replayed, seed 0, input space: applicant_id (3 values), artifact_logs_reason_explanation (2 values), credit_history_months (11 values), credit_score (11 values), debt_to_income (11 values), decision (2 values), delinquencies_24m (7 values), posterior_default (11 values), provenance_model_version (2 values), scope_statements_local_vs_global (2 values). Strategy: the recorded decisions are replayed first unmodified; remaining inputs use seeded random perturbation of one recorded decision, replacing one or two fields with values drawn from that field's candidate pool (the values the trace shows for it, the numeric literals of the property, and their immediate neighbours)
 
 LIMITS OF THIS REPORT
@@ -138,7 +157,7 @@ headline: 1 requirements · 1 binding: 1 proved
 REQUIREMENT FINDINGS:
   [PROVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
-    summary: Proved for all inputs: formal solver verified requirement 'present(artifact_logs_reason_explanation) and present(provenance_model_version) and present(scope_statements_local_vs_global)' holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution.
+    summary: Proved for all inputs: formal solver verified requirement 'present(artifact_logs_reason_explanation) -> ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, "internal standards") and not contains(artifact_logs_reason_explanation, "internal policies") and not contains(artifact_logs_reason_explanation, "failed to achieve a qualifying score"))' holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded either because no regulatory class was declared for the system at all, or because the class that was declared is not the one the requirement is limited to. This tool never infers that class, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope line before reading a not-applicable result.

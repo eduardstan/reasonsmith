@@ -51,15 +51,38 @@ rendering instead of being a rendering convention.
 
 Which engine a requirement reaches is decided by what the system exposes — for *every* fragment,
 not just `logical`, since the property-language unification. `rulelang.py` is the one property
-language: every `spec` is a formula in it (presence atoms `present(signal)`, comparisons,
-connectives, temporal operators), `formalism` names which fragment the formula belongs to,
-`load_pack` classifies the spec and refuses a mismatch or prose, and the English lives in the
-required `rationale` field. `report._engine_ladder` then collects every engine the fragment *and*
-the exposed surface allow and takes the strongest evidence produced: `logic()` gets Z3, `decide()`
-gets the replay search, a trace gets the record or observed engine, and temporal never rises above
-`observed` because no engine here reasons over a trace-wide formula. Read `docs/semantics.md` §2
-and §3.5 before editing any of it — they state the rule, the two `present()` encodings, and the one
-case the ladder does not resolve (exposed logic disagreeing with the trace).
+language: every `spec` is a formula in it (presence atoms `present(signal)`, the phrase atom
+`contains(signal, "literal")`, comparisons, connectives, temporal operators), `formalism` names
+which fragment the formula belongs to, `load_pack` classifies the spec and refuses a mismatch or
+prose, and the English lives in the required `rationale` field. `report._engine_ladder` then
+collects every engine the fragment *and* the exposed surface allow and takes the strongest evidence
+produced: `logic()` gets Z3, `decide()` gets the replay search, and a trace gets the record engine
+for a presence conjunction and the observed engine for **every other fragment, `logical`
+included** — a state property is a property of one decision record, so a trace of them is evidence
+about it, and declining to read one was a defect the label caused rather than the evidence. Temporal
+still never rises above `observed`; that is a separate claim and untouched. Two limits of the trace
+rung are stated rather than silent: rtamt cannot render a comparison against a Boolean constant, and
+it reads the `spec` as written, so implication in a pack must be spelled `->` and never
+`Implies(...)`. Read `docs/semantics.md` §2 and §3.5 before editing any of it — they state the rule,
+the atom encodings, and the one case the ladder does not resolve (exposed logic disagreeing with the
+trace).
+
+`contains(signal, "phrase")` is the one atom that reads *what a statement says* rather than whether a
+field is blank, and it exists because a duty settled by `present()` alone accepts a reason of
+`"n/a"`. It must keep agreeing across all three encodings — the rulelang interpreter, the synthetic
+per-record flag fed to rtamt, and the Z3 regular language — which is why the case fold is ASCII-only
+and one-to-one and a non-ASCII phrase is refused; `test_the_solvers_fold_is_the_interpreters_fold`
+is the differential check, the counterpart of the blank-string one for `present()`. Only a clause
+that states its own negative constraint may use it: the shipped example,
+`ecoa_reg_b_1002_9_b_2_specific_reasons`, checks the two statements 12 CFR 1002.9(b)(2) itself calls
+insufficient and decides nothing about whether any other statement is specific. Do not add a phrase
+the regulation does not supply, and never push the judgement into the adapter as a self-declared
+`reason_is_specific` flag — `docs/semantics.md` §3 is why. That duty also carries the clause's
+trigger as an implication, which removed a false violation against a creditor lawfully on the
+(a)(2)(ii) disclosure branch and bought a stated cost: where the antecedent never holds the duty is
+`satisfied` vacuously and no report outcome distinguishes that from a trace that was checked and
+met. `docs/semantics.md` §4 records the gap; `docs/findings-nesyarena.md` shows it landing on a real
+system.
 
 `requires` is a conjunctive gate, so a branch of an either/or clause must not be listed in it: the
 loader (`spec._check_spec`, via `rulelang.unconditional_signal_names`) exempts a signal read only

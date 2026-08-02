@@ -363,6 +363,17 @@ def test_conformance_shares_one_trace_across_probed_requirements():
 
 
 def test_trace_and_planning_failures_are_not_evaluated(monkeypatch):
+    """This engine's own contract, plus what a whole run does with a trace it cannot read.
+
+    What changed, and why: a `logical` duty used to reach this engine and no other, so a trace this
+    engine had wrapped into a verdict was the only account a whole run ever gave of one. Now that a
+    state fragment also admits a trace rung, a `logical` duty is answered the way a `record` one
+    always was — and a trace that cannot be read at all raises and names the system, for every
+    fragment alike (`docs/semantics.md` §3.5, `test_a_trace_of_the_wrong_shape_names_the_system`).
+    That is the tool becoming consistent rather than this engine changing: the direct call below is
+    unchanged, because wrapping the provider it was handed is exactly what this engine promises.
+    The routed half now pins the uniform behaviour, and still pins that the trace is read once.
+    """
     class BrokenTraceSUT(HonestSUT):
         def __init__(self):
             super().__init__()
@@ -379,11 +390,8 @@ def test_trace_and_planning_failures_are_not_evaluated(monkeypatch):
     assert "trace service unavailable" in direct.evidence_summary
 
     routed_sut = BrokenTraceSUT()
-    routed = check_conformance(
-        routed_sut,
-        Pack("p", "P", "", (_req("r1"), _req("r2"))),
-    )
-    assert all(result.details["reason"] == "trace_acquisition_failed" for result in routed.results)
+    with pytest.raises(RuntimeError, match="trace service unavailable"):
+        check_conformance(routed_sut, Pack("p", "P", "", (_req("r1"), _req("r2"))))
     assert routed_sut.trace_reads == 1
 
     def fail_plan(*args, **kwargs):

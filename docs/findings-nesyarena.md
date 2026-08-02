@@ -55,25 +55,37 @@ a measurement harness, not an AI system placed on the market in an Annex III use
 
 | outcome | count |
 | --- | ---: |
-| satisfied, at strength `observed` | 20 |
-| violated, at strength `observed` | 5 |
+| satisfied, at strength `observed` | 21 |
+| violated, at strength `observed` | 4 |
 | inconclusive, `unattainable` | 15 |
 | not applicable (no class declared) | 20 |
 | satisfied at `probed` | 0 |
 | satisfied at `proved` | 0 |
 
-Three of the five violations are the missing-reason finding below, which the first run of this
+Two of the four violations are the missing-reason finding below, which the first run of this
 battery already produced against 11 requirements. The other two are the twelfth requirement, added
 after that run to read the declared deviation rather than the field that explains it — see
 [what changed](#what-changed-since-this-finding), under finding 1.
 
 ## The violation
 
-`add-mult(clamped)` is reported **violated** on three requirements —
-`ecoa_reg_b_1002_9_a_2_written_statement` and `ecoa_reg_b_1002_9_b_2_specific_reasons` (both
-binding) and `gdpr_recital71_meaningful_explanation` (interpretive) — on the same evidence: 4 of
-its 16 decisions carry no reason at all. The counterexamples are instances `G1-P4-L2-c0`,
-`G1-P4-L2-c1`, `G1-P4-L3-c0` and `G1-P4-L3-c1` (record indices 8–11).
+`add-mult(clamped)` is reported **violated** on two requirements —
+`ecoa_reg_b_1002_9_a_2_written_statement` (binding) and `gdpr_recital71_meaningful_explanation`
+(interpretive) — on the same evidence: 4 of its 16 decisions carry no reason at all. The
+counterexamples are instances `G1-P4-L2-c0`, `G1-P4-L2-c1`, `G1-P4-L3-c0` and `G1-P4-L3-c1`
+(record indices 8–11).
+
+It was three until 12 CFR 1002.9(b)(2) gained the trigger the clause states in its own first
+words: that clause governs *the statement of reasons required by paragraph (a)(2)(i)*, so where a
+record carries no statement at all it imposes nothing, and (b)(2) now reports those four decisions
+**satisfied** — vacuously. That is the gap `docs/semantics.md` §4 records, arriving on a real
+system rather than in a test fixture, and it is worth looking at closely because it cuts both ways.
+The duty that *does* reach a notification with no reasons is (a)(2), which requires one of two
+contents and reports exactly those four record indices violated. So the pack still catches the
+system, on the clause that actually binds it, and the count fell by one because a duty stopped
+being reported against records it was never about. What is genuinely lost is legibility: a reader
+scanning verdicts sees `satisfied` on (b)(2) for these four decisions and cannot tell from that
+line alone that nothing was examined.
 
 This is not a bug in the adapter and it is not a contrived input. On those four instances naive
 add-mult proof enumeration over-counts overlapping proofs, the raw proof sum exceeds 1, the clamp
@@ -97,7 +109,7 @@ This is the most important thing in this run.
 | system | max abs. deviation from its claimed semantics | instances deviating | decisions differing from `exact-wmc` | conformance verdicts |
 | --- | ---: | ---: | ---: | --- |
 | `exact-wmc` | 0.000000 | 0/16 | 0/16 | all checkable duties satisfied |
-| `add-mult(clamped)` | 0.347356 | 8/16 | 0/16 | 3 violated |
+| `add-mult(clamped)` | 0.347356 | 8/16 | 0/16 | 2 violated |
 | `top-1-proofs` | 0.470679 | 8/16 | **8/16** | all checkable duties satisfied |
 | `top-3-proofs` | 0.097273 | 4/16 | 0/16 | all checkable duties satisfied |
 | `min-max-prob` | 0.357000 | **16/16** | 4/16 | all checkable duties satisfied |
@@ -256,9 +268,9 @@ this run as evidence that a production neuro-symbolic system can emit that field
 it. Where the tool looks strongest here, it is standing on a property of the research harness
 rather than of a deployable one.
 
-### 6. The reason rule decided three of the five violations in the run
+### 6. The reason rule decided two of the four violations in the run
 
-Full disclosure, because it is the one judgement call responsible for three verdicts. The reason
+Full disclosure, because it is the one judgement call responsible for two verdicts. The reason
 field was defined before the run as *the facts the system's own gradient gives non-zero influence*.
 Under that rule, `add-mult(clamped)`'s saturated decisions carry no reason and are violations.
 

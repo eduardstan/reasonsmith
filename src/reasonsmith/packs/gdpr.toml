@@ -40,9 +40,9 @@ verbatim_text = "The data subject shall have the right not to be subject to a de
 stakeholder = "affected individual"
 formalism = "logical"
 spec = """\
-Implies(artifact_logs_solely_automated and artifact_logs_significant_effect, \
-(provenance_basis_contract or provenance_basis_union_or_member_state_law or provenance_basis_explicit_consent) \
-and Implies(provenance_basis_contract or provenance_basis_explicit_consent, \
+(artifact_logs_solely_automated and artifact_logs_significant_effect) -> \
+((provenance_basis_contract or provenance_basis_union_or_member_state_law or provenance_basis_explicit_consent) \
+and ((provenance_basis_contract or provenance_basis_explicit_consent) -> \
 artifact_logs_human_intervention_route))"""
 rationale = """No input admits a decision that is solely automated and significantly affecting unless one of the \
 Article 22(2) bases is present, and where that basis is point (a) or (c) the Article 22(3) route to human \

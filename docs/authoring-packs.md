@@ -82,8 +82,9 @@ including the free names a `logical` requirement's `spec` reads.
 ## One property language
 
 Every `spec`, in every fragment, is a formula in the language of `src/reasonsmith/rulelang.py`:
-presence atoms (`present(signal)`), comparisons over signal values, boolean connectives and arrows,
-the temporal operators, and the rulelang calls `implies`, `abs`, `min`, `max`. Every name in it is
+presence atoms (`present(signal)`), phrase atoms (`contains(signal, "literal")`), comparisons over
+signal values, boolean connectives and arrows, the temporal operators, and the rulelang calls
+`implies`, `abs`, `min`, `max`. Every name in it is
 resolved against the decision record the system produces, so the names in `spec`, the names in
 `requires` and the names the system's `logic()` declares are one vocabulary, not three — and the
 loader refuses a `spec` reading an *unconditional* signal `requires` does not gate.
@@ -107,6 +108,33 @@ against one exposing `logic()`. `docs/semantics.md` §3.5 states the rule and it
 If a duty cannot be written in this language, that is a finding to record in `docs/semantics.md` —
 not a reason to widen the language until it fits. Widening it to accommodate one stubborn duty is
 how a property language becomes an untyped string again.
+
+## A phrase in a `spec` is the clause's own words, never the pack's
+
+`contains(signal, "phrase")` asks whether the text a record carries for a signal carries a phrase.
+It is how a duty escapes *presence is not adequacy* — a reason field containing `"n/a"` is present,
+and 12 CFR 1002.9(b)(2) does not accept it — but the escape is narrow and the discipline is the same
+as for a number.
+
+**Only a clause that supplies its own constraint may use it.** 12 CFR 1002.9(b)(2) names two
+statements that are *insufficient*, so `ecoa_reg_b_1002_9_b_2_specific_reasons` can check that
+neither was made without anyone deciding what *specific* means. A phrase you chose because it seemed
+like a bad reason is an invented standard presented as the regulation's, exactly like an invented
+threshold. Quote the clause in `verbatim_text`, put the phrase in the `spec`, and if the phrase is a
+*reading* of the clause rather than a contiguous quotation — the ECOA duty distributes
+`internal standards or policies` into two — say so in `rationale`.
+
+**Never ask the system to grade itself.** A signal such as `reason_is_specific` would make the
+verdict a restatement of the system's own opinion of itself. reasonsmith checks what a system says,
+not whether it was honest (`docs/semantics.md` §3), and a self-declared adequacy flag is not an
+adequacy check.
+
+**What the atom does and does not do.** It is a substring test with ASCII case folding: it does not
+paraphrase, so a clause's meaning expressed in other words passes. A non-ASCII phrase is refused at
+load time, because the fold must stay reproducible character-for-character by the solver. A record
+carrying no value for the signal contains no phrase, which is what lets an implication guarded by
+`present()` express a clause that only bites in some circumstances — read `docs/semantics.md` §4 on
+what a vacuously satisfied duty does *not* tell a reader before relying on that.
 
 ## An either/or clause
 

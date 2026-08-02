@@ -7,6 +7,8 @@ What this module is for:
 
 from __future__ import annotations
 
+import ast
+
 import pytest
 import z3
 
@@ -20,6 +22,7 @@ from reasonsmith.rulelang import (
     eval_expression,
     is_present,
     parse_expression,
+    parse_property,
     preprocess_spec,
 )
 from reasonsmith.spec import Pack, Requirement, load_pack
@@ -165,8 +168,17 @@ def test_solver_timeout_reported_not_evaluated(monkeypatch):
     assert "timeout" in res.evidence_summary
 
 
-def test_system_without_logic_reported_not_evaluated():
-    """A system exposing no logic (sut.logic() is None) is reported not evaluated."""
+def test_system_without_logic_or_a_trace_is_not_evaluated():
+    """No logic and no decisions is no evidence, and the report names what was actually missing.
+
+    What changed, and why: this used to assert the summary said *no decision logic exposed*, on the
+    strength of that being the only rung a `logical` duty had. Now such a duty also admits a trace
+    rung, and `_NO_LOGIC_TO_REASON_OVER` does what it has always done — a proof rung that never had
+    any logic to reason over says nothing about this evaluation, so a lower rung's account of the
+    evidence the system did supply displaces it. With no trace either, that account is the empty
+    trace, which is the more useful thing to tell a reader holding a system that exposes neither.
+    The claim being pinned is unchanged: not evaluated, `strength=None`, never satisfied.
+    """
     class NoLogicSUT(BaseSUT):
         def logic(self):
             return None
@@ -181,7 +193,60 @@ def test_system_without_logic_reported_not_evaluated():
     res = evaluate_requirement(req, sut)
     assert res.verdict == Verdict.INCONCLUSIVE
     assert res.strength is None
+    assert "trace is empty" in res.evidence_summary
+
+
+def test_the_proof_rung_still_names_the_missing_logic_when_it_is_asked_directly():
+    """The message did not disappear; it stopped being the whole run's only account.
+
+    `ProvedEngine` is what knows which interface was missing, and it still says so. Pinning it here
+    keeps the diagnostic from being quietly lost while the ladder prefers a rung with evidence.
+    """
+    class NoLogicSUT(BaseSUT):
+        def logic(self):
+            return None
+
+    req = _logical_req(
+        spec="income >= 30000 implies approved == True",
+        requires=("income", "approved"),
+    )
+    res = ProvedEngine.evaluate(req, NoLogicSUT(declared_capabilities={"income", "approved"}))
+    assert res.strength is None
     assert "no decision logic exposed" in res.evidence_summary
+
+
+def test_a_logical_duty_is_answered_from_a_trace_when_there_is_nothing_to_reason_over():
+    """The point of the change: evidence that is right there is read rather than declined.
+
+    A `logical` property is a property of one decision record — that is what puts it in
+    `STATE_FRAGMENTS` — so a trace of decision records is evidence about it. Refusing to read one
+    reported *not evaluated* because of the label on the fragment rather than because of the
+    evidence, which is the defect fragment classification exists to prevent
+    (`docs/semantics.md` §3.5).
+    """
+    class TraceOnlySUT(BaseSUT):
+        def logic(self):
+            return None
+
+        def decisions(self):
+            return [{"income": 41000, "approved": True}, {"income": 12000, "approved": False}]
+
+    req = _logical_req(
+        spec="income >= 30000 implies approved",
+        requires=("income", "approved"),
+    )
+    res = evaluate_requirement(req, TraceOnlySUT(declared_capabilities={"income", "approved"}))
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.OBSERVED
+
+    class BreachingSUT(TraceOnlySUT):
+        def decisions(self):
+            return [{"income": 41000, "approved": True}, {"income": 55000, "approved": False}]
+
+    breach = evaluate_requirement(req, BreachingSUT(declared_capabilities={"income", "approved"}))
+    assert breach.verdict == Verdict.VIOLATED
+    assert breach.strength == Strength.OBSERVED
+    assert breach.details["violation_step_indices"] == [1]
 
 
 def test_counterexample_verification_failure_reported_not_evaluated(monkeypatch):
@@ -697,18 +762,50 @@ def test_gdpr_art22_violation_reports_a_counterexample_that_reproduces():
     assert "the system's own decide()" in res.evidence_summary
 
 
-def test_gdpr_art22_without_exposed_logic_is_not_evaluated_never_satisfied():
-    """A system that can emit every signal but exposes no logic proves nothing, and says so."""
+def test_gdpr_art22_without_exposed_logic_is_never_proved_on_the_strength_of_a_sample():
+    """The universal prohibition is not answered *for all inputs* by a log, and never was.
+
+    What changed, and why: this used to assert not evaluated, because a system exposing no logic
+    reached no engine at all. The intent behind that was never "refuse to look" — it was *do not
+    report a universal prohibition satisfied on the strength of a sample*. That intent is now
+    carried by the **strength label**, which is where it belongs. `observed` denotes "on the records
+    supplied, and nothing here establishes they are representative" (`docs/semantics.md` §3, §4), so
+    an `observed` verdict is not a claim about every input and cannot be read as one. What must
+    never happen is this duty reaching `proved` without exposed logic, and that is what is pinned.
+
+    An empty-trace system still has nothing to look at and is still not evaluated, which is the
+    second half below.
+    """
+    req = _art22_requirement()
+
     class OpaqueSUT(BaseSUT):
         def logic(self):
             return None
 
-    req = _art22_requirement()
+        def decisions(self):
+            # Every atom of the property is a bare Boolean, so every record must establish that
+            # kind. These two are lawful: automated and significant, but on an Article 22(2)(b)
+            # basis, which is the one branch that does not require the intervention route.
+            lawful = {signal: False for signal in req.requires}
+            lawful["artifact_logs_solely_automated"] = True
+            lawful["artifact_logs_significant_effect"] = True
+            lawful["provenance_basis_union_or_member_state_law"] = True
+            return [dict(lawful), dict(lawful)]
+
     res = evaluate_requirement(req, OpaqueSUT(declared_capabilities=set(req.requires)))
 
-    assert res.verdict == Verdict.INCONCLUSIVE
-    assert res.strength is None
-    assert "no decision logic exposed" in res.evidence_summary
+    assert res.verdict == Verdict.SATISFIED
+    assert res.strength == Strength.OBSERVED
+    assert res.strength < Strength.PROVED
+    assert "decision(s)" in res.evidence_summary
+
+    class NoTraceSUT(BaseSUT):
+        def logic(self):
+            return None
+
+    silent = evaluate_requirement(req, NoTraceSUT(declared_capabilities=set(req.requires)))
+    assert silent.verdict == Verdict.INCONCLUSIVE
+    assert silent.strength is None
 
 
 def test_gdpr_art22_record_duties_are_untouched_by_the_proof_duty():
@@ -912,18 +1009,123 @@ def test_a_record_duty_survives_a_system_whose_logic_raises():
     assert sut.logic_calls == 1
 
 
-def test_a_logical_duty_names_the_logic_failure_rather_than_propagating_it():
+def test_a_logical_duty_survives_a_system_whose_logic_raises():
+    """A broken optional interface must not cost a logical duty the evidence it does have.
+
+    What changed, and why: this used to assert the summary named the `RuntimeError`, because the
+    proof rung was the only rung a logical duty had, so its failure was the whole account. Now such
+    a duty also admits a trace rung, and the duty lands on it — which is exactly what
+    `test_a_record_duty_survives_a_system_whose_logic_raises` has always asserted one rung over. The
+    enduring claim is the one in the name: the exception is absorbed, never propagated, and the duty
+    still reaches the strongest rung that produced evidence.
+
+    Where no rung produces any, the failure is still named, and
+    `test_a_logic_failure_is_named_when_no_rung_produced_evidence` pins that.
+    """
+    req = _logical_req(
+        spec="present(artifact_logs_reason_explanation)",
+        requires=("artifact_logs_reason_explanation",),
+    )
+
+    class _BrokenLogicTraceSUT(_BrokenLogicSUT):
+        def decisions(self):
+            return [
+                {"artifact_logs_reason_explanation": "approved on score"},
+                {"artifact_logs_reason_explanation": "length of credit history"},
+            ]
+
+    sut = _BrokenLogicTraceSUT()
+    result = evaluate_requirement(req, sut)
+
+    assert result.verdict == Verdict.SATISFIED
+    assert result.strength == Strength.OBSERVED
+    assert sut.logic_calls == 1
+
+
+def test_a_logic_failure_is_named_when_no_rung_produced_evidence():
+    """The `RuntimeError` is still reachable; it stopped displacing a rung that had an answer."""
     req = _logical_req(
         spec="present(artifact_logs_reason_explanation)",
         requires=("artifact_logs_reason_explanation",),
     )
     sut = _BrokenLogicSUT()
-
-    result = evaluate_requirement(req, sut)
+    result = report_module._run_proof_rung(
+        req, sut, None, report_module._EvaluationResources(sut)
+    )
 
     assert result.strength is None
     assert "RuntimeError" in result.evidence_summary
     assert "logic export is broken" in result.evidence_summary
+
+
+def test_the_monitor_reads_the_spec_as_written_so_implication_is_spelled_with_an_arrow():
+    """A stated limit with a sharp edge, found while giving the state fragment its trace rung.
+
+    `preprocess_spec` rewrites `->` into `Implies(...)` before *parsing*, so the two spellings are
+    the same property — this asserts that, rather than trusting it. But `to_stl` renders the spec
+    text as the pack wrote it, and rtamt has infix `->` and no prefix `Implies`. So a `logical` duty
+    spelled with the prefix form keeps its solver and replay rungs and is *not evaluated* against a
+    trace, purely because of how it was typed.
+
+    That is sound — never satisfied, never violated — and it is arbitrary, so the shipped Article 22
+    duty is spelled with the arrow and this test is where the next pack author finds out. Teaching
+    the renderer to lower the prefix form is a different and larger change than the ladder rung it
+    was found under; it is recorded in `docs/semantics.md` §2 rather than smuggled in here.
+    """
+    equivalent = (
+        "Implies(a and b, c)",
+        "(a and b) -> c",
+    )
+    parsed = [ast.dump(parse_property(text)) for text in equivalent]
+    assert parsed[0] == parsed[1], "the two spellings must remain the same property"
+
+    class TraceSUT(BaseSUT):
+        def logic(self):
+            return None
+
+        def decisions(self):
+            return [{"a": True, "b": True, "c": True}] * 2
+
+    prefix = evaluate_requirement(
+        _logical_req(spec=equivalent[0], requires=("a", "b", "c")),
+        TraceSUT(declared_capabilities={"a", "b", "c"}),
+    )
+    assert prefix.verdict == Verdict.INCONCLUSIVE
+    assert prefix.strength is None
+
+    arrow = evaluate_requirement(
+        _logical_req(spec=equivalent[1], requires=("a", "b", "c")),
+        TraceSUT(declared_capabilities={"a", "b", "c"}),
+    )
+    assert arrow.verdict == Verdict.SATISFIED
+    assert arrow.strength == Strength.OBSERVED
+
+    shipped = load_pack("gdpr").get_requirement(ART22_REQUIREMENT_ID)
+    assert "Implies(" not in shipped.spec
+
+
+def test_the_trace_rung_does_not_reach_every_logical_shape_and_says_so():
+    """A stated limit of the trace rung, not a silent one.
+
+    rtamt scores real-valued signals, and `validate_temporal_property` refuses the shapes it cannot
+    render soundly — a comparison against a Boolean constant among them, which the `logical`
+    fragment otherwise permits (`docs/semantics.md` §2). Such a duty keeps its solver and replay
+    rungs and is reported *not evaluated* against a trace, never satisfied. Widening the monitor to
+    cover it is a different change; reporting a verdict it did not establish would be the overclaim.
+    """
+    class TraceOnlySUT(BaseSUT):
+        def logic(self):
+            return None
+
+        def decisions(self):
+            return [{"approved": True}, {"approved": True}]
+
+    req = _logical_req(spec="approved == True", requires=("approved",))
+    result = evaluate_requirement(req, TraceOnlySUT(declared_capabilities={"approved"}))
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert "unsupported" in result.evidence_summary.lower()
 
 
 def test_building_the_ladder_never_executes_the_system():

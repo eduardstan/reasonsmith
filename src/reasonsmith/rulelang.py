@@ -132,21 +132,38 @@ def fold_ascii_case(text: str) -> str:
 def contains_literal(haystack: Any, needle: str) -> bool:
     """Whether a recorded value carries `needle`, folding ASCII case on both sides.
 
-    A value the record does not carry, in the `is_present` sense, contains nothing: a duty
-    triggered by what a reason *says* has to be false where no reason was said, so that the
-    implication guarding it can be the thing that decides. A value that is present but is not
-    text is neither true nor false here and raises, because answering `False` would report a
-    system satisfied on a field nothing read.
+    Three cases, and the boundary between them is the point:
+
+    - **A value the record does not carry**, in the `is_present` sense, contains nothing. A duty
+      triggered by what a reason *says* has to be false where no reason was said, so that the
+      implication guarding it can be the thing that decides.
+    - **A string** is searched directly.
+    - **A list or tuple of strings** is a statement given in parts, and contains the phrase when
+      one of its parts does. A decision log recording reasons as `["C02 excessive obligations",
+      "C04 delinquent obligations"]` is recording a statement of reasons, and refusing to read it
+      would report *not evaluated* because of how the log is shaped rather than because of what it
+      says. The parts are searched separately and never joined: joining them would let a phrase
+      match across a boundary between two reasons that never appeared together.
+
+    Anything else present raises. Answering `False` for a value nothing read would report a system
+    satisfied on evidence that was never examined, which is the overclaim this package exists to
+    refuse — and a number or a mapping is not a statement in any case.
     """
     if not is_present(haystack):
         return False
-    if not isinstance(haystack, str):
-        raise UnsupportedConstructError(
-            f"{CONTAINS_CALL}() reads recorded text, but this decision carries "
-            f"{type(haystack).__name__} {haystack!r}. A non-text value is not evidence about what "
-            "a statement says, so it is refused rather than read as carrying nothing"
-        )
-    return fold_ascii_case(needle) in fold_ascii_case(haystack)
+    folded_needle = fold_ascii_case(needle)
+    if isinstance(haystack, str):
+        return folded_needle in fold_ascii_case(haystack)
+    if isinstance(haystack, (list, tuple)) and all(
+        isinstance(part, str) for part in haystack
+    ):
+        return any(folded_needle in fold_ascii_case(part) for part in haystack)
+    raise UnsupportedConstructError(
+        f"{CONTAINS_CALL}() reads a recorded statement — text, or a list of text given in parts — "
+        f"but this decision carries {type(haystack).__name__} {haystack!r}. A value that is not a "
+        "statement is not evidence about what one says, so it is refused rather than read as "
+        "carrying nothing"
+    )
 
 
 def contains_arguments(node: ast.Call) -> tuple[str, str]:

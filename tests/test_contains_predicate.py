@@ -153,13 +153,37 @@ def test_the_fold_is_ascii_case_and_reaches_no_further():
         )
 
 
-def test_a_present_non_text_value_is_refused_not_read_as_carrying_nothing():
-    """A list of reason codes is not a statement, and is not evidence that none was insufficient."""
+def test_a_statement_given_in_parts_is_read_part_by_part():
+    """A log recording reasons as a list is recording a statement of reasons.
+
+    Refusing it would report *not evaluated* because of how a log is shaped rather than because of
+    what it says — the same defect as declining to read a trace that is right there. The real
+    system in `docs/nesyarena-conformance-report.md` records reasons exactly this way.
+    """
+    node = parse_property(f'contains({REASON}, "qualifying score")')
+    assert eval_expression(node, {REASON: ["C03 length of credit history"]}) is False
+    assert eval_expression(
+        node, {REASON: ["C03 length of credit history", "Failed to achieve a QUALIFYING SCORE"]}
+    ) is True
+
+
+def test_the_parts_of_a_statement_are_never_joined():
+    """A phrase must occur in one part, not across the seam between two.
+
+    Joining the list would invent a sentence the system never wrote: two reasons that merely
+    appeared in the same record would read as one continuous statement.
+    """
+    node = parse_property(f'contains({REASON}, "internal standards")')
+    assert eval_expression(node, {REASON: ["nothing internal", "standards were met"]}) is False
+    assert eval_expression(node, {REASON: ["our internal standards applied"]}) is True
+
+
+def test_a_present_value_that_is_not_a_statement_is_refused():
+    """A number or a mapping is not a statement, and is not evidence that none was insufficient."""
     node = parse_property(f'contains({REASON}, "n/a")')
-    with pytest.raises(UnsupportedConstructError):
-        eval_expression(node, {REASON: ["n/a"]})
-    with pytest.raises(UnsupportedConstructError):
-        eval_expression(node, {REASON: 7})
+    for not_a_statement in (7, {"code": "n/a"}, ["n/a", 3]):
+        with pytest.raises(UnsupportedConstructError):
+            eval_expression(node, {REASON: not_a_statement})
 
 
 # --------------------------------------------------------------------------------------------
@@ -193,7 +217,7 @@ def test_a_non_text_value_makes_the_duty_not_evaluated_never_satisfied():
     """The counterpart of an unmeasured magnitude: a kind the trace never established."""
     result = _evaluate(
         f'always(not contains({REASON}, "n/a"))',
-        ["Length of credit history", ["n/a"]],
+        ["Length of credit history", {"code": "n/a"}],
     )
     assert result.verdict == Verdict.INCONCLUSIVE
     assert result.strength is None

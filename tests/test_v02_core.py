@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+import reasonsmith.report as report_module
 from reasonsmith.report import (
     LIMITS as REPORT_LIMITS,
 )
@@ -22,6 +23,7 @@ from reasonsmith.rulelang import classify_fragment, eval_expression, parse_prope
 from reasonsmith.spec import (
     PACKS_DIR,
     REGULATORY_CLASSES,
+    VALID_FORMALISMS,
     Pack,
     Requirement,
     list_packs,
@@ -661,27 +663,63 @@ def test_an_empty_trace_is_not_evidence():
     assert "[NOT EVALUATED]" in report.render_text()
 
 
-@pytest.mark.parametrize("formalism", ["logical"])
-def test_a_formalism_without_an_engine_is_not_evaluated(formalism):
-    """Declaring the signals a logical property needs does not establish it.
+def test_a_formalism_without_an_engine_is_not_evaluated(monkeypatch):
+    """A formalism nothing here evaluates is reported as such, and its trace is never read.
 
-    There is no solver in this build (stage 3). Checking such a requirement by looking
-    for the signal names in the trace would report `satisfied` for a property nothing tested —
-    the failure mode that would make every verdict in this tool unfalsifiable.
+    What changed, and why: this was parametrised over `logical`, on the premise that the build had
+    no engine for one. It has had a solver since stage 3, and now a `logical` property — a property
+    of a single decision record, by `docs/semantics.md` §3.5's own definition — is also monitored
+    per record against a trace. So `logical` is no longer an example of an uncovered formalism, and
+    asserting that it is would pin the defect rather than the rule.
+
+    The rule itself is unchanged and still worth holding: a requirement whose formalism no engine
+    covers must be reported not evaluated from the capability declaration alone, never answered by
+    looking for its signal names in the trace. `SUPPORTED_FORMALISMS` is narrowed here to reach that
+    branch, because every valid formalism now has an engine — which the first assertion pins, so
+    this test fails if a formalism is ever added without one.
     """
 
     class TraceSUT(BaseSUT):
         def decisions(self):
             raise AssertionError("must not read the trace for a formalism no engine covers")
 
-    req = _requirement(formalism=formalism, requires=("signal_a",))
+    assert set(report_module.SUPPORTED_FORMALISMS) == set(VALID_FORMALISMS)
+
+    req = _requirement(formalism="logical", requires=("signal_a",))
+    monkeypatch.setattr(report_module, "SUPPORTED_FORMALISMS", ("record", "temporal"))
+
     result = evaluate_requirement(req, TraceSUT({"signal_a"}))
     assert result.verdict == Verdict.INCONCLUSIVE
     assert result.strength is None
-    assert formalism in result.evidence_summary
+    assert "logical" in result.evidence_summary
 
     report = check_conformance(TraceSUT({"signal_a"}), Pack("p", "P", "", (req,)))
     assert report.headline == "1 requirements · 1 binding: 1 not evaluated"
+
+
+def test_every_valid_formalism_has_an_engine_that_reads_a_trace():
+    """The claim the test above stopped being able to make: no fragment is left unreadable.
+
+    A state fragment is a property of one decision record, so a trace of decision records is
+    evidence about it. A build that classified a property into a fragment and then refused to read
+    the trace in front of it reported *not evaluated* because of a label rather than because of the
+    evidence — the defect the fragment classification exists to prevent.
+    """
+    trace = [{"signal_a": "given"}, {"signal_a": "given"}]
+
+    class TraceOnlySUT(BaseSUT):
+        def decisions(self):
+            return trace
+
+    for formalism, spec in (
+        ("record", "present(signal_a)"),
+        ("logical", "present(signal_a) -> present(signal_a)"),
+        ("temporal", "always(present(signal_a))"),
+    ):
+        req = _requirement(formalism=formalism, spec=spec, requires=("signal_a",))
+        result = evaluate_requirement(req, TraceOnlySUT({"signal_a"}))
+        assert result.verdict == Verdict.SATISFIED, formalism
+        assert result.strength == Strength.OBSERVED, formalism
 
 
 def test_result_cannot_claim_more_than_its_evidence():

@@ -136,6 +136,18 @@ def test_the_content_duty_and_the_specificity_duty_can_come_apart():
     A creditor capable of stating reasons that instead disclosed the right to request them
     discharges the content duty and leaves the specificity duty with nothing to bite on. Before the
     either/or was formalised the two properties differed by one signal and could not separate.
+
+    What changed, and why: this used to assert the specificity duty came back `violated` here, which
+    was the residual false violation left over after the either/or repair. 12 CFR 1002.9(b)(2)
+    governs, by its own words, "the statement of reasons required by paragraph (a)(2)(i)" — so a
+    creditor that lawfully took the (a)(2)(ii) disclosure branch has no such statement yet and the
+    clause does not reach them. The trigger is now in the property as an implication, and both
+    duties come back satisfied on the same lawful notification.
+
+    What `satisfied` does and does not mean here is stated in `docs/semantics.md` §4 and pinned by
+    `test_a_duty_whose_trigger_never_fires_is_satisfied_vacuously_and_the_report_cannot_say_so`:
+    the duty imposed nothing on these records, which is not the same as having been checked and
+    found clean, and the four report outcomes cannot tell a reader which of the two it was.
     """
     sut = BaseSUT(set(EVERY_SIGNAL) | {"scope_statements_local_vs_global"})
     disclosure = "You may request a statement of specific reasons within 60 days."
@@ -146,7 +158,8 @@ def test_the_content_duty_and_the_specificity_duty_can_come_apart():
     content = evaluate_requirement(requirement(), sut, records)
     specificity = evaluate_requirement(requirement(SPECIFICITY_DUTY), sut, records)
     assert content.verdict == Verdict.SATISFIED
-    assert specificity.verdict == Verdict.VIOLATED
+    assert specificity.verdict == Verdict.SATISFIED
+    assert specificity.strength == Strength.OBSERVED
 
 
 def test_a_single_decision_trace_is_not_evaluated_never_satisfied():
