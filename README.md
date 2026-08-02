@@ -20,6 +20,22 @@ When a system makes a decision about a person, a regulatory duty often requires 
 
 Given a decision, the symbolic artifact behind it, and an applicable regulatory duty, reasonsmith evaluates the record's structural completeness and compares actual engine behavior against ground-truth exact inference. Where the applicable requirement identifies reasons the statute obliges, its paired reason-deletion certificate shows which of them the engine dropped.
 
+## Any model in: one duty, three systems, three rungs
+
+Neural, probabilistic or symbolic — a system is fed in by writing an adapter that says what it exposes, and nothing else is asked of it. These three, all checked against the *same* binding duty (ECOA / Reg B 12 CFR 1002.9(b)(2), "the statement of reasons ... must be specific"), come back at three different rungs:
+
+| system | what it exposes | rung reached |
+|---|---|---|
+| [neural risk network](docs/adapters/neural_scorer.py), served behind an inference API | `decisions()` — an exported decision log, nothing else | `observed` |
+| [probabilistic log-odds scorer](docs/adapters/probabilistic_scorer.py), in-process | `decisions()` + `decide(case)` replay | `probed`, carrying its search budget |
+| [symbolic underwriting rule set](docs/adapters/symbolic_rules.py) | `decisions()` + `logic()` | `proved`, over every input the constraints admit |
+
+```sh
+for s in neural_scorer probabilistic_scorer symbolic_rules; do python docs/adapters/$s.py; done
+```
+
+All three verdicts are `satisfied`. The rung is not a score and not a grade of compliance: it is how far the claim reaches — three logged decisions, 200 replayed inputs, or every input the declared constraints admit. The neural system **cannot** reach `probed` or `proved` as built, and no adapter can change that; a test pins that ceiling. Full walkthrough, with the three transcripts and why this duty was chosen over a recital: [`docs/three-systems.md`](docs/three-systems.md).
+
 ## What a verdict is worth
 
 Every evaluated result records its evidence strength, on one lattice:

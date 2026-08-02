@@ -91,6 +91,15 @@ committed page byte-for-byte to that script. Touching the renderer means regener
 repo and deploys to Vercel — see issue #35; this repo only generates the dossier that gets
 published there as `report.html`.
 
+`docs/three-systems.md` and the three files in `docs/adapters/` are the answer to "how does any
+model get into this tool?": a neural black box (`JSONLAdapter`, log only), a probabilistic scorer
+(`CallableAdapter`, replayable) and a rule set (`RulesAdapter`, logic exposed), all checked against
+the one binding duty `ecoa_reg_b_1002_9_b_2_specific_reasons` and reaching `observed`, `probed` and
+`proved` respectively. `tests/test_docs_three_systems.py` holds each transcript byte-for-byte the
+way `test_docs_example_output.py` does, asserts the three rungs are still three, and pins the
+neural system's ceiling. That ceiling is the point of the artefact: raising it means changing the
+*system*, never the adapter, and the README's first screen carries the same table.
+
 `docs/nesyarena-conformance-report.md` is the third generated document, and the only run against a
 real system rather than a demonstration fixture: `docs/build_nesyarena_report.py` drives the five
 `nesyarena.suts.registry()` provenances over generated ground programs against the GDPR, EU AI Act
