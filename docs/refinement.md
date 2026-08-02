@@ -126,6 +126,69 @@ It is stated once, here, rather than nineteen times:
   (`docs/semantics.md` §4). A real per-decision applicability gate would need a `not_applicable`
   verdict a *record* can carry, which is a change to the result model rather than to a pack.
 
+## One of the four signal categories is empty, and no sourced statute fills it
+
+`docs/authoring-packs.md` names four Section 6.3 signal-name prefixes. Three are exercised by the
+shipped packs — `provenance_` by fourteen distinct signals, `artifact_logs_` by nineteen,
+`scope_statements_` by five — and the fourth, `stability_signals_`, by **none**. The demonstration
+log `src/reasonsmith/examples/sample_decisions.jsonl` even emits `stability_signals_artifact_drift`,
+a number no duty in any pack reads. The category is empty on purpose, and this is the reason.
+
+**No statute this repository can source obliges stability, drift or consistency over time as a
+property of a decision record.** Four candidates were read against the live official text and
+rejected, each for a reason that is about the *subject* of the duty rather than about the
+expressiveness of the property language:
+
+- **EU AI Act Article 15(1)** — high-risk systems "shall be designed and developed in such a way
+  that they achieve an appropriate level of accuracy, robustness, and cybersecurity, and that they
+  perform consistently in those respects throughout their lifecycle". The consistency is real, and
+  its subject is the *design and development* of a system over its lifecycle. No decision record
+  witnesses it, and a trace of records is a sample of one run (*the trace is a sample*, above).
+- **EU AI Act Article 15(3)** — accuracy levels and metrics "shall be declared in the accompanying
+  instructions of use". This is the closest of the four to expressible, and it is still not this
+  duty: its subject is a document that accompanies the system, not the decision record, and the
+  only thing reasonsmith could check is that some accuracy number appears in each record — which
+  Article 15(3) does not require of any record. Writing that would be inventing a duty to fill a
+  column.
+- **EU AI Act Article 72(1)–(2) and Article 26(5)** — the provider "shall establish and document a
+  post-market monitoring system", which "shall actively and systematically collect, document and
+  analyse relevant data … on the performance of high-risk AI systems throughout their lifetime";
+  the deployer "shall monitor the operation of the high-risk AI system on the basis of the
+  instructions for use". Both bind an organisation over time. They are the paradigm case of
+  *organisational facts are outside every engine* (above): the artefact that discharges them is a
+  monitoring system, not a decision.
+- **GDPR Recital 71 and Article 5(1)(d)** — the Recital's error-minimisation sentence is already
+  refined, by `gdpr_recital71_error_risk_minimised`, and it is about the error in *one* decision,
+  not about drift between decisions; the Recital carries no regular-checking language (it was read
+  in full for it, and there is none). Article 5(1)(d) obliges personal data to be "accurate and,
+  where necessary, kept up to date" — a duty about the input data, not about the stability of a
+  model or of an explanation.
+
+Regulation B was read too and has nothing of this shape: 12 CFR 1002.9 is triggered by an adverse
+action taken on one application, and the record-retention rule of 12 CFR 1002.12 obliges records to
+be *kept*, not to stay consistent.
+
+**What would change the answer.** Any one of these, and none of them is in this repository's gift:
+
+1. A statute — a delegated act, a harmonised standard given legal effect, or a supervisory
+   authority's binding guidance — that obliges a *per-decision* stability figure, so the duty's
+   subject is the record reasonsmith reads. Article 15(2)'s benchmarks and measurement
+   methodologies are the plausible route to one, and none exists yet.
+2. A result model in which a duty can be evaluated against an artefact that is not a decision
+   record — a monitoring report, a model card, an instructions-of-use document. Article 72 would
+   then have somewhere to land. That is a change to what the tool reads, not to a pack.
+3. A verdict that can be a property of a *trace* rather than of the records in it. Drift is a
+   relation between decisions; every property here is evaluated per record and then quantified.
+
+Until then, a duty written to use `stability_signals_` would read a number the system declares about
+itself and grade the system on its own homework, and it would do so without a clause requiring the
+number. This repository already carries one duty that reads a self-declared figure —
+`gdpr_recital71_error_risk_minimised`, whose bound is the decision's own margin rather than
+an invented threshold, and whose weakness is named in its row below. A second one, backed by no
+clause, would be worse than an empty category. **The honest state of the taxonomy is three
+categories used and one empty**, and an author who finds this section should extend it with the
+clause they rejected rather than delete it with a duty they invented.
+
 ---
 
 ## GDPR (Regulation (EU) 2016/679) — `src/reasonsmith/packs/gdpr.toml`
