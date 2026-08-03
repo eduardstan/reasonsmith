@@ -8,6 +8,34 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A decision whose reasons bounded proof enumeration never found buys no verdict, and never
+  `satisfied`** ([#94](https://github.com/eduardstan/reasonsmith/pull/94)). The certificate engine
+  read one number off the certificate — `len(cert.deleted)` — and never consulted the certificate's
+  own verdict. With nothing enumerated that number is zero for the absence of a measurement rather
+  than for a decision whose reasons the system's answer all depended on, and `uncertified`,
+  `caveat` and `skipped` are empty too, so the engine reported a clean unqualified probe.
+
+  Taking the demonstration's own `TruncatingCreditSystem`, which provably deletes four of five
+  legally owed reasons behind `APP-1042`, and moving only the artefact's `exact_depth` from 1 to 0
+  turned `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` from `violated` at `probed` (exit 2)
+  into `satisfied` at `probed` (exit 0) — same rules, same trace, same reasons, same notices, with
+  the budget line itself reading `reasons switched off: 0`. Weaker evidence bought the strongest
+  verdict available on the duty, and it needs no intent: a misconfiguration, a program that grew a
+  rule layer or a wrong query identifier produce the same artefact.
+
+  `certificate.Certificate.verdict` already refuses to call an un-enumerated query a `PASS`, on the
+  ground that a zero value gap on one is not agreement because exact inference never evaluated it.
+  The engine now asks for that refusal rather than reading the count. Such a certificate is dropped
+  from the certified set, counted in `decisions_without_an_enumerated_reason`, and named in the
+  summary of whatever verdict the remaining decisions carry, so a mixed trace still reports its real
+  breach and still says which decisions the verdict does not cover; a run where every certificate is
+  like that is *not evaluated*, naming `artifact_logs_deleted_reason_count` as unmeasured. A system
+  that genuinely enumerates reasons and deletes none still reaches `satisfied` at `probed`.
+  `docs/semantics.md` §3's certificate guarantee now says enumeration found *at least one* reason
+  and states what a decision without one is covered by.
+
 ### Changed
 
 - **Breaking:** **An adapter declares which variables the system computes, and the proof engine
