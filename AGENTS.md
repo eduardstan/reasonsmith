@@ -173,10 +173,11 @@ is in `docs/semantics.md` §3; why it exists is finding 1 of `docs/findings-nesy
 block in it and compares stdout byte-for-byte, and cross-checks the header's line count and
 `md5sum` against RESULTS.md. So anything that changes what the demo or the CLI prints — a wording
 tweak included — means regenerating the transcripts and updating both files' headers together.
-The README's own CLI block is derived too and is the one derived transcript **no test pins**:
-regenerate it with `python docs/build_readme_transcripts.py`, which raises rather than writing when
-a command it names matches no block, because the ad-hoc helper it replaced reported success having
-substituted nothing and left the front page showing a verdict the tool no longer prints.
+The README's own CLI block is derived too, and `tests/test_docs_readme_transcripts.py` holds it
+byte-for-byte to `python docs/build_readme_transcripts.py` the way the other pins hold their
+documents: anything a wording change moves fails there. The builder raises rather than writing
+when a command it names matches no block, because the ad-hoc helper it replaced reported success
+having substituted nothing and left the front page showing a verdict the tool no longer prints.
 `docs/report.html` is generated as well, but not by the CLI: `docs/build_example.py` composes it — the
 Table 7 run declared into the high-risk class, beside the demonstration's key finding, which no
 report the CLI writes may carry — and `test_docs_index_html_matches_the_renderer` holds the
@@ -245,7 +246,8 @@ record), and a reason left unstated out of the certificate engine's own measurem
 no statute and explains no decision; `docs/semantics.md` §7 is the rule and the four tests in
 `tests/test_audience_view.py` are the enforcement, including the one that fails if the view ever
 becomes a subset of an expert view again. The `--audience` transcripts in `README.md` are derived
-and no test pins them, so a wording change there means `python docs/build_readme_transcripts.py`.
+and held by the same `tests/test_docs_readme_transcripts.py`, so a wording change there means
+`python docs/build_readme_transcripts.py`.
 
 `docs/assets/og.png` is generated from `brand/og.html` in the site repository, is served live as the
 site's social card, and must never be edited here — regenerate there, copy here, update the pinned
