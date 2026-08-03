@@ -300,10 +300,14 @@ The gate is not the only thing standing between these systems and the fourth of 
 count reasonsmith *measures* from an inference artefact a system exposes through the optional
 `artifact()` method rather than reads from a log, so even a run declaring `consumer-credit` would
 report it `unattainable` on all five provenances. It would not be alone: the timing duty would be
-`unattainable` too, on the notification latency and counteroffer signals it gates on, and so would
-the counterfactual duty added since, on `applicant_prohibited_basis` — a fact about a natural
-person, which a graph solver has none of. So three of the five duties would stay unattainable and
-the other two — the written-statement and specific-reasons duties — would become checkable.
+`unattainable` too, on the notification latency and counteroffer signals it gates on. But the
+counterfactual duty added since is *not evaluated* rather than unattainable:
+`applicant_prohibited_basis` is an input a decision procedure accepts and not a field a decision
+record carries, so it is the one name the capability gate does not subtract, and the duty reaches
+the engines — which answer that these provenances expose neither `decide()` nor `logic()`, and no
+length of decision log establishes what a system would have decided. So two of the five duties
+would stay unattainable, one would come back not evaluated, and the other two — the
+written-statement and specific-reasons duties — would become checkable.
 
 Three things this did not fix, in descending order of how much they should worry a reader:
 

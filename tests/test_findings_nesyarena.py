@@ -217,7 +217,12 @@ def _unattainable_sentence(document: str) -> str:
 
 
 def _ecoa_with_domain() -> dict[str, Counter]:
-    """The ECOA outcomes of a run that declared `consumer-credit`, derived by running it."""
+    """The ECOA outcomes of a run that declared `consumer-credit`, derived by running it.
+
+    Bucketed by what each result *claims* rather than by its verdict alone. `unattainable` and
+    *not evaluated* are both `inconclusive`, and finding 3's counterfactual turns on which of the
+    two a duty comes back as: counting the verdict alone let the prose name the wrong one.
+    """
     out: dict[str, Counter] = {}
     for sut in SYSTEMS:
         report = check_conformance(
@@ -228,7 +233,13 @@ def _ecoa_with_domain() -> dict[str, Counter]:
             system_domains=["consumer-credit"],
         )
         for result in report.results:
-            out.setdefault(result.requirement_id, Counter())[result.verdict.name] += 1
+            if result.strength is Strength.UNATTAINABLE:
+                label = "UNATTAINABLE"
+            elif result.strength is None:
+                label = "NOT_EVALUATED"
+            else:
+                label = result.verdict.name
+            out.setdefault(result.requirement_id, Counter())[label] += 1
     return out
 
 
@@ -613,19 +624,21 @@ def test_finding_3_ecoa_domain_gate():
 
 
 def test_finding_3_consumer_credit_counterfactual():
-    """A consumer-credit run leaves three duties unattainable and two checkable, derived."""
+    """A consumer-credit run: two duties unattainable, one not evaluated, two checkable."""
     with_domain = _ecoa_with_domain()
-    unattainable = {
-        rid for rid, c in with_domain.items() if c["INCONCLUSIVE"]
-    }
+    unattainable = {rid for rid, c in with_domain.items() if c["UNATTAINABLE"]}
+    not_evaluated = {rid for rid, c in with_domain.items() if c["NOT_EVALUATED"]}
     checkable = {rid for rid, c in with_domain.items() if c["SATISFIED"] or c["VIOLATED"]}
     assert unattainable == {
-        "ecoa_reg_b_1002_4_a_no_disparate_treatment",
         "ecoa_reg_b_1002_9_a_1_timing_of_notice",
         "ecoa_reg_b_1002_9_b_2_principal_reasons_complete",
     }, (
-        "a consumer-credit run now leaves a different pair unattainable "
+        "a consumer-credit run now leaves a different set unattainable "
         f"({sorted(unattainable)}) — finding 3's counterfactual must be re-derived"
+    )
+    assert not_evaluated == {"ecoa_reg_b_1002_4_a_no_disparate_treatment"}, (
+        "a consumer-credit run now leaves a different set not evaluated "
+        f"({sorted(not_evaluated)}) — finding 3's counterfactual must be re-derived"
     )
     assert checkable == {
         "ecoa_reg_b_1002_9_a_2_written_statement",
@@ -633,6 +646,9 @@ def test_finding_3_consumer_credit_counterfactual():
     }
     prose = _prose()
     assert f"{_word(len(unattainable))} of the five duties would stay unattainable" in prose
+    assert "the counterfactual duty added since is *not evaluated* rather than unattainable" in (
+        prose
+    )
     assert "the written-statement and specific-reasons duties — would become checkable" in prose
 
 
