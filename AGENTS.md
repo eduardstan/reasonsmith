@@ -201,7 +201,14 @@ same shape of claim `docs/nesyarena-conformance-report.md` carries — do not ad
 either. The renderer
 itself lives in `render.py` — module-level `render_text`/`render_html`, with the presentation
 constants and `_source_checkout` — and `ConformanceReport`'s methods of the same names are thin
-delegates to it, so a rendering edit is a `render.py` edit and nothing in `report.py`. The website
+delegates to it, so a rendering edit is a `render.py` edit and nothing in `report.py`. One such
+convention bears stating: the text renderer names the offending decision record of a violated
+finding by the record's own `decision_id` — the same identifier the JSON
+(`details.offending_trace_segment`) and HTML (witness table) renderings already use — and falls
+back to the step index only when a record carries no identifier, so a reader is never handed an
+empty name. That line lives on the text surface (`render_text`) and was deliberately not moved
+into an engine summary, because `evidence_summary` travels into the JSON; editing an engine to
+fix a redaction therefore changes a second rendering. The website
 (landing, vendored libraries, fonts, assets) lives in the separate private `reasonsmith-site`
 repo and deploys to Vercel — see [#35](https://github.com/eduardstan/reasonsmith/pull/35); this
 repo only generates the dossier that gets published there as `report.html`, and the audience

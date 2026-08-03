@@ -282,6 +282,7 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     ABSENT FROM TRACE: artifact_logs_reason_explanation
     summary: Violated over 16 observed decision(s): the system declares it can emit these signals, but records carry no value for artifact_logs_reason_explanation.
+    offending records: step 8, step 9, step 10, step 11
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
     requires: scope_statements_declared_deviation, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
     summary: Observed over 16 decision(s): temporal monitor for 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' satisfied at every decision step.
@@ -383,6 +384,7 @@ REQUIREMENT FINDINGS:
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): violated
     requires: scope_statements_declared_deviation, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
     summary: Violated over 16 decision(s): temporal property 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' failed at decision step(s) [4, 5, 6, 7, 8, 9, 10, 11].
+    offending records: step 4, step 5, step 6, step 7, step 8, step 9, step 10, step 11
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
@@ -579,6 +581,7 @@ REQUIREMENT FINDINGS:
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): violated
     requires: scope_statements_declared_deviation, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
     summary: Violated over 16 decision(s): temporal property 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' failed at decision step(s) [0, 1, 2, 3, 8].
+    offending records: step 0, step 1, step 2, step 3, step 8
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.

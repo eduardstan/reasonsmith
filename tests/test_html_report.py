@@ -20,7 +20,12 @@ from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.cli import main as cli_main
 from reasonsmith.demo import render_key_finding_html
 from reasonsmith.examples import SAMPLE_LOG
-from reasonsmith.report import ConformanceReport, RequirementResult, check_conformance
+from reasonsmith.report import (
+    PROBE_BUDGET_KEY,
+    ConformanceReport,
+    RequirementResult,
+    check_conformance,
+)
 from reasonsmith.spec import load_pack
 from reasonsmith.verdict import Strength, Verdict
 
@@ -221,6 +226,108 @@ def test_witness_table_is_capped_and_says_how_many_it_elided():
     assert "showing the first 20 of 75 offending records" in html
     assert "Step 19</td>" in html
     assert "Step 20</td>" not in html
+
+
+def test_text_finding_names_the_offending_decision_record():
+    """A violated finding in the text report identifies the record, not only a bare index.
+
+    The JSON (`details.offending_trace_segment`) and HTML (witness table) renderings already
+    name the offending record; the text default is the odd surface out, and it is what a
+    first-time user meets. The text follows the same convention — the record's own
+    `decision_id` — and falls back to the step index only when a record carries no identifier,
+    so a reader is never handed an empty name and the index stays available for mapping back to
+    the JSON's `violation_step_indices` / HTML's "Step N".
+    """
+    report = ConformanceReport(
+        pack_id="test_pack",
+        system_name="TestSystem",
+        results=(
+            RequirementResult(
+                requirement_id="req_violated",
+                source_clause="GDPR Art. 22",
+                verdict=Verdict.VIOLATED,
+                strength=Strength.OBSERVED,
+                signals_required=("signal_a",),
+                evidence_summary="Violated over 2 decisions",
+                details={
+                    "offending_trace_segment": [
+                        {"decision_id": "dec-1024", "result": "no"},
+                        {"decision_id": "dec-1025", "result": "no"},
+                    ],
+                    "violation_step_indices": [3, 5],
+                },
+                binding=True,
+            ),
+        ),
+    )
+    text = report.render_text()
+    assert (
+        "offending records: decision dec-1024 (step 3), decision dec-1025 (step 5)" in text
+    ), "the text finding must name the decision records it came from"
+
+    # A record that carries no `decision_id` falls back to the step index: the output stays
+    # useful rather than printing an empty name, and the index remains available.
+    unnamed = ConformanceReport(
+        pack_id="test_pack",
+        system_name="TestSystem",
+        results=(
+            RequirementResult(
+                requirement_id="req_unnamed",
+                source_clause="GDPR Art. 22",
+                verdict=Verdict.VIOLATED,
+                strength=Strength.OBSERVED,
+                signals_required=("signal_a",),
+                evidence_summary="Violated over 3 decisions",
+                details={
+                    "offending_trace_segment": [{"result": "no"}],
+                    "violation_step_indices": [1],
+                },
+                binding=True,
+            ),
+        ),
+    )
+    unnamed_text = unnamed.render_text()
+    assert "offending record: step 1" in unnamed_text
+
+    # The JSON and HTML renderings are untouched: the identification is a text-surface concern
+    # on top of details the run already produced, and its phrasing appears nowhere else.
+    assert "offending records:" not in report.render_html()
+    assert "offending records:" not in json.dumps(report.to_dict())
+
+
+def test_text_finding_never_names_a_record_it_was_not_given():
+    """No offending-record line without an offending segment to back it.
+
+    A violated verdict that carries no `offending_trace_segment` (e.g. one the solver proved
+    with a counterexample) keeps exactly the text it had: the line is drawn from the record
+    evidence, never invented.
+    """
+    report = ConformanceReport(
+        pack_id="test_pack",
+        system_name="TestSystem",
+        results=(
+            RequirementResult(
+                requirement_id="req_violated",
+                source_clause="GDPR Art. 22",
+                verdict=Verdict.VIOLATED,
+                strength=Strength.PROBED,
+                signals_required=("signal_a",),
+                evidence_summary="Violated on a counterexample input",
+                details={
+                    "counterexample": {"credit_score": 601},
+                    PROBE_BUDGET_KEY: {
+                        "trials": 8,
+                        "strategy": "seeded perturbation",
+                        "seed": 0,
+                        "input_space": {"credit_score": 601},
+                    },
+                },
+                binding=True,
+            ),
+        ),
+    )
+    text = report.render_text()
+    assert "offending record" not in text
 
 
 def test_witness_table_below_the_cap_states_it_is_complete():

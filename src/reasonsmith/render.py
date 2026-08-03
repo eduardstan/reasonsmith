@@ -380,6 +380,28 @@ def render_text(report: ConformanceReport, audience: str | None = None) -> str:
                 lines.append(f"    ABSENT FROM TRACE: {', '.join(absent)}")
             if view.evidence_summary and r.evidence_summary:
                 lines.append(f"    summary: {r.evidence_summary}")
+            # A violated finding names the decision record it came from, the way the JSON
+            # (`details.offending_trace_segment`) and HTML (witness table) renderings already
+            # do: the record's own `decision_id` when it carries one, and the step index
+            # otherwise, so a record without an identifier is still named rather than printed as
+            # an empty label. Same identifier, same fallback — this is not a third convention.
+            offending = r.details.get("offending_trace_segment")
+            indices = r.details.get("violation_step_indices")
+            if (
+                view.witnesses
+                and r.verdict == Verdict.VIOLATED
+                and offending
+                and indices
+            ):
+                named = []
+                for step, record in zip(indices, offending, strict=False):
+                    identifier = record.get("decision_id") if isinstance(record, dict) else None
+                    if identifier is not None and str(identifier).strip():
+                        named.append(f"decision {identifier} (step {step})")
+                    else:
+                        named.append(f"step {step}")
+                plural = "" if len(named) == 1 else "s"
+                lines.append(f"    offending record{plural}: {', '.join(named)}")
             budget = r.details.get(PROBE_BUDGET_KEY)
             if view.probe_budget and budget:
                 lines.append(f"    probe budget: {_budget_line(budget)}")
