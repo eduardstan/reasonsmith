@@ -60,7 +60,7 @@ releases before it predate the file and are not reconstructed here.
 ### Fixed
 
 - **A declaration of what a system computes can no longer widen what it can be proved about**
-  ([#94](https://github.com/eduardstan/reasonsmith/pull/94)). `_check_declared_directions` ran
+  ([#95](https://github.com/eduardstan/reasonsmith/pull/95)). `_check_declared_directions` ran
   *instead of* `_check_magnitudes_are_computed` wherever `sut.logic()` declared `computes`, and it
   asked only whether a name was in `variables ∪ computes`. But `variables` is a **type table**: a
   caller listing a signal its system merely *logs* is naming a sort, not declaring an input the
