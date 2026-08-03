@@ -93,6 +93,11 @@ class _CreditSystem:
 
 
 def _artifact_of(adapter):
+    """The artefact behind `APP-1042`, at the depth the record itself asks for.
+
+    A record carrying `shallow` gets `exact_depth=0`, which enumerates no reason at all — the one
+    number the reproduction of the false-satisfied defect moves.
+    """
     def supply(decision: dict[str, Any]):
         if decision.get("decision_id") != APP_1042.case_id:
             return None
@@ -101,7 +106,7 @@ def _artifact_of(adapter):
             "base": APP_1042.base,
             "query": APP_1042.query,
             "adapter": adapter,
-            "exact_depth": 1,
+            "exact_depth": 0 if decision.get("shallow") else 1,
             "labels": APP_1042.labels,
         }
 
@@ -267,6 +272,64 @@ def test_an_engine_that_deletes_nothing_is_probed_and_never_proved():
     assert result.verdict == Verdict.SATISFIED
     assert result.strength == Strength.PROBED
     assert "nothing here extends the claim" in result.evidence_summary
+
+
+def test_a_decision_whose_reasons_were_never_enumerated_cannot_buy_satisfied():
+    """Weaker evidence must never produce a stronger verdict.
+
+    The same system, the same trace, the same reasons, the same notices — only the artefact's own
+    `exact_depth` moves, from 1 to 0. At 0 the enumeration finds no reason, so nothing is switched
+    off and `len(cert.deleted)` is zero for the absence of a measurement rather than for a decision
+    whose reasons the engine all used. `certificate.Certificate.verdict` already refuses to call
+    such a query a PASS; this asserts the engine one layer up makes that refusal — through
+    `conformance.measured` — instead of reporting the clean unqualified probe that turned the
+    demonstration's breached decision into a satisfied one.
+
+    Both halves of the asymmetry are pinned here: a violation needs one witness, so a measured
+    breach still comes back `violated` at `probed` beside an unmeasured decision, while a
+    satisfaction needs complete evidence, so a trace holding one unmeasured decision buys no
+    strength at all however clean the rest of it is.
+    """
+    shallow = {
+        "decision_id": "APP-1042",
+        "artifact_logs_reason_explanation": "C01 — Income insufficient for amount requested",
+        "shallow": True,
+    }
+    sut = _CreditSystem(oracle=_artifact_of(ReferenceAdapter(TopK(1))), record=shallow)
+    result = evaluate_requirement(_duty(), sut)
+
+    assert result.verdict != Verdict.SATISFIED
+    assert result.strength is None
+    assert "no reason at all" in result.evidence_summary
+    assert DELETED_REASON_COUNT in result.evidence_summary
+
+    # A violation needs one witness: a decision that *was* enumerated and breached still carries
+    # its verdict, and the unenumerated one beside it is counted and named, never allowed to
+    # dilute or to silence it.
+    deep = {k: v for k, v in shallow.items() if k != "shallow"}
+    mixed = _CreditSystem(
+        oracle=_artifact_of(ReferenceAdapter(TopK(1))), record=deep, trace=[deep, shallow]
+    )
+    partial = evaluate_requirement(_duty(), mixed)
+
+    assert partial.verdict == Verdict.VIOLATED
+    assert partial.strength == Strength.PROBED
+    assert partial.details["decisions_certified"] == 1
+    assert partial.details["decisions_without_an_enumerated_reason"] == 1
+    assert "no reason enumerated at all" in partial.evidence_summary
+
+    # A satisfaction needs complete evidence: the same trace with an engine that deletes nothing
+    # would be satisfied on the enumerated decision alone, and is not evaluated because of the
+    # decision beside it. Satisfaction over a subset of the trace is not satisfaction over it.
+    clean = _CreditSystem(
+        oracle=_artifact_of(ReferenceAdapter(ExactWMC())), record=deep, trace=[deep, shallow]
+    )
+    subset = evaluate_requirement(_duty(), clean)
+
+    assert subset.verdict != Verdict.SATISFIED
+    assert subset.strength is None
+    assert DELETED_REASON_COUNT in subset.evidence_summary
+    assert "subset of the trace" in subset.evidence_summary
 
 
 def test_a_trace_with_no_artifact_is_not_evaluated_never_satisfied():

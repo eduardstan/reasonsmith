@@ -39,6 +39,30 @@ What a reader must not break:
     Why this matters: `certificate.certify` never assumes such a reason is live, and neither may
     this engine assume it was dropped. Counting it either way would put a verdict on evidence the
     probe explicitly declined to produce.
+  - A certificate whose enumeration found *no* reason measures nothing, and is evidence for
+    nothing. It is dropped from the certified set, counted, and reported, and no run holding one
+    reports SATISFIED: it is NOT EVALUATED naming `artifact_logs_deleted_reason_count`.
+    Why this matters: `len(cert.deleted)` is zero on such a certificate for the same reason it is
+    zero on a decision whose reasons the engine all used, and the two are not the same fact. The
+    engine asks `conformance.measured(cert)` — this package's single predicate for whether a
+    certificate measured anything at all, and the no-enumerated-reason clause of
+    `Certificate.verdict`'s refusal to report PASS, "a zero value gap on an un-enumerated query is
+    not agreement; exact inference never evaluated it" — rather than reading the zero. That
+    property's other clause, that `uncertified` also blocks PASS, is deliberately *not* acted on
+    here: an unseparable reason stays in the certified set and is reported as a caveat rather than
+    turning the verdict. Lowering the artefact's own `exact_depth` to 0 would otherwise turn the
+    demonstration's breached decision clean, which is weaker evidence buying a stronger verdict.
+  - A violation needs one witness; a satisfaction needs complete evidence. A measured breach is
+    reported VIOLATED however many decisions went unmeasured beside it, while SATISFIED requires
+    that every certified decision was measured.
+    Why this matters: the lenient rule — satisfied over whatever remained — is defeated by the
+    same move the refusal above was written to stop: declare `exact_depth=0` on every decision but
+    one genuinely clean one and the duty reports satisfied again. This is not the
+    `decisions_without_an_artifact` case and that precedent must not be cited as one: a decision
+    without an artefact was never certified, while a decision whose artefact declared depth 0 was
+    certified and produced nothing — a stronger signal, not a weaker one. The asymmetry is the one
+    `docs/semantics.md` §3 already states for a trace, a satisfied verdict being universal over it
+    and a violated one existential.
 """
 
 from __future__ import annotations
@@ -47,6 +71,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from reasonsmith.certificate import Certificate, certify
+from reasonsmith.conformance import measured
 from reasonsmith.report import CERTIFICATES_KEY, PROBE_BUDGET_KEY, RequirementResult
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
@@ -250,6 +275,26 @@ class CertificateEngine:
                 ),
             )
 
+        # A certificate whose enumeration found no reason at all measured nothing: its zero
+        # deleted-reason count is the absence of a measurement, not a measurement of zero. This is
+        # the refusal `Certificate.verdict` already makes one layer down, asked for here.
+        unenumerated = sum(1 for _, cert, _ in certified if not measured(cert))
+        certified = [item for item in certified if measured(item[1])]
+        if not certified:
+            return _result(
+                req,
+                Verdict.INCONCLUSIVE,
+                None,
+                (
+                    f"Not evaluated: bounded proof enumeration found no reason at all behind any "
+                    f"of the {unenumerated} certified decision(s), so {DELETED_REASON_COUNT} is "
+                    "unmeasured for every one of them and no reason was switched off. A zero "
+                    "deleted-reason count on a decision whose reasons were never enumerated is "
+                    "the absence of a measurement, not a measurement of zero — the artefact's own "
+                    "exact_depth is the usual cause. Nothing is claimed either way."
+                ),
+            )
+
         uncertified_reasons = sum(len(cert.uncertified) for _, cert, _ in certified)
         budget = {
             "trials": sum(_probes(cert) for _, cert, _ in certified),
@@ -266,6 +311,7 @@ class CertificateEngine:
             PROBE_BUDGET_KEY: budget,
             "decisions_certified": len(certified),
             "decisions_without_an_artifact": uncertifiable,
+            "decisions_without_an_enumerated_reason": unenumerated,
             "reasons_not_certifiable": uncertified_reasons,
             CERTIFICATES_KEY: [
                 {
@@ -292,6 +338,17 @@ class CertificateEngine:
             if uncertifiable
             else ""
         )
+        # Named beside the caveat rather than folded into it: this one is not a reason the probe
+        # declined, it is a decision the enumeration never reached. Kept apart from `skipped`
+        # because the not-evaluated branch below states it in its own words and still owes the
+        # reader the decisions that exposed no artefact.
+        unmeasured = (
+            f" {unenumerated} decision(s) had no reason enumerated at all, so "
+            f"{DELETED_REASON_COUNT} is unmeasured for them and this verdict covers them not at "
+            "all."
+            if unenumerated
+            else ""
+        )
 
         breached = [(index, cert) for index, cert, held in certified if not held]
         if breached:
@@ -309,10 +366,30 @@ class CertificateEngine:
                     f"inference found {len(worst.verdicts)} reason(s) and the deletion probe "
                     f"showed the system's answer does not depend on {len(worst.deleted)} of them "
                     f"— {missing_reasons}. Attribution: {worst.attribution}"
-                    f"{caveat}{skipped} Measured against the inference artefact the system "
+                    f"{caveat}{skipped}{unmeasured} Measured against the inference artefact the "
+                    "system "
                     "exposed, not read from its decision log."
                 ),
                 details=details,
+            )
+
+        # A violation needs one witness, a satisfaction needs complete evidence: the breach above
+        # stands whatever went unmeasured beside it, and satisfied does not.
+        if unenumerated:
+            return _result(
+                req,
+                Verdict.INCONCLUSIVE,
+                None,
+                (
+                    f"Not evaluated: bounded proof enumeration found no reason at all behind "
+                    f"{unenumerated} of the {unenumerated + len(certified)} certified "
+                    f"decision(s), so {DELETED_REASON_COUNT} is unmeasured for them. No reason "
+                    f"was shown deleted on the other {len(certified)}, but satisfaction over a "
+                    "subset of the trace is not satisfaction over the trace: a violation needs "
+                    "one witness, a satisfaction needs complete evidence. The artefact's own "
+                    f"exact_depth is the usual cause.{caveat}{skipped} Nothing is claimed either "
+                    "way."
+                ),
             )
 
         return _result(
