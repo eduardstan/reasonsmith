@@ -11,59 +11,22 @@
 
 [![Reasonsmith conformance dossier: headline, key finding and reason audit with the four deleted reasons struck](docs/report-preview.png)](https://reasonsmith.dev/report.html)
 
-## The state of the art, the gap, and what this adds
+## Prove which legally-owed reasons a system deleted. And from whom.
 
-**Where compliance tooling stands.** Checking an automated decision system against a regulatory duty is, in practice, checking a document. Model cards, datasheets, audit-log schemas, the EU AI Act's own Article 12 record-keeping duty: each names artefacts the system must produce, and a checker reads what was produced and reports which required fields are filled. That is a real check and it catches real gaps — a missing reason field is a missing reason field.
+**For anyone who has to answer for an automated decision** — the team that built the model, the
+auditor checking it, the regulator reading the file. reasonsmith checks a decision system against a
+regulatory duty and states how it knows, instead of returning a tick.
 
-**The gap.** Existing compliance tools check whether a log has the required fields. None of them states what *strength of evidence* stands behind the verdict. A checker reading a decision log can speak only about the decisions in that log; a checker reasoning over a system's decision rules can speak about every input those rules admit. Both report the same word. The reader of the report cannot tell which one happened, so a claim about three logged decisions and a claim about an unbounded input space arrive indistinguishable — and the weaker of the two is the one that is easy to produce.
+A credit system declined application `APP-1042` and stated **one** reason. Its own inference used
+**five**. reasonsmith re-ran that inference, switched each reason off in turn, and named the four
+the system's answer depended on and its notice never said — and it did not read that from the
+decision log, because the log records nothing missing.
 
-**What reasonsmith adds.** Every verdict carries the method that reached it, on a strict lattice — `unattainable < observed < probed < proved` — and a result no engine could establish carries no strength at all rather than a satisfied verdict. Which rung a duty reaches is a fact about the system under test, not about which word a pack author typed: the same property is read off a trace, searched by replay, or proved by a solver depending only on what the system exposes. `RequirementResult` refuses to be constructed claiming more than it has, so the bound travels into every rendering instead of being a convention some renderer might drop. The table in the next section is that claim under test — one duty, three systems, three different rungs — rather than an illustration of it.
-
-**What this does not claim.** A rung is not a compliance grade and not a confidence score: it ranks how a conclusion was reached, never what it was reached about, so a `proved` verdict over logic unrelated to the deployed system is worth less than an `observed` verdict over a year of production decisions, and the lattice cannot see that. Nothing here determines whether a legal duty is discharged. The full statement of what each rung does and does not mean, one engine at a time, is [`docs/semantics.md`](docs/semantics.md).
-
-### The two concrete questions
-
-Given a decision, the symbolic artifact behind it, and an applicable duty, reasonsmith answers:
-
-1. **Is the evidence record complete?** Does it carry every field the duty's formal specification requires?
-2. **Did the explanation engine keep the reasons it was supposed to give?** Or did it drop some on the way out?
-
-The first is evaluated against the formal specification and reported with its strength. The second compares actual engine behavior against ground-truth exact inference: where the applicable requirement identifies reasons the statute obliges, its paired reason-deletion certificate shows which of them the engine dropped. Where the system exposes the inference artefact behind a decision, that certificate is itself an engine, so the second question is answered as a requirement verdict rather than alongside one.
-
-## Any model in: one duty, three systems, three rungs
-
-Neural, probabilistic or symbolic — a system is fed in by writing an adapter that says what it exposes, and what kind of decision it makes. These three, all checked against the *same* binding duty (ECOA / Reg B 12 CFR 1002.9(b)(2), "the statement of reasons ... must be specific"), come back at three different rungs:
-
-| system | what it exposes | rung reached |
-|---|---|---|
-| [neural risk network](src/reasonsmith/examples/neural_scorer.py), served behind an inference API | `decisions()` — an exported decision log, nothing else | `observed` |
-| [probabilistic log-odds scorer](src/reasonsmith/examples/probabilistic_scorer.py), in-process | `decisions()` + `decide(case)` replay | `probed`, carrying its search budget |
-| [symbolic underwriting rule set](src/reasonsmith/examples/symbolic_rules.py) | `decisions()` + `logic()` | `proved`, over every input the constraints admit |
-
-All three also declare `system_domains = ("consumer-credit",)`, which is what puts them inside a duty about adverse-action reasons at all: 12 CFR 1002.9 is about consumer-credit decisions, and a system that has declared no decision domain is reported *not applicable* rather than judged. Raising a rung means changing the *system*; declaring a domain it is not in would be a different error entirely.
-
-These three systems ship *inside* the package, so the commands below run against a
-`pip install reasonsmith` with no checkout and no data of your own:
+Two commands, from a bare install, no checkout and no data of your own:
 
 ```sh
-for s in neural_scorer probabilistic_scorer symbolic_rules; do python -m reasonsmith.examples.$s; done
+pip install reasonsmith
 ```
-
-The CLI reaches the same three systems against a whole pack, no Python needed — `--system-module` **imports the named module, which executes it**, and takes the attribute after the colon as the system under test (the `module:attribute` spelling pytest's `-p` and gunicorn's application path use):
-
-```sh
-reasonsmith check --system-module reasonsmith.examples.symbolic_rules:system_under_test --pack ecoa
-```
-
-All three verdicts are `satisfied`, and the rung is what separates them: how far each claim reaches — three logged decisions, 200 replayed inputs, or every input the declared constraints admit. The neural system **cannot** reach `probed` or `proved` as built, and no adapter can change that; a test pins that ceiling. Full walkthrough, with the three transcripts and why this duty was chosen over a recital: [`docs/three-systems.md`](docs/three-systems.md).
-
-A fourth system — [a language model prompted to write the notice](src/reasonsmith/examples/language_model_notices.py) — adds no rung: a model you can call sits at `probed`, where the probabilistic scorer already sits. It is worth a document of its own for the *other* axis, which duties can be answered about a system at all. Run against the whole `ecoa` pack it comes back `observed` on the notice's timing and contents, `probed` on 12 CFR 1002.9(b)(2)'s specific-reasons duty, and **`unattainable`** on the other half of that same clause, naming the signal it lacks — because reason fidelity is measured from an inference artefact and a decoder has none. reasonsmith refuses that duty rather than passing the system on the easier one beside it: [`docs/language-model.md`](docs/language-model.md).
-
-## Key Finding: form completeness does not imply reason fidelity — one system, two duties
-
-The table above holds the duty fixed and varies the system, so it answers **how far a claim reaches**. This section holds the system fixed and varies the property, so it answers **what the property actually says**. Two different questions about the same run; neither one answers the other, which is why both are on this page.
-
-12 CFR 1002.9(b)(2) asks two things of an adverse-action notice, and this repository ships them as two duties. `ecoa_reg_b_1002_9_b_2_specific_reasons` reads the notice's **form**: a statement of reasons is there, and it is none of the wordings the clause itself calls insufficient. `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` reads its **content**: are the reasons stated all the reasons the decision's own inference used? On the demonstration's decision `APP-1042`, served by a system that exposes its inference artefact, the first comes back **satisfied** and the second comes back **violated** — exact inference finds five reasons and the deletion probe shows the engine's answer depends on only one of them:
 
 ```sh
 reasonsmith check --system-module reasonsmith.demo:deployed_credit_system --pack ecoa --system-name TruncatingCreditSystem
@@ -105,7 +68,27 @@ LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
 ```
 
-Checking form alone launders that gap into a document that reads as authoritative: on this same decision the Table 7 evidence record is `COMPLETE`, and it is the reason-deletion certificate beneath it that reads `FAIL`. That record, that certificate and the four struck reasons are in [`docs/example-output.md`](docs/example-output.md); what the run above adds is the same finding as a *requirement verdict*, which no report from this tool could state until the certificate became an engine.
+**Form completeness does not imply reason fidelity.** 12 CFR 1002.9(b)(2) asks two things of an
+adverse-action notice, and this repository ships them as two duties. `..._specific_reasons` reads
+the notice's **form**: a statement of reasons is there, and it is none of the wordings the clause
+itself calls insufficient. `..._principal_reasons_complete` reads its **content**: are the reasons
+stated all the reasons the decision's own inference used? On `APP-1042` the first comes back
+**satisfied** and the second comes back **violated** — which is the finding, not an inconsistency.
+Checking form alone launders that gap into a document that reads as authoritative: on this same
+decision the Table 7 evidence record is `COMPLETE`, and it is the reason-deletion certificate
+beneath it that reads `FAIL`. That record, that certificate and the four struck reasons are in
+[`docs/example-output.md`](docs/example-output.md).
+
+The same violation ships as an example you can run without the CLI, alongside three that pass:
+
+```sh
+python -m reasonsmith.examples.truncating_credit_system
+```
+
+**Before you go further, the four things this tool cannot do** — it takes a system's word about what
+it is, three quarters of the shipped duties are presence checks, a rung is not a grade, and the
+strongest results need a system that exposes its inference: [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md).
+Every claim there cites the committed document that already states it, with the numbers.
 
 ## One run, five readers
 
@@ -218,6 +201,56 @@ affected-individual --json` is not a redaction. Redaction is a security property
 presentation one. The decision accounts the lay view quotes are the one thing not in it, for the
 opposite reason: the JSON is the findings record, and what the system logged is an input the run
 read rather than a finding it made.
+
+## Any model in: one duty, three systems, three rungs
+
+The run above held one system fixed and varied the property, so it answers **what a property actually says**. This section does the opposite — one duty, three systems — so it answers **how far a claim reaches**. Two different questions about the same tool; neither answers the other, which is why both are on this page.
+
+Neural, probabilistic or symbolic — a system is fed in by writing an adapter that says what it exposes, and what kind of decision it makes. These three, all checked against the *same* binding duty (ECOA / Reg B 12 CFR 1002.9(b)(2), "the statement of reasons ... must be specific"), come back at three different rungs:
+
+| system | what it exposes | rung reached |
+|---|---|---|
+| [neural risk network](src/reasonsmith/examples/neural_scorer.py), served behind an inference API | `decisions()` — an exported decision log, nothing else | `observed` |
+| [probabilistic log-odds scorer](src/reasonsmith/examples/probabilistic_scorer.py), in-process | `decisions()` + `decide(case)` replay | `probed`, carrying its search budget |
+| [symbolic underwriting rule set](src/reasonsmith/examples/symbolic_rules.py) | `decisions()` + `logic()` | `proved`, over every input the constraints admit |
+
+All three also declare `system_domains = ("consumer-credit",)`, which is what puts them inside a duty about adverse-action reasons at all: 12 CFR 1002.9 is about consumer-credit decisions, and a system that has declared no decision domain is reported *not applicable* rather than judged. Raising a rung means changing the *system*; declaring a domain it is not in would be a different error entirely.
+
+These three systems ship *inside* the package, so the commands below run against a
+`pip install reasonsmith` with no checkout and no data of your own:
+
+```sh
+for s in neural_scorer probabilistic_scorer symbolic_rules; do python -m reasonsmith.examples.$s; done
+```
+
+The CLI reaches the same three systems against a whole pack, no Python needed — `--system-module` **imports the named module, which executes it**, and takes the attribute after the colon as the system under test (the `module:attribute` spelling pytest's `-p` and gunicorn's application path use):
+
+```sh
+reasonsmith check --system-module reasonsmith.examples.symbolic_rules:system_under_test --pack ecoa
+```
+
+All three verdicts here are `satisfied` — the shipped example that comes back **violated** is the truncating credit system of the first section — and the rung is what separates these three: how far each claim reaches — three logged decisions, 200 replayed inputs, or every input the declared constraints admit. The neural system **cannot** reach `probed` or `proved` as built, and no adapter can change that; a test pins that ceiling. Full walkthrough, with the three transcripts and why this duty was chosen over a recital: [`docs/three-systems.md`](docs/three-systems.md).
+
+A further system — [a language model prompted to write the notice](src/reasonsmith/examples/language_model_notices.py) — adds no rung: a model you can call sits at `probed`, where the probabilistic scorer already sits. It is worth a document of its own for the *other* axis, which duties can be answered about a system at all. Run against the whole `ecoa` pack it comes back `observed` on the notice's timing and contents, `probed` on 12 CFR 1002.9(b)(2)'s specific-reasons duty, and **`unattainable`** on the other half of that same clause, naming the signal it lacks — because reason fidelity is measured from an inference artefact and a decoder has none. reasonsmith refuses that duty rather than passing the system on the easier one beside it: [`docs/language-model.md`](docs/language-model.md).
+
+## The state of the art, the gap, and what this adds
+
+**Where compliance tooling stands.** Checking an automated decision system against a regulatory duty is, in practice, checking a document. Model cards, datasheets, audit-log schemas, the EU AI Act's own Article 12 record-keeping duty: each names artefacts the system must produce, and a checker reads what was produced and reports which required fields are filled. That is a real check and it catches real gaps — a missing reason field is a missing reason field.
+
+**The gap.** Existing compliance tools check whether a log has the required fields. None of them states what *strength of evidence* stands behind the verdict. A checker reading a decision log can speak only about the decisions in that log; a checker reasoning over a system's decision rules can speak about every input those rules admit. Both report the same word. The reader of the report cannot tell which one happened, so a claim about three logged decisions and a claim about an unbounded input space arrive indistinguishable — and the weaker of the two is the one that is easy to produce.
+
+**What reasonsmith adds.** Every verdict carries the method that reached it, on a strict lattice — `unattainable < observed < probed < proved` — and a result no engine could establish carries no strength at all rather than a satisfied verdict. Which rung a duty reaches is a fact about the system under test, not about which word a pack author typed: the same property is read off a trace, searched by replay, or proved by a solver depending only on what the system exposes. `RequirementResult` refuses to be constructed claiming more than it has, so the bound travels into every rendering instead of being a convention some renderer might drop. The three-systems table above is that claim under test — one duty, three systems, three different rungs — rather than an illustration of it.
+
+**What this does not claim.** A rung is not a compliance grade and not a confidence score: it ranks how a conclusion was reached, never what it was reached about, so a `proved` verdict over logic unrelated to the deployed system is worth less than an `observed` verdict over a year of production decisions, and the lattice cannot see that. Nothing here determines whether a legal duty is discharged. The full statement of what each rung does and does not mean, one engine at a time, is [`docs/semantics.md`](docs/semantics.md).
+
+### The two concrete questions
+
+Given a decision, the symbolic artifact behind it, and an applicable duty, reasonsmith answers:
+
+1. **Is the evidence record complete?** Does it carry every field the duty's formal specification requires?
+2. **Did the explanation engine keep the reasons it was supposed to give?** Or did it drop some on the way out?
+
+The first is evaluated against the formal specification and reported with its strength. The second compares actual engine behavior against ground-truth exact inference: where the applicable requirement identifies reasons the statute obliges, its paired reason-deletion certificate shows which of them the engine dropped. Where the system exposes the inference artefact behind a decision, that certificate is itself an engine, so the second question is answered as a requirement verdict rather than alongside one.
 
 ## What a verdict is worth
 
@@ -368,7 +401,7 @@ Table 7 is transcribed verbatim into `src/reasonsmith/table7.toml`. That file is
 | `src/reasonsmith/rulelang.py` | The whitelisted mini-language rule and specification text is parsed and executed in, shared by the rule adapter and the proved engine |
 | `src/reasonsmith/adapters/` | SUT protocol adapters for JSONL decision logs, Python callables, and rule-based systems that expose their decision logic |
 | `src/reasonsmith/engines/` | Verification engines: `record` completeness check, `observed` rtamt monitor over a trace (temporal formulas and per-record state properties), `probed` perturb-and-replay search, `proved` Z3 solver, `temporal` — the same solver, over an `always(f)` reduced to a property of one decision — and `counterfactual`, the one engine over a *pair* of executions: Z3 self-composition at `proved`, paired replay at `probed`, and no trace rung |
-| `src/reasonsmith/examples/` | The four runnable example systems and `sample_decisions.jsonl`, shipped in the wheel so every documented command runs after `pip install`; `python -m reasonsmith.examples` prints the directory they installed into |
+| `src/reasonsmith/examples/` | The five runnable example systems — including the one that comes back violated — and `sample_decisions.jsonl`, shipped in the wheel so every documented command runs after `pip install`; `python -m reasonsmith.examples` prints the directory they installed into |
 | `src/reasonsmith/cli.py` | Command-line interface (`reasonsmith` / `python -m reasonsmith.cli`): `check --system /path/to/your-decisions.jsonl --pack gdpr --capabilities /path/to/capabilities.txt` and `validate-pack gdpr` |
 | `src/reasonsmith/drift.py` | Statute drift check (`python -m reasonsmith.drift`): re-fetches the official legal sources and re-verifies every pack quote, reporting `match` / `differ` / `could-not-verify` without ever editing a pack |
 | `src/reasonsmith/packs/table7.toml` | Table 7 rows restated as a formal requirement pack |
@@ -488,8 +521,8 @@ unattested.
 for: [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) is a real run against five
 `nesyarena` provenances, and `docs/nesyarena-conformance-report.md` is its regenerable evidence.
 Missing: properties worth differentiating a system on, and the fifth pack moved this the wrong way.
-Twenty-two of the twenty-eight shipped requirements are now presence checks, up from fourteen of
-nineteen, against three `logical`, two `temporal` and one `counterfactual` one — so a battery of engines mostly agrees by
+Twenty-one of the twenty-eight shipped requirements are now presence checks, up from thirteen of
+nineteen, against three `logical`, three `temporal` and one `counterfactual` one — so a battery of engines mostly agrees by
 construction, and more so than before `packs/gpai.toml` shipped. That pack's eight Article 53 and 55
 duties are document-production duties, for which presence is the correct refinement and no stronger
 property exists to write; the breadth is real and it is not depth

@@ -460,6 +460,34 @@ class TestSystemModule:
         assert rc == 1
         assert "--system-module" in capsys.readouterr().err
 
+    def test_a_shipped_example_reports_a_violation_and_help_names_it(self, capsys):
+        """The one shipped example that fails, and the `--help` line a stranger finds it by.
+
+        Its three siblings all come back satisfied, so before this example a new user following
+        the tool's own pointing never saw a violation — the memorable result. Both halves are
+        pinned here: the run reports it, and `check --help` names the command that produces it.
+        """
+        rc = cli_main(
+            [
+                "check",
+                "--system-module",
+                "reasonsmith.examples.truncating_credit_system:system_under_test",
+                "--pack",
+                "ecoa",
+            ]
+        )
+        out = capsys.readouterr().out
+        assert rc == 2, out
+        assert "[PROBED] ecoa_reg_b_1002_9_b_2_principal_reasons_complete" in out
+        assert "violated" in out
+
+        with pytest.raises(SystemExit):
+            cli_main(["check", "--help"])
+        assert (
+            "reasonsmith.examples.truncating_credit_system:system_under_test"
+            in capsys.readouterr().out
+        )
+
     def test_help_says_the_flag_imports_and_executes(self, capsys):
         with pytest.raises(SystemExit):
             cli_main(["check", "--help"])

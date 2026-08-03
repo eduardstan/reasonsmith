@@ -55,8 +55,26 @@ releases before it predate the file and are not reconstructed here.
     is the first shipped signal that is a fact about a natural person rather than about a system,
     so it sits outside the paper's four Section 6.3 categories and is pinned as the sole exception.
 
+- **`reasonsmith.examples.truncating_credit_system` — the first shipped example that comes back
+  `violated`.** Its three siblings all pass, so a reader who ran every shipped example never saw
+  the tool report a breach, and a breach is the memorable result. It runs the demonstration's own
+  `TruncatingCreditSystem` — imported from `reasonsmith.demo`, not reimplemented — against 12 CFR
+  1002.9(b)(2)'s *content* duty and names the four reasons the system's inference used and its
+  notice did not. `reasonsmith check --help` now ends in worked examples with that run first, and
+  every command there works from a bare `pip install`.
+- **[`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md)** — the four things this tool
+  cannot do, stated together with the numbers, each citing the committed document that already
+  states it: it takes a system's word about what it is, 21 of 28 shipped requirements are presence
+  checks, a rung is not a grade, and the strongest rungs need a system that exposes its inference.
+
 ### Changed
 
+- **The README leads with the deleted reasons.** The reason-deletion run, its transcript and the
+  limits document are the first screen after the badges; *The state of the art, the gap, and what
+  this adds* keeps every word and moves below the demonstration. A timed cold read of the repository
+  found the strongest result four screens down and reachable from no `--help` string. Also corrects
+  two stale counts against `validate-pack`'s own output: 21 of 28 requirements are presence checks
+  (not 22 of 28), against three `temporal` (not two).
 - `_Scope` in `engines/proved.py` takes a namespace, so one rule block can be encoded twice into
   one solver without the two copies collapsing into each other. An SSA label is `name#version`,
   unique within one execution and identical across two. The `logic()` reader and the

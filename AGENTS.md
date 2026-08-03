@@ -316,7 +316,19 @@ the one binding duty `ecoa_reg_b_1002_9_b_2_specific_reasons` and reaching `obse
 `proved` respectively. `tests/test_docs_three_systems.py` holds each transcript byte-for-byte the
 way `test_docs_example_output.py` does, asserts the three rungs are still three, and pins the
 neural system's ceiling. That ceiling is the point of the artefact: raising it means changing the
-*system*, never the adapter, and the README's first screen carries the same table.
+*system*, never the adapter, and the README carries the same table.
+
+A fifth example, `truncating_credit_system.py`, is the only one that comes back **violated**, and
+that is its whole job: the other four pass, so before it a reader who ran every shipped example
+never saw the tool report a breach. It imports `reasonsmith.demo`'s `TruncatingCreditSystem` rather
+than reimplementing it — that system's output is also the README transcript, `docs/example-output.md`
+and the committed dossier, so a second copy would be a fourth thing to keep in step. It checks the
+clause's *content* duty (`..._principal_reasons_complete`), never the *form* duty its siblings
+check, which this same system satisfies. `reasonsmith check --help`'s epilogue names it first;
+`test_a_shipped_example_reports_a_violation_and_help_names_it` in `tests/test_adoption_surface.py`
+pins both halves. The README's first screen after the badges is that run and its transcript, then
+[`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md) — the theory sections live below
+the demonstration and nothing may move them back above it.
 
 They live under `src/` and not under `docs/` for one reason: **a documented command must run for
 someone who only ran `pip install reasonsmith`**, and no wheel carries `docs/`. So a command a

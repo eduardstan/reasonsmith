@@ -68,6 +68,14 @@ What a reader must not break:
     so the packs a `check` run can load are exactly the packs `validate-pack` accepts.
     Why this matters: the front door must not have a second, looser idea of a valid pack that
     a stranger could validate a pack with and then fail to check against.
+  - `check --help` ends in worked examples, and the first one is the run that reports a
+    *violation* — the reason-deletion certificate against
+    `reasonsmith.examples.truncating_credit_system`. Every command there runs after
+    `pip install reasonsmith` with no checkout and no data of the reader's own.
+    Why this matters: a timed cold read of this project found the tool's strongest result
+    reachable from no `--help` string and from none of the shipped examples, so a stranger
+    following the tool's own pointing saw only clean runs. The example that fails is the one
+    worth showing first.
 
 """
 
@@ -238,7 +246,34 @@ def main(args: list[str] | None = None) -> int:
     )
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")
 
-    check_parser = subparsers.add_parser("check", help="Check SUT conformance against a pack")
+    check_parser = subparsers.add_parser(
+        "check",
+        help="Check SUT conformance against a pack",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "worked examples, all shipped inside the package and runnable after\n"
+            "`pip install reasonsmith`, with no checkout and no data of your own:\n"
+            "\n"
+            "  the reason-deletion certificate — a credit system whose notice states one reason\n"
+            "  while its own inference used five. This run reports VIOLATED and names the four\n"
+            "  reasons it deleted, measured by re-running that inference:\n"
+            "    reasonsmith check --system-module "
+            "reasonsmith.examples.truncating_credit_system:system_under_test --pack ecoa\n"
+            "\n"
+            "  the same three systems the README's table compares, one duty at three rungs:\n"
+            "    reasonsmith check --system-module "
+            "reasonsmith.examples.neural_scorer:system_under_test --pack ecoa\n"
+            "    reasonsmith check --system-module "
+            "reasonsmith.examples.probabilistic_scorer:system_under_test --pack ecoa\n"
+            "    reasonsmith check --system-module "
+            "reasonsmith.examples.symbolic_rules:system_under_test --pack ecoa\n"
+            "\n"
+            "  a plain decision log, which cannot rise above the observed rung:\n"
+            "    reasonsmith check --system "
+            '"$(python -m reasonsmith.examples)/sample_decisions.jsonl" --pack ecoa '
+            "--system-domain consumer-credit\n"
+        ),
+    )
     check_parser.add_argument(
         "--system",
         "-s",

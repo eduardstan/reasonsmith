@@ -46,6 +46,7 @@ DOCUMENTED_PACKAGE_FILES = (
     "reasonsmith/examples/probabilistic_scorer.py",
     "reasonsmith/examples/symbolic_rules.py",
     "reasonsmith/examples/language_model_notices.py",
+    "reasonsmith/examples/truncating_credit_system.py",
     "reasonsmith/examples/sample_decisions.jsonl",
     "reasonsmith/table7.toml",
     "reasonsmith/packs/ecoa.toml",
