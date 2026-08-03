@@ -8,41 +8,6 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
-### Fixed
-
-- **A decision whose reasons bounded proof enumeration never found buys no verdict, and never
-  `satisfied`** ([#94](https://github.com/eduardstan/reasonsmith/pull/94)). The certificate engine
-  read one number off the certificate — `len(cert.deleted)` — and never consulted the certificate's
-  own verdict. With nothing enumerated that number is zero for the absence of a measurement rather
-  than for a decision whose reasons the system's answer all depended on, and `uncertified`,
-  `caveat` and `skipped` are empty too, so the engine reported a clean unqualified probe.
-
-  Taking the demonstration's own `TruncatingCreditSystem`, which provably deletes four of five
-  legally owed reasons behind `APP-1042`, and moving only the artefact's `exact_depth` from 1 to 0
-  turned `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` from `violated` at `probed` (exit 2)
-  into `satisfied` at `probed` (exit 0) — same rules, same trace, same reasons, same notices, with
-  the budget line itself reading `reasons switched off: 0`. Weaker evidence bought the strongest
-  verdict available on the duty, and it needs no intent: a misconfiguration, a program that grew a
-  rule layer or a wrong query identifier produce the same artefact.
-
-  `certificate.Certificate.verdict` already refuses to call an un-enumerated query a `PASS`, on the
-  ground that a zero value gap on one is not agreement because exact inference never evaluated it.
-  The engine now makes that refusal, through `conformance.measured(cert)` — this package's single
-  predicate for whether a certificate measured anything at all, and the no-enumerated-reason clause
-  of that property — rather than reading the count. Such a certificate is dropped from the certified
-  set, counted in `decisions_without_an_enumerated_reason`, and named in the summary.
-
-  A violation needs one witness; a satisfaction needs complete evidence. A breach measured on a
-  decision that *was* enumerated is still reported `violated` at `probed`, naming the unmeasured
-  decisions beside it, while a run that would otherwise be `satisfied` is *not evaluated* the moment
-  one certified decision went unmeasured, naming `artifact_logs_deleted_reason_count` as unmeasured
-  for it: satisfaction over a subset of the trace is not satisfaction over the trace. Anything
-  weaker is defeated by the same move it was written to stop — declare `exact_depth=0` on every
-  decision but one genuinely clean one. A system that genuinely enumerates reasons and deletes none
-  still reaches `satisfied` at `probed`. `docs/semantics.md` §3's certificate guarantee now says
-  enumeration found *at least one* reason on *every* decision the verdict covers, and states the
-  asymmetry in the same words.
-
 ### Changed
 
 - **Breaking:** **An adapter declares which variables the system computes, and the proof engine
@@ -93,6 +58,39 @@ releases before it predate the file and are not reconstructed here.
   declaration and names the test behind every claim.
 
 ### Fixed
+
+- **A decision whose reasons bounded proof enumeration never found buys no verdict, and never
+  `satisfied`** ([#94](https://github.com/eduardstan/reasonsmith/pull/94)). The certificate engine
+  read one number off the certificate — `len(cert.deleted)` — and never consulted the certificate's
+  own verdict. With nothing enumerated that number is zero for the absence of a measurement rather
+  than for a decision whose reasons the system's answer all depended on, and `uncertified`,
+  `caveat` and `skipped` are empty too, so the engine reported a clean unqualified probe.
+
+  Taking the demonstration's own `TruncatingCreditSystem`, which provably deletes four of five
+  legally owed reasons behind `APP-1042`, and moving only the artefact's `exact_depth` from 1 to 0
+  turned `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` from `violated` at `probed` (exit 2)
+  into `satisfied` at `probed` (exit 0) — same rules, same trace, same reasons, same notices, with
+  the budget line itself reading `reasons switched off: 0`. Weaker evidence bought the strongest
+  verdict available on the duty, and it needs no intent: a misconfiguration, a program that grew a
+  rule layer or a wrong query identifier produce the same artefact.
+
+  `certificate.Certificate.verdict` already refuses to call an un-enumerated query a `PASS`, on the
+  ground that a zero value gap on one is not agreement because exact inference never evaluated it.
+  The engine now makes that refusal, through `conformance.measured(cert)` — this package's single
+  predicate for whether a certificate measured anything at all, and the no-enumerated-reason clause
+  of that property — rather than reading the count. Such a certificate is dropped from the certified
+  set, counted in `decisions_without_an_enumerated_reason`, and named in the summary.
+
+  A violation needs one witness; a satisfaction needs complete evidence. A breach measured on a
+  decision that *was* enumerated is still reported `violated` at `probed`, naming the unmeasured
+  decisions beside it, while a run that would otherwise be `satisfied` is *not evaluated* the moment
+  one certified decision went unmeasured, naming `artifact_logs_deleted_reason_count` as unmeasured
+  for it: satisfaction over a subset of the trace is not satisfaction over the trace. Anything
+  weaker is defeated by the same move it was written to stop — declare `exact_depth=0` on every
+  decision but one genuinely clean one. A system that genuinely enumerates reasons and deletes none
+  still reaches `satisfied` at `probed`. `docs/semantics.md` §3's certificate guarantee now says
+  enumeration found *at least one* reason on *every* decision the verdict covers, and states the
+  asymmetry in the same words.
 
 - **A declaration of what a system computes can no longer widen what it can be proved about**
   ([#95](https://github.com/eduardstan/reasonsmith/pull/95)). `_check_declared_directions` ran
