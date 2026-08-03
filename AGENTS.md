@@ -107,7 +107,12 @@ exists* rather than *no pair disagrees*, and the proof rung refuses both before 
 negation: a declaration that pins the protected variable (the replay rung already refused that
 system, so the ladder was publishing the engine that asked less), and rules that assign the
 protected name while `computes` omits it — checked on the encoding (`is_definitely_assigned`,
-`scope.inputs`), because that route is invisible to the declaration. `TREATMENT_LIMIT` rides on every
+`scope.inputs`), because that route is invisible to the declaration. A third refusal is about the
+**sort**: a protected variable the declaration does not type as an integer is *not evaluated* at both
+rungs, naming the variable and its declared sort, because a prohibited basis is a category and over a
+dense sort the replay search samples fractions between the categories (0, 0.125, 0.25, 0.5 over a band
+running to 8) while the proof rung's witness may be a pair the system can never be given. It lives in
+`_direction_refusal`, so both rungs inherit it. `TREATMENT_LIMIT` rides on every
 result because the duty cannot see a proxy or a disparate impact, and neither rung ever takes the
 protected value from the trace — a decision record holding a fact about a natural person is a
 collection cost this repository does not create, which is also why no shipped example system

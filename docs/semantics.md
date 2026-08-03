@@ -589,6 +589,22 @@ reach the trigger is unaffected
 placed after the unmeasured-subset one above, so a run that is both incomplete and untriggered is
 reported as incomplete.
 
+**A trace where only *some* decisions triggered the duty is satisfied about those, and the summary
+says which.** This is the mixed trace, and it is the shape a real creditor's log has: one notice
+states its reasons and another lawfully takes the 12 CFR 1002.9(a)(2)(ii) disclosure branch. The
+verdict is `satisfied` and the duty is right to be silent about the second decision — (b)(2)
+governs the statement of reasons a creditor gave, and there was none. What was not right was the
+sentence: "Probed over 2 certified decision(s): … so no reason was shown deleted" describes a
+measurement that found two decisions clean, on a run where the deletion probe measured four reasons
+deleted behind one of them and the duty set it aside. So the satisfied summary now names how many
+certified decisions the trigger reached, how many it did not, and how many reasons were measured
+deleted behind those, and says in as many words that this verdict speaks to none of them. The
+counts also travel in `details` as `decisions_whose_trigger_never_fired` and
+`deleted_reasons_behind_an_untriggered_decision`
+(`test_a_certified_decision_the_trigger_never_reached_is_named_in_the_satisfied_summary`). The
+verdict itself is unchanged — what 12 CFR 1002.9(b)(2) reaches is a question about the duty and not
+about the measurement, and no engine answers it by rewording a summary.
+
 *The domain, exactly.* The decisions the system's trace holds **and** for which `artifact()`
 returned an artefact rather than None. The enumeration is exact on *one* ground program and one
 base interpretation — `certificate.LIMITS` says so in its own words — so this rung is `probed` and
@@ -791,6 +807,19 @@ inferred.
   and seen to differ again, so *some* pair the system admits breaches the duty — a finding about the
   system as built, not about any decision it has taken
   (`test_the_witness_pair_is_replayed_on_both_halves`).
+- **A protected variable the declaration does not type as an integer is *not evaluated*.** A
+  prohibited basis is a category, and a category declared over a sort that is not the integers
+  admits the values between the categories too. Over `real`, the replay rung's enumeration of a
+  band running `0 <= basis <= 8` returned 0, 0.125, 0.25 and 0.5 — four points in the bottom
+  sixteenth of it, none of them a category — and reported `satisfied` on a system that
+  discriminates at category 2; the proof rung's witness pair, on the same declaration, may be a
+  pair the system can never be given. Both rungs refuse it before they encode or enumerate
+  anything, naming the variable and the sort it was declared as
+  (`test_a_protected_variable_not_typed_as_an_integer_is_not_evaluated`), and the same system typed
+  `int` reaches its verdict unchanged
+  (`test_the_same_system_typed_int_still_reaches_its_earned_violation`). This is an authoring
+  mistake refused rather than sampled, and it costs a duty answerable only where the variable table
+  says what the codes are.
 - **It reaches one variable and does not compose.** Moving two protected variables together is a
   different property; the atom is the whole of a spec or no part of one, so a conjunction, a
   negation or a temporal quantification over it is refused at load time rather than answered
@@ -808,7 +837,14 @@ inferred.
 > (`test_paired_replay_reaches_probed_when_the_proof_rung_cannot`,
 > `test_paired_replay_takes_no_protected_value_from_the_trace`).
 
-*What it does not tell you.* Everything above, and the bound of a search: the claim covers the pairs
+*What it does not tell you.* Everything above, and the bound of a search — including a bound on the
+protected values themselves. `DEFAULT_MAX_VALUES` stops the enumeration at four, so over a band
+admitting nine the search moves the variable across four of them, and the summary says which of the
+two it did: every value the constraints admit, or that many of them with the declaration admitting
+more. It used to name the values it searched as "the values the declared constraints admit", which
+is the one sentence a reader would check a declared band against
+(`test_the_replay_summary_does_not_call_the_values_it_searched_the_admitted_set`,
+`test_a_replay_that_did_exhaust_the_admitted_values_says_so`). The claim covers the pairs
 the budget names and no others, so a system whose logged decisions all sit far from the threshold
 the protected variable would move is reported `satisfied` here while the solver rung reports the
 same system `violated` (`test_paired_replay_misses_what_the_trace_it_was_given_cannot_reach`). The

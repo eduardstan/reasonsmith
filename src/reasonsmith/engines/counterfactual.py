@@ -184,8 +184,8 @@ def _direction_refusal(
 ) -> RequirementResult | None:
     """Refuse what the declared directions say this system cannot be asked, or None to proceed.
 
-    Four questions, and the order matters because the first two are about the *system* and the
-    second two about what it handed over.
+    Five questions, and the order matters because the first two are about the *system* and the
+    rest about what it handed over.
 
     - **No directions declared at all.** Reported not evaluated. This is the case the whole duty
       turns on: without `computes`, a system that accepts the protected variable and one that has
@@ -200,6 +200,12 @@ def _direction_refusal(
       is held equal across the two copies by the equality the encoding asserts, so the negation is
       unsatisfiable for a reason that has nothing to do with the protected variable. That is the
       vacuous proof this package refuses everywhere else, reached by a different road.
+    - **The protected variable is not integer-typed.** Reported not evaluated, naming the variable
+      and the sort it was declared as. A prohibited basis is a category, and a category declared
+      over a dense sort cannot be answered honestly at either rung: the replay search enumerates
+      fractions between the categories and reports a clean verdict having never reached one, and a
+      witness the proof rung finds may be a pair the system can never be given. Refusing an
+      authoring mistake is the four-outcome discipline; sampling it and answering is not.
     """
     if computes is None:
         return _result(
@@ -259,6 +265,30 @@ def _direction_refusal(
                 "of anything the system decides."
             ),
             details={"engine": "counterfactual", "reason": "outcome_not_computed"},
+        )
+    # Read the same way `engines.proved._sort_for` reads it, default included, so the sort refused
+    # here is the sort the encoding would have used.
+    declared_sort = str(variables.get(protected, "real")).lower()
+    if declared_sort not in ("int", "integer"):
+        return _result(
+            req,
+            Verdict.INCONCLUSIVE,
+            None,
+            (
+                f"Not evaluated: the system declares {protected!r} as {declared_sort!r}, and this "
+                "duty answers only an integer-typed protected variable. A prohibited basis is a "
+                "category rather than a magnitude, and over a sort that is not the integers the "
+                "values between the categories are admissible too: the replay search would move "
+                "the variable across fractions the system can never be given and report a clean "
+                "verdict having reached no second category, and a pair the solver names may be "
+                "one that does not exist. Declaring the sort the values actually are is what "
+                "makes the question answerable."
+            ),
+            details={
+                "engine": "counterfactual",
+                "reason": "protected_variable_not_integer_typed",
+                "declared_sort": declared_sort,
+            },
         )
     return None
 
@@ -790,13 +820,18 @@ class PairedReplayEngine:
             return refusal
 
         try:
-            values = _admissible_values(variables, constraints, protected, max_values)
+            # One more than the bound, so the summary can say whether the search saw the whole
+            # admitted set or stopped inside it. Reporting the searched values as the admitted set
+            # was a false claim about the measurement.
+            values = _admissible_values(variables, constraints, protected, max_values + 1)
         except Exception as exc:  # noqa: BLE001 — reported, never swallowed
             return not_evaluated(
                 f"Not evaluated: the admissible values of {protected!r} could not be enumerated "
                 f"from the declared constraints — {type(exc).__name__}: {exc}.",
                 "values_not_enumerable",
             )
+        bounded = len(values) > max_values
+        values = values[:max_values]
         if len(values) < 2:
             return not_evaluated(
                 f"Not evaluated: the declared constraints admit "
@@ -950,13 +985,22 @@ class PairedReplayEngine:
             if errored
             else ""
         )
+        # What was searched, and out of what: the values below are what this search moved the
+        # variable across, which is the whole admitted set only when the enumeration ran out
+        # before the bound did.
+        searched = (
+            f"{len(values)} of the values the declared constraints admit — the search bound "
+            "stopped the enumeration there and the declaration admits more"
+            if bounded
+            else f"every one of the {len(values)} values the declared constraints admit"
+        )
         return _result(
             req,
             Verdict.SATISFIED,
             Strength.PROBED,
             (
                 f"Probed over {replayed} pair(s): no recorded decision changed its {outcome!r} "
-                f"when {protected!r} was moved between the values the declared constraints admit "
+                f"when {protected!r} was moved across {searched} "
                 f"({', '.join(repr(value) for value in values)}) and nothing else was "
                 f"changed.{skipped} This is a bounded search over the decisions the system logged "
                 "and the values the budget below names, not a proof: the property is unchecked for "

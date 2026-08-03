@@ -225,7 +225,9 @@ class CertificateEngine:
 
         antecedent_node = implication_antecedent(node)
         antecedent_text = ast.unparse(antecedent_node) if antecedent_node is not None else ""
-        triggered = 0
+        # The decisions the duty's trigger reached, by index rather than as a count: the satisfied
+        # summary owes a reader what it measured behind the *other* ones and set aside.
+        triggered_at: set[int] = set()
 
         certified: list[tuple[int, Certificate, bool]] = []
         uncertifiable = 0
@@ -275,7 +277,7 @@ class CertificateEngine:
                 env = _env(record, cert)
                 held = bool(eval_expression(node, env))
                 if antecedent_node is not None and eval_expression(antecedent_node, env):
-                    triggered += 1
+                    triggered_at.add(index)
             except Exception as exc:  # noqa: BLE001 — reported, never swallowed
                 return _result(
                     req,
@@ -418,7 +420,7 @@ class CertificateEngine:
                 ),
             )
 
-        if antecedent_node is not None and not triggered:
+        if antecedent_node is not None and not triggered_at:
             return not_evaluated_for_unreachable_trigger(
                 req,
                 antecedent_text,
@@ -426,14 +428,50 @@ class CertificateEngine:
                 details,
             )
 
+        # A certified decision whose antecedent was false was measured and then set aside: the
+        # implication holds on it vacuously, so it never turns the verdict, and a summary that
+        # counted it among the decisions measured clean would be false about the measurement. Both
+        # earlier clauses name evidence the probe could not get; this one names evidence it got and
+        # the duty does not ask about.
+        untriggered = (
+            [(index, cert) for index, cert, _ in certified if index not in triggered_at]
+            if antecedent_node is not None
+            else []
+        )
+        set_aside = sum(len(cert.deleted) for _, cert in untriggered)
+        if untriggered:
+            details["decisions_whose_trigger_never_fired"] = [
+                index for index, _ in untriggered
+            ]
+            details["deleted_reasons_behind_an_untriggered_decision"] = set_aside
+        untouched = (
+            f" On {len(untriggered)} of them the trigger {antecedent_text} was false — they stated "
+            "no reasons at all — so the duty asks nothing of them and this verdict says nothing "
+            "about whether their reasons were all the reasons"
+            + (
+                f", including the {set_aside} reason(s) the deletion probe measured deleted behind "
+                "them and set aside here."
+                if set_aside
+                else "."
+            )
+            if untriggered
+            else ""
+        )
         return _result(
             req,
             Verdict.SATISFIED,
             Strength.PROBED,
             (
-                f"Probed over {len(certified)} certified decision(s): every reason exact bounded "
-                "proof enumeration found is one the system's own answer depends on, so no reason "
-                f"was shown deleted.{caveat}{skipped} Holds on the decisions whose artefact was "
+                f"Probed over {len(certified)} certified decision(s), "
+                f"{len(triggered_at)} of which the duty's trigger reached"
+                if untriggered
+                else f"Probed over {len(certified)} certified decision(s)"
+            )
+            + (
+                ": every reason exact bounded proof enumeration found is one the system's own "
+                "answer depends on, so no reason was shown deleted"
+                + (" on those." if untriggered else ".")
+                + f"{untouched}{caveat}{skipped} Holds on the decisions whose artefact was "
                 "exposed and within the probes the budget below names; nothing here extends the "
                 "claim to a decision the system did not open up."
             ),

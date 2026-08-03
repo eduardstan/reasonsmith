@@ -416,6 +416,66 @@ def test_a_certified_trace_that_does_reach_the_antecedent_still_reaches_probed()
 
     assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.PROBED)
     assert VACUOUS_TRIGGER_KEY not in result.details
+    # The control's own summary: with every certified decision triggered there is nothing to
+    # disclaim, and the sentence is the one it always was.
+    assert "the duty's trigger reached" not in result.evidence_summary
+    assert "certified decision(s): every reason" in result.evidence_summary
+
+
+class _DisclosureBranch(demo.TruncatingCreditSystem):
+    """A creditor lawfully on the 12 CFR 1002.9(a)(2)(ii) branch for the deleting decision.
+
+    The mixed trace, which is the shape a real creditor's log has: `APP-1042` states no reasons and
+    offers the right to request them, `APP-1043` states its reason. The all-or-nothing trace the
+    test above covers is the easy case.
+    """
+
+    BLINDED = "APP-1042"
+
+    def decisions(self):
+        for record in super().decisions():
+            if record.get("decision_id") == self.BLINDED:
+                yield {
+                    **record,
+                    REASONS: "",
+                    "artifact_logs_right_to_reasons_disclosure": (
+                        "you may request a statement of the specific reasons within 60 days"
+                    ),
+                }
+            else:
+                yield record
+
+
+def test_a_certified_decision_the_trigger_never_reached_is_named_in_the_satisfied_summary():
+    """The measurement the old summary described was not the measurement it made.
+
+    On this trace the deletion probe measured four reasons deleted behind `APP-1042` and the duty
+    set that decision aside, its antecedent being false. The verdict is unchanged — the duty asks
+    nothing of a notice that states no reasons — but "Probed over 2 certified decision(s): … no
+    reason was shown deleted" said the probe found two decisions clean when it found one clean and
+    one dirty. There is a clause for a decision the probe could not certify and a clause for a
+    reason it could not separate; this is the clause for a decision it measured and set aside.
+    """
+    system = _DisclosureBranch()
+    result = CertificateEngine.evaluate(_adequacy(), system, list(system.decisions()))
+
+    assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.PROBED)
+    assert result.details["decisions_whose_trigger_never_fired"] == [1]
+    assert result.details["deleted_reasons_behind_an_untriggered_decision"] == 4
+
+    summary = result.evidence_summary
+    assert "2 certified decision(s), 1 of which the duty's trigger reached" in summary
+    assert f"On 1 of them the trigger present({REASONS}) was false" in summary
+    assert "says nothing about whether their reasons were all the reasons" in summary
+    assert "4 reason(s) the deletion probe measured deleted" in summary
+
+
+def test_the_disclosure_branch_does_not_suppress_the_breach_it_still_measures():
+    """The earned violation survives: the same system stating its truncated reasons is violated."""
+    system = demo.TruncatingCreditSystem()
+    result = CertificateEngine.evaluate(_adequacy(), system, list(system.decisions()))
+
+    assert (result.verdict, result.strength) == (Verdict.VIOLATED, Strength.PROBED)
 
 
 # --------------------------------------------------------------------------------------------

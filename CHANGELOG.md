@@ -69,6 +69,38 @@ releases before it predate the file and are not reconstructed here.
 
 ### Fixed
 
+- **Two summaries described a measurement the engine did not make.** Neither is a verdict change;
+  both were sentences a reader would have checked a system against.
+
+  - **The certificate rung's satisfied summary counted decisions it had set aside.** A creditor
+    lawfully on the 12 CFR 1002.9(a)(2)(ii) disclosure branch for one decision and stating its
+    reason on the other read "Probed over 2 certified decision(s): … so no reason was shown
+    deleted" — on a run where the deletion probe measured **four** reasons deleted behind the
+    first and the duty set that decision aside, its antecedent being false. The engine had a clause
+    for a decision it could not certify and a clause for a reason it could not separate, and none
+    for a decision it measured and the duty does not ask about. The summary now names how many
+    certified decisions the trigger reached, how many it did not, and how many reasons were
+    measured deleted behind those, and says that this verdict speaks to none of them; the counts
+    travel in `details` as `decisions_whose_trigger_never_fired` and
+    `deleted_reasons_behind_an_untriggered_decision`. The verdict is unchanged: what the clause
+    reaches is a question about the duty, not one an engine answers by rewording a summary.
+  - **The paired-replay summary presented the values it sampled as the values the constraints
+    admit.** `DEFAULT_MAX_VALUES` bounds the enumeration at four, so over a declared
+    `0 <= applicant_prohibited_basis <= 8` the summary named four of nine as the admitted set. It
+    now says what was searched and out of what — every admitted value, or that many of them with
+    the declaration admitting more.
+
+- **Breaking (verdicts move): a protected variable the declaration does not type as an integer is
+  reported *not evaluated*.** One word in the variable table cleared a system that discriminates at
+  category 2: typed `real`, the replay rung enumerated 0, 0.125, 0.25 and 0.5 — four points in the
+  bottom sixteenth of a band running to 8, none of them a category — and reported `satisfied`. A
+  prohibited basis is a category, not a magnitude, and over a dense sort the values between the
+  categories are admissible too, so the proof rung's witness pair may be one the system can never
+  be given. Both rungs of `engines/counterfactual.py` now refuse before they encode or enumerate
+  anything, naming the variable and the sort it was declared as. The same system typed `int`
+  reaches its verdict unchanged. This is the four-outcome discipline applied to an authoring
+  mistake the tool accepted in silence.
+
 - **Breaking (verdicts move): a duty whose trigger never fired is reported *not evaluated*, at
   every rung.** A creditor whose rules assign `artifact_logs_reason_explanation = ""` on every path
   was reported, in one report, *violated* on 12 CFR 1002.9(a)(2) for giving neither reasons nor a

@@ -464,6 +464,89 @@ def test_paired_replay_takes_no_protected_value_from_the_trace():
     assert 99 not in used
 
 
+# --- the sort of the protected variable ---------------------------------------------------------
+
+#: The band the shipped signal's own values live in: a prohibited basis is a category code, and the
+#: report that found this declared it over the whole of one.
+WIDE_CONSTRAINTS = [
+    "credit_score >= 300",
+    "credit_score <= 850",
+    f"{PROTECTED} >= 0",
+    f"{PROTECTED} <= 8",
+]
+
+#: The rule that made the sort visible: it discriminates at category 2, which a search that walks
+#: the reals from 0 upwards never reaches inside its bound.
+DISCRIMINATES_AT_TWO = [
+    f"approved = credit_score >= 640 and {PROTECTED} < 2",
+    (
+        "if approved:\n"
+        f'    {OUTCOME} = "credit granted on this application"\n'
+        "else:\n"
+        f'    {OUTCOME} = "adverse action taken on this application"\n'
+    ),
+]
+
+
+def _typed(sort: str, rules=DISCRIMINATES_AT_TWO):
+    return _aware_system(
+        rules=rules,
+        variables={**AWARE_VARIABLES, PROTECTED: sort},
+        constraints=WIDE_CONSTRAINTS,
+    )
+
+
+@pytest.mark.parametrize("sort", ["real", "bool", "str"])
+@pytest.mark.parametrize("engine", [CounterfactualProofEngine, PairedReplayEngine])
+def test_a_protected_variable_not_typed_as_an_integer_is_not_evaluated(engine, sort):
+    """One word in the variable table used to clear a system that discriminates at category 2.
+
+    Declared `real`, the admissible values the replay rung enumerated were 0, 0.125, 0.25 and 0.5 —
+    four points in the bottom sixteenth of a band running to 8, none of them a category and none of
+    them the one the rules discriminate at — and the run came back satisfied. A prohibited basis is
+    a category, so a sort that is not the integers is an authoring mistake this duty now refuses
+    rather than samples.
+    """
+    result = engine.evaluate(_requirement(), _typed(sort))
+    assert (result.verdict, result.strength) == (Verdict.INCONCLUSIVE, None)
+    assert PROTECTED in result.evidence_summary
+    assert repr(sort) in result.evidence_summary
+    assert result.details["declared_sort"] == sort
+
+
+@pytest.mark.parametrize(
+    ("engine", "strength"),
+    [(CounterfactualProofEngine, Strength.PROVED), (PairedReplayEngine, Strength.PROBED)],
+)
+def test_the_same_system_typed_int_still_reaches_its_earned_violation(engine, strength):
+    """The control the refusal must not silence: the same rules over the same band, typed `int`."""
+    result = engine.evaluate(_requirement(), _typed("int"))
+    assert (result.verdict, result.strength) == (Verdict.VIOLATED, strength)
+
+
+def test_the_replay_summary_does_not_call_the_values_it_searched_the_admitted_set():
+    """`DEFAULT_MAX_VALUES` bounds the enumeration, so the values searched are a subset.
+
+    The summary used to name them as "the values the declared constraints admit", which is what a
+    reader would check a declared band against. Over 0..8 it searched four of nine.
+    """
+    result = PairedReplayEngine.evaluate(
+        _requirement(), _typed("int", rules=list(AWARE_RULES))
+    )
+    assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.PROBED)
+    summary = result.evidence_summary
+    assert "moved between the values the declared constraints admit" not in summary
+    assert "4 of the values the declared constraints admit" in summary
+    assert "the declaration admits more" in summary
+
+
+def test_a_replay_that_did_exhaust_the_admitted_values_says_so():
+    """The control: a band the enumeration ran out of before the bound did."""
+    result = PairedReplayEngine.evaluate(_requirement(), _aware_system())
+    assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.PROBED)
+    assert "every one of the 2 values the declared constraints admit" in result.evidence_summary
+
+
 # --- the shipped pack ---------------------------------------------------------------------------
 
 
