@@ -36,6 +36,7 @@ inputs, not proved; and here is the duty it could not answer at all.
 | `1002.9(a)(2)` written statement | `observed` | same |
 | `1002.9(b)(2)` specific reasons | `probed`, carrying its budget | a state property, and the model is callable, so the replay search runs |
 | `1002.9(b)(2)` principal reasons complete | `unattainable` | needs an inference artefact the system has none of |
+| `1002.4(a)` no disparate treatment | *not evaluated* | a counterfactual property, and the model declares no input space, so there is no admissible value of the protected variable to replay a twin decision against — and no engine reads one out of the log ([`semantics.md`](semantics.md) §3, *counterfactual*) |
 
 ## The system
 

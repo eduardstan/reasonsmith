@@ -9,8 +9,9 @@ Each objective gives a **measurable outcome** — a check that fails today and w
 objective is met — and what it **depends on**. Where the honest answer is that an objective is
 blocked, or deliberately not started, that is written down rather than left as an implied "soon".
 
-Current state, for scale: **5 packs, 27 requirements, 6 engines** (`record`, `observed`, `probed`,
-`certificate` — also at `probed` — `proved`, and the temporal proof engine, also at `proved`).
+Current state, for scale: **5 packs, 28 requirements, 7 engines** (`record`, `observed`, `probed`,
+`certificate` — also at `probed` — `proved`, the temporal proof engine, also at `proved`, and the
+counterfactual engine, which spans both `proved` and `probed`).
 `reasonsmith validate-pack ecoa eu_ai_act gdpr gpai table7` prints what each contains.
 
 ---
@@ -85,8 +86,10 @@ variable, and that it cannot see a disparate impact.
 - **No shipped example system exercises the `satisfied` case.** None of the three systems of
   `docs/three-systems.md` declares a protected variable, and none should: a decision record carrying
   a fact about a natural person is a collection cost this repository does not create. So the ECOA
-  run reports the duty `unattainable` for every shipped system, and the provable-non-discrimination
-  case lives in `tests/test_counterfactual_invariance.py` rather than in a transcript.
+  run reports the duty `unattainable` for all three — and *not evaluated* for the language model of
+  `docs/language-model.md`, which declares no input space to vary the variable over — and the
+  provable-non-discrimination case lives in `tests/test_counterfactual_invariance.py` rather than
+  in a transcript.
 
 ## 4. Breadth: more regulations than five
 

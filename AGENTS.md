@@ -349,7 +349,8 @@ byte-for-byte. Anything that moves `render_text`'s wording, the nesyarena versio
 own constants means regenerating with `python docs/build_nesyarena_report.py`. Like
 `docs/report.html`, it names its build command and deliberately carries no commit hash; reproducibility
 is owned by the byte-for-byte builder test, so do not add a hash back. Its adapter declares only
-signals a provenance genuinely emits, so eleven pack signals are deliberately undeclared, and
+signals a provenance genuinely emits, so a set of pack signals is deliberately undeclared — the
+census and the count live in `docs/findings-nesyarena.md`, which pins them — and
 neither a regulatory class nor a decision domain is declared — these systems decide graph
 reachability and Sudoku validity, so there is nothing to declare; the resulting unattainable and
 not-applicable verdicts are the finding, not a gap to close, and naming a domain to make the ECOA

@@ -132,7 +132,7 @@ def gallery_report() -> ConformanceReport:
         than reporting that this run read none.
 
     Scope and domain are declared, because an undeclared system is reported `not_applicable`
-    on a domain-limited duty and a page of four not-applicable rows demonstrates nothing about
+    on a domain-limited duty and a page of five not-applicable rows demonstrates nothing about
     audiences. `system_under_test()` already declares `consumer-credit`; the class declaration
     is this caller's, exactly as it is in `docs/build_example.py`.
     """

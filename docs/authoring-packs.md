@@ -66,7 +66,7 @@ codebase acts on when it does not.
 | `source_document`, `article_clause` | The statute and clause the duty comes from. Together they are the citation a finding is reported against. |
 | `verbatim_text` | The exact words of the clause, quoted for the report. |
 | `stakeholder` | Whose interest the duty protects. |
-| `formalism` | Which **fragment** of the property language `spec` is written in: `record` (a conjunction of `present(signal)` atoms), `temporal` (anything using a temporal operator), `logical` (any other property of one decision record). It says what the property *is*; it does not decide which engine answers it. The loader parses `spec`, works out the fragment and refuses a mismatch. |
+| `formalism` | Which **fragment** of the property language `spec` is written in: `record` (a conjunction of `present(signal)` atoms), `temporal` (anything using a temporal operator), `logical` (any other property of one decision record), `counterfactual` (the one relational atom — see "There is a fourth fragment" below). It says what the property *is*; it does not decide which engine answers it. The loader parses `spec`, works out the fragment and refuses a mismatch. |
 | `spec` | The property, as a formula. Never prose — see "One property language" below. |
 | `rationale` | What the duty asks, in English, for a human reading the pack. Nothing derives a verdict from its wording. |
 | `requires` | The signal names the system must be capable of emitting for the requirement to be checkable at all. A system missing one is reported unattainable on the missing signal, without being run. It is a conjunction — see "An either/or clause" below before listing a branch of one here. |
