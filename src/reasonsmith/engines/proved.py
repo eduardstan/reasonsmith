@@ -36,15 +36,19 @@ What a reader must not break:
     makes the claim is what stops `proved` from being read as more than it is.
   - A property reading a name the declared rules never assign MUST be refused where reading it is
     a claim about what the system computed — `present`, `contains` and a comparison of magnitudes
-    alike (`_present_to_z3`, `_contains_to_z3`, `_check_magnitudes_are_computed`).
+    alike (`_present_to_z3`, `_contains_to_z3`, and whichever of `_check_declared_directions` and
+    `_check_magnitudes_are_computed` the logic's own declaration selects).
     Why this matters: such a name is a free constant of this encoding. `deviation <= margin` over
     two of them is arithmetic over numbers nobody computed, and the counterexample verification
-    cannot catch it because the reference interpreter is handed the same free inputs. The third
-    guard is narrow — it needs the property to read no assigned name at all, and to read some free
-    name as a magnitude — and both conditions are load-bearing: `income >= 30000 implies approved`
-    must stay provable, and a property over free *Booleans* is a reading duties genuinely take
-    (`gdpr_art22_1_no_prohibited_decision_for_any_input`). It is a heuristic, and
-    `_check_magnitudes_are_computed` says why it is the available one.
+    cannot catch it because the reference interpreter is handed the same free inputs.
+  - Where `sut.logic()` declares `computes`, that declaration and NOT the sort heuristic decides
+    which names the system produces, and a name in neither `computes` nor `variables` MUST be
+    refused outright.
+    Why this matters: a name the system has no notion of is one `_Scope.read` invents a constant
+    for, and every verdict downstream is then about the invention. The heuristic below cannot see
+    that at all; it can only ask what sort a name would get, which is the wrong question. An
+    adapter declaring nothing keeps the heuristic, so the answer for an undeclared adapter is the
+    one it has today and never a proof it would not have been granted.
   - A counterexample model produced by Z3 MUST be verified to reproduce on the system under test
     before reporting `VIOLATED` at strength `PROVED`, and the evidence summary must say what that
     verification actually ran against.
@@ -344,12 +348,14 @@ def _check_magnitudes_are_computed(node: ast.AST, scope: _Scope) -> None:
     implies approved == True` reads three free magnitudes and one computed `approved`, and it is a
     claim about what the system decides. Proving it is the engine's whole purpose.
 
-    **It is a heuristic, and cuts along the wrong joint on purpose.** The distinction that matters
-    is an *input to the decision situation* versus an *output the system computes*, and `logic()`
-    declares variable sorts but not directions, so nothing here can ask it. The principled closure
-    is a protocol change — adapters declaring that direction per variable — and it is deliberately
-    not made here: it widens the adapter contract every existing adapter implements, which is a
-    decision above this guard. `docs/semantics.md` §3.5 states the same, for the reader.
+    **It is a heuristic, and cuts along the wrong joint.** The distinction that matters is an
+    *input to the decision situation* versus an *output the system computes*, and it answers that
+    with a name's sort and reachability, which are proxies for neither. It is no longer the only
+    thing available: `logic()` may declare `computes`, and where it does the question is asked
+    directly by `_check_declared_directions` and this guard does not run. It stays for the adapter
+    that declares nothing, because the alternative — reading an undeclared adapter as one whose
+    variables are all inputs — hands back exactly the `violated`-at-`proved` verdict it stops.
+    `docs/semantics.md` §3.5 states both halves, for the reader.
     """
     names = signal_names(node)
     if any(scope.is_definitely_assigned(name) for name in names):
@@ -366,6 +372,68 @@ def _check_magnitudes_are_computed(node: ast.AST, scope: _Scope) -> None:
         "the system computes. Proving a property of the solver's free constants would report "
         "arithmetic over numbers nobody computed as a fact about the system"
     )
+
+
+def _check_declared_directions(node: ast.AST, scope: _Scope, computes: set[str]) -> None:
+    """Refuse a property the declared directions say this encoding cannot be about.
+
+    Runs in place of `_check_magnitudes_are_computed` whenever `sut.logic()` declares `computes`,
+    and asks the question that guard could only approximate. The declaration splits every name into
+    three, the two lists together supplying the outer boundary and `computes` the inner one:
+
+    - **in `computes`** — an output the system produces. `RulesAdapter` keeps `computes` a subset
+      of `variables`, but nothing in the protocol requires an adapter to repeat a computed name in
+      the type table, so a name declared computed and nothing else is an output here and not an
+      unknown: it is a name the system said it produces, whatever sort `_declare` gives it.
+    - **in `variables`, not in `computes`** — an input the decision situation supplies. The
+      solver's free constant is exactly the right encoding of one, and quantifying over it is what
+      a proof *is*. `income >= 30000 implies approved` and
+      `gdpr_art22_1_no_prohibited_decision_for_any_input` both live here.
+    - **in neither** — a name the system has no notion of.
+
+    Two refusals follow, and neither is a judgement about the property:
+
+    - **A name the system has no notion of.** `_Scope.read` declares a constant for any name it
+      meets, so without this the encoding invents the very value the verdict is then about. This is
+      the defect `_check_magnitudes_are_computed` was written against, caught at its own joint:
+      a system deciding on a score alone has no `artifact_logs_decision_margin`, and it does not
+      matter what sort one would be given.
+    - **A declared output the exposed rules do not settle on every path.** The system says it
+      computes this name and the logic it handed over does not show how, so the constant standing
+      in for it is free after all. `present()` and `contains()` refuse the same thing for their own
+      atoms and with their own wording, which is why this runs after the property is encoded rather
+      than before: their message is the more specific one and should win.
+
+    Both are `UnsupportedConstructError`, so the duty falls to the strongest engine that *can*
+    discharge it (`report._engine_ladder`) rather than losing its verdict.
+
+    What this does not do is second-guess the declaration. An adapter that calls an output an input
+    is claiming its situation supplies a value it in fact produces, and this engine will duly prove
+    things about that claim — the same trust `system_domains` is given, and stated in
+    `docs/semantics.md` §3.5.
+    """
+    names = signal_names(node)
+    unknown = sorted(
+        name for name in names if name not in scope.var_types and name not in computes
+    )
+    if unknown:
+        raise UnsupportedConstructError(
+            "the property reads "
+            + ", ".join(repr(name) for name in unknown)
+            + ", which the declared logic gives the system no notion of — neither an input it "
+            "accepts nor a value it computes. Proving anything about it would be a fact about a "
+            "constant this encoding invented"
+        )
+    unsettled = sorted(
+        name for name in names if name in computes and not scope.is_definitely_assigned(name)
+    )
+    if unsettled:
+        raise UnsupportedConstructError(
+            "the system declares it computes "
+            + ", ".join(repr(name) for name in unsettled)
+            + ", but the declared rules do not assign it on every path, so the exposed logic does "
+            "not establish the value the property is about"
+        )
 
 
 def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
@@ -675,11 +743,12 @@ def _verify_counterexample(
                     False,
                     "System under test provides no decide() method to verify counterexample",
                 )
-            temp_adapter = RulesAdapter(
-                rules=logic_data.get("rules", []),
-                variables=logic_data.get("variables"),
-                constraints=logic_data.get("constraints"),
-            )
+            # The rules alone, because `decide()` executes nothing else: the type table and the
+            # constraint list reach only `logic()`, which nothing here calls, while handing them
+            # over lets a declaration mismatch that has nothing to do with replaying a
+            # counterexample refuse the interpreter construction and report a reproducible
+            # violation not evaluated.
+            temp_adapter = RulesAdapter(rules=logic_data.get("rules", []))
             output_rec = temp_adapter.decide(ce_inputs)
             ran_against = (
                 "the declared logic from sut.logic(), executed by the reference rule "
@@ -742,15 +811,47 @@ class ProvedEngine:
             rules = logic_data.get("rules", [])
             variables = logic_data.get("variables", {})
             constraints = logic_data.get("constraints", [])
+            declared_computes = logic_data.get("computes")
         elif hasattr(logic_data, "rules"):
             rules = getattr(logic_data, "rules", [])
             variables = getattr(logic_data, "variables", {})
             constraints = getattr(logic_data, "constraints", [])
+            declared_computes = getattr(logic_data, "computes", None)
         else:
             tname = type(logic_data).__name__
             return not_evaluated(
                 f"Not evaluated: sut.logic() returned unexpected type {tname}.", {}
             )
+
+        if isinstance(declared_computes, (str, bytes)):
+            return not_evaluated(
+                "Not evaluated: sut.logic() declares `computes` as a string rather than a "
+                "collection of names, and read as one it is a set of characters naming nothing "
+                "the system computes. Silently accepted it would read every declared variable as "
+                "an input, which is the reading the declaration exists to replace.",
+                {"computes": repr(declared_computes)},
+            )
+
+        if declared_computes is not None:
+            try:
+                declared_computes = set(declared_computes)
+            except TypeError:
+                return not_evaluated(
+                    "Not evaluated: sut.logic() declares `computes` as "
+                    f"{type(declared_computes).__name__}, which is not a collection of names at "
+                    "all, so nothing here can read which variables the system computes. A "
+                    "direction declaration that cannot be read is refused rather than ignored.",
+                    {"computes": repr(declared_computes)},
+                )
+            not_names = sorted(repr(n) for n in declared_computes if not isinstance(n, str))
+            if not_names:
+                return not_evaluated(
+                    "Not evaluated: sut.logic() declares `computes` entries that are not variable "
+                    "names: " + ", ".join(not_names) + ". An entry naming no variable matches no "
+                    "name in the property, so accepting it would silently read a computed output "
+                    "as an input the situation supplies.",
+                    {"computes": ", ".join(not_names)},
+                )
 
         scope = _Scope(variables)
         solver = z3.Solver()
@@ -765,14 +866,19 @@ class ProvedEngine:
                 _encode_block(ast.parse(r_text, mode="exec").body, scope, solver)
 
             # Every rule is encoded by now, so `scope` knows which names the rules assign — which
-            # is what the guard needs and why it is asked here rather than while the property is
-            # walked.
+            # is what both guards need and why they are asked here rather than while the property
+            # is walked. Which one runs is the logic's own declaration: a `computes` list is a
+            # direction per variable and answers the question outright, and the sort heuristic is
+            # what remains for logic that declares none.
             property_node = parse_property(req.spec)
-            _check_magnitudes_are_computed(property_node, scope)
+            if declared_computes is None:
+                _check_magnitudes_are_computed(property_node, scope)
             spec_z3 = _as_bool(
                 _ast_to_z3(property_node, scope),
                 f"Requirement spec {req.spec!r}",
             )
+            if declared_computes is not None:
+                _check_declared_directions(property_node, scope, declared_computes)
 
             premise_check = solver.check()
             premise_reason = (

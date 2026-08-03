@@ -74,15 +74,21 @@ trace).
 
 The proof rung refuses a property built out of names the declared rules never assign, on the ground
 that such a name is a free constant of the encoding — for `present()`, for `contains()`, and (since
-the temporal reduction made it reachable) for a comparison of magnitudes. The third,
-`_check_magnitudes_are_computed`, is the only one that is a **heuristic**, and it is narrow for two
-reasons that are each a duty: it needs the property to read no assigned name at all, or
-`income >= 30000 implies approved` stops being provable, and it needs a free name of arithmetic
-sort, or `gdpr_art22_1_no_prohibited_decision_for_any_input` — whose whole point is quantifying over
-Boolean flags no rule assigns — loses its proof. Widening either condition breaks a shipped duty.
-The principled closure is adapters declaring variable directions, which no engine can ask for today;
-`docs/semantics.md` §3.5, *When the magnitudes are not the system's own*, is the statement of all of
-it.
+the temporal reduction made it reachable) for a comparison of magnitudes. The third refusal is the
+one that needed a **direction**, so `sut.logic()` may declare `computes` beside `variables`: the
+names the system produces, as against the ones its situation supplies. The two together give three
+states — computed, input, *no notion of* — and `_check_declared_directions` refuses a property
+reading a name in the third state, or a declared output the rules do not settle on every path.
+A declared **input** is quantified over, flags and magnitudes alike, which is what keeps
+`income >= 30000 implies approved` and `gdpr_art22_1_no_prohibited_decision_for_any_input` provable.
+`RulesAdapter` derives `computes` from its rules' assignment targets — the premise of that adapter
+is that the rules *are* the decision procedure — so no adapter here is undeclared, and a `computes`
+name outside `variables` is refused at construction. Nothing second-guesses the declaration: an
+adapter calling an output an input is answered about the system it described, the same trust
+`system_domains` gets. `_check_magnitudes_are_computed` survives for logic declaring no directions,
+and only for that — reading such logic as all-inputs hands back the `violated`-at-`proved` verdict
+it exists to stop. `docs/semantics.md` §3.5, *When the magnitudes are not the system's own*, states
+all of it and names every test.
 
 `contains(signal, "phrase")` is the one atom that reads *what a statement says* rather than whether a
 field is blank, and it exists because a duty settled by `present()` alone accepts a reason of

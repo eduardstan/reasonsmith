@@ -123,7 +123,14 @@ RULES = [
     ),
 ]
 
-#: Declared types for every variable the rules read or write. The solver reasons over these.
+#: Declared types for every variable the rules read or write. The solver reasons over these, and
+#: together with the *direction* declaration they say which names this system is answerable about.
+#: `RulesAdapter` derives that direction from `RULES` — the assignment targets are what this system
+#: computes — so the five names below that no rule assigns are the inputs the application supplies:
+#: `credit_score`, `debt_to_income`, `delinquencies_24m`, `credit_history_months` and
+#: `notification_queue_days`. A name in neither list is one this system has no notion of, and a
+#: property reading one is refused a proof rather than answered from a constant the solver invented
+#: (`docs/semantics.md` §3.5).
 VARIABLES = {
     "credit_score": "int",
     "debt_to_income": "real",

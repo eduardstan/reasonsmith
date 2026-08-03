@@ -150,6 +150,13 @@ admissible input space stated as constraints. `RulesAdapter` executes those same
 different programs. The duty stops being a question about the decisions the system happened to
 log.
 
+`logic()` also declares the *direction* of each variable — `computes` names the ones the system
+produces, and the rest of `variables` are the ones the application supplies. `RulesAdapter` derives
+that from the rules themselves, so this system says it computes what its rules assign and nothing
+more. It is what lets the engine tell an input it may quantify over from a name the system has no
+notion of, and refuse a proof about the latter rather than answer it from a constant the solver
+invented ([`semantics.md`](semantics.md) §3.5).
+
 The same system, from a shell and against the whole `ecoa` pack, is
 `reasonsmith check --system-module reasonsmith.examples.symbolic_rules:system_under_test --pack ecoa`
 — which **imports and executes** that module. See [From a shell](#from-a-shell) below.

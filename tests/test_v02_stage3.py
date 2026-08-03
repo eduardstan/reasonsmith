@@ -1257,12 +1257,13 @@ def test_a_temporal_violation_names_the_trace_it_is_and_is_not_about():
     assert "not a finding about the trace supplied here" in result.evidence_summary
 
 
+#: The system's whole variable table: a score it is handed and an approval it computes. The
+#: deviation signals are deliberately absent from it, which is the declaration that this system has
+#: no notion of them — it emits values under those names into a record (below) without any variable
+#: standing behind them, which is exactly the shape the defect was found in.
 _UNCOMPUTED_MAGNITUDE_VARIABLES = {
     "score": "int",
     "approved": "bool",
-    "scope_statements_declared_deviation": "real",
-    "artifact_logs_decision_margin": "real",
-    "scope_statements_approximation_vs_guarantee": "bool",
 }
 _UNCOMPUTED_MAGNITUDE_SIGNALS = {
     "scope_statements_declared_deviation",
@@ -1295,6 +1296,12 @@ def test_a_magnitude_the_rules_never_compute_is_not_proved_violated():
     Both halves are the fix. The duty must not reach a proof rung on such a system, and it must
     fall to the engine that reads the trace, which measures the magnitudes when the decisions
     carry them and reports them unmeasured when they do not.
+
+    The refusal now comes from the direction declaration rather than from the sort heuristic:
+    `RulesAdapter` declares `computes`, and neither magnitude is in this system's variable table at
+    all, so the engine can say plainly that the system has no notion of them. The heuristic answers
+    the same case for logic that declares no directions —
+    `test_logic_that_declares_no_directions_keeps_the_sort_heuristic`.
     """
     req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
 
@@ -1303,7 +1310,7 @@ def test_a_magnitude_the_rules_never_compute_is_not_proved_violated():
     )
     assert unmeasured.strength is None
     assert unmeasured.verdict == Verdict.INCONCLUSIVE
-    assert "reads nothing the declared rules assign" in unmeasured.evidence_summary
+    assert "gives the system no notion of" in unmeasured.evidence_summary
 
     measured = evaluate_requirement(
         req,
@@ -1328,15 +1335,285 @@ def test_a_magnitude_the_rules_never_compute_is_not_proved_violated():
     assert measured.strength == Strength.OBSERVED
 
 
+class _UndeclaredDirectionsSUT(BaseSUT):
+    """Logic exposed the way it was before directions existed: no `computes` key at all.
+
+    Stands for every adapter written against the old contract, including one outside this
+    repository. It exists so the sort heuristic keeps a test of its own now that every
+    `RulesAdapter` declares directions and no longer reaches it.
+    """
+
+    def __init__(self):
+        super().__init__(set(_UNCOMPUTED_MAGNITUDE_SIGNALS))
+
+    def logic(self):
+        return {
+            "variables": {
+                "score": "int",
+                "approved": "bool",
+                "scope_statements_declared_deviation": "real",
+                "artifact_logs_decision_margin": "real",
+            },
+            "rules": ["approved = score >= 650"],
+            "constraints": ["score >= 0", "score <= 1000"],
+        }
+
+
+def test_logic_that_declares_no_directions_keeps_the_sort_heuristic():
+    """An adapter declaring no directions gets the answer it has today, and never a wider one.
+
+    Directions are the right joint, but logic that declares none cannot be *read* as declaring
+    every variable an input: that reading is exactly what reported `violated` at `proved` on
+    numbers nobody computed. So `_check_magnitudes_are_computed` stays for undeclared logic, and
+    this system — whose variable table lists both magnitudes and whose rules assign neither — is
+    refused a proof by the heuristic rather than by the declaration guard.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+
+    result = evaluate_requirement(req, _UndeclaredDirectionsSUT())
+
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert "reads nothing the declared rules assign" in result.evidence_summary
+
+
+def test_a_declared_output_the_rules_never_settle_is_refused_a_proof():
+    """Declaring an output does not conjure the logic that produces it.
+
+    The other half of the direction guard. This system says it computes the decision margin — the
+    name is in `variables` and in `computes` — but the rules it exposed assign it on no path, so
+    the constant standing in for it in the encoding is free after all. A proof read off that
+    constant would be a proof about the declaration and not about the system.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    sut = RulesAdapter(
+        rules=["approved = score >= 650"],
+        variables={
+            "score": "int",
+            "approved": "bool",
+            "scope_statements_declared_deviation": "real",
+            "artifact_logs_decision_margin": "real",
+        },
+        constraints=["score >= 0", "score <= 1000"],
+        computes={
+            "approved",
+            "scope_statements_declared_deviation",
+            "artifact_logs_decision_margin",
+        },
+        declared_capabilities=set(_UNCOMPUTED_MAGNITUDE_SIGNALS),
+    )
+
+    result = evaluate_requirement(req, sut)
+
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert "declares it computes" in result.evidence_summary
+    assert "do not assign it on every path" in result.evidence_summary
+
+
+def test_a_magnitude_declared_an_input_is_quantified_over_like_any_other():
+    """The joint the sort heuristic cut wrongly, cut correctly.
+
+    A system declaring that its situation supplies both magnitudes and that its rules ignore them
+    is making the same shape of claim `gdpr_art22_1_no_prohibited_decision_for_any_input` quantifies
+    over, with numbers instead of flags. "For every admissible input the declared deviation is
+    within the margin" is then genuinely false, and reporting it violated is the engine working.
+    The heuristic refused this because the free names were arithmetic; the declaration admits it
+    because the system says the situation supplies them.
+
+    That the verdict follows the declaration is the cost of taking one: an adapter calling an
+    output an input is answered about the system it described. `docs/semantics.md` §3.5 says so,
+    and it is the same trust `system_domains` is given.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    sut = RulesAdapter(
+        rules=["approved = score >= 650"],
+        variables={
+            "score": "int",
+            "approved": "bool",
+            "scope_statements_declared_deviation": "real",
+            "artifact_logs_decision_margin": "real",
+        },
+        constraints=["score >= 0", "score <= 1000"],
+        declared_capabilities=set(_UNCOMPUTED_MAGNITUDE_SIGNALS),
+    )
+    assert sut.logic()["computes"] == ["approved"]
+
+    result = evaluate_requirement(req, sut)
+
+    assert result.verdict == Verdict.VIOLATED
+    assert result.strength == Strength.PROVED
+
+
+def test_computes_is_derived_from_the_rules_and_must_name_declared_variables():
+    """No RulesAdapter is undeclared by accident, and no declaration names a variable-less name.
+
+    The derivation is not a guess: this adapter's premise is that `rules` *is* the decision
+    procedure, so its assignment targets are what the system computes. A name written on one
+    branch is still computed — whether every path writes it is the proof engine's separate
+    question — so `_assigned_names` collects any-path targets.
+    """
+    branching = RulesAdapter(
+        rules=[
+            "approved = score >= 650",
+            'if approved:\n    reason = "ok"\nelse:\n    pass\n',
+        ],
+        variables={"score": "int", "approved": "bool", "reason": "str"},
+    )
+    assert branching.logic()["computes"] == ["approved", "reason"]
+
+    with pytest.raises(ValueError, match="computes must name declared variables"):
+        RulesAdapter(
+            rules=["approved = score >= 650"],
+            variables={"score": "int", "approved": "bool"},
+            computes={"approved", "artifact_logs_decision_margin"},
+        )
+
+
+def test_a_computes_that_is_not_a_collection_of_names_is_named_at_the_adapter():
+    """The misdeclaration is answered where it was made, not per character or as a parse error.
+
+    `set("approved")` and `set(True)` are a character soup and a `TypeError` respectively, and
+    both used to surface as something else — a variable-table complaint about `'a'`, `'d'`, `'e'`
+    …, or the engine's generic "error parsing decision logic or property". The engine refuses
+    both too (`ProvedEngine.evaluate`), because no adapter outside this repository goes through
+    here.
+    """
+    with pytest.raises(ValueError, match="computes must be a collection of names"):
+        RulesAdapter(
+            rules=["approved = score >= 650"],
+            variables={"score": "int", "approved": "bool"},
+            computes="approved",
+        )
+
+    with pytest.raises(TypeError, match="cannot be iterated"):
+        RulesAdapter(
+            rules=["approved = score >= 650"],
+            variables={"score": "int", "approved": "bool"},
+            computes=True,
+        )
+
+
+class _ComputesOutsideTheTypeTableSUT(BaseSUT):
+    """Third-party logic declaring a computed name the type table does not repeat.
+
+    `RulesAdapter` keeps `computes` inside `variables`, but no adapter outside this repository is
+    bound by that: the protocol asks for the names the system produces and never says the type
+    table must list them too. The rules here assign the margin, so it is an output at the default
+    sort and not a name this system has no notion of.
+    """
+
+    def __init__(self):
+        super().__init__(set(_UNCOMPUTED_MAGNITUDE_SIGNALS))
+
+    def logic(self):
+        return {
+            "variables": {
+                "score": "int",
+                "approved": "bool",
+                "scope_statements_declared_deviation": "real",
+            },
+            "computes": ["approved", "artifact_logs_decision_margin"],
+            "rules": ["approved = score >= 650", "artifact_logs_decision_margin = 100"],
+            "constraints": ["score >= 0", "score <= 1000"],
+        }
+
+
+def test_a_computed_name_outside_the_type_table_is_an_output_not_an_unknown():
+    """The outer boundary is both declarations, not `variables` alone.
+
+    Reading `variables` as the only boundary would answer a system about a name it said in as many
+    words that it computes with "you have no notion of this" — and refuse a proof the rules
+    genuinely establish. The margin is assigned on every path, the deviation is a declared input,
+    and the duty is decided rather than refused.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+
+    result = evaluate_requirement(req, _ComputesOutsideTheTypeTableSUT())
+
+    assert result.verdict == Verdict.VIOLATED
+    assert result.strength == Strength.PROVED
+
+
+class _StringComputesSUT(_ComputesOutsideTheTypeTableSUT):
+    """The misdeclaration that reads as its own characters."""
+
+    def logic(self):
+        data = super().logic()
+        data["computes"] = "approved"
+        return data
+
+
+def test_computes_declared_as_a_string_is_refused_rather_than_read_as_characters():
+    """A bare string is iterable, and taking it silently widens every proof.
+
+    `set("approved")` is six characters naming nothing the system computes, so the declaration
+    guard would find no output to check, the sort heuristic would already have been skipped, and
+    every declared variable would read as an input — the reading `docs/semantics.md` §3.5 says
+    hands back the `violated`-at-`proved` verdict the declaration exists to stop.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+
+    result = evaluate_requirement(req, _StringComputesSUT())
+
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert "declares `computes` as a string" in result.evidence_summary
+
+
+class _UniterableComputesSUT(_ComputesOutsideTheTypeTableSUT):
+    """A declaration that is not a collection at all."""
+
+    def logic(self):
+        data = super().logic()
+        data["computes"] = True
+        return data
+
+
+class _NonNameComputesSUT(_ComputesOutsideTheTypeTableSUT):
+    """A collection whose entries name no variable."""
+
+    def logic(self):
+        data = super().logic()
+        data["computes"] = ["approved", 3]
+        return data
+
+
+@pytest.mark.parametrize(
+    ("sut", "expected"),
+    [
+        (_UniterableComputesSUT(), "not a collection of names at all"),
+        (_NonNameComputesSUT(), "entries that are not variable names"),
+    ],
+)
+def test_a_computes_that_cannot_be_read_as_names_is_refused_by_the_engine(sut, expected):
+    """The string guard's two neighbours, refused for the same reason and named as themselves.
+
+    Both are declarations the engine cannot read: a non-iterable used to reach `set()` inside the
+    encoding block and be reported as an error parsing the property, and an entry that is not a
+    name matches nothing in a property, so the output it was meant to declare would quietly read
+    as an input the situation supplies — the widening `docs/semantics.md` §3.5 says the
+    declaration exists to stop.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+
+    result = evaluate_requirement(req, sut)
+
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert expected in result.evidence_summary
+
+
 def test_article_22_still_quantifies_over_flags_the_rules_never_assign():
-    """The reading the magnitude guard must not silence.
+    """The reading neither guard may silence.
 
     `gdpr_art22_1_no_prohibited_decision_for_any_input` asks whether *any* admissible input yields
     a decision that is solely automated and significantly affecting without an Article 22(2) basis.
     Its flags are free inputs of the exposed rules on purpose — quantifying over them is the whole
-    duty — so a guard that refused every unassigned name would turn this proof into silence. It
-    fires only on a property reading no assigned name *and* reading some free name as a magnitude,
-    and these flags are Booleans.
+    duty — so a guard that refused every unassigned name would turn this proof into silence. This
+    SUT is a `RulesAdapter`, so it declares `computes` and `_check_declared_directions` is the
+    guard that runs: the flags are in `variables` and not in `computes`, which is the declaration
+    for an input the situation supplies, and an input is quantified over.
     """
     req = load_pack("gdpr").get_requirement("gdpr_art22_1_no_prohibited_decision_for_any_input")
     flags = (
