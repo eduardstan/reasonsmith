@@ -13,6 +13,11 @@ What a reader must not break:
     transcript pass, which is the one failure this test exists to catch.
   - The header's line count and `md5sum` are checked against the demo block and against RESULTS.md.
     Regenerating a transcript without updating them is what makes the two files stop matching.
+  - The header names the reasonsmith version the file was produced with, and
+    `test_doc_names_the_version_it_was_generated_with` holds that note to
+    `reasonsmith.__version__` the way the transcripts are held to real stdout. A reader who
+    installed a release must be able to tell a stale page from a broken install; a note that
+    named a stale number would be the same defect in another shape.
 """
 
 import hashlib
@@ -28,6 +33,24 @@ RESULTS = REPO_ROOT / "RESULTS.md"
 
 PAIR_RE = re.compile(r"```sh\n(.*?)\n```\n\n```text\n(.*?)```\n", re.DOTALL)
 HEADER_RE = re.compile(r"\*\*Demo transcript:\*\* (\d+) lines, `md5sum` `([0-9a-f]{32})`")
+
+
+def test_doc_names_the_version_it_was_generated_with():
+    """The file says which reasonsmith produced it, and the pin holds that to `__version__`.
+
+    Every command on the page runs against an installed release, while these transcripts were
+    generated from this tree — which is ahead of the last release. The note exists so a reader
+    whose output differs can tell a stale page from a broken install, so the number in it is
+    only worth anything while it is the version the tree actually is. It is asserted rather
+    than trusted, the same way each transcript below is asserted rather than trusted.
+    """
+    from reasonsmith import __version__
+
+    text = EXAMPLE_OUTPUT.read_text(encoding="utf-8")
+    assert f"reasonsmith `{__version__}`" in text, (
+        "docs/example-output.md must state it was produced with reasonsmith "
+        f"`{__version__}`; regenerate the note when the version changes"
+    )
 
 
 def test_committed_transcripts_are_the_real_stdout():

@@ -184,6 +184,12 @@ is in `docs/semantics.md` §3; why it exists is finding 1 of `docs/findings-nesy
 block in it and compares stdout byte-for-byte, and cross-checks the header's line count and
 `md5sum` against RESULTS.md. So anything that changes what the demo or the CLI prints — a wording
 tweak included — means regenerating the transcripts and updating both files' headers together.
+Both `docs/example-output.md` and `docs/three-systems.md` also state, near the top, the
+`reasonsmith` version they were generated with, and each document's pin holds that note to
+`reasonsmith.__version__`: the tree runs ahead of the last release, so a reader who installed
+from PyPI and sees different output must be able to tell a stale page from a broken install. The
+number is only worth anything while it is the version the tree actually is, so a version bump
+means regenerating the note in the same change, or the pin fails.
 The README's own CLI block is derived too, and `tests/test_docs_readme_transcripts.py` holds it
 byte-for-byte to `python docs/build_readme_transcripts.py` the way the other pins hold their
 documents: anything a wording change moves fails there. The builder raises rather than writing

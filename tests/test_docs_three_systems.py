@@ -16,6 +16,12 @@ What a reader must not break:
     re-run that is not there and `proved` needs something to read that is not there. Raising that
     ceiling means changing the *system*; a change that raises it by handing the adapter a replay
     hook makes the document overclaim, which is the exact failure this package exists to prevent.
+  - The page names the reasonsmith version it was produced with, and
+    `test_doc_names_the_version_it_was_generated_with` holds that note to
+    `reasonsmith.__version__` the way the transcripts are held to real stdout. The page ships
+    instructions that run against an installed release while this tree runs ahead of it, so a
+    reader whose output differs must be able to tell a stale page from a broken install; a note
+    that named a stale number would be the same defect in another shape.
 """
 
 import importlib
@@ -68,6 +74,24 @@ def test_committed_transcripts_are_the_real_stdout():
         assert (
             run.stdout.replace("\r\n", "\n") == transcript.replace("\r\n", "\n")
         ), f"transcript for `{command}` is stale"
+
+
+def test_doc_names_the_version_it_was_generated_with():
+    """The page says which reasonsmith produced it, and the pin holds that to `__version__`.
+
+    Every command on the page runs against an installed release, while these transcripts were
+    generated from this tree — which is ahead of the last release. The note exists so a reader
+    whose output differs can tell a stale page from a broken install, so the number in it is
+    only worth anything while it is the version the tree actually is. It is asserted rather
+    than trusted, the same way each transcript below is asserted rather than trusted.
+    """
+    from reasonsmith import __version__
+
+    text = THREE_SYSTEMS.read_text(encoding="utf-8")
+    assert f"reasonsmith `{__version__}`" in text, (
+        "docs/three-systems.md must state it was produced with reasonsmith "
+        f"`{__version__}`; regenerate the note when the version changes"
+    )
 
 
 def test_one_duty_reaches_three_different_rungs():
