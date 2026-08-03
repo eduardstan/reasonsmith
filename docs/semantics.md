@@ -576,6 +576,18 @@ without an artefact was never certified, while a decision whose artefact declare
 certified and produced nothing, which is a stronger signal rather than a weaker one
 (`test_a_decision_whose_reasons_were_never_enumerated_cannot_buy_satisfied`).
 
+**A trace whose decisions never triggered the duty is not evaluated here either.** This duty is an
+implication — 12 CFR 1002.9(b)(2) governs the statement of reasons a creditor gave, so a decision
+that states none does not reach it — and a run where the antecedent held on no certified decision
+is reported **not evaluated**, naming the antecedent and the certified decisions it was looked for
+in, exactly as the four rungs of §4 (*A duty whose trigger never fired is not evaluated, at every
+rung*) do. It is the same rule and the same two functions, asked of this engine's domain
+(`test_a_certified_trace_that_never_reached_the_antecedent_is_not_evaluated`), and a trace that does
+reach the trigger is unaffected
+(`test_a_certified_trace_that_does_reach_the_antecedent_still_reaches_probed`). The refusal is
+placed after the unmeasured-subset one above, so a run that is both incomplete and untriggered is
+reported as incomplete.
+
 *The domain, exactly.* The decisions the system's trace holds **and** for which `artifact()`
 returned an artefact rather than None. The enumeration is exact on *one* ground program and one
 base interpretation — `certificate.LIMITS` says so in its own words — so this rung is `probed` and
@@ -1239,6 +1251,7 @@ the domain it quantifies over, and the domain travels on the result:
 | `proved`, over a trace | the same domain: `always(f)` is decided by deciding `f`, so the reduction inherits the refusal rather than repeating it | `test_the_temporal_reduction_inherits_the_refusal` |
 | `probed` | the decisions the search replayed — the interpreter already evaluates the antecedent to answer the implication, so it is counted in the same walk | `test_a_search_that_never_reached_the_antecedent_is_not_evaluated_at_probed` |
 | `observed` | the decisions of the supplied trace — the antecedent is monitored as a sub-formula, at the same threshold satisfaction is read at | `test_an_antecedent_false_at_every_position_is_not_evaluated_at_observed` |
+| `probed`, over certificates | the certified decisions of the trace — the antecedent is counted in the same walk that decides the property against the measured count | `test_a_certified_trace_that_never_reached_the_antecedent_is_not_evaluated` |
 
 **Why the argument for tolerating it did not survive.** It was a trace argument: reporting the
 vacuous case `satisfied` is literally true of what was monitored — the observed engine's claim is
@@ -1330,7 +1343,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | A system with neither logic nor decisions is not evaluated, and the proof rung still names the missing interface when asked | `test_system_without_logic_or_a_trace_is_not_evaluated`, `test_the_proof_rung_still_names_the_missing_logic_when_it_is_asked_directly` |
 | A universal prohibition is never proved on the strength of a sample; a trace answers it at `observed` and no higher | `test_gdpr_art22_without_exposed_logic_is_never_proved_on_the_strength_of_a_sample` |
 | The trace rung does not reach every logical shape, and says so rather than guessing | `test_the_trace_rung_does_not_reach_every_logical_shape_and_says_so`, `test_the_monitor_reads_the_spec_as_written_so_implication_is_spelled_with_an_arrow` |
-| A duty whose trigger never fired is not evaluated at every rung, naming the antecedent and the domain searched | `test_a_duty_whose_trigger_never_fires_is_not_evaluated_at_any_rung`, `test_an_antecedent_no_admissible_input_reaches_is_not_evaluated_at_proved`, `test_the_temporal_reduction_inherits_the_refusal`, `test_a_search_that_never_reached_the_antecedent_is_not_evaluated_at_probed`, `test_an_antecedent_false_at_every_position_is_not_evaluated_at_observed` |
+| A duty whose trigger never fired is not evaluated at every rung, naming the antecedent and the domain searched | `test_a_duty_whose_trigger_never_fires_is_not_evaluated_at_any_rung`, `test_an_antecedent_no_admissible_input_reaches_is_not_evaluated_at_proved`, `test_the_temporal_reduction_inherits_the_refusal`, `test_a_search_that_never_reached_the_antecedent_is_not_evaluated_at_probed`, `test_an_antecedent_false_at_every_position_is_not_evaluated_at_observed`, `test_a_certified_trace_that_never_reached_the_antecedent_is_not_evaluated` |
 | The guard is one rule against the property language, and an earned verdict still reaches its rung | `test_the_language_names_the_antecedent_whatever_the_arrow_was_written_as`, `test_a_property_that_is_not_one_implication_has_no_antecedent_to_be_unreachable`, `test_a_satisfaction_whose_antecedent_does_fire_still_reaches_proved`, `test_a_property_with_no_implication_is_untouched_at_proved`, `test_widening_the_declared_input_space_alone_turns_the_refusal_into_a_violation` |
 | 12 CFR 1002.9(b)(2) is falsifiable on a plain decision log, and the disclosure branch is no longer violated | `test_a_statement_the_clause_calls_insufficient_is_violated_on_a_bare_log`, `test_a_statement_resting_on_internal_standards_or_policies_is_violated`, `test_a_statement_naming_a_principal_factor_is_satisfied`, `test_a_creditor_who_took_the_disclosure_branch_is_not_violated` |
 | Every forbidden wording is the clause's own, and the one derived reading is named as one | `test_the_forbidden_wordings_are_the_clauses_own` |

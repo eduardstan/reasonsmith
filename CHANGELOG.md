@@ -89,8 +89,12 @@ releases before it predate the file and are not reconstructed here.
     `engines/counterfactual.py` already ran for its own fragment; `temporal` inherits it through the
     `always(f)` reduction; `observed` monitors the antecedent as a sub-formula per position;
     `probed` counts the replayed decisions that reached it, in the walk the interpreter already
-    makes. The replay rung is included because the engine ladder falls to it: guarding the proof
-    rung alone moved the vacuous `satisfied` down a rung instead of removing it.
+    makes; the certificate rung counts the certified decisions that reached it, in the walk that
+    already decides the property against the measured count. The replay rung is included because
+    the engine ladder falls to it: guarding the proof rung alone moved the vacuous `satisfied` down
+    a rung instead of removing it. The certificate rung is included because the ladder gives
+    `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` that rung and no other, so nothing beneath
+    it could have caught the same empty claim.
   - **Earned verdicts are untouched.** A satisfaction whose antecedent does fire still reaches
     `proved`; a violation never could be vacuous, so the guard runs on the satisfied path only; a
     property with no implication in it is unchanged at every rung.

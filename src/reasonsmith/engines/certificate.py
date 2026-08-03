@@ -52,6 +52,18 @@ What a reader must not break:
     here: an unseparable reason stays in the certified set and is reported as a caveat rather than
     turning the verdict. Lowering the artefact's own `exact_depth` to 0 would otherwise turn the
     demonstration's breached decision clean, which is weaker evidence buying a stronger verdict.
+  - A certified decision whose reasons the notice never stated does not satisfy this duty
+    vacuously: a run where the property's antecedent held on no certified decision is reported NOT
+    EVALUATED, never `satisfied`. The rule is not this engine's own — it is written once,
+    `rulelang.implication_antecedent` naming the subtree and
+    `report.not_evaluated_for_unreachable_trigger` wording the refusal — and the antecedent is
+    counted in the same walk that decides the property, exactly as `engines/probed.py` counts the
+    replays that reached it.
+    Why this matters: this duty is written as an implication so a creditor lawfully on the
+    12 CFR 1002.9(a)(2)(ii) disclosure branch is not accused of an inadequate statement it never
+    made. Reading that as `satisfied` would report every such system alike clean on the adequacy of
+    a statement no decision carried, which is the same empty claim at the same strength this
+    engine's own reason for existing was to remove.
   - A violation needs one witness; a satisfaction needs complete evidence. A measured breach is
     reported VIOLATED however many decisions went unmeasured beside it, while SATISFIED requires
     that every certified decision was measured.
@@ -67,15 +79,22 @@ What a reader must not break:
 
 from __future__ import annotations
 
+import ast
 from collections.abc import Mapping
 from typing import Any
 
 from reasonsmith.certificate import Certificate, certify
 from reasonsmith.conformance import measured
-from reasonsmith.report import CERTIFICATES_KEY, PROBE_BUDGET_KEY, RequirementResult
+from reasonsmith.report import (
+    CERTIFICATES_KEY,
+    PROBE_BUDGET_KEY,
+    RequirementResult,
+    not_evaluated_for_unreachable_trigger,
+)
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
     eval_expression,
+    implication_antecedent,
     parse_property,
     signal_names,
 )
@@ -204,6 +223,10 @@ class CertificateEngine:
                 ),
             )
 
+        antecedent_node = implication_antecedent(node)
+        antecedent_text = ast.unparse(antecedent_node) if antecedent_node is not None else ""
+        triggered = 0
+
         certified: list[tuple[int, Certificate, bool]] = []
         uncertifiable = 0
         for index, record in enumerate(records):
@@ -249,7 +272,10 @@ class CertificateEngine:
                     ),
                 )
             try:
-                held = bool(eval_expression(node, _env(record, cert)))
+                env = _env(record, cert)
+                held = bool(eval_expression(node, env))
+                if antecedent_node is not None and eval_expression(antecedent_node, env):
+                    triggered += 1
             except Exception as exc:  # noqa: BLE001 — reported, never swallowed
                 return _result(
                     req,
@@ -390,6 +416,14 @@ class CertificateEngine:
                     f"exact_depth is the usual cause.{caveat}{skipped} Nothing is claimed either "
                     "way."
                 ),
+            )
+
+        if antecedent_node is not None and not triggered:
+            return not_evaluated_for_unreachable_trigger(
+                req,
+                antecedent_text,
+                f"the {len(certified)} certified decision(s) of this trace",
+                details,
             )
 
         return _result(

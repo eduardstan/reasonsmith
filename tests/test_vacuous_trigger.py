@@ -28,15 +28,19 @@ from __future__ import annotations
 import ast
 
 import pytest
+from nesyarena.adapters.base import ReferenceAdapter
+from nesyarena.suts import ExactWMC
 
+from reasonsmith import demo
 from reasonsmith.adapters.rules import RulesAdapter
+from reasonsmith.engines.certificate import DELETED_REASON_COUNT, CertificateEngine
 from reasonsmith.engines.observed import ObservedEngine
 from reasonsmith.engines.probed import ProbedEngine
 from reasonsmith.engines.proved import ProvedEngine
 from reasonsmith.engines.temporal import TemporalProofEngine
 from reasonsmith.report import VACUOUS_TRIGGER_KEY, evaluate_requirement
 from reasonsmith.rulelang import implication_antecedent, parse_property
-from reasonsmith.spec import Requirement
+from reasonsmith.spec import Requirement, load_pack
 from reasonsmith.sut import BaseSUT
 from reasonsmith.verdict import Strength, Verdict
 
@@ -334,6 +338,81 @@ def test_a_search_that_did_reach_the_antecedent_still_reaches_probed():
             return record
 
     result = ProbedEngine.evaluate(_presence_req(), StatedReasons({REASONS, VERSION}), None)
+
+    assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.PROBED)
+    assert VACUOUS_TRIGGER_KEY not in result.details
+
+
+# --------------------------------------------------------------------------------------------
+# The certificate rung, which is the only rung one shipped binding duty has
+# --------------------------------------------------------------------------------------------
+
+ADEQUACY = "ecoa_reg_b_1002_9_b_2_principal_reasons_complete"
+
+#: The demonstration's own case: five reasons, and an oracle that deletes none of them.
+APP_1042 = demo.build_case("APP-1042", "typical", demo.CREDIT_QUERY, demo.CREDIT_REASONS, 0.88)
+
+
+class _CertifiedCredit:
+    """One certified decision, stating whatever reasons the test hands it.
+
+    `report._engine_ladder` gives the adequacy duty this rung and no other, so a vacuous pass here
+    is caught by nothing else: the fall-to-the-next-rung argument that put the guard on `probed`
+    does not reach this engine.
+    """
+
+    system_domains = ("consumer-credit",)
+
+    def __init__(self, reason: str):
+        self._record = {"decision_id": APP_1042.case_id, REASONS: reason}
+
+    def capabilities(self) -> set[str]:
+        return {"decision_id", REASONS, DELETED_REASON_COUNT}
+
+    def decisions(self) -> list[dict]:
+        return [dict(self._record)]
+
+    def logic(self):
+        return None
+
+    def artifact(self, decision: dict):
+        if decision.get("decision_id") != APP_1042.case_id:
+            return None
+        return {
+            "program": APP_1042.program,
+            "base": APP_1042.base,
+            "query": APP_1042.query,
+            "adapter": ReferenceAdapter(ExactWMC()),
+            "exact_depth": 1,
+            "labels": APP_1042.labels,
+        }
+
+
+def _adequacy():
+    return load_pack("ecoa").get_requirement(ADEQUACY)
+
+
+def test_a_certified_trace_that_never_reached_the_antecedent_is_not_evaluated():
+    """The shipped duty whose only rung this is, put to a creditor that states no reason.
+
+    Exact inference deletes nothing here, so before the guard this run reported `satisfied` at
+    `probed` on the adequacy of a statement the notice never made — the same empty claim the proof
+    rung used to publish, one rung down and with nothing beneath it to catch it.
+    """
+    system = _CertifiedCredit("")
+    result = CertificateEngine.evaluate(_adequacy(), system, system.decisions())
+
+    assert (result.verdict, result.strength) == (Verdict.INCONCLUSIVE, None)
+    assert result.details[VACUOUS_TRIGGER_KEY] == {
+        "antecedent": f"present({REASONS})",
+        "domain": "the 1 certified decision(s) of this trace",
+    }
+
+
+def test_a_certified_trace_that_does_reach_the_antecedent_still_reaches_probed():
+    """The control: same engine, same artefact, a notice that states its reasons."""
+    system = _CertifiedCredit("C01 — Income insufficient for amount requested")
+    result = CertificateEngine.evaluate(_adequacy(), system, system.decisions())
 
     assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.PROBED)
     assert VACUOUS_TRIGGER_KEY not in result.details
