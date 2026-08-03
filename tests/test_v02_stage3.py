@@ -1339,8 +1339,9 @@ class _UndeclaredDirectionsSUT(BaseSUT):
     """Logic exposed the way it was before directions existed: no `computes` key at all.
 
     Stands for every adapter written against the old contract, including one outside this
-    repository. It exists so the sort heuristic keeps a test of its own now that every
-    `RulesAdapter` declares directions and no longer reaches it.
+    repository. It exists so the path where the sort heuristic is the *only* guard keeps a test of
+    its own: every `RulesAdapter` declares directions, so on one the heuristic runs beside
+    `_check_declared_directions` and cannot be seen answering alone.
     """
 
     def __init__(self):
@@ -1364,9 +1365,9 @@ def test_logic_that_declares_no_directions_keeps_the_sort_heuristic():
 
     Directions are the right joint, but logic that declares none cannot be *read* as declaring
     every variable an input: that reading is exactly what reported `violated` at `proved` on
-    numbers nobody computed. So `_check_magnitudes_are_computed` stays for undeclared logic, and
-    this system — whose variable table lists both magnitudes and whose rules assign neither — is
-    refused a proof by the heuristic rather than by the declaration guard.
+    numbers nobody computed. So `_check_magnitudes_are_computed` runs over every logic, declared or
+    not, and this system — whose variable table lists both magnitudes and whose rules assign
+    neither — is refused a proof by the heuristic with no declaration guard beside it.
     """
     req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
 
