@@ -468,19 +468,14 @@ class ObservedEngine:
             )
 
         # Construct rtamt STL specification
+        spec_name = f"spec_{req.id.replace('-', '_')}"
         try:
-            spec_name = f"spec_{req.id.replace('-', '_')}"
             res = _monitor(stl_text, spec_name, spec_vars, time_series)
             always_body = _always_body(stl_text)
             violation_res = (
                 _monitor(always_body, f"{spec_name}_body", spec_vars, time_series)
                 if always_body is not None
                 else res
-            )
-            antecedent_res = (
-                _monitor(antecedent_stl, f"{spec_name}_antecedent", spec_vars, time_series)
-                if antecedent_stl is not None
-                else None
             )
         except Exception as exc:
             return RequirementResult(
@@ -530,13 +525,40 @@ class ObservedEngine:
         # and the monitor scoring every step non-negative is then a fact about the antecedent.
         # The antecedent is read at the same threshold satisfaction is: robustness below zero is
         # the trigger not firing, exactly as it is the formula not holding.
-        if antecedent_res is not None and all(rob < 0 for _t, rob in antecedent_res):
-            return not_evaluated_for_unreachable_trigger(
-                req,
-                ast.unparse(antecedent_node),
-                f"the {len(records)} decision(s) of this trace",
-                {"records_observed": len(records), "antecedent_scores": antecedent_res},
-            )
+        #
+        # Monitored here, after the violation check and in a try of its own, so that an
+        # antecedent rtamt cannot parse can only ever withhold a satisfied verdict. Sharing the
+        # try above would let a sub-formula the monitor chokes on suppress a breach the monitor
+        # had already scored.
+        if antecedent_stl is not None:
+            try:
+                antecedent_res = _monitor(
+                    antecedent_stl, f"{spec_name}_antecedent", spec_vars, time_series
+                )
+            except Exception as exc:
+                return RequirementResult(
+                    requirement_id=req.id,
+                    source_clause=clause,
+                    verdict=Verdict.INCONCLUSIVE,
+                    strength=None,
+                    signals_required=tuple(req.requires),
+                    evidence_summary=(
+                        f"Not evaluated: no decision breached {req.spec!r}, but rtamt cannot "
+                        f"express or parse its antecedent {ast.unparse(antecedent_node)!r}: "
+                        f"{exc}. A duty whose trigger cannot be read is reported as no evidence "
+                        "rather than as a clean verdict."
+                    ),
+                    details={"error": str(exc), "records_observed": len(records)},
+                    binding=req.binding,
+                    scope=req.scope,
+                )
+            if all(rob < 0 for _t, rob in antecedent_res):
+                return not_evaluated_for_unreachable_trigger(
+                    req,
+                    ast.unparse(antecedent_node),
+                    f"the {len(records)} decision(s) of this trace",
+                    {"records_observed": len(records), "antecedent_scores": antecedent_res},
+                )
 
         return RequirementResult(
             requirement_id=req.id,

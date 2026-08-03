@@ -278,6 +278,23 @@ def test_a_temporal_duty_over_the_same_implication_moves_with_it():
     assert result.details[VACUOUS_TRIGGER_KEY]["antecedent"] == f"present({REASONS})"
 
 
+def test_an_antecedent_the_monitor_cannot_parse_never_suppresses_a_breach():
+    """The guard may withhold a satisfied verdict; it may not withhold a violated one.
+
+    An antecedent is re-rendered from the parsed tree, so a nested implication comes back out as
+    `Implies(a, b)` — the prefix form rtamt has no operator for. Monitoring it beside the property
+    itself would turn a breach the monitor had already scored into `not evaluated`.
+    """
+    margin = "artifact_logs_decision_margin"
+    spec = f"(present({REASONS}) -> present({VERSION})) -> present({margin})"
+    req = _req(spec=spec, requires=(REASONS, VERSION, margin))
+    records = [{REASONS: "", VERSION: "", margin: ""} for _ in range(2)]
+
+    result = ObservedEngine.evaluate(req, BaseSUT({REASONS, VERSION, margin}), records)
+
+    assert (result.verdict, result.strength) == (Verdict.VIOLATED, Strength.OBSERVED)
+
+
 def test_a_search_that_never_reached_the_antecedent_is_not_evaluated_at_probed():
     """The rung the ladder falls to when the proof rung refuses, held to the same rule.
 

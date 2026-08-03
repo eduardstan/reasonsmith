@@ -200,6 +200,11 @@ class RequirementResult:
         # repository never audited must not be able to make the tool claim more than it has.
         self._validate_plugin_claim()
 
+        # A vacuous-trigger result carries the trigger that never fired and the domain that was
+        # searched. Refused here for the reason the probe budget is: those two are the whole of
+        # the finding, and a result that cannot name them is not one a rendering can report.
+        self._validate_vacuous_trigger()
+
         unattainable = self.strength == Strength.UNATTAINABLE
         if unattainable and self.verdict != Verdict.INCONCLUSIVE:
             raise ValueError(
@@ -263,6 +268,34 @@ class RequirementResult:
             raise ValueError(
                 f"{self.requirement_id}: the probe budget must name "
                 f"{', '.join(PROBE_BUDGET_FIELDS)}; missing {', '.join(missing_fields)}"
+            )
+
+    def _validate_vacuous_trigger(self) -> None:
+        """Refuse a vacuous-trigger result that does not name both halves of the finding."""
+        vacuous = self.details.get(VACUOUS_TRIGGER_KEY)
+        if vacuous is None:
+            return
+        missing = (
+            list(VACUOUS_TRIGGER_FIELDS)
+            if not isinstance(vacuous, Mapping)
+            else [
+                field
+                for field in VACUOUS_TRIGGER_FIELDS
+                if not str(vacuous.get(field, "")).strip()
+            ]
+        )
+        if missing:
+            raise ValueError(
+                f"{self.requirement_id}: details[{VACUOUS_TRIGGER_KEY!r}] must name "
+                f"{', '.join(VACUOUS_TRIGGER_FIELDS)}; missing {', '.join(missing)}. An "
+                "implication holds wherever its trigger is false, so a reader who is not told "
+                "which trigger stayed false and over what has been handed a verdict about the "
+                "formula and told it is a verdict about the system"
+            )
+        if self.strength is not None:
+            raise ValueError(
+                f"{self.requirement_id}: a duty whose trigger fired nowhere cannot carry "
+                f"evidence strength {self.strength}; nothing was learned about the system"
             )
 
     def _validate_plugin_claim(self) -> None:
