@@ -57,6 +57,12 @@ releases before it predate the file and are not reconstructed here.
 
 ### Fixed
 
+- **The README's conformance-check block is held to its builder** ([#93](https://github.com/eduardstan/reasonsmith/pull/93)).
+  It was the one derived transcript byte-for-byte pins did not hold, and it went stale once already
+  under a green suite. `tests/test_docs_readme_transcripts.py` loads `docs/build_readme_transcripts.py`
+  and asserts the committed README equals the builder's own output, the same load-by-path, verbatim
+  comparison the other pins use. `AGENTS.md`'s index now names the test.
+
 - **A requirement identifier no longer renders under its own badges** ([#90](https://github.com/eduardstan/reasonsmith/pull/90)).
   The requirement card header is one flex row — identifier and citation left, badges right — and
   its left item had a zero flex basis with a 16rem floor, narrower than a requirement identifier.
