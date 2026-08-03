@@ -158,10 +158,9 @@ insufficient and decides nothing about whether any other statement is specific. 
 the regulation does not supply, and never push the judgement into the adapter as a self-declared
 `reason_is_specific` flag — `docs/semantics.md` §3 is why. That duty also carries the clause's
 trigger as an implication, which removed a false violation against a creditor lawfully on the
-(a)(2)(ii) disclosure branch and bought a stated cost: where the antecedent never holds the duty is
-`satisfied` vacuously and no report outcome distinguishes that from a trace that was checked and
-met. `docs/semantics.md` §4 records the gap; `docs/findings-nesyarena.md` shows it landing on a real
-system.
+(a)(2)(ii) disclosure branch; where that antecedent fires nowhere the duty is *not evaluated*, under
+the cross-cutting rule stated above and in `docs/semantics.md` §4.
+`docs/findings-nesyarena.md` shows those ECOA duties landing on a real system.
 
 `requires` is a conjunctive gate, so a branch of an either/or clause must not be listed in it: the
 loader (`spec._check_spec`, via `rulelang.unconditional_signal_names`) exempts a signal read only

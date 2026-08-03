@@ -580,8 +580,9 @@ certified and produced nothing, which is a stronger signal rather than a weaker 
 implication — 12 CFR 1002.9(b)(2) governs the statement of reasons a creditor gave, so a decision
 that states none does not reach it — and a run where the antecedent held on no certified decision
 is reported **not evaluated**, naming the antecedent and the certified decisions it was looked for
-in, exactly as the four rungs of §4 (*A duty whose trigger never fired is not evaluated, at every
-rung*) do. It is the same rule and the same two functions, asked of this engine's domain
+in, exactly as the other rungs of §4 (*A duty whose trigger never fired is not evaluated, at every
+rung*) do — this engine's own row is the last one in that section's table. It is the same rule and
+the same two functions, asked of this engine's domain
 (`test_a_certified_trace_that_never_reached_the_antecedent_is_not_evaluated`), and a trace that does
 reach the trigger is unaffected
 (`test_a_certified_trace_that_does_reach_the_antecedent_still_reaches_probed`). The refusal is
