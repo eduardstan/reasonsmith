@@ -8,6 +8,8 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-03
+
 ### Changed
 
 - **Breaking:** **An adapter declares which variables the system computes, and the proof engine
