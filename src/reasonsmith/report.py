@@ -37,7 +37,13 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any, cast
 
-from reasonsmith.rulelang import STATE_FRAGMENTS, is_present
+from reasonsmith.rulelang import (
+    STATE_FRAGMENTS,
+    UnsupportedConstructError,
+    counterfactual_atom,
+    is_present,
+    parse_property,
+)
 from reasonsmith.spec import Pack, Requirement, normalize_domains, normalize_scope
 from reasonsmith.sut import SystemUnderTest, _validate_capability_collection
 from reasonsmith.verdict import Strength, Verdict
@@ -597,14 +603,36 @@ def analyze_unattainable(req: Requirement, sut: SystemUnderTest) -> tuple[bool, 
     adapter is weaker: its result is limited to that supplied trace rather than stated as a
     property of the system as built.
 
+    One name is exempt from the subtraction, and only one: the *protected* argument of a
+    `counterfactually_invariant(outcome, protected)` duty. `capabilities()` is what a system can
+    emit into a decision record, and that is the opposite direction from what this duty needs —
+    what the decision procedure *accepts*. Both of its engines read the protected variable's values
+    from the system's declared `constraints` and never from a record, so gating on the capability
+    would report a creditor whose procedure accepts a prohibited basis and whose log deliberately
+    carries it for nobody `unattainable`, and tell that adopter to start logging a prohibited basis
+    per decision. The name stays in the requirement's `requires` because it is the one the
+    counterfactual engine names as missing when the system's declared logic has no notion of it —
+    an unattainable result may not name a signal the requirement never required.
+
     Returns:
         (is_unattainable, missing_signals) — missing_signals is sorted and never empty when
         is_unattainable is True.
     """
     declared = sut.capabilities()
     _validate_capability_collection(declared, f"{type(sut).__name__}.capabilities() must return")
-    missing = tuple(sorted(set(req.requires) - set(declared)))
+    missing = tuple(sorted(set(req.requires) - set(declared) - _input_only_signals(req)))
     return bool(missing), missing
+
+
+def _input_only_signals(req: Requirement) -> set[str]:
+    """The names a duty reads as declared inputs rather than as fields of a decision record."""
+    if req.formalism != "counterfactual":
+        return set()
+    try:
+        atom = counterfactual_atom(parse_property(req.spec))
+    except UnsupportedConstructError:
+        return set()
+    return {atom[1]} if atom is not None else set()
 
 
 def _read_trace(sut: SystemUnderTest) -> list[dict[str, Any]]:

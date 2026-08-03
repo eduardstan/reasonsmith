@@ -749,6 +749,18 @@ inferred.
 - **The claim is bounded by the constraints the system declared**, exactly as the `proved` paragraph
   above is. A system declaring a narrow input band is proved invariant over that band and over
   nothing else, and no engine here checks that the declared band is the deployed one.
+- **Where the declaration admits no pair at all, the verdict is *not evaluated*.** This is the
+  degenerate case of the bound above, and an `unsat` meaning "no pair exists" is not evidence of "no
+  pair disagrees". Two roads reach it and the engine closes both before it reads the negation: a
+  declaration that *pins* the protected variable — directly, or through a variable the encoding
+  holds equal across the copies — so that no admissible pair differs in it at all
+  (`test_constraints_pinning_the_protected_variable_are_not_a_proof`, where the replay rung refuses
+  the same system); and declared *rules* that assign the protected name while `computes` omits it,
+  so the encoding overwrites the input the intervention turns and the decision is reached from a
+  value neither copy was free to differ in
+  (`test_rules_assigning_the_protected_variable_are_not_a_proof`). The second is not a case the
+  direction declaration can close, because it is a name the rules assign and the declaration does
+  not claim; the check is on the encoding rather than on what was declared.
 - **The two verdicts are not mirror images**, for the reason the temporal paragraph gives.
   `satisfied` is universal over every admitted pair. `violated` is existential: the solver named one
   admissible pair whose outcomes differ, and **both halves** of it were replayed against the system
@@ -790,7 +802,13 @@ nor `logic()` is reported *not evaluated*, however long its log
 
 **The protected variable is an input, not a logged field.** Neither rung ever takes its value from a
 decision record, which is what lets a system answer this duty while its audit log carries a
-prohibited basis for nobody. A duty that instructed every checkable system to log race per decision
+prohibited basis for nobody. The capability gate says the same thing: `capabilities()` is what a
+system can *emit* into a record, so the protected argument of the atom is the one name
+`report.analyze_unattainable` does not subtract from it, and a system that accepts the variable and
+never logs it is answered rather than reported unattainable
+(`test_a_system_that_never_logs_the_protected_variable_is_still_answered`). The name stays in the
+duty's `requires` because it is the one the engine names as missing when a system's declared logic
+has no notion of it. A duty that instructed every checkable system to log race per decision
 would have made reasonsmith the reason it was collected — under the GDPR, an Article 9 processing
 purpose invented to check a fairness duty. `docs/refinement.md` records the cost of the other
 direction: nothing here can compare across groups, because nothing here reads a group.
@@ -1308,6 +1326,8 @@ Two consequences of that report text, followed by a separate package-level termi
 | The atom is the whole of a spec or no part of one, and both its arguments are distinct signal names | `test_the_atom_is_the_whole_spec_or_no_part_of_one`, `test_both_arguments_are_signal_names_and_must_differ`, `test_the_atom_classifies_into_its_own_fragment_and_not_into_logical` |
 | The paired replay takes the protected values from the declared constraints and never from the trace, and reports what it searched | `test_paired_replay_takes_no_protected_value_from_the_trace`, `test_paired_replay_reaches_probed_when_the_proof_rung_cannot`, `test_paired_replay_finds_a_disagreement_and_verifies_it` |
 | A probed counterfactual verdict is a bounded search and the proved rung can find what it misses | `test_paired_replay_misses_what_the_trace_it_was_given_cannot_reach` |
+| A declaration admitting no pair that differs in the protected variable is not evaluated, never satisfied | `test_constraints_pinning_the_protected_variable_are_not_a_proof`, `test_rules_assigning_the_protected_variable_are_not_a_proof` |
+| The protected variable is gated as an input the procedure accepts, never as a field a decision record must carry | `test_a_system_that_never_logs_the_protected_variable_is_still_answered` |
 | Exactly one shipped signal is outside the paper's Section 6.3 taxonomy, and it is the protected variable | `test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy`, `test_the_shipped_duty_is_the_only_counterfactual_requirement` |
 | The solver's blank string is Python's blank string, so a provable blank reason is a violation | `test_the_solvers_blank_string_is_pythons_blank_string`, `test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose` |
 | `contains()` takes a signal name and a literal ASCII phrase, and every other shape is refused | `test_a_malformed_contains_atom_is_refused_rather_than_guessed_at`, `test_a_contains_atom_is_a_boolean_property_outside_the_record_fragment`, `test_the_phrase_is_not_a_signal_the_property_reads` |

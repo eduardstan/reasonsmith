@@ -211,8 +211,11 @@ Across all three packs there are three `logical` requirements
 `gdpr_recital71_error_risk_minimised`), beside the one `counterfactual` requirement
 (`ecoa_reg_b_1002_4_a_no_disparate_treatment`), which reaches neither rung here for the reason the
 ECOA duties below do not: the domain gate answers it before any engine runs, and a run that did
-declare `consumer-credit` would report it `unattainable`, because these provenances have no notion
-of an applicant's prohibited basis. Two duties came back `unattainable` for all five systems —
+declare `consumer-credit` would report it *not evaluated*, because these provenances expose neither
+`decide()` nor `logic()` and no length of decision log establishes what a system would have decided.
+The capability gate does not answer it either: the protected variable is an input the decision
+procedure accepts rather than a field a decision record carries, so it is the one name that gate
+does not subtract (`docs/semantics.md` §3, *counterfactual*). Two duties came back `unattainable` for all five systems —
 the whole unattainable column of ten: the GDPR logical duty
 `gdpr_art22_1_no_prohibited_decision_for_any_input` and the GDPR record duty
 `gdpr_art22_1_automated_decision_prohibition`. The logical duty needs six signals; the system can

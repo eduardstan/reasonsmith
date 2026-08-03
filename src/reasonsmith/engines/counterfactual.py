@@ -371,6 +371,28 @@ class CounterfactualProofEngine:
             )
 
         for scope in (left, right):
+            # An `unsat` that means "no pair exists" is not evidence of "no disagreement", and the
+            # declaration cannot rule this route out: `_direction_refusal` refuses a protected name
+            # the system *declares* it computes, while a name the rules assign and `computes` omits
+            # arrives here with the encoding overwriting the free input the intervention turns.
+            if scope.is_definitely_assigned(protected) or protected not in scope.inputs:
+                return _result(
+                    req,
+                    Verdict.INCONCLUSIVE,
+                    None,
+                    (
+                        f"Not evaluated: the declared rules assign {protected!r} themselves, so "
+                        "the encoding overwrites the input this duty intervenes on and the copies "
+                        "decide from a value neither pair member was free to differ in. The "
+                        "negation would be unsatisfiable because no pair differing in "
+                        f"{protected!r} reaches the decision — not because the decision cannot "
+                        "move — and a proof of that is a proof of nothing."
+                    ),
+                    details={
+                        "engine": "counterfactual",
+                        "reason": "protected_variable_assigned_by_the_rules",
+                    },
+                )
             if not scope.is_definitely_assigned(outcome):
                 return _result(
                     req,
@@ -417,6 +439,47 @@ class CounterfactualProofEngine:
                 (
                     "Not evaluated: the formal solver could not decide whether the two encoded "
                     f"copies admit an input at all: {reason}."
+                ),
+                details={"engine": "counterfactual", "reason_unknown": reason},
+            )
+
+        # The pair this duty is about must exist before its absence can be read as invariance. A
+        # declaration pinning the protected variable — directly, or by tying it to a variable the
+        # equalities above hold fixed — makes the negation unsatisfiable for a reason that is not
+        # the property, and the replay rung refuses the same system for the same reason.
+        pair_solver = z3.Solver()
+        pair_solver.set("timeout", timeout_ms)
+        pair_solver.add(*solver.assertions())
+        pair_solver.add(left.inputs[protected] != right.inputs[protected])
+        pair_check = pair_solver.check()
+        if pair_check == z3.unsat:
+            return _result(
+                req,
+                Verdict.INCONCLUSIVE,
+                None,
+                (
+                    f"Not evaluated: the system's own declaration admits no pair of inputs that "
+                    f"differ in {protected!r} at all — the constraints pin it, alone or through a "
+                    "variable this encoding holds equal across the two copies. There is no second "
+                    "value to hold everything else fixed and move to, so the negated property is "
+                    "unsatisfiable because the question could not be asked and not because the "
+                    f"decision cannot move. A duty about a variable the declared input space pins "
+                    "is not a duty this proof can discharge."
+                ),
+                details={
+                    "engine": "counterfactual",
+                    "result": "no_admissible_pair_differing_in_the_protected_variable",
+                },
+            )
+        if pair_check != z3.sat:
+            reason = pair_solver.reason_unknown() or "solver returned unknown or timed out"
+            return _result(
+                req,
+                Verdict.INCONCLUSIVE,
+                None,
+                (
+                    "Not evaluated: the formal solver could not decide whether the declaration "
+                    f"admits any pair of inputs differing in {protected!r}: {reason}."
                 ),
                 details={"engine": "counterfactual", "reason_unknown": reason},
             )

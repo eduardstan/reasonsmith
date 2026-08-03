@@ -82,11 +82,21 @@ engine evaluates through that interpreter — move it and the guarantee becomes 
 cases must never merge, and telling them apart is the only reason `computes` is consulted here: a
 system that accepts the protected variable and provably ignores it is `satisfied`; a system with no
 notion of it is `unattainable`. Without the declaration both encode identically and both come back
-`unsat`, which would certify an unaware system as provably fair. `TREATMENT_LIMIT` rides on every
+`unsat`, which would certify an unaware system as provably fair. Two further `unsat`s mean *no pair
+exists* rather than *no pair disagrees*, and the proof rung refuses both before it reads the
+negation: a declaration that pins the protected variable (the replay rung already refused that
+system, so the ladder was publishing the engine that asked less), and rules that assign the
+protected name while `computes` omits it — checked on the encoding (`is_definitely_assigned`,
+`scope.inputs`), because that route is invisible to the declaration. `TREATMENT_LIMIT` rides on every
 result because the duty cannot see a proxy or a disparate impact, and neither rung ever takes the
 protected value from the trace — a decision record holding a fact about a natural person is a
 collection cost this repository does not create, which is also why no shipped example system
-declares one and why the shipped ECOA run reports the duty unattainable everywhere.
+declares one. For the same reason the protected argument is the one name
+`report.analyze_unattainable` does not subtract from `capabilities()`: that set is what a system can
+*emit* into a record, this duty needs what its procedure *accepts*, and gating on it would report a
+creditor whose log carries a prohibited basis for nobody unattainable and tell it to start logging
+one per decision. The name stays in `requires` because it is what the engine names as missing when a
+system's declared logic has no notion of it.
 `applicant_prohibited_basis` is the first shipped signal outside the paper's four Section 6.3
 categories; `test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy` keeps it the only one.
 Read `docs/semantics.md` §3 (*counterfactual*) and the `docs/refinement.md` row before touching any

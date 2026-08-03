@@ -168,7 +168,7 @@ def _aware_system(rules=None, variables=None, constraints=None):
         rules=list(AWARE_RULES if rules is None else rules),
         variables=dict(AWARE_VARIABLES if variables is None else variables),
         constraints=list(AWARE_CONSTRAINTS if constraints is None else constraints),
-        declared_capabilities={"decision", OUTCOME, PROTECTED},
+        declared_capabilities={"decision", OUTCOME},
         test_inputs=[dict(case) for case in AWARE_INPUTS],
     )
 
@@ -181,9 +181,7 @@ def _unaware_system():
         rules=list(AWARE_RULES),
         variables=variables,
         constraints=constraints,
-        # It declares the *capability* — its log carries the field — so the capability gate lets
-        # the duty through and the engine is the thing that has to tell the two systems apart.
-        declared_capabilities={"decision", OUTCOME, PROTECTED},
+        declared_capabilities={"decision", OUTCOME},
         test_inputs=[{"credit_score": case["credit_score"]} for case in AWARE_INPUTS],
     )
     return sut
@@ -243,7 +241,7 @@ def test_a_log_only_system_is_never_answered_from_its_trace():
         capability_basis = "trace"
 
         def capabilities(self):
-            return {"decision", OUTCOME, PROTECTED}
+            return {"decision", OUTCOME}
 
         def decisions(self):
             return [{OUTCOME: "credit granted on this application", PROTECTED: 0}] * 20
@@ -290,6 +288,59 @@ def test_the_two_cases_reach_different_verdicts_on_the_same_rules():
     assert aware.strength == Strength.PROVED
     assert unaware.strength == Strength.UNATTAINABLE
     assert aware.verdict != unaware.verdict
+
+
+def test_a_system_that_never_logs_the_protected_variable_is_still_answered():
+    """`requires` gates on what a system can emit; this variable is one it *accepts*.
+
+    A creditor whose procedure takes a prohibited basis and whose audit log deliberately carries it
+    for nobody must reach the engines and be answered. Gating on the capability would report that
+    system unattainable and tell it to start logging a prohibited basis per decision.
+    """
+    sut = _aware_system()
+    assert PROTECTED not in sut.capabilities()
+    result = evaluate_requirement(_requirement(), sut, system_domains=("consumer-credit",))
+    assert result.verdict == Verdict.SATISFIED
+    assert result.strength == Strength.PROVED
+    assert result.signals_missing == ()
+
+
+# --- the two roads to a proof of nothing --------------------------------------------------------
+
+
+def test_constraints_pinning_the_protected_variable_are_not_a_proof():
+    """`unsat` because no pair exists is not evidence that no pair disagrees."""
+    pinned = [
+        *(c for c in AWARE_CONSTRAINTS if PROTECTED not in c),
+        f"{PROTECTED} >= 0",
+        f"{PROTECTED} <= 0",
+    ]
+    result = CounterfactualProofEngine.evaluate(
+        _requirement(), _aware_system(constraints=pinned)
+    )
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert "no second value" in result.evidence_summary
+    assert TREATMENT_LIMIT in result.evidence_summary
+
+    # And the two rungs agree: the replay refuses the same system for the same reason.
+    replayed = PairedReplayEngine.evaluate(_requirement(), _aware_system(constraints=pinned))
+    assert replayed.strength is None
+    assert replayed.details["reason"] == "no_second_admissible_value"
+
+
+def test_rules_assigning_the_protected_variable_are_not_a_proof():
+    """The route the direction declaration cannot close: assigned by the rules, absent from
+    `computes`. The encoding overwrites the input the intervention turns, so the negation is
+    unsatisfiable because the question never reached the decision."""
+    sut = _aware_system(rules=[f"{PROTECTED} = 0", *AWARE_RULES])
+    logic = sut.logic()
+    logic["computes"] = [name for name in logic["computes"] if name != PROTECTED]
+    result = CounterfactualProofEngine.evaluate(_requirement(), sut, logic_data=logic)
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "protected_variable_assigned_by_the_rules"
+    assert TREATMENT_LIMIT in result.evidence_summary
 
 
 def test_a_system_declaring_no_directions_is_not_evaluated():

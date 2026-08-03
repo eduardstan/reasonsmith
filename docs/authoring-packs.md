@@ -112,6 +112,9 @@ ladder has no trace rung at all, so a system exposing neither `logic()` nor `dec
 protected variable is reported *unattainable* rather than satisfied. Writing one means reading
 `docs/semantics.md` §3, *counterfactual*, first — in particular that the protected variable is an
 input the decision procedure accepts and **not** a field a decision record should be made to carry.
+Both names still belong in `requires` — the protected one is what the engine reports as missing
+when a system has no notion of it — but it is the single name the capability gate does not
+subtract, so a duty written this way never tells an adopter to start logging a prohibited basis.
 
 **The fragment does not pick the engine.** How strongly a duty can be discharged is a fact about the
 system under test, not about the pack: `report._engine_ladder` collects every engine the fragment
