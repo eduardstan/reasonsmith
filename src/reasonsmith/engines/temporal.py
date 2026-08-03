@@ -52,6 +52,7 @@ from typing import Any, Optional
 
 from reasonsmith.report import RequirementResult
 from reasonsmith.rulelang import (
+    ALWAYS_OPERATOR,
     UnsupportedConstructError,
     has_temporal_operator,
     parse_property,
@@ -69,7 +70,10 @@ __all__ = [
 
 #: The one temporal operator this engine reduces. See the module docstring for why it is the only
 #: one, and `rulelang.TEMPORAL_OPERATORS` for the rest of the fragment, which stays at `observed`.
-ALWAYS = "always"
+#: It is the language's constant rather than a second spelling of it: `rulelang` strips the same
+#: operator when it names an implication's antecedent, and two literals would be two places to
+#: disagree about which operator distributes over positions.
+ALWAYS = ALWAYS_OPERATOR
 
 #: The trace semantics every verdict from this engine carries, because a `proved` temporal verdict
 #: is a claim about a *set of traces* and a reader who cannot see which set cannot read it. Carried

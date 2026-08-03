@@ -76,9 +76,10 @@ Three things made it the right duty for this demonstration, and it is worth sayi
 
   The antecedent is the trigger the clause states in its own first words: (b)(2) governs the
   statement *required by paragraph (a)(2)(i)*, so a creditor that lawfully disclosed the right to
-  request reasons instead has none yet and is not in breach. Where that antecedent never holds the
-  duty is satisfied vacuously, which reads the same in a report as a log that was checked and found
-  clean — a gap recorded in [`semantics.md`](semantics.md) §4.
+  request reasons instead has none yet and is not in breach. Where that antecedent holds nowhere in
+  the evidence an engine had, the duty is reported **not evaluated** rather than satisfied, naming
+  the trigger that never fired — so a log that was checked and found clean never reads the same as
+  one the duty imposed nothing on ([`semantics.md`](semantics.md) §4).
 
 ## 1. Neural — `observed`
 

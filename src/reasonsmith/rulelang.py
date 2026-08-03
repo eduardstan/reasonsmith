@@ -87,6 +87,13 @@ _ASCII_UPPER = frozenset(chr(code) for code in range(ord("A"), ord("Z") + 1))
 #: The numeric comparison that gives a signal the flag role rather than the magnitude role.
 FLAG_THRESHOLD = 0.5
 
+#: The one temporal operator whose vacuity question is the state property's own. `always(f)` holds
+#: at every position, so a trigger inside `f` that fires nowhere leaves the whole quantification
+#: vacuous in exactly the way `f` is vacuous at each position. Named here rather than in
+#: `engines/temporal.py` because `implication_antecedent` is a fact about the language and the
+#: engine's `ALWAYS` is this constant.
+ALWAYS_OPERATOR = "always"
+
 #: The temporal operators of the language, in the prefix call form a Python parser accepts.
 #: rtamt's infix `until` and `since` are deliberately absent: they do not parse here, so a spec
 #: using one is refused at load time rather than accepted into a fragment nothing can classify.
@@ -850,6 +857,39 @@ def has_temporal_operator(node: ast.AST) -> bool:
         and child.func.id in TEMPORAL_OPERATORS
         for child in ast.walk(node)
     )
+
+
+def implication_antecedent(node: ast.AST) -> ast.AST | None:
+    """The antecedent of a property that is one implication, or `None` for every other shape.
+
+    This is the whole of the unreachable-trigger rule that is a fact about the *formula*, and it
+    lives here for the reason the fragment classifier does: there is one property language, every
+    engine parses the same `spec` through it, and the antecedent is the same subtree whatever
+    domain the engine goes on to quantify over. Seven engines each guard the domain they built —
+    an empty trace, an empty plan, unsatisfiable premises — and not one of them could see this,
+    because a duty whose trigger fires nowhere has a domain that is full and evidence that is
+    empty. The engines ask this one question and answer it with the machinery they already hold:
+    the solver checks premises ∧ antecedent, the monitor scores the antecedent per position, the
+    replay search evaluates it per replayed decision. What they do with the answer is
+    `report.not_evaluated_for_unreachable_trigger`, so the sentence a reader gets is also written
+    once.
+
+    A top-level `always` is stripped first: over a finite trace `always(f)` holds exactly when `f`
+    holds at every position, so an antecedent inside `f` that is true at no position leaves the
+    quantification vacuous in the same sense. `eventually(f)` is deliberately not stripped — its
+    vacuity is a different claim, about a position that never existed rather than a trigger that
+    never fired — and neither is a conjunction of implications, whose antecedents are several and
+    whose vacuity is per-conjunct. Both are limits stated in `docs/semantics.md` §4 rather than
+    guessed at here.
+    """
+    if isinstance(node, ast.Expression):
+        return implication_antecedent(node.body)
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+        if node.func.id == ALWAYS_OPERATOR and len(node.args) == 1:
+            return implication_antecedent(node.args[0])
+        if node.func.id in ("implies", "Implies") and len(node.args) == 2:
+            return node.args[0]
+    return None
 
 
 def classify_fragment(spec: str) -> str:

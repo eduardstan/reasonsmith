@@ -500,11 +500,12 @@ gone: 12 CFR 1002.9(a)(2) is formalised as the either/or it is, and (b)(2) now c
 the clause states in its own first words — it governs the statement *required by paragraph
 (a)(2)(i)* — so a creditor lawfully using the disclosure alternative is no longer reported violated.
 What replaced it is smaller and is stated rather than hidden: where that creditor's log carries no
-statement of reasons, (b)(2) is `satisfied` **vacuously**, and no report outcome distinguishes a
-duty that imposed nothing from one that was checked and met
-([`docs/semantics.md`](docs/semantics.md) §4). Reporting a lawful practice compliant for the wrong
-reason is a far smaller defect than reporting it in breach, but a supervisor reading a verdict still
-cannot tell the two apart from the verdict alone.
+statement of reasons, the trigger fired nowhere, so (b)(2) is reported **not evaluated** — naming
+the antecedent that never fired and the domain that was searched — rather than `satisfied`
+([`docs/semantics.md`](docs/semantics.md) §4). That is the honest report of a duty nothing was
+learned about, and it is still not the honest *verdict*: `not applicable` is, per decision, and the
+result model cannot express one. A supervisor is told the duty was not answered on this log and is
+not told that the creditor was in the clear.
 
 **Auditors** running this against a client's system. Missing: reach into systems that are only logs.
 For any system exposing nothing but a decision trace, `observed` is the ceiling whatever the pack

@@ -18,6 +18,13 @@ What a reader must not break:
     read as a proof.
     Why this matters: `unsat` from premises no input can satisfy proves every property and its
     negation alike. A vacuous model is a modelling failure, so it is reported NOT EVALUATED.
+  - Where the property is an implication, the antecedent MUST be checked satisfiable under the
+    same premises before `unsat` on the negation is read as a proof.
+    Why this matters: it is the premise check one quantifier deeper. `unsat` from an antecedent no
+    admissible input reaches proves the implication and every other implication with that
+    antecedent, so the verdict is a fact about the formula wearing the strongest rung this tool
+    issues. `rulelang.implication_antecedent` names the subtree and
+    `report.not_evaluated_for_unreachable_trigger` words the refusal, both once for every engine.
   - Rule assignments MUST be encoded in static single assignment form.
     Why this matters: `logic()` describes a program executed statement by statement, so `score =
     score + 10` reassigns. Encoding it as one equality per name turns reassignment into a
@@ -67,7 +74,7 @@ from typing import Any, Optional
 
 import z3
 
-from reasonsmith.report import RequirementResult
+from reasonsmith.report import RequirementResult, not_evaluated_for_unreachable_trigger
 from reasonsmith.rulelang import (
     CONTAINS_CALL,
     PRESENCE_CALL,
@@ -77,6 +84,7 @@ from reasonsmith.rulelang import (
     eval_expression,
     execute_statements,
     fold_ascii_case,
+    implication_antecedent,
     parse_expression,
     parse_property,
     signal_names,
@@ -1024,6 +1032,52 @@ class ProvedEngine:
             )
 
         if check_res == z3.unsat:
+            # `unsat` on the negation is a proof only if there was something to prove. Where the
+            # property is an implication whose antecedent no admissible input satisfies, the
+            # negation is unsatisfiable because the trigger is unreachable and not because the
+            # system settles the consequent — the same shape as the unsatisfiable-premises refusal
+            # above, one quantifier deeper, and the same three lines `engines/counterfactual.py`
+            # already runs to ask whether an admissible differing pair exists at all. Asked here,
+            # on the satisfied path alone: a violated verdict names an input whose antecedent did
+            # fire, so vacuity cannot arise on it, and an earned proof pays for one extra check.
+            antecedent = implication_antecedent(property_node)
+            if antecedent is not None:
+                trigger_solver = z3.Solver()
+                trigger_solver.set("timeout", timeout_ms)
+                try:
+                    trigger_solver.add(*solver.assertions())
+                    trigger_solver.add(
+                        _as_bool(
+                            _ast_to_z3(antecedent, scope),
+                            f"Antecedent {ast.unparse(antecedent)!r}",
+                        )
+                    )
+                    trigger_res = trigger_solver.check()
+                    trigger_unknown = (
+                        trigger_solver.reason_unknown() if trigger_res == z3.unknown else ""
+                    ) or "solver returned unknown or timed out"
+                except Exception as exc:
+                    return not_evaluated(
+                        "Not evaluated: error checking whether any admissible input reaches the "
+                        f"antecedent of {req.spec!r}: {exc}",
+                        {"error": str(exc)},
+                    )
+                if trigger_res == z3.unsat:
+                    return not_evaluated_for_unreachable_trigger(
+                        req,
+                        ast.unparse(antecedent),
+                        "the inputs the system's declared logic and constraints admit",
+                        {"solver": "z3", "result": "unreachable_antecedent"},
+                    )
+                if trigger_res != z3.sat:
+                    return not_evaluated(
+                        "Not evaluated: the solver could not decide whether any admissible input "
+                        f"reaches the antecedent of {req.spec!r}: {trigger_unknown}. Until it "
+                        "does, `unsat` on the negation is not distinguishable from a trigger that "
+                        "never fires, and neither reading may be reported.",
+                        {"solver": "z3", "reason_unknown": trigger_unknown},
+                    )
+
             proof_details: dict[str, Any] = {"solver": "z3", "result": "unsat"}
             proof_limits = ""
             if scope.uses_real_arithmetic:

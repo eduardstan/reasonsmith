@@ -20,6 +20,13 @@ What a reader must not break:
     read for what it is worth, so `RequirementResult` refuses to construct a probed result whose
     `details` do not carry `probe_budget` (see `report.PROBE_BUDGET_FIELDS`) — the budget is a
     construction-time invariant, not a rendering convention.
+  - Where the property is an implication, a search in which no replayed decision reached the
+    antecedent is reported NOT EVALUATED, never `satisfied`.
+    Why this matters: "no counterexample" is worth what the search was; a search where the trigger
+    fired nowhere found no counterexample the way an empty search does. The rule is the solver's
+    own (`engines/proved.py`), asked of this domain, and it is written once —
+    `rulelang.implication_antecedent` names the subtree,
+    `report.not_evaluated_for_unreachable_trigger` words the refusal.
   - The search MUST be reproducible: the same records, trials and seed replay the same inputs in
     the same order (`plan_inputs`), and the seed is part of the recorded budget.
     Why this matters: a report that names a budget nobody can re-derive attests to nothing.
@@ -51,12 +58,17 @@ import random
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Optional
 
-from reasonsmith.report import PROBE_BUDGET_KEY, RequirementResult
+from reasonsmith.report import (
+    PROBE_BUDGET_KEY,
+    RequirementResult,
+    not_evaluated_for_unreachable_trigger,
+)
 from reasonsmith.rulelang import (
     NotAStatementError,
     UnsupportedConstructError,
     eval_expression,
     expression_kind,
+    implication_antecedent,
     parse_expression,
     parse_property,
 )
@@ -593,6 +605,14 @@ class ProbedEngine:
                 )
             return result
 
+        # The same question the solver asks of its input space, asked of this one: did any
+        # replayed decision reach the property's antecedent at all? Counted alongside the
+        # property rather than in a second walk, because the interpreter is already evaluating
+        # both — `Implies(a, b)` evaluates its antecedent to answer the implication.
+        antecedent_ast = implication_antecedent(spec_ast)
+        antecedent_text = ast.unparse(antecedent_ast) if antecedent_ast is not None else ""
+        triggered = 0
+
         errored = 0
         first_error = ""
         for index, case in enumerate(plan):
@@ -613,6 +633,8 @@ class ProbedEngine:
             try:
                 record = _as_record(case_snapshot, decide(first_input))
                 satisfied = holds(record)
+                if antecedent_ast is not None and eval_expression(antecedent_ast, dict(record)):
+                    triggered += 1
             except NotAStatementError as exc:
                 return not_evaluated(
                     f"Not evaluated: {req.spec!r} asks what a statement says, but replaying input "
@@ -710,6 +732,14 @@ class ProbedEngine:
                     "error": first_error,
                     PROBE_BUDGET_KEY: budget(len(plan), errored),
                 },
+            )
+
+        if antecedent_ast is not None and not triggered:
+            return not_evaluated_for_unreachable_trigger(
+                req,
+                antecedent_text,
+                f"the {len(plan) - errored} decision(s) this search replayed",
+                {"engine": "probed", PROBE_BUDGET_KEY: budget(len(plan), errored)},
             )
 
         return RequirementResult(

@@ -16,8 +16,11 @@ What a reader must not break:
     spec would pass while the pack said something else.
   - The forbidden wordings are the clause's own. If a test starts asserting on a phrase that is not
     in `verbatim_text`, the property has stopped being derived from the regulation.
-  - `test_a_duty_whose_trigger_never_fires_...` records a limit rather than a feature. Do not
-    "fix" it by asserting a fourth outcome the property cannot express; see `docs/semantics.md` §4.
+  - `test_a_duty_whose_trigger_never_fires_is_not_evaluated_at_any_rung` pins a feature, and one
+    that used to be the limit this module recorded: a trace where the antecedent held nowhere was
+    reported `satisfied` at `observed` while the solver reported the same formula `proved`. Both
+    rungs now refuse it. Do not restore the old assertion — see `docs/semantics.md` §4, and
+    `rulelang.implication_antecedent` for where the rule is written.
 """
 
 from __future__ import annotations
@@ -143,13 +146,21 @@ def test_a_statement_naming_a_principal_factor_is_satisfied(tmp_path):
 
 
 def test_a_creditor_who_took_the_disclosure_branch_is_not_violated(tmp_path):
-    """The residual false violation, removed.
+    """The residual false violation, removed — and what removing it does *not* buy.
 
     12 CFR 1002.9(b)(2) governs "the statement of reasons required by paragraph (a)(2)(i)". A
     creditor that lawfully disclosed the right to request reasons under (a)(2)(ii) has no such
     statement yet, so the clause does not reach that notification. Reporting them `violated` on a
     binding duty was the worst error this tool can make, and the README's Impact section said so in
-    public.
+    public. That is the assertion this test exists for and it is unchanged.
+
+    What changed is the second half. This creditor used to be reported `satisfied` at `observed`,
+    which was the duty's antecedent being false rather than its consequent being met — nothing about
+    the wording of any statement was examined, because there was no statement. The trigger guard
+    reports that *not evaluated* and names the antecedent that never fired. It is a weaker report of
+    the same creditor and a truer one, and `docs/semantics.md` §4 states the cost: a lawful
+    disclosure-branch creditor no longer gets a clean line on this duty, and the honest answer
+    (`not applicable`, per record) is one the result model still cannot express.
     """
     disclosure = "Write to Credit Review, 1 Example Street, within 60 days of this notice."
     result = _check(
@@ -161,27 +172,26 @@ def test_a_creditor_who_took_the_disclosure_branch_is_not_violated(tmp_path):
     )
 
     assert result.verdict != Verdict.VIOLATED
-    assert result.verdict == Verdict.SATISFIED
-    assert result.strength == Strength.OBSERVED
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert f"present({REASONS})" in result.evidence_summary
 
 
-# --------------------------------------------------------------------------------------------
-# What the property does not capture, pinned where it can rot
-# --------------------------------------------------------------------------------------------
+def test_a_duty_whose_trigger_never_fires_is_not_evaluated_at_any_rung():
+    """The limit this module used to record, closed. See `docs/semantics.md` §4.
 
+    Two traces, two situations, and they must not share a verdict. In the first the duty imposed a
+    requirement and the records met it: `satisfied` at `observed`, which is what the monitor
+    established. In the second the antecedent held at no position, so the duty imposed nothing and
+    nothing about the wording of any statement was examined — and this used to be reported
+    `satisfied` at `observed` too, with no field of the result telling the two apart. It is now
+    *not evaluated*, and the summary names the antecedent that never fired and the trace it was
+    looked for in, which are the two things a reader needs to see that the duty was not answered.
 
-def test_a_duty_whose_trigger_never_fires_is_satisfied_vacuously_and_the_report_cannot_say_so():
-    """A finding, not a feature. See `docs/semantics.md` §4.
-
-    Two traces, two different situations, one verdict. In the first the duty imposed a requirement
-    and the records met it. In the second the antecedent never held, so the duty imposed nothing and
-    nothing about the wording of any statement was checked. Both are reported `satisfied` at
-    `observed`, and no field of the result distinguishes them.
-
-    `not_applicable` would be the honest answer for the second, and the property cannot reach it:
+    `not_applicable` is still the honest answer for the second and is still out of reach:
     applicability in reasonsmith is a per-*requirement*, per-*system* question decided from the
-    declared regulatory class before any engine runs, and there is no per-record equivalent. This
-    test exists so the gap is visible in the suite rather than only in prose.
+    declared class and domain before any engine runs, and there is no per-record equivalent. What
+    changed is that the un-answerable case is no longer reported as an answer.
     """
     from reasonsmith.sut import BaseSUT
 
@@ -200,8 +210,16 @@ def test_a_duty_whose_trigger_never_fires_is_satisfied_vacuously_and_the_report_
     b = evaluate_requirement(requirement(), sut, never_triggered)
 
     assert (a.verdict, a.strength) == (Verdict.SATISFIED, Strength.OBSERVED)
-    assert (b.verdict, b.strength) == (Verdict.SATISFIED, Strength.OBSERVED)
-    assert a.verdict == b.verdict and a.strength == b.strength
+    assert (b.verdict, b.strength) == (Verdict.INCONCLUSIVE, None)
+    assert b.details["vacuous_trigger"] == {
+        "antecedent": f"present({REASONS})",
+        "domain": f"the {len(never_triggered)} decision(s) of this trace",
+    }
+
+
+# --------------------------------------------------------------------------------------------
+# What the property does not capture, pinned where it can rot
+# --------------------------------------------------------------------------------------------
 
 
 def test_the_property_does_not_decide_whether_any_other_statement_is_specific(tmp_path):

@@ -313,6 +313,61 @@ class RequirementResult:
         }
 
 
+#: Where a result records that the duty's trigger fired nowhere in the evidence the engine had.
+#: It carries the antecedent that never fired and the domain that was searched, because those two
+#: are the whole of the finding: an implication is true of every system alike where its antecedent
+#: is false, so a reader who is not told which trigger stayed false and over what has been handed a
+#: verdict about the formula and told it is a verdict about the system.
+VACUOUS_TRIGGER_KEY = "vacuous_trigger"
+
+#: The two fields that key carries, named here so a rendering asks the result rather than parsing
+#: a sentence that is free to be reworded — the same reason `PROBE_BUDGET_FIELDS` is named.
+VACUOUS_TRIGGER_FIELDS = ("antecedent", "domain")
+
+
+def not_evaluated_for_unreachable_trigger(
+    req: Requirement,
+    antecedent: str,
+    domain: str,
+    details: dict[str, Any] | None = None,
+) -> RequirementResult:
+    """The one result an engine returns when a duty's trigger fired nowhere it could look.
+
+    Written once, against the result model, for the reason `rulelang.implication_antecedent` is
+    written once against the property language: the vacuity is a fact about the formula, the same
+    subtree in every engine, and four rungs answering it in four sentences would be four places for
+    the rule to drift. `antecedent` is the trigger as the property states it, and `domain` is the
+    engine's own account of what it searched and how much of it there was — "every input the
+    declared constraints admit", "2 decision(s) of the trace", "59 replayed input(s)" — because the
+    contract is that both travel with the verdict.
+
+    The verdict is `inconclusive` at `strength=None`, which is this package's "not evaluated": the
+    duty reaches the system, the engine ran, and what it learned about the system is nothing. It is
+    deliberately not `satisfied`, which would be literally true of the formula and false of the
+    claim a reader takes from it, and deliberately not `not_applicable`, which is a statement about
+    a duty's reach that no engine is in a position to make. See `docs/semantics.md` §4.
+    """
+    merged: dict[str, Any] = dict(details or {})
+    merged[VACUOUS_TRIGGER_KEY] = {"antecedent": antecedent, "domain": domain}
+    return RequirementResult(
+        requirement_id=req.id,
+        source_clause=f"{req.source_document} {req.article_clause}",
+        verdict=Verdict.INCONCLUSIVE,
+        strength=None,
+        signals_required=tuple(req.requires),
+        evidence_summary=(
+            f"Not evaluated: {req.spec!r} is an implication, and nothing in {domain} made its "
+            f"antecedent {antecedent!r} true. An implication holds wherever its trigger is false, "
+            "so this evidence would report every system alike satisfied and says nothing about "
+            "this one. A duty whose trigger never fired is reported as no evidence rather than as "
+            "a clean verdict."
+        ),
+        details=merged,
+        binding=req.binding,
+        scope=req.scope,
+    )
+
+
 #: The report categories, in the order they are rendered. Every result falls in exactly one of
 #: them, which is what lets the counts reconcile against a total instead of merely summing to
 #: something plausible.

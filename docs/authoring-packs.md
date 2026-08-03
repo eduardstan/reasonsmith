@@ -152,8 +152,10 @@ adequacy check.
 paraphrase, so a clause's meaning expressed in other words passes. A non-ASCII phrase is refused at
 load time, because the fold must stay reproducible character-for-character by the solver. A record
 carrying no value for the signal contains no phrase, which is what lets an implication guarded by
-`present()` express a clause that only bites in some circumstances — read `docs/semantics.md` §4 on
-what a vacuously satisfied duty does *not* tell a reader before relying on that.
+`present()` express a clause that only bites in some circumstances — read `docs/semantics.md` §4
+before relying on that: a duty whose trigger fires nowhere is reported *not evaluated* at every
+rung, so a pack that guards a duty this way buys the correct absence of a false violation and loses
+the clean line the duty used to get where the clause never bit.
 
 ## An either/or clause
 

@@ -402,8 +402,11 @@ decisions. And the flag/magnitude reading of §2 is a modelling choice — a pac
 Not evaluated, never satisfied, when: the trace is shorter than two records, because a discrete-time
 monitor cannot read a sampling period off one sample
 (`test_trace_too_short_names_the_trace_not_the_formula`); rtamt cannot parse the formula
-(`test_unexpressible_formula_reports_not_evaluated`); or any record carries no finite real number for
-a variable the formula treats as a magnitude (`test_quantitative_bound_needs_a_measurement`).
+(`test_unexpressible_formula_reports_not_evaluated`); any record carries no finite real number for
+a variable the formula treats as a magnitude (`test_quantitative_bound_needs_a_measurement`); or the
+property is an implication whose antecedent scored below zero at every position, because a trace
+that never reaches the trigger scores non-negative for every system alike
+(`test_an_antecedent_false_at_every_position_is_not_evaluated_at_observed`, and §4 for the rule).
 
 The two-record floor is what holding an either/or costs `ecoa_reg_b_1002_9_a_2_written_statement`.
 A disjunction is not a conjunction of `present()` atoms, so the duty is quantified over the trace
@@ -508,6 +511,9 @@ system exposing no `decide()` (`test_a_system_without_decide_is_not_evaluated_ne
 trace with nothing to perturb around (`test_an_empty_trace_gives_the_search_nothing_to_probe_around`),
 a non-positive trial budget (`test_nonpositive_trial_budget_is_not_confused_with_an_empty_trace`), and
 a property this engine cannot express (`test_the_complete_property_must_be_expressible_and_boolean`).
+So is a search in which no replayed decision reached the property's antecedent: "no counterexample"
+is worth what the search was, and a search whose trigger fired nowhere found none the way an empty
+search does (`test_a_search_that_never_reached_the_antecedent_is_not_evaluated_at_probed`, §4).
 
 ### `certificate` — `engines/certificate.py`
 
@@ -654,7 +660,11 @@ the declared sorts. That is the strongest thing this tool says.
 Reported not evaluated, never `proved` or `satisfied`: a solver result of `unknown` or a timeout
 (`test_solver_timeout_reported_not_evaluated`); premises no input can satisfy, since `unsat` from a
 vacuous model proves every property and its negation alike
-(`test_unsatisfiable_premises_are_not_a_proof`); logic or a property using a construct the encoding
+(`test_unsatisfiable_premises_are_not_a_proof`); an implication whose antecedent no admissible input
+satisfies, which is that same check one quantifier deeper — `unsat` on the negation is then a fact
+about the trigger and not about the system
+(`test_an_antecedent_no_admissible_input_reaches_is_not_evaluated_at_proved`, and §4 for the rule
+and its cost); logic or a property using a construct the encoding
 does not model (`test_unsupported_construct_reported_not_evaluated`); rules undefined on the witness
 the solver chose (`test_rules_undefined_on_the_witness_are_named_as_such`); a disagreement between
 encoding and interpreter (`test_encoding_disagreeing_with_the_interpreter_is_not_a_proof`); a system
@@ -700,7 +710,8 @@ and not left to be inferred, the same discipline the probe budget is held to.
   (`test_only_always_reaches_the_temporal_proof_rung`,
   `test_a_nested_temporal_operator_does_not_reduce`).
 - **Everything the `proved` engine cannot claim, this cannot claim**, because the verdict *is* that
-  engine's verdict: `unknown`, a timeout, vacuous premises, an encoding that disagrees with the
+  engine's verdict: `unknown`, a timeout, vacuous premises, an antecedent no admissible input
+  reaches (`test_the_temporal_reduction_inherits_the_refusal`), an encoding that disagrees with the
   interpreter, or a counterexample that does not reproduce all yield not evaluated, and the duty
   falls back to the trace.
 - **The empty trace is covered vacuously**, since `always(f)` is true of it. A satisfied verdict here
@@ -1198,7 +1209,7 @@ system declared a domain that is simply not this duty's raises no such line, bec
 answered (`test_a_run_that_skipped_duties_for_a_missing_declaration_says_so`). The exit code is
 unchanged, which is why the notice exists.
 
-### The gap these four leave: a duty whose trigger never fired
+### A duty whose trigger never fired is not evaluated, at every rung
 
 Some clauses only bite in some circumstances. 12 CFR 1002.9(b)(2) governs, by its own words, "the
 statement of reasons required by paragraph (a)(2)(i)", so a creditor that lawfully took the
@@ -1207,28 +1218,58 @@ That trigger is expressible — it is an implication whose antecedent is
 `present(artifact_logs_reason_explanation)` — and formalising it removed a false violation on a
 binding duty (`test_a_creditor_who_took_the_disclosure_branch_is_not_violated`).
 
-**But the outcome it produces is `satisfied`, and that is not quite the truth.** Two traces get the
+**The outcome that used to produce was `satisfied`, and it was not the truth.** Two traces got the
 same verdict at the same strength: one where the duty imposed a requirement and every record met it,
 and one where the antecedent never held, so the duty imposed nothing and the wording of no statement
-was ever examined. No field of the result distinguishes them
-(`test_a_duty_whose_trigger_never_fires_is_satisfied_vacuously_and_the_report_cannot_say_so`).
+was ever examined. No field of the result distinguished them.
 
-`not applicable` would be the honest answer for the second, and **the property language cannot reach
-it**. Applicability here is a per-*requirement*, per-*system* question, decided from the declared
-regulatory class and decision domain before any engine runs. Both gates are about the system,
-not about the record: neither can say that a duty reached this system and then imposed nothing
-on *this decision*. There is no per-record equivalent, and a formula is Boolean per record with
-no third value to return. Reporting the vacuous case `satisfied` is therefore
-literally true of what was monitored — the observed engine's claim is non-negative robustness at
-every step, which held — and misleading about what was learned.
+The rule now: **where a requirement's property is an implication and the engine's evidence domain
+contains no element satisfying its antecedent, the result is `not evaluated`, `strength=None`,
+naming the antecedent that never fired and the domain that was searched**
+(`test_a_duty_whose_trigger_never_fires_is_not_evaluated_at_any_rung`). It is written once — the
+antecedent is a fact about the formula, the same subtree whichever engine parsed it
+(`rulelang.implication_antecedent`), and the refusal is worded once against the result model
+(`report.not_evaluated_for_unreachable_trigger`,
+`test_the_language_names_the_antecedent_whatever_the_arrow_was_written_as`). Each rung asks it of
+the domain it quantifies over, and the domain travels on the result:
 
-This is recorded as a gap rather than closed. Closing it would mean a per-record applicability
-verdict that every engine, every count and every rendering could carry, which is a change to the
-result model and not to a pack. The mitigation available today is that the duty's `rationale` says
-when the clause bites, and a reader who needs the distinction can get it from
-`ecoa_reg_b_1002_9_a_2_written_statement`, which reports *which* branch each notification took.
-Until then, `satisfied` on a triggered duty means "no record breached it", not "every record was
-tested against it".
+| Rung | The domain the antecedent was looked for in | Test |
+|---|---|---|
+| `proved` | every input the declared logic and constraints admit — the solver is asked whether premises ∧ antecedent is satisfiable, which is the premise check one quantifier deeper | `test_an_antecedent_no_admissible_input_reaches_is_not_evaluated_at_proved` |
+| `proved`, over a trace | the same domain: `always(f)` is decided by deciding `f`, so the reduction inherits the refusal rather than repeating it | `test_the_temporal_reduction_inherits_the_refusal` |
+| `probed` | the decisions the search replayed — the interpreter already evaluates the antecedent to answer the implication, so it is counted in the same walk | `test_a_search_that_never_reached_the_antecedent_is_not_evaluated_at_probed` |
+| `observed` | the decisions of the supplied trace — the antecedent is monitored as a sub-formula, at the same threshold satisfaction is read at | `test_an_antecedent_false_at_every_position_is_not_evaluated_at_observed` |
+
+**Why the argument for tolerating it did not survive.** It was a trace argument: reporting the
+vacuous case `satisfied` is literally true of what was monitored — the observed engine's claim is
+non-negative robustness at every step, which held — and misleading only about what was learned.
+That reading does not exist at `proved`, where there is no monitor, no record and no robustness,
+and the claim is universal over the whole declared input space. A creditor whose rules state no
+reasons at all was reported *violated* on 12 CFR 1002.9(a)(2) for giving neither reasons nor a
+disclosure, and `satisfied` at `proved` on 12 CFR 1002.9(b)(2) for the specificity of the statement
+it never made, in the same five lines of one report. So the argument for tolerating the weak case
+was the argument against tolerating the strong one, and both moved together
+(`test_the_solver_and_the_monitor_no_longer_disagree_about_the_same_formula`).
+
+**What this costs, stated rather than hidden.** Duties that used to land in the `satisfied` column
+land in `not evaluated`, and headline counts and exit codes moved with them. A creditor lawfully on
+the (a)(2)(ii) disclosure branch is one of them: that system is *not* in breach, and it no longer
+gets a clean line on this duty either. `not applicable` is still the honest answer there and **the
+result model still cannot reach it**. Applicability here is a per-*requirement*, per-*system*
+question, decided from the declared regulatory class and decision domain before any engine runs.
+Both gates are about the system, not about the record: neither can say that a duty reached this
+system and then imposed nothing on *this decision*. There is no per-record equivalent, and a
+formula is Boolean per record with no third value to return. What changed is that the case is no
+longer reported as an answer; the reader is told the trigger never fired and over what, which is
+what the summary and `report.VACUOUS_TRIGGER_KEY` carry.
+
+Two shapes the guard deliberately does not reach, and neither is an oversight
+(`test_a_property_that_is_not_one_implication_has_no_antecedent_to_be_unreachable`). `eventually(f)`
+is not stripped the way `always(f)` is: its vacuity is a claim about a position that never existed
+rather than about a trigger that never fired, and the two need different sentences. A conjunction of
+implications has several antecedents and a vacuity per conjunct, which is a finer report than one
+`strength=None` can carry. A property that is not an implication at all is untouched at every rung
+(`test_a_property_with_no_implication_is_untouched_at_proved`).
 
 The operational consequence is in the exit code: among completed reports, only a violation exits
 non-zero. Unattainable
@@ -1289,7 +1330,8 @@ Two consequences of that report text, followed by a separate package-level termi
 | A system with neither logic nor decisions is not evaluated, and the proof rung still names the missing interface when asked | `test_system_without_logic_or_a_trace_is_not_evaluated`, `test_the_proof_rung_still_names_the_missing_logic_when_it_is_asked_directly` |
 | A universal prohibition is never proved on the strength of a sample; a trace answers it at `observed` and no higher | `test_gdpr_art22_without_exposed_logic_is_never_proved_on_the_strength_of_a_sample` |
 | The trace rung does not reach every logical shape, and says so rather than guessing | `test_the_trace_rung_does_not_reach_every_logical_shape_and_says_so`, `test_the_monitor_reads_the_spec_as_written_so_implication_is_spelled_with_an_arrow` |
-| A duty whose trigger never fired is reported satisfied, and the four outcomes cannot say so | `test_a_duty_whose_trigger_never_fires_is_satisfied_vacuously_and_the_report_cannot_say_so` |
+| A duty whose trigger never fired is not evaluated at every rung, naming the antecedent and the domain searched | `test_a_duty_whose_trigger_never_fires_is_not_evaluated_at_any_rung`, `test_an_antecedent_no_admissible_input_reaches_is_not_evaluated_at_proved`, `test_the_temporal_reduction_inherits_the_refusal`, `test_a_search_that_never_reached_the_antecedent_is_not_evaluated_at_probed`, `test_an_antecedent_false_at_every_position_is_not_evaluated_at_observed` |
+| The guard is one rule against the property language, and an earned verdict still reaches its rung | `test_the_language_names_the_antecedent_whatever_the_arrow_was_written_as`, `test_a_property_that_is_not_one_implication_has_no_antecedent_to_be_unreachable`, `test_a_satisfaction_whose_antecedent_does_fire_still_reaches_proved`, `test_a_property_with_no_implication_is_untouched_at_proved`, `test_widening_the_declared_input_space_alone_turns_the_refusal_into_a_violation` |
 | 12 CFR 1002.9(b)(2) is falsifiable on a plain decision log, and the disclosure branch is no longer violated | `test_a_statement_the_clause_calls_insufficient_is_violated_on_a_bare_log`, `test_a_statement_resting_on_internal_standards_or_policies_is_violated`, `test_a_statement_naming_a_principal_factor_is_satisfied`, `test_a_creditor_who_took_the_disclosure_branch_is_not_violated` |
 | Every forbidden wording is the clause's own, and the one derived reading is named as one | `test_the_forbidden_wordings_are_the_clauses_own` |
 | The specificity duty leaves the record fragment, so a one-decision log no longer answers it | `test_a_single_decision_log_is_not_evaluated_never_satisfied` |

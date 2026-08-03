@@ -67,6 +67,51 @@ releases before it predate the file and are not reconstructed here.
   states it: it takes a system's word about what it is, 21 of 28 shipped requirements are presence
   checks, a rung is not a grade, and the strongest rungs need a system that exposes its inference.
 
+### Fixed
+
+- **Breaking (verdicts move): a duty whose trigger never fired is reported *not evaluated*, at
+  every rung.** A creditor whose rules assign `artifact_logs_reason_explanation = ""` on every path
+  was reported, in one report, *violated* on 12 CFR 1002.9(a)(2) for giving neither reasons nor a
+  disclosure and `satisfied` at **`proved`** on 12 CFR 1002.9(b)(2) for the specificity of the
+  statement it never made. `unsat` on the negated property was read as a proof; it was the
+  implication's antecedent being unreachable. The rule that replaced it: where a requirement's
+  property is an implication and the engine's evidence domain contains no element satisfying its
+  antecedent, the result is *not evaluated*, `strength=None`, naming the antecedent that never
+  fired and the domain that was searched (`report.VACUOUS_TRIGGER_KEY`).
+
+  - **One guard, expressed once.** The vacuity is a property of the *formula*, not of the evidence,
+    which is why seven engine-local domain guards found it nowhere.
+    `rulelang.implication_antecedent` names the subtree — one property language, one antecedent,
+    whatever surface syntax the pack used — and
+    `report.not_evaluated_for_unreachable_trigger` words the refusal against the result model.
+  - **Every rung asks it of the domain it quantifies over.** `proved` checks premises ∧ antecedent
+    satisfiable, which is the existing premise check one quantifier deeper and the same three lines
+    `engines/counterfactual.py` already ran for its own fragment; `temporal` inherits it through the
+    `always(f)` reduction; `observed` monitors the antecedent as a sub-formula per position;
+    `probed` counts the replayed decisions that reached it, in the walk the interpreter already
+    makes. The replay rung is included because the engine ladder falls to it: guarding the proof
+    rung alone moved the vacuous `satisfied` down a rung instead of removing it.
+  - **Earned verdicts are untouched.** A satisfaction whose antecedent does fire still reaches
+    `proved`; a violation never could be vacuous, so the guard runs on the satisfied path only; a
+    property with no implication in it is unchanged at every rung.
+  - **What it costs, accepted knowingly.** Duties that landed in the `satisfied` column land in
+    *not evaluated*, and headline counts and exit codes move with them. A creditor lawfully on the
+    12 CFR 1002.9(a)(2)(ii) disclosure branch is one of them: no longer accused, and no longer
+    cleared either. `not applicable` remains the honest verdict there and remains unreachable — it
+    is a per-record question and the result model has no per-record applicability. No shipped
+    example, generated document or published number moved: every byte-pinned builder rewrote
+    identical bytes, because every shipped demonstration system states reasons.
+  - **Two shapes deliberately out of reach**, stated rather than guessed at: `eventually(f)` is not
+    stripped the way `always(f)` is — its vacuity is about a position that never existed, not a
+    trigger that never fired — and a conjunction of implications has a vacuity per conjunct that one
+    `strength=None` cannot carry.
+
+  `docs/semantics.md` §3 and §4 state it per rung; `tests/test_vacuous_trigger.py` holds it. The
+  test that pinned the old behaviour as a known limit
+  (`test_a_duty_whose_trigger_never_fires_is_satisfied_vacuously_and_the_report_cannot_say_so`) now
+  pins the new one under the name
+  `test_a_duty_whose_trigger_never_fires_is_not_evaluated_at_any_rung`.
+
 ### Changed
 
 - **The README leads with the deleted reasons.** The reason-deletion run, its transcript and the
