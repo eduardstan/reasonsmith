@@ -603,12 +603,19 @@ def _admissible_values(
     constraints: Iterable[str],
     protected: str,
     limit: int,
+    *,
+    timeout_ms: int = 5000,
 ) -> list[Any]:
     """Distinct values of `protected` the declared constraints and sort admit, sorted.
 
     Enumerated from the declaration and never from the trace — see the module docstring. Sorted
     before use so the baseline the replay compares against is the same one on every run, whatever
     order the solver happened to produce the models in.
+
+    Bounded by a solver timeout for the reason every other solver here carries one: the caller
+    reports a raise, and cannot report a hang. A check that comes back neither `sat` nor `unsat`
+    raises rather than truncating, because a partial enumeration read as the whole admissible set
+    would report a variable the system pins.
     """
     from reasonsmith.engines.proved import (
         _as_bool,
@@ -619,11 +626,21 @@ def _admissible_values(
 
     scope = _Scope(dict(variables))
     solver = z3.Solver()
+    solver.set("timeout", timeout_ms)
     for text in constraints:
         solver.add(_as_bool(_ast_to_z3(parse_expression(text), scope), f"constraint {text!r}"))
     const = scope.read(protected)
     values: list[Any] = []
-    while len(values) < limit and solver.check() == z3.sat:
+    while len(values) < limit:
+        outcome = solver.check()
+        if outcome == z3.unsat:
+            break
+        if outcome != z3.sat:
+            reason = solver.reason_unknown() or "solver returned unknown or timed out"
+            raise UnsupportedConstructError(
+                f"the declared constraints could not be searched for values of {protected!r}: "
+                f"{reason}"
+            )
         # `model_completion=True` because a variable no constraint mentions is absent from the
         # model, and absent from the model is the *widest* input space rather than the narrowest:
         # the declaration admits every value of the sort. Reading `model[const]` alone would return
@@ -647,6 +664,7 @@ class PairedReplayEngine:
         max_values: int = DEFAULT_MAX_VALUES,
         max_pairs: int = DEFAULT_MAX_PAIRS,
     ) -> RequirementResult:
+        from reasonsmith.engines.probed import _clone_case
         from reasonsmith.engines.proved import LogicDeclarationError, read_declared_logic
 
         atom = _atom(req)
@@ -749,6 +767,7 @@ class PairedReplayEngine:
         errored = 0
         first_error = ""
         replayed = 0
+        attempted = 0
 
         def budget() -> dict[str, Any]:
             return {
@@ -768,9 +787,17 @@ class PairedReplayEngine:
                 "pairs_errored": errored,
             }
 
+        def replay_input(case: Mapping[str, Any], value: Any) -> dict[str, Any]:
+            # Cloned per half for the reason the sibling search clones per probe: a decide() that
+            # mutates a nested value it was handed would otherwise change the second half's input,
+            # and the two outcomes would differ for a reason that is not the protected variable.
+            replay = _clone_case(dict(case))
+            replay[protected] = value
+            return replay
+
         def run_pair(case: Mapping[str, Any], other: Any) -> tuple[Any, Any]:
-            left = decide({**case, protected: baseline})
-            right = decide({**case, protected: other})
+            left = decide(replay_input(case, baseline))
+            right = decide(replay_input(case, other))
             for record in (left, right):
                 if not isinstance(record, Mapping) or outcome not in record:
                     raise UnsupportedConstructError(
@@ -779,9 +806,15 @@ class PairedReplayEngine:
             return left[outcome], right[outcome]
 
         for case in bases:
+            if attempted >= max_pairs:
+                break
             for other in alternatives:
-                if replayed >= max_pairs:
+                # The cap counts pairs *attempted*, not pairs that came back: a decide() that
+                # raises on every pair would otherwise run the whole product while the budget
+                # reported a bound it was not keeping.
+                if attempted >= max_pairs:
                     break
+                attempted += 1
                 try:
                     left_outcome, right_outcome = run_pair(case, other)
                 except Exception as exc:  # noqa: BLE001 — counted, never read as a pass
