@@ -110,12 +110,19 @@ SOURCES = (
         "https://www.ecfr.gov/api/versioner/v1/full/2023-08-29/title-12.xml?part=1002&section=1002.9",
         "ecfr-xml",
     ),
+    SourceDocument(
+        "ecoa_general_rules",
+        "https://www.ecfr.gov/api/versioner/v1/full/2023-08-29/title-12.xml?part=1002&section=1002.4",
+        "ecfr-xml",
+    ),
 )
 SOURCES_BY_KEY = {source.key: source for source in SOURCES}
 
 #: Provision registry: requirement `article_clause` -> (source key, passage selector).
 #: For Cellar XHTML the selector is the `id` of the paragraph, article or recital `<div>`; the eCFR
-#: response *is* section 1002.9, so its selector is None (the whole document is the passage).
+#: response *is* the section it was asked for, so its selector is None (the whole document is
+#: the passage). Section 1002.4 is a second eCFR document rather than a selector into the
+#: first: the versioner endpoint returns one section per request.
 PROVISIONS = {
     "Article 12(1)": ("ai_act", "012.001"),
     "Article 12(2)": ("ai_act", "012.002"),
@@ -137,6 +144,7 @@ PROVISIONS = {
     "12 CFR 1002.9(a)(1)": ("ecoa", None),
     "12 CFR 1002.9(a)(2)": ("ecoa", None),
     "12 CFR 1002.9(b)(2)": ("ecoa", None),
+    "12 CFR 1002.4(a)": ("ecoa_general_rules", None),
 }
 
 

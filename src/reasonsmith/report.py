@@ -62,7 +62,7 @@ LIMITS = (
 )
 
 #: Formalisms this build can actually evaluate.
-SUPPORTED_FORMALISMS = ("record", "temporal", "logical")
+SUPPORTED_FORMALISMS = ("record", "temporal", "logical", "counterfactual")
 
 #: Where a probed result carries the search that produced it, and the fields that search must
 #: name. A probed verdict is a statement about a bounded search — how many inputs were replayed,
@@ -994,6 +994,18 @@ def _engine_ladder(
     appending a rung that will always report not-evaluated would make every non-`always` temporal
     duty pay for a solver call that cannot answer it.
 
+    **The `counterfactual` fragment has no trace rung, and returns before every other rung is
+    considered.** `counterfactually_invariant(outcome, protected)` is a property of a *pair* of
+    executions: hold every input fixed, move one named variable, and the decision must not move. A
+    trace holds what the system decided and a counterfactual asks what it would have decided, so no
+    length of decision log establishes one — reading the atom off a record is refused by
+    `rulelang.eval_expression` itself, which is why this is a fact about the code rather than a
+    convention this function is trusted to keep. Two rungs remain, both of which *run* the system:
+    the solver encoding the declared rules twice, and the paired replay running `decide()` on a
+    recorded decision and on its twin. Neither is appended alongside a plug-in rung, for the reason
+    the certificate duty below returns early: an installed package this repository never audited
+    must not be able to answer a counterfactual duty off a log either.
+
     One duty is deliberately given a ladder of **one** rung: a duty gating on
     `engines.certificate.DELETED_REASON_COUNT` asks whether the reasons a decision states are all
     the reasons its inference had, and that is measured against the inference artefact or not at
@@ -1022,6 +1034,35 @@ def _engine_ladder(
                 ),
             )
         ]
+
+    if req.formalism == "counterfactual":
+        from reasonsmith.engines.counterfactual import (
+            CounterfactualProofEngine,
+            PairedReplayEngine,
+        )
+
+        counterfactual: list[tuple[Strength, Any]] = []
+        if callable(getattr(sut, "logic", None)):
+            counterfactual.append(
+                (
+                    Strength.PROVED,
+                    lambda: _run_proof_rung(
+                        req, sut, records, resources, engine=CounterfactualProofEngine
+                    ),
+                )
+            )
+        counterfactual.append(
+            (
+                Strength.PROBED,
+                lambda: PairedReplayEngine.evaluate(
+                    req,
+                    sut,
+                    records,
+                    trace_provider=resources.trace if records is None else None,
+                ),
+            )
+        )
+        return counterfactual
 
     ladder: list[tuple[Strength, Any]] = []
 

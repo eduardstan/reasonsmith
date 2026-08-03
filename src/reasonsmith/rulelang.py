@@ -63,6 +63,24 @@ PRESENCE_CALL = "present"
 #: occurs, and nothing about what the text means.
 CONTAINS_CALL = "contains"
 
+#: The atom asking whether one named variable can move a named outcome, holding everything else
+#: fixed — `counterfactually_invariant(outcome_signal, protected_signal)`.
+#:
+#: It is the third atom whose arguments are signal *names* rather than expressions, for the reason
+#: the other two give: every engine has to bind them to named variables, and there is no variable
+#: behind a computed value. It is the first atom in this language that is **not a property of one
+#: decision record**. `present()` and `contains()` ask something about a decision; this asks whether
+#: two decisions the system would make — differing in one input and in nothing else — agree. That
+#: is a property of a *pair* of executions, which is why it has a fragment of its own
+#: (`classify_fragment`) rather than being admitted into `logical`: a trace holds what happened and
+#: a counterfactual is about what would have happened, so no engine reading a trace may be handed
+#: this. `report._engine_ladder` gives the fragment no trace rung, and `eval_expression` refuses the
+#: atom outright so that nothing can evaluate one against a decision record by accident.
+#:
+#: The admissible values of the protected variable come from the system's declared `constraints`,
+#: never from the trace. See `engines/counterfactual.py` and `docs/semantics.md` §3.
+COUNTERFACTUAL_CALL = "counterfactually_invariant"
+
 #: The characters `contains()` folds, and the only ones. See `fold_ascii_case`.
 _ASCII_UPPER = frozenset(chr(code) for code in range(ord("A"), ord("Z") + 1))
 
@@ -81,8 +99,10 @@ VALUE_CALLS = {"implies": 2, "Implies": 2, "abs": 1, "min": 2, "max": 2}
 
 #: The fragments of this language, narrowest first. `record` is a conjunction of presence atoms;
 #: `logical` is any other state property of one decision record; `temporal` is anything reaching
-#: across records with a temporal operator.
-FRAGMENTS = ("record", "logical", "temporal")
+#: across records with a temporal operator; `counterfactual` is the one relational fragment — a
+#: property of a *pair* of executions rather than of any trace, and the only one nothing that reads
+#: a decision log may discharge.
+FRAGMENTS = ("record", "logical", "temporal", "counterfactual")
 
 #: The fragments that are properties of a single decision record, and can therefore be discharged
 #: by an engine that reasons about one decision at a time (the solver, the replay search) as well
@@ -216,6 +236,70 @@ def contains_arguments(node: ast.Call) -> tuple[str, str]:
             "limit of the predicate, recorded in docs/semantics.md, not of the clause"
         )
     return signal.id, phrase.value
+
+
+def counterfactual_arguments(node: ast.Call) -> tuple[str, str]:
+    """The outcome name and the protected name of a `counterfactually_invariant()` atom.
+
+    One place decides what a well-formed atom is, so the solver's self-composition and the paired
+    replay cannot drift on it — the same reason `contains_arguments` exists.
+
+    Both arguments are signal names and never expressions. A computed value has no variable behind
+    it for the protected copy of the encoding to *vary*, and no field of a replayed input to
+    replace, so an expression in either position would name nothing either engine could act on.
+
+    The two names must differ. `counterfactually_invariant(x, x)` asks whether `x` moves when `x`
+    moves, which is answered by the shape of the question rather than by anything about a system.
+    """
+    if len(node.args) != 2:
+        raise UnsupportedConstructError(
+            f"{COUNTERFACTUAL_CALL}() takes an outcome signal name and a protected signal name: "
+            f"{ast.unparse(node)!r}"
+        )
+    outcome, protected = node.args
+    for argument, role in ((outcome, "outcome"), (protected, "protected")):
+        if not isinstance(argument, ast.Name):
+            raise UnsupportedConstructError(
+                f"{COUNTERFACTUAL_CALL}()'s {role} argument is a signal name and not an "
+                f"expression: {ast.unparse(node)!r}. Every engine has to bind it to a named "
+                "variable of the decision procedure, and a computed value has no such variable"
+            )
+    if outcome.id == protected.id:
+        raise UnsupportedConstructError(
+            f"{COUNTERFACTUAL_CALL}({outcome.id}, {outcome.id}) asks whether {outcome.id!r} moves "
+            "when it is itself moved, which the shape of the question answers and no system does. "
+            "Name the decision as the outcome and the protected variable as the second argument"
+        )
+    return outcome.id, protected.id
+
+
+def counterfactual_atom(node: ast.AST) -> tuple[str, str] | None:
+    """The (outcome, protected) pair when the *whole* property is one counterfactual atom.
+
+    `None` for every other shape, and that is deliberately the only shape the language admits: see
+    `validate_property`, which refuses the atom in any other position. One atom, one meaning, and
+    no general hyperproperty logic — a conjunction, an implication or a negation over a 2-safety
+    atom is a different and much larger claim, and nothing here could discharge one.
+    """
+    if isinstance(node, ast.Expression):
+        return counterfactual_atom(node.body)
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == COUNTERFACTUAL_CALL
+    ):
+        return counterfactual_arguments(node)
+    return None
+
+
+def has_counterfactual_atom(node: ast.AST) -> bool:
+    """True when `counterfactually_invariant()` occurs anywhere in a property."""
+    return any(
+        isinstance(child, ast.Call)
+        and isinstance(child.func, ast.Name)
+        and child.func.id == COUNTERFACTUAL_CALL
+        for child in ast.walk(node)
+    )
 
 
 def string_literal_mask(text: str) -> list[bool]:
@@ -449,6 +533,9 @@ def expression_kind(node: ast.AST) -> str:
         if name == CONTAINS_CALL:
             contains_arguments(node)
             return "boolean"
+        if name == COUNTERFACTUAL_CALL:
+            counterfactual_arguments(node)
+            return "boolean"
         if name in TEMPORAL_OPERATORS:
             if len(node.args) != 1:
                 raise UnsupportedConstructError(
@@ -474,6 +561,19 @@ def expression_kind(node: ast.AST) -> str:
 
 def validate_property(node: ast.AST) -> None:
     """Refuse a parsed expression that is not a Boolean property in this language."""
+    # The one relational atom stands alone or not at all. A conjunction, a negation or an
+    # implication over a 2-safety atom is a strictly larger claim — a property of a pair of runs
+    # combined with a property of one, or with a second pair — and no engine here discharges one.
+    # Admitting the shape and reporting it not evaluated would put the atom into `logical`'s reach
+    # via classification, where the trace rung would answer the part it could read and call the
+    # result the duty's.
+    if has_counterfactual_atom(node) and counterfactual_atom(node) is None:
+        raise UnsupportedConstructError(
+            f"{COUNTERFACTUAL_CALL}() is a property of a *pair* of executions and is the whole of "
+            f"a spec or no part of one: {ast.unparse(node)!r} combines it with something else. "
+            "Nothing here discharges a combination, and admitting one would let the part that is "
+            "a property of one decision be answered off a trace and reported as the duty"
+        )
     kind = expression_kind(node)
     if kind not in ("boolean", "unknown"):
         raise UnsupportedConstructError(
@@ -674,7 +774,7 @@ def _bare_boolean_parts(node: ast.AST) -> tuple[tuple[str, ...], tuple[bool, ...
             if name in TEMPORAL_OPERATORS or name in ("implies", "Implies"):
                 for argument in current.args:
                     visit(argument, True)
-            elif name not in (PRESENCE_CALL, CONTAINS_CALL):
+            elif name not in (PRESENCE_CALL, CONTAINS_CALL, COUNTERFACTUAL_CALL):
                 for argument in current.args:
                     visit(argument)
 
@@ -698,7 +798,7 @@ def _value_signal_names(node: ast.AST) -> set[str]:
     if (
         isinstance(node, ast.Call)
         and isinstance(node.func, ast.Name)
-        and node.func.id in (PRESENCE_CALL, CONTAINS_CALL)
+        and node.func.id in (PRESENCE_CALL, CONTAINS_CALL, COUNTERFACTUAL_CALL)
     ):
         return set()
     names: set[str] = set()
@@ -755,11 +855,19 @@ def has_temporal_operator(node: ast.AST) -> bool:
 def classify_fragment(spec: str) -> str:
     """The narrowest fragment of this language `spec` belongs to.
 
-    `temporal` when anything in it reaches across records; `record` when it is a conjunction of
-    presence atoms and nothing else; `logical` for every other well-formed state property. Raises
-    `UnsupportedConstructError` for text that is not in the language at all.
+    `counterfactual` when it is the one relational atom; `temporal` when anything in it reaches
+    across records; `record` when it is a conjunction of presence atoms and nothing else; `logical`
+    for every other well-formed state property. Raises `UnsupportedConstructError` for text that is
+    not in the language at all.
+
+    `counterfactual` is asked first and is exclusive: `validate_property` has already refused every
+    shape mixing the atom with anything else, so a spec reaching here either *is* the atom or does
+    not contain one. Classifying it into `logical` would be the whole defect — the fragment is what
+    decides which engines may discharge a duty, and a trace cannot establish a counterfactual.
     """
     node = parse_property(spec)
+    if counterfactual_atom(node) is not None:
+        return "counterfactual"
     if has_temporal_operator(node):
         validate_temporal_property(node)
         return "temporal"
@@ -873,6 +981,23 @@ def eval_expression(node: ast.AST, env: dict[str, Any]) -> Any:
             # rather than turned into a NameError.
             signal, phrase = contains_arguments(node)
             return contains_literal(env.get(signal), phrase)
+        if name == COUNTERFACTUAL_CALL:
+            # Refused rather than answered, and this is the load-bearing refusal of the whole
+            # fragment. This interpreter is handed one decision record, and one record is what
+            # happened; the atom asks what would have happened had one input differed. Every
+            # engine that reads a trace — the record engine, the observed monitor, the replay
+            # search's own property check — evaluates through here, so refusing at this one place
+            # is what makes "no engine answers a counterfactual off a decision log" a fact about
+            # the code rather than a convention `report._engine_ladder` is trusted to keep.
+            outcome, protected = counterfactual_arguments(node)
+            raise UnsupportedConstructError(
+                f"{COUNTERFACTUAL_CALL}({outcome}, {protected}) cannot be evaluated against a "
+                "decision record. A record is what the system decided; this atom asks what it "
+                "would have decided had "
+                f"{protected!r} differed and nothing else had. That is a property of a pair of "
+                "executions, and it is established by encoding the declared rules twice or by "
+                "replaying a paired input — never read off a log"
+            )
         args = [eval_expression(arg, env) for arg in node.args]
         if name in ("implies", "Implies"):
             _require_arity(name, args, 2)

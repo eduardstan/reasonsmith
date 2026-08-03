@@ -50,29 +50,43 @@ to widen the language until it fits, because widening a property language to acc
 stubborn duty is how it becomes an untyped string again. So this objective waits for a real duty
 that cannot be written without it. It is on the roadmap to be found, not to be started.
 
-## 3. A fairness property, anywhere
+## 3. A fairness property, anywhere — **met**
 
-**The gap.** No requirement in any shipped pack checks a fairness property. GDPR Recital 71's
-prevention of discriminatory effects on the listed protected grounds — racial or ethnic origin,
-political opinion, religion, trade union membership, genetic or health status, sexual orientation —
-is not formalised here or anywhere else in the packs; the one requirement quoting that recital's
-second paragraph formalises the *error* limb and nothing else.
+**What met it.** `ecoa_reg_b_1002_4_a_no_disparate_treatment` — counterfactual invariance under one
+named protected variable, anchored to 12 CFR 1002.4(a), the disparate-*treatment* limb of
+Regulation B. It is the first relational property in this repository: a property of a *pair* of
+executions rather than of one decision record. It has a fragment of its own (`counterfactual`), a
+soundness paragraph of its own (`docs/semantics.md` §3, the seventh), two rungs — self-composition
+in Z3 at `proved`, paired replay through `decide()` at `probed` — and deliberately **no trace rung**,
+because a trace holds what a system decided and a counterfactual asks what it would have decided.
 
-Stated in [`docs/refinement.md`](docs/refinement.md), the GDPR Recital 71 row of column four.
+The measurable outcome is met literally: the property compares an outcome across groups — the same
+applicant under two values of the protected variable — rather than checking that a field is
+non-empty; `docs/refinement.md` carries its row; and the sentence that objective quoted has stopped
+being true and was **narrowed rather than deleted**. It now reads that no *distributional* fairness
+property is checked, that the one that is checked is counterfactual invariance under a single named
+variable, and that it cannot see a disparate impact.
 
-**Measurable outcome.** At least one shipped requirement whose property compares an outcome across
-groups rather than checking that a fairness field is non-empty, with a `docs/refinement.md` row
-naming what it does not capture — and the sentence *no fairness property is checked by any
-requirement in this repository* removed from that document because it has stopped being true.
+**What is still open, and it is most of the subject.**
 
-**Depends on.** A design answer before any code: `conformance.stratified()` already computes
-per-group figures, but it does so over reason-deletion certificates and produces statistics, not a
-requirement verdict, and that path still does not meet a duty. What a single certificate takes to
-become a verdict is now shown by `engines/certificate.py` — one decision at a time, grounding one
-measured signal — and a group statistic is not that. Deciding whether a protected attribute may be a
-signal in a decision record at all — and what it means for a property to read one — is the work.
-It also depends on the four-outcome discipline of `docs/semantics.md` §4 holding: a fairness
-property that cannot be evaluated must report *not evaluated*, never `satisfied`.
+- **Disparate impact — GDPR Recital 71's own *discriminatory effects* limb — is not formalised and
+  is not on this roadmap to be built.** No group-statistical criterion can earn a verdict on this
+  evidence model: a rate over a trace is an estimate of a population quantity with no sampling claim
+  behind it, no statute supplies the threshold, equalised odds and calibration need a ground truth
+  the SUT protocol has no method for, and the `proved` rung quantifies over a measure-free domain
+  where a probability has no denominator. `docs/authoring-packs.md` documents the hazard, because a
+  pack author can write the bad version today and reach `violated` at `proved` on arithmetic over
+  numbers nobody computed.
+- **A proxy is invisible to the duty that shipped.** A rule set that never reads the protected
+  variable and decides by postcode is `satisfied`. `TREATMENT_LIMIT` says so on every result the
+  engine returns, which is a mitigation and not a fix.
+- **One variable per duty, and no interaction.** 12 CFR 1002.2(z) lists nine prohibited bases; the
+  shipped duty names one signal, and the atom is deliberately not composable.
+- **No shipped example system exercises the `satisfied` case.** None of the three systems of
+  `docs/three-systems.md` declares a protected variable, and none should: a decision record carrying
+  a fact about a natural person is a collection cost this repository does not create. So the ECOA
+  run reports the duty `unattainable` for every shipped system, and the provable-non-discrimination
+  case lives in `tests/test_counterfactual_invariance.py` rather than in a transcript.
 
 ## 4. Breadth: more regulations than five
 
@@ -85,7 +99,7 @@ first to exercise it.
 
 **What it did not settle, and the honest cost of it.** The judgement this objective names — whether
 another pack is worth more than depth on the ones that ship — is *less* settled than before, not
-more. Twenty-one of the twenty-seven shipped requirements are now presence checks, up from thirteen
+more. Twenty-one of the twenty-eight shipped requirements are now presence checks, up from thirteen
 of nineteen, because Article 53 and Article 55 are document-production duties for which presence is
 the correct refinement and no stronger property exists to write
 ([`docs/refinement.md`](docs/refinement.md), *presence is not adequacy*). Breadth bought that way is

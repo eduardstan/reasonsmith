@@ -116,10 +116,14 @@ constructed at all without the search budget that produced it
 ## 2. The property language
 
 There is **one** property language, in `rulelang.py`, and `formalism` names which fragment of it a
-requirement's `spec` belongs to. The three fragments are decided by the shape of the formula, not by
-the word a pack author typed: `classify_fragment` returns `temporal` when the formula uses a
-temporal operator, `record` when it is a conjunction of `present(signal)` atoms and nothing else,
-and `logical` for every other well-formed property of a single decision record. The loader demands
+requirement's `spec` belongs to. The four fragments are decided by the shape of the formula, not by
+the word a pack author typed: `classify_fragment` returns `counterfactual` when the formula is the
+one relational atom, `temporal` when it uses a temporal operator, `record` when it is a conjunction
+of `present(signal)` atoms and nothing else, and `logical` for every other well-formed property of a
+single decision record. `counterfactual` is asked first and is exclusive — the atom is the whole of
+a spec or no part of one — because that fragment is the one thing on this page that no engine
+reading a decision log may be handed, and classifying it into `logical` would hand it to one
+(§3, *counterfactual*). The loader demands
 an **exact** match against the declared `formalism` — a presence conjunction is also a well-formed
 `logical` property, and a lenient check would let one be declared `logical` and silently lose the
 record engine's per-signal diagnostics (`test_the_loader_refuses_a_spec_that_is_not_in_the_declared_fragment`).
@@ -703,7 +707,95 @@ and not left to be inferred, the same discipline the probe budget is held to.
   is therefore not evidence that the system ever decided anything — the same caveat the
   `unattainable` and empty-trace rules carry elsewhere in this document.
 
-### The assumption all six share
+### `counterfactual` — `engines/counterfactual.py`
+
+> **If the counterfactual engine reports `satisfied` at strength `proved`, then:** the duty was
+> `counterfactually_invariant(outcome, protected)`; the system's `logic()` declared `protected` an
+> input it accepts and `outcome` a value it computes; the declared rules were encoded **twice**
+> into one solver under two namespaces; every free input of the two copies was constrained equal
+> except `protected`; the encoded pair was checked to admit at least one input at all; **each** copy
+> of the encoding was checked to agree with the reference interpreter on that witness; and Z3 found
+> `outcome@0 != outcome@1` unsatisfiable — so **no** pair of valuations the system's own
+> `constraints` admit, differing in `protected` alone, produces two different values of `outcome`
+> (`test_a_system_accepting_the_protected_variable_and_ignoring_it_is_satisfied`,
+> `test_two_copies_of_one_rule_block_do_not_collide`).
+
+This is the first relational property in this repository, and the first paragraph on this page
+written over a *pair* of executions rather than over one. The six above say "the trace it was given"
+or "the valuations the constraints admit"; this one says "the pairs". `PAIR_SEMANTICS` and
+`TREATMENT_LIMIT` travel on every result the engine returns, so which set of pairs a verdict is
+about, and what a fairness verdict from this tool is not, are on the page rather than left to be
+inferred.
+
+*What it does not tell you.*
+
+- **It is a property of treatment and it says nothing about effects.** A proxy is invisible to it: a
+  rule set that never reads the protected variable and decides by postcode is `satisfied` here, and
+  correctly so under the property as written. Disparate impact — a fact about outcomes across a
+  population — is not a property of any pair of decisions and is formalised nowhere in this
+  repository. `TREATMENT_LIMIT` says this on every result, satisfied ones included, because that is
+  where it matters.
+- **A system with no notion of the variable is `unattainable` and never `satisfied`.** This is the
+  distinction the whole duty turns on, and it is not available from the encoding alone: a system
+  that accepts the protected variable and provably ignores it, and a system that has never heard of
+  it, produce the *identical* encoding — in both the name is a free constant the outcome does not
+  depend on, so the negation is `unsat` in both. What tells them apart is the `computes` direction
+  declaration of §3.5, *When the magnitudes are not the system's own*: a name in neither `variables`
+  nor `computes` is one the system has no notion of, and the duty is reported unattainable naming
+  it. A system declaring no directions at all is reported *not evaluated*, because guessing would
+  certify an unaware system as provably fair
+  (`test_a_system_with_no_notion_of_the_protected_variable_is_unattainable`,
+  `test_a_system_declaring_no_directions_is_not_evaluated`).
+- **The claim is bounded by the constraints the system declared**, exactly as the `proved` paragraph
+  above is. A system declaring a narrow input band is proved invariant over that band and over
+  nothing else, and no engine here checks that the declared band is the deployed one.
+- **The two verdicts are not mirror images**, for the reason the temporal paragraph gives.
+  `satisfied` is universal over every admitted pair. `violated` is existential: the solver named one
+  admissible pair whose outcomes differ, and **both halves** of it were replayed against the system
+  and seen to differ again, so *some* pair the system admits breaches the duty — a finding about the
+  system as built, not about any decision it has taken
+  (`test_the_witness_pair_is_replayed_on_both_halves`).
+- **It reaches one variable and does not compose.** Moving two protected variables together is a
+  different property; the atom is the whole of a spec or no part of one, so a conjunction, a
+  negation or a temporal quantification over it is refused at load time rather than answered
+  (`test_the_atom_is_the_whole_spec_or_no_part_of_one`).
+- **Everything the `proved` engine cannot claim, this cannot claim**, because the rung is that
+  encoding twice: `unknown`, a timeout, premises admitting no pair, a copy that disagrees with the
+  interpreter, or a witness pair that does not reproduce all yield not evaluated.
+
+> **If the paired-replay engine reports `satisfied` at strength `probed`, then:** for every decision
+> in the trace and every admissible value of `protected` beyond the first, `decide()` was run on the
+> recorded input with `protected` set to the first admissible value and again with it set to that
+> other value, **nothing else changed**, and the two runs produced the same `outcome`; the values
+> came from the system's declared `constraints` and its declared sort, never from the trace; and the
+> budget on the result names the pairs replayed, the values used and the pairs that raised
+> (`test_paired_replay_reaches_probed_when_the_proof_rung_cannot`,
+> `test_paired_replay_takes_no_protected_value_from_the_trace`).
+
+*What it does not tell you.* Everything above, and the bound of a search: the claim covers the pairs
+the budget names and no others, so a system whose logged decisions all sit far from the threshold
+the protected variable would move is reported `satisfied` here while the solver rung reports the
+same system `violated` (`test_paired_replay_misses_what_the_trace_it_was_given_cannot_reach`). The
+trace supplies the *base inputs* this search varies around and nothing else; a value the trace shows
+for the protected variable is never one it replays.
+
+**No rung reads a trace, and that is a fact about the code rather than about the ladder.** A trace
+holds what a system decided; a counterfactual asks what it would have decided. So
+`rulelang.eval_expression` refuses the atom outright — every engine that reads a decision record
+goes through that interpreter, so none of them can answer this duty even if a ladder handed it to
+one (`test_no_engine_can_evaluate_the_atom_against_a_decision_record`,
+`test_the_ladder_for_this_fragment_carries_no_trace_rung`). A system that exposes neither `decide()`
+nor `logic()` is reported *not evaluated*, however long its log
+(`test_a_log_only_system_is_never_answered_from_its_trace`).
+
+**The protected variable is an input, not a logged field.** Neither rung ever takes its value from a
+decision record, which is what lets a system answer this duty while its audit log carries a
+prohibited basis for nobody. A duty that instructed every checkable system to log race per decision
+would have made reasonsmith the reason it was collected — under the GDPR, an Article 9 processing
+purpose invented to check a fairness duty. `docs/refinement.md` records the cost of the other
+direction: nothing here can compare across groups, because nothing here reads a group.
+
+### The assumption all seven share
 
 None of these engines defends against a system that is adversarial toward its own audit. The probed
 engine states the boundary and this document does not invent a second version of it — from
@@ -717,7 +809,7 @@ The isolation against *accidental* mutation is real and tested
 (`test_nested_mutation_cannot_change_the_verification_input_or_witness`,
 `test_uncloneable_probe_input_is_not_evaluated`). The defence against a deliberate one is not claimed.
 
-Read across all six engines, the same shape holds: a declared capability set is taken at its word, a
+Read across all seven engines, the same shape holds: a declared capability set is taken at its word, a
 trace is taken as given, and exposed logic is taken as describing the system. reasonsmith checks
 what a system says against what a specification asks. It does not check whether the system was
 honest.
@@ -732,12 +824,27 @@ list, and the requirement supplies only one of them:
 
 - **The fragment** says what kind of property this is. `record` and `logical` are `STATE_FRAGMENTS`
   — properties of a single decision record — so an engine that reasons about one decision at a time
-  can discharge them. `temporal` is not.
+  can discharge them. `temporal` is not, and `counterfactual` is not a property of any decision
+  record at all.
 - **The system's exposed surface** says what can be reasoned over. A non-`None` `logic()` admits
   `ProvedEngine`; a callable `decide()` admits `ProbedEngine`; **a trace admits a rung for every
-  fragment** (`test_every_valid_formalism_has_an_engine_that_reads_a_trace`). Which engine reads it
-  depends on the shape: `RecordEngine` for a presence conjunction, `ObservedEngine` for everything
-  else, temporal and `logical` alike.
+  fragment but one** (`test_every_valid_formalism_has_an_engine_that_reads_a_trace`). Which engine
+  reads it depends on the shape: `RecordEngine` for a presence conjunction, `ObservedEngine` for
+  everything else, temporal and `logical` alike.
+
+**The `counterfactual` fragment is the one exception, and it has no trace rung.** Its ladder is
+built and returned before every other rung is considered: `CounterfactualProofEngine` where the
+system exposes `logic()`, `PairedReplayEngine` where it exposes `decide()`, and nothing else — not
+the record engine, not the rtamt monitor, and not an installed plug-in. `counterfactually_invariant`
+is a property of a *pair* of executions, a trace holds what a system decided rather than what it
+would have decided, and no length of decision log establishes one. The refusal is enforced one layer
+below the ladder as well: `rulelang.eval_expression` raises on the atom, and every trace-reading
+engine evaluates through that interpreter, so this is a fact about the code rather than a convention
+this function is trusted to keep (`test_the_ladder_for_this_fragment_carries_no_trace_rung`,
+`test_no_engine_can_evaluate_the_atom_against_a_decision_record`). A system exposing neither
+surface is reported *not evaluated*, and a system whose declared logic has no notion of the
+protected variable is reported *unattainable* — never `satisfied`, because unawareness is not a
+discharge (§3, *counterfactual*).
 
 **One duty has a ladder of exactly one rung, and for the opposite reason to everything above.** A
 duty gating on `engines.certificate.DELETED_REASON_COUNT` asks whether the reasons a decision
@@ -1193,6 +1300,15 @@ Two consequences of that report text, followed by a separate package-level termi
 | A presence proof requires the rules to assign the signal on every path | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can`, `test_presence_is_not_proved_when_only_one_branch_assigns_the_signal` |
 | A temporal duty reaches proved only as `always(f)` over a state property; every other shape stops at observed | `test_only_always_reaches_the_temporal_proof_rung`, `test_a_nested_temporal_operator_does_not_reduce` |
 | A proved temporal violation is existential and says so: it is about the system as built, not about the trace supplied | `test_a_temporal_violation_names_the_trace_it_is_and_is_not_about` |
+| A counterfactual duty is proved by encoding the declared rules twice, and two copies of one rule block do not collide | `test_two_copies_of_one_rule_block_do_not_collide`, `test_a_rule_set_ignoring_the_protected_variable_is_unsat_on_the_negation`, `test_a_rule_set_reading_the_protected_variable_yields_a_witness_pair` |
+| A system that accepts the protected variable and provably never lets it move the outcome is satisfied at proved | `test_a_system_accepting_the_protected_variable_and_ignoring_it_is_satisfied`, `test_the_shipped_duty_is_satisfied_by_a_system_that_provably_ignores_the_basis` |
+| A system whose declared logic has no notion of the protected variable is unattainable, never satisfied — unawareness is not a discharge | `test_a_system_with_no_notion_of_the_protected_variable_is_unattainable`, `test_the_two_cases_reach_different_verdicts_on_the_same_rules`, `test_a_system_declaring_no_directions_is_not_evaluated` |
+| A counterfactual violation names an admissible pair, and both halves of it are replayed against the system | `test_a_rule_set_reading_the_protected_variable_is_violated_at_proved`, `test_the_witness_pair_is_replayed_on_both_halves` |
+| The counterfactual fragment has no trace rung, and no engine can evaluate the atom against a decision record | `test_the_ladder_for_this_fragment_carries_no_trace_rung`, `test_no_engine_can_evaluate_the_atom_against_a_decision_record`, `test_a_log_only_system_is_never_answered_from_its_trace`, `test_the_counterfactual_fragment_is_the_one_a_trace_cannot_answer` |
+| The atom is the whole of a spec or no part of one, and both its arguments are distinct signal names | `test_the_atom_is_the_whole_spec_or_no_part_of_one`, `test_both_arguments_are_signal_names_and_must_differ`, `test_the_atom_classifies_into_its_own_fragment_and_not_into_logical` |
+| The paired replay takes the protected values from the declared constraints and never from the trace, and reports what it searched | `test_paired_replay_takes_no_protected_value_from_the_trace`, `test_paired_replay_reaches_probed_when_the_proof_rung_cannot`, `test_paired_replay_finds_a_disagreement_and_verifies_it` |
+| A probed counterfactual verdict is a bounded search and the proved rung can find what it misses | `test_paired_replay_misses_what_the_trace_it_was_given_cannot_reach` |
+| Exactly one shipped signal is outside the paper's Section 6.3 taxonomy, and it is the protected variable | `test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy`, `test_the_shipped_duty_is_the_only_counterfactual_requirement` |
 | The solver's blank string is Python's blank string, so a provable blank reason is a violation | `test_the_solvers_blank_string_is_pythons_blank_string`, `test_a_presence_proof_refuses_the_blank_string_the_solver_could_choose` |
 | `contains()` takes a signal name and a literal ASCII phrase, and every other shape is refused | `test_a_malformed_contains_atom_is_refused_rather_than_guessed_at`, `test_a_contains_atom_is_a_boolean_property_outside_the_record_fragment`, `test_the_phrase_is_not_a_signal_the_property_reads` |
 | The solver's ASCII case fold is the interpreter's, over a generated corpus | `test_the_solvers_fold_is_the_interpreters_fold`, `test_the_fold_is_ascii_case_and_reaches_no_further` |

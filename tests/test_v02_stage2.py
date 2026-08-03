@@ -885,6 +885,13 @@ class TestRequirementsMeasureTheirDuty:
         assert result.verdict == Verdict.VIOLATED
 
 
+#: The shipped signals that are deliberately outside the paper's four Section 6.3 categories,
+#: and the complete list of them. See `test_exactly_one_shipped_signal_is_outside_the_paper_s_
+#: taxonomy` for the argument, and `docs/refinement.md` for what the duty using it can and cannot
+#: see.
+OUTSIDE_THE_TAXONOMY = {"applicant_prohibited_basis"}
+
+
 class TestRegulationPacks:
     """Tests for EU AI Act, GDPR, and ECOA regulation packs."""
 
@@ -906,10 +913,39 @@ class TestRegulationPacks:
             for signal in sorted(checked):
                 assert any(
                     signal.startswith(cat) for cat in CAPABILITY_TAXONOMY
-                ), (
+                ) or signal in OUTSIDE_THE_TAXONOMY, (
                     f"Signal {signal!r} in pack {pack_name} must belong to "
                     f"Section 6.3 taxonomy {CAPABILITY_TAXONOMY}"
                 )
+
+    def test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy(self):
+        """The exemption above is a category, not a spelling licence, and it stays at one.
+
+        Every one of the paper's four Section 6.3 categories names a fact about an *inference*, its
+        artefacts, or the governance around it. None names a fact about a person, so the protected
+        variable of the counterfactual duty is the first signal in any shipped pack that is not
+        about the system at all — it is an input the decision procedure accepts, and the duty asks
+        whether the procedure uses it. Widening `CAPABILITY_TAXONOMY` is not the fix: it is a
+        verbatim transcription of the paper (`sut.py`), and the paper does not have this category.
+        Naming the one exception here is, so that a second one has to be argued for rather than
+        typed.
+        """
+        shipped = {
+            signal
+            # The four statutory packs, exactly as the check above is parametrised. `table7` is
+            # out of frame here as it is there: its signal names are the paper's own evidence-field
+            # keys, transcribed rather than authored, and `test_pack_matches_table7_transcription`
+            # is what holds those to the print.
+            for pack_name in ("eu_ai_act", "gpai", "gdpr", "ecoa")
+            for req in load_pack(pack_name).requirements
+            for signal in set(req.requires) | set(signal_names(parse_property(req.spec)))
+        }
+        outside = {
+            signal
+            for signal in shipped
+            if not any(signal.startswith(cat) for cat in CAPABILITY_TAXONOMY)
+        }
+        assert outside == OUTSIDE_THE_TAXONOMY
 
     @pytest.mark.parametrize("pack_name", ["eu_ai_act", "gpai", "gdpr", "ecoa"])
     def test_pack_quotes_found_verbatim_in_legal_sources_report(self, pack_name: str):

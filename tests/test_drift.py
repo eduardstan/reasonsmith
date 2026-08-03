@@ -35,6 +35,7 @@ FIXTURE_BY_KEY = {
     "gdpr_consolidated": "gdpr_consolidated_art22.xhtml",
     "gdpr_original": "gdpr_original_rct71.xhtml",
     "ecoa": "ecoa_1002_9.xml",
+    "ecoa_general_rules": "ecoa_1002_4.xml",
 }
 
 STATUTORY_REQUIREMENT_COUNT = sum(len(load_pack(name).requirements) for name in STATUTORY_PACKS)
@@ -222,7 +223,13 @@ class TestCheckStatuteDrift:
 
         report = check_statute_drift(counting_fetcher)
         assert not report.has_drift
-        assert calls == ["ai_act", "gdpr_consolidated", "gdpr_original", "ecoa"]
+        assert calls == [
+            "ai_act",
+            "gdpr_consolidated",
+            "gdpr_original",
+            "ecoa",
+            "ecoa_general_rules",
+        ]
 
 
 class TestRegistry:

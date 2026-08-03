@@ -239,3 +239,45 @@ Comments 1 and 4-7 concern how many reasons to give and how to select them from 
 > 2. *Source of specific reasons.* The specific reasons disclosed under §§ 1002.9(a)(2) and (b)(2) must relate to and accurately describe the factors actually considered or scored by a creditor.
 
 > 3. *Description of reasons.* A creditor need not describe how or why a factor adversely affected an applicant. For example, the notice may say “length of residence” rather than “too short a period of residence.”
+
+---
+
+## Provision 4: ECOA / Regulation B — 12 CFR 1002.4(a)
+
+### Metadata & Citation
+- **Document Title:** Title 12 — Banks and Banking, Chapter X — Bureau of Consumer Financial Protection, Part 1002 — Equal Credit Opportunity Act (Regulation B), Section 1002.4 — General rules
+- **Document Identifier / Citation:** `12 CFR 1002.4`
+- **Official Source URL:** [eCFR Section 1002.4](https://www.ecfr.gov/current/title-12/chapter-X/part-1002/section-1002.4)
+- **Direct eCFR API Endpoint:** `https://www.ecfr.gov/api/versioner/v1/full/2023-08-29/title-12.xml?part=1002&section=1002.4`
+- **Effective / Latest Amendment Date:** January 31, 2013 (78 FR 7248), as printed in the section's own source note; retrieved at the Part 1002 amendment date 2023-08-29 used for § 1002.9 above, so one recorded date serves both provisions.
+- **Retrieval Date & Time:** 2026-08-03 12:41 UTC
+- **Uncertainty / Status Flag:** Verified against official eCFR API (Title 12, Part 1002, Section 1002.4).
+
+---
+
+### Verbatim Text
+
+#### 12 CFR 1002.4(a)
+**§ 1002.4 General rules.**
+
+(a) *Discrimination.* A creditor shall not discriminate against an applicant on a prohibited basis regarding any aspect of a credit transaction.
+
+---
+
+### Definition the clause depends on — 12 CFR 1002.2(z)
+
+- **Document Identifier / Citation:** `12 CFR 1002.2(z)`
+- **Direct eCFR API Endpoint:** `https://www.ecfr.gov/api/versioner/v1/full/2023-08-29/title-12.xml?part=1002&section=1002.2`
+- **Retrieval Date & Time:** 2026-08-03 12:41 UTC
+- **Why it is recorded here:** no shipped pack quotes it. It is retrieved so that the vocabulary of protected grounds rests on the print rather than on memory, and so that `docs/refinement.md` can say which grounds a duty naming one variable does not reach.
+
+> (z) *Prohibited basis* means race, color, religion, national origin, sex, marital status, or age (provided that the applicant has the capacity to enter into a binding contract); the fact that all or part of the applicant's income derives from any public assistance program; or the fact that the applicant has in good faith exercised any right under the Consumer Credit Protection Act or any state law upon which an exemption has been granted by the Bureau.
+
+---
+
+### Findings & Interpretation
+
+- **What 12 CFR 1002.4(a) forbids:**
+  - Operative phrase: *"shall not discriminate against an applicant on a prohibited basis regarding any aspect of a credit transaction"*.
+- **Why this clause and not GDPR Recital 71.** The recital's discrimination limb is *effects* language — *"prevents, inter alia, discriminatory effects on natural persons"*, recorded under Provision 2 above — and effects is disparate impact, which is a fact about outcomes across a population and not a property of any pair of decisions. § 1002.4(a) forbids discriminating *against an applicant* on a prohibited basis, which is disparate treatment, and treatment is the limb a counterfactual invariance property can see. Attaching the property to the recital would have been a refinement of a duty it does not formalise.
+- **What this record does not settle.** Whether Regulation B's effects test is codified in the regulation or lives in the Official Interpretation was not retrieved, and no shipped duty rests on it; `docs/refinement.md` records disparate impact as unformalised without relying on where the effects test is printed.

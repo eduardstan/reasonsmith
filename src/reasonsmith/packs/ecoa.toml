@@ -120,3 +120,34 @@ requires = [
 binding = true
 scope = ""
 domains = ["consumer-credit"]
+
+[[requirement]]
+id = "ecoa_reg_b_1002_4_a_no_disparate_treatment"
+source_document = "ECOA / Regulation B (12 CFR 1002.4)"
+article_clause = "12 CFR 1002.4(a)"
+verbatim_text = "A creditor shall not discriminate against an applicant on a prohibited basis regarding any aspect of a credit transaction."
+stakeholder = "applicant"
+formalism = "counterfactual"
+spec = "counterfactually_invariant(artifact_logs_decision_record, applicant_prohibited_basis)"
+rationale = """No applicant's decision would have been different had the prohibited basis alone \
+been different. The clause forbids discriminating *against an applicant* on a prohibited basis, \
+which is disparate treatment, and this is the narrowest formal reading of that limb: hold every \
+other input of the decision fixed, move the one variable the system accepts as the prohibited \
+basis, and the decision must not move. What it cannot see is the rest of the clause's reach, and \
+the omission is deliberate rather than hidden: a proxy is invisible to it — a rule set that never \
+reads the prohibited basis and decides by postcode satisfies this duty — and disparate impact, \
+which is a fact about effects across a population, is not a property of any pair of decisions and \
+remains unformalised here (docs/refinement.md). It reaches exactly one variable, so a creditor \
+answerable on several prohibited bases is answered here about the one this duty names. \
+`applicant_prohibited_basis` is an input the decision procedure accepts and not a field a \
+decision record must carry: the question is whether the procedure uses it, and a system answers \
+it from its declared logic while its audit log holds a prohibited basis for nobody. A system \
+whose declared logic has no notion of the variable is reported unattainable and never satisfied, \
+because not knowing a prohibited basis is not evidence of not using one."""
+requires = [
+    "artifact_logs_decision_record",
+    "applicant_prohibited_basis",
+]
+binding = true
+scope = ""
+domains = ["consumer-credit"]

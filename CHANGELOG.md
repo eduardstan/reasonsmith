@@ -8,6 +8,61 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Added
+
+- **The first fairness property this repository checks: counterfactual invariance under one named
+  protected variable.** Hold every input fixed, move one variable, and the decision must not move.
+  It closes `ROADMAP.md` objective 3, and it is the first *relational* property here — a property
+  of a **pair** of executions, where all six existing soundness paragraphs are written over one.
+
+  - **One atom, one fragment, no hyperproperty logic.**
+    `counterfactually_invariant(outcome_signal, protected_signal)` takes two signal names, never
+    expressions, and they must differ. It classifies into a new `counterfactual` fragment rather
+    than into `logical`, and it is the whole of a `spec` or no part of one: a conjunction,
+    negation or temporal quantification over it is a load error.
+  - **No trace rung, enforced below the ladder.** `report._engine_ladder` gives the fragment two
+    rungs — Z3 self-composition at `proved`, paired replay through `decide()` at `probed` — and
+    nothing that reads a decision log, plug-ins included. A trace holds what a system decided and a
+    counterfactual asks what it would have decided, so `rulelang.eval_expression` refuses the atom
+    outright; every trace-reading engine evaluates through that interpreter, which makes this a
+    fact about the code rather than a convention the ladder is trusted to keep.
+  - **Unawareness is not a discharge.** A system that accepts the protected variable and whose
+    rules provably never let it move the outcome is `satisfied` at `proved`. A system whose
+    declared logic has *no notion* of the variable is `unattainable`, never satisfied. Without the
+    `computes` direction declaration of 0.6.0 these are indistinguishable — in both, the name is a
+    free constant the outcome does not depend on and the negation is `unsat` — so a system
+    declaring no directions is reported not evaluated rather than guessed at.
+  - **The pair witness is cross-checked and replayed on both halves.** The premise model is checked
+    against the reference interpreter on *each* copy of the encoding, and a counterexample pair is
+    replayed as both of its inputs with the outcomes compared, so this engine's runtime-agreement
+    guarantee is no weaker than any other engine's while it claims the same rung.
+  - **The protected variable is never read from the trace.** At `proved` the admissible values are
+    every value the declared `constraints` admit; at `probed` they are enumerated from those same
+    constraints. Nothing here is a reason to log a prohibited basis for anybody.
+  - **The duty:** `ecoa_reg_b_1002_4_a_no_disparate_treatment`, anchored to 12 CFR 1002.4(a) — the
+    disparate-*treatment* limb of Regulation B, retrieved and recorded in `docs/legal-sources.md`
+    with its eCFR endpoint and re-fetchable by `python -m reasonsmith.drift`. Not GDPR Recital 71:
+    that recital's limb is *discriminatory effects*, and effects is the limb a property of a pair
+    of decisions cannot reach.
+  - **What it cannot see, stated on every result it produces** (`TREATMENT_LIMIT`) and in a
+    `docs/refinement.md` row: a proxy is invisible to it — a rule set that never reads the
+    protected variable and decides by postcode is `satisfied` — it says nothing about disparate
+    impact, it quantifies over the input space the system's own `constraints` declare, and it
+    reaches exactly one of the nine prohibited bases 12 CFR 1002.2(z) lists.
+  - `docs/refinement.md`'s sentence *no fairness property is checked by any requirement in this
+    repository* was **narrowed rather than deleted**: no *distributional* fairness property is
+    checked, and the one that is checked cannot see a disparate impact. `applicant_prohibited_basis`
+    is the first shipped signal that is a fact about a natural person rather than about a system,
+    so it sits outside the paper's four Section 6.3 categories and is pinned as the sole exception.
+
+### Changed
+
+- `_Scope` in `engines/proved.py` takes a namespace, so one rule block can be encoded twice into
+  one solver without the two copies collapsing into each other. An SSA label is `name#version`,
+  unique within one execution and identical across two. The `logic()` reader and the
+  decision-runner selection are shared with the new engine rather than duplicated; no existing
+  message or verdict changed.
+
 ## [0.6.0] - 2026-08-03
 
 ### Changed

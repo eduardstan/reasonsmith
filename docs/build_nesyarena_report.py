@@ -122,6 +122,15 @@ UNDECLARED_SIGNALS = (
         "there is nothing to measure and no longer trace could ever supply it",
     ),
     (
+        "applicant_prohibited_basis",
+        "a fact about a natural person and not about an inference — the one pack signal outside "
+        "the paper's Section 6.3 taxonomy. These provenances decide graph reachability and Sudoku "
+        "validity, so no applicant exists for them to accept a prohibited basis about, and the "
+        "counterfactual duty is unattainable rather than satisfied. Declaring the name to make it "
+        "evaluate would be inventing an input the system has no notion of, which is the very case "
+        "that duty reports unattainable",
+    ),
+    (
         "artifact_logs_solely_automated",
         "whether a human reviews the output afterwards is a property of the pipeline the "
         "system is embedded in, which the system cannot observe",

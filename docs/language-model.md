@@ -61,7 +61,7 @@ system: notice-writer (language model, called through one text completion)
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 4 requirements · 4 binding: 1 probed, 2 observed, 1 unattainable
+headline: 5 requirements · 5 binding: 1 probed, 2 observed, 2 unattainable
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
@@ -82,6 +82,11 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     MISSING SIGNALS: artifact_logs_deleted_reason_count
     summary: Unattainable as built: the system declares no capability to emit artifact_logs_deleted_reason_count, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
+  [UNATTAINABLE] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): inconclusive
+    requires: artifact_logs_decision_record, applicant_prohibited_basis
+    domain limit: consumer-credit
+    MISSING SIGNALS: applicant_prohibited_basis
+    summary: Unattainable as built: the system declares no capability to emit applicant_prohibited_basis, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.

@@ -72,6 +72,27 @@ it reads the `spec` as written, so implication in a pack must be spelled `->` an
 the atom encodings, and the one case the ladder does not resolve (exposed logic disagreeing with the
 trace).
 
+`counterfactual` is the fourth fragment and the only **relational** one — a property of a *pair* of
+executions. `counterfactually_invariant(outcome, protected)` is its single atom, it is the whole of
+a `spec` or no part of one, and `engines/counterfactual.py` is the whole of its ladder: Z3
+self-composition at `proved` (the rules encoded twice under `_Scope` namespaces, every free input
+held equal but the protected one), paired replay at `probed`, and **no trace rung, ever**. The
+refusal lives in `rulelang.eval_expression`, not in `_engine_ladder`, because every trace-reading
+engine evaluates through that interpreter — move it and the guarantee becomes a convention. Two
+cases must never merge, and telling them apart is the only reason `computes` is consulted here: a
+system that accepts the protected variable and provably ignores it is `satisfied`; a system with no
+notion of it is `unattainable`. Without the declaration both encode identically and both come back
+`unsat`, which would certify an unaware system as provably fair. `TREATMENT_LIMIT` rides on every
+result because the duty cannot see a proxy or a disparate impact, and neither rung ever takes the
+protected value from the trace — a decision record holding a fact about a natural person is a
+collection cost this repository does not create, which is also why no shipped example system
+declares one and why the shipped ECOA run reports the duty unattainable everywhere.
+`applicant_prohibited_basis` is the first shipped signal outside the paper's four Section 6.3
+categories; `test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy` keeps it the only one.
+Read `docs/semantics.md` §3 (*counterfactual*) and the `docs/refinement.md` row before touching any
+of it. Group-statistical fairness — parity, equalised odds, calibration — is unreachable on this
+evidence model and is documented as a hazard in `docs/authoring-packs.md`; do not build one.
+
 The proof rung refuses a property built out of names the declared rules never assign, on the ground
 that such a name is a free constant of the encoding — for `present()`, for `contains()`, and (since
 the temporal reduction made it reachable) for a comparison of magnitudes. The third refusal is the

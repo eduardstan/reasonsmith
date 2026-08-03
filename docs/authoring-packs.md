@@ -101,6 +101,18 @@ Two load-time checks make `formalism` mean something:
   exact and not merely compatible: a presence conjunction is also a well-formed `logical` property,
   and accepting it as one would cost the record engine's per-signal, per-record diagnostics.
 
+There is a fourth fragment and it behaves unlike the other three.
+`counterfactually_invariant(outcome_signal, protected_signal)` — hold every input fixed, move one
+named variable, and the decision must not move — is a property of a *pair* of executions and
+classifies into `counterfactual`. Both arguments are signal names and never expressions, the two
+must differ, and **the atom is the whole of a `spec` or no part of one**: a conjunction, a negation
+or a temporal quantification over it is a load error rather than a duty nothing can answer. Its
+ladder has no trace rung at all, so a system exposing neither `logic()` nor `decide()` is reported
+*not evaluated* however long its log, and a system whose declared logic has no notion of the
+protected variable is reported *unattainable* rather than satisfied. Writing one means reading
+`docs/semantics.md` §3, *counterfactual*, first — in particular that the protected variable is an
+input the decision procedure accepts and **not** a field a decision record should be made to carry.
+
 **The fragment does not pick the engine.** How strongly a duty can be discharged is a fact about the
 system under test, not about the pack: `report._engine_ladder` collects every engine the fragment
 and the system's exposed surface allow, and takes the strongest evidence produced. A presence
@@ -269,11 +281,13 @@ exist, and both are narrower than the hazard:
   `observed` rung, which reads the trace as written and answers.
 
 The reason this is not merely unimplemented is that a group rate is a **population** statistic and
-every engine here answers about **one decision record**. That mismatch is why `ROADMAP.md` objective
-3 lists a design answer as the dependency rather than an engine, and why the GDPR Recital 71 row of
-[`refinement.md`](refinement.md) records that no requirement in this repository checks a fairness
-property. Read those before deciding a parity spec is close enough; nothing here promises the gap
-will close.
+every engine here answers about **one decision record**, or — since the counterfactual fragment
+shipped — about **one pair** of them. Neither is a population. `ROADMAP.md` objective 3 now records
+that no group-statistical criterion can earn a verdict on this evidence model and why, and the GDPR
+Recital 71 row of [`refinement.md`](refinement.md) records that no *distributional* fairness
+property is checked here. Read both before deciding a parity spec is close enough: this gap is not
+scheduled to close, and a duty that shipped in its place answers a different and much narrower
+question.
 
 The encoding gives you a second, quieter symptom, and it is worth knowing what you are looking at
 when you hit it. A property of one record can only read a field of that record, so a population

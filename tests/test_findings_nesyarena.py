@@ -257,9 +257,9 @@ def _results_for(ids: set[str]) -> list:
 
 
 def test_headline_scale():
-    """'65 results — 5 systems × 13 requirements' is the product of the real battery."""
+    """'70 results — 5 systems × 14 requirements' is the product of the real battery."""
     document = _document()
-    assert len(REQS) == 13, f"the three packs now hold {len(REQS)} requirements, not 13"
+    assert len(REQS) == 14, f"the three packs now hold {len(REQS)} requirements, not 14"
     scale = f"{len(SYSTEMS)} systems × {len(REQS)} requirements"
     assert scale in document, (
         "docs/findings-nesyarena.md's headline scale is stale: the run is "
@@ -464,7 +464,12 @@ def test_finding_2_formalism_census():
     """The per-formalism census matches the packs, and so do the id lists."""
     prose = _prose()
     counts = Counter(req.formalism for req in REQS.values())
-    assert dict(counts) == {"record": 7, "logical": 3, "temporal": 3}, (
+    assert dict(counts) == {
+        "record": 7,
+        "logical": 3,
+        "temporal": 3,
+        "counterfactual": 1,
+    }, (
         f"the packs now hold {dict(counts)} requirements by formalism; the document's census "
         "is stale — update docs/findings-nesyarena.md in the commit that moved the packs"
     )
@@ -594,27 +599,28 @@ def test_finding_2_record_duty_split():
 
 
 def test_finding_3_ecoa_domain_gate():
-    """All twenty ECOA results are not applicable, and the document's split is the run's."""
+    """All twenty-five ECOA results are not applicable, and the document's split is the run's."""
     prose = _prose()
     ecoa_results = _results_for(_ecoa_ids())
-    assert len(ecoa_results) == 20, (
-        f"the ECOA pack now produces {len(ecoa_results)} results, not 20"
+    assert len(ecoa_results) == 25, (
+        f"the ECOA pack now produces {len(ecoa_results)} results, not 25"
     )
     assert all(r.verdict is Verdict.NOT_APPLICABLE for r in ecoa_results), (
         "some ECOA result is no longer not applicable — finding 3's gate claim is stale"
     )
-    assert "all twenty ECOA results are now `not_applicable`" in prose
+    assert "all twenty-five ECOA results are now `not_applicable`" in prose
     assert f"{len(_ecoa_ids()) * len(SYSTEMS)} results rather than 15" in prose
 
 
 def test_finding_3_consumer_credit_counterfactual():
-    """A consumer-credit run leaves two duties unattainable and two checkable, derived."""
+    """A consumer-credit run leaves three duties unattainable and two checkable, derived."""
     with_domain = _ecoa_with_domain()
     unattainable = {
         rid for rid, c in with_domain.items() if c["INCONCLUSIVE"]
     }
     checkable = {rid for rid, c in with_domain.items() if c["SATISFIED"] or c["VIOLATED"]}
     assert unattainable == {
+        "ecoa_reg_b_1002_4_a_no_disparate_treatment",
         "ecoa_reg_b_1002_9_a_1_timing_of_notice",
         "ecoa_reg_b_1002_9_b_2_principal_reasons_complete",
     }, (
@@ -626,7 +632,7 @@ def test_finding_3_consumer_credit_counterfactual():
         "ecoa_reg_b_1002_9_b_2_specific_reasons",
     }
     prose = _prose()
-    assert f"{_word(len(unattainable))} of the four duties would stay unattainable" in prose
+    assert f"{_word(len(unattainable))} of the five duties would stay unattainable" in prose
     assert "the written-statement and specific-reasons duties — would become checkable" in prose
 
 

@@ -709,6 +709,10 @@ def test_every_valid_formalism_has_an_engine_that_reads_a_trace():
     evidence about it. A build that classified a property into a fragment and then refused to read
     the trace in front of it reported *not evaluated* because of a label rather than because of the
     evidence — the defect the fragment classification exists to prevent.
+
+    `counterfactual` is deliberately not on this list and is checked below instead: it is the one
+    fragment that is not a property of any decision record, so a trace is not weak evidence about
+    it but no evidence at all.
     """
     trace = [{"signal_a": "given"}, {"signal_a": "given"}]
 
@@ -725,6 +729,30 @@ def test_every_valid_formalism_has_an_engine_that_reads_a_trace():
         result = evaluate_requirement(req, TraceOnlySUT({"signal_a"}))
         assert result.verdict == Verdict.SATISFIED, formalism
         assert result.strength == Strength.OBSERVED, formalism
+
+
+def test_the_counterfactual_fragment_is_the_one_a_trace_cannot_answer():
+    """The exception to the test above, and the reason it is an exception.
+
+    Every other fragment is a property of one decision record. This one is a property of a pair of
+    executions: a trace holds what a system decided, and a counterfactual asks what it would have
+    decided. A trace rung here would report `satisfied` off a log, which is the overclaim the whole
+    duty exists to refuse.
+    """
+    trace = [{"signal_a": "given", "signal_b": 0}] * 20
+
+    class TraceOnlySUT(BaseSUT):
+        def decisions(self):
+            return trace
+
+    req = _requirement(
+        formalism="counterfactual",
+        spec="counterfactually_invariant(signal_a, signal_b)",
+        requires=("signal_a", "signal_b"),
+    )
+    result = evaluate_requirement(req, TraceOnlySUT({"signal_a", "signal_b"}))
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
 
 
 def test_result_cannot_claim_more_than_its_evidence():

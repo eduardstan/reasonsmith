@@ -54,7 +54,7 @@ from reasonsmith.rulelang import (
     unconditional_signal_names,
 )
 
-VALID_FORMALISMS = ("record", "temporal", "logical")
+VALID_FORMALISMS = ("record", "temporal", "logical", "counterfactual")
 PACKS_DIR = Path(__file__).parent / "packs"
 
 #: Exactly the fields a [[requirement]] block carries. A pack that omits one is
@@ -268,7 +268,7 @@ class Requirement:
     article_clause: str
     verbatim_text: str
     stakeholder: str
-    formalism: Literal["record", "temporal", "logical"]
+    formalism: Literal["record", "temporal", "logical", "counterfactual"]
     spec: str
     rationale: str
     requires: tuple[str, ...]

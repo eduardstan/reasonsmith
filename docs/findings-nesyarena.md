@@ -37,16 +37,17 @@ as a number. The decision margin and numeric deviation are the two signals added
 its property compares them, and its capability declaration also requires the existing approximation
 statement. The first run carried eight signals and no duty read the deviation at all.
 
-Eleven further pack signals were **not** declared, because the system genuinely cannot emit them —
+Twelve further pack signals were **not** declared, because the system genuinely cannot emit them —
 `provenance_active_exceptions` (definite Horn programs have no defeater mechanism),
 `artifact_logs_notification_latency_days` and `artifact_logs_counteroffer_not_accepted` (no
 notification exists in this domain), `artifact_logs_right_to_reasons_disclosure` (the system issues
 no adverse-action notice; it is the ungated branch of the either/or of 12 CFR 1002.9(a)(2), so its
 absence makes no duty unattainable), `artifact_logs_deleted_reason_count` (the one signal
 reasonsmith *measures* from an inference artefact rather than reads from a record, and no
-provenance here exposes one through `artifact()`), and the six Article 22 signals that are facts
-about a controller's legal position or about the pipeline the system is embedded in, not about an
-inference. Filling any of those in would have made a duty checkable that this system cannot
+provenance here exposes one through `artifact()`), `applicant_prohibited_basis` (a fact about a
+natural person, and no applicant exists for a graph solver to accept one about), and the six
+Article 22 signals that are facts about a controller's legal position or about the pipeline the
+system is embedded in, not about an inference. Filling any of those in would have made a duty checkable that this system cannot
 discharge, which is the failure this whole exercise exists to avoid.
 
 **No regulatory class was declared.** `nesyarena`'s provenances are reference implementations in
@@ -55,12 +56,12 @@ a measurement harness, not an AI system placed on the market in an Annex III use
 
 **No decision domain was declared either.** These provenances decide graph reachability and Sudoku
 validity. They issue no credit, hire nobody and treat no patient, so there is nothing to declare,
-and the four ECOA duties come back not applicable rather than checked. That is finding 3 below,
+and the five ECOA duties come back not applicable rather than checked. That is finding 3 below,
 and it is the reason the gate exists.
 
 ## The headline
 
-65 results — 5 systems × 13 requirements across the three packs:
+70 results — 5 systems × 14 requirements across the three packs:
 
 | outcome | count |
 | --- | ---: |
@@ -68,7 +69,7 @@ and it is the reason the gate exists.
 | violated, at strength `observed` | 3 |
 | inconclusive, `unattainable` | 10 |
 | not applicable (no class declared) | 20 |
-| not applicable (no decision domain declared) | 20 |
+| not applicable (no decision domain declared) | 25 |
 | satisfied at `probed` | 0 |
 | satisfied at `proved` | 0 |
 
@@ -80,8 +81,9 @@ after that run to read the declared deviation rather than the field that explain
 The whole ECOA column moved to *not applicable* when the decision-domain gate landed: 8 satisfied,
 2 violated and 5 unattainable results became 15 not-applicable ones. Nothing about these systems
 changed. What changed is that a duty about consumer credit stopped being answered against a graph
-solver — finding 3. The column is 20 results rather than 15 today only because the pack has since
-gained a fourth duty; the gate did what that sentence says it did to the three that existed then.
+solver — finding 3. The column is 25 results rather than 15 today only because the pack has since
+gained a fourth and a fifth duty; the gate did what that sentence says it did to the three that
+existed then.
 
 ## The violation
 
@@ -206,7 +208,11 @@ Across all three packs there are three `logical` requirements
 (`gdpr_art22_1_no_prohibited_decision_for_any_input`, `ecoa_reg_b_1002_9_b_2_specific_reasons` and
 `ecoa_reg_b_1002_9_b_2_principal_reasons_complete`) and three `temporal` requirements
 (`ecoa_reg_b_1002_9_a_1_timing_of_notice`, `ecoa_reg_b_1002_9_a_2_written_statement` and
-`gdpr_recital71_error_risk_minimised`). Two duties came back `unattainable` for all five systems —
+`gdpr_recital71_error_risk_minimised`), beside the one `counterfactual` requirement
+(`ecoa_reg_b_1002_4_a_no_disparate_treatment`), which reaches neither rung here for the reason the
+ECOA duties below do not: the domain gate answers it before any engine runs, and a run that did
+declare `consumer-credit` would report it `unattainable`, because these provenances have no notion
+of an applicant's prohibited basis. Two duties came back `unattainable` for all five systems —
 the whole unattainable column of ten: the GDPR logical duty
 `gdpr_art22_1_no_prohibited_decision_for_any_input` and the GDPR record duty
 `gdpr_art22_1_automated_decision_prohibition`. The logical duty needs six signals; the system can
@@ -214,7 +220,7 @@ emit none of them, because five are facts about a controller's legal basis or ab
 human-intervention route and one is about the effect a decision has on a person. The record duty
 needs `provenance_active_exceptions`, and definite Horn programs have no defeater mechanism to
 record as active. The ECOA *timing* duty is not `unattainable` in this run at all — it is one of
-the twenty not-applicable results, because the domain gate of finding 3 reports it without running
+the twenty-five not-applicable results, because the domain gate of finding 3 reports it without running
 it. It needs a notification latency and a counteroffer signal the system has no concept of, so a
 run that declared `consumer-credit` would report it `unattainable`, but this run is not that run.
 
@@ -280,8 +286,8 @@ signal, not a missing domain.
 
 **Fixed, and this is what fixing it cost.** A `domains` field now sits beside `scope` on every
 requirement, naming the kinds of decision a duty is about, and it is matched by intersection against
-what a system declares (`--system-domain`, or `system_domains` on an adapter). The four ECOA duties
-carry `domains = ["consumer-credit"]`; this run declares no domain; all twenty ECOA results are now
+what a system declares (`--system-domain`, or `system_domains` on an adapter). The five ECOA duties
+carry `domains = ["consumer-credit"]`; this run declares no domain; all twenty-five ECOA results are now
 `not_applicable`, where four of the five systems were `satisfied` on
 `ecoa_reg_b_1002_9_a_2_written_statement` before. The GDPR results did **not** move, and that is the
 right answer rather than a gap: Article 22 governs a solely-automated decision whatever the decision
@@ -291,9 +297,10 @@ The gate is not the only thing standing between these systems and the fourth of 
 count reasonsmith *measures* from an inference artefact a system exposes through the optional
 `artifact()` method rather than reads from a log, so even a run declaring `consumer-credit` would
 report it `unattainable` on all five provenances. It would not be alone: the timing duty would be
-`unattainable` too, on the notification latency and counteroffer signals it gates on, so two of the
-four duties would stay unattainable and the other two — the written-statement and specific-reasons
-duties — would become checkable.
+`unattainable` too, on the notification latency and counteroffer signals it gates on, and so would
+the counterfactual duty added since, on `applicant_prohibited_basis` — a fact about a natural
+person, which a graph solver has none of. So three of the five duties would stay unattainable and
+the other two — the written-statement and specific-reasons duties — would become checkable.
 
 Three things this did not fix, in descending order of how much they should worry a reader:
 
@@ -306,7 +313,7 @@ Three things this did not fix, in descending order of how much they should worry
 - **A declaration is a self-declaration.** Nothing checks that a system declaring `consumer-credit`
   issues credit. The gate stops a duty reaching a system that said nothing; it does nothing about
   one that said the wrong thing — the same standing as the Article 22(2) basis flags
-  (`docs/semantics.md` §3, *the assumption all six share*).
+  (`docs/semantics.md` §3, *the assumption all seven share*).
 - **The trigger inside a decision is still not modelled.** 12 CFR 1002.9 is triggered by adverse
   action having been taken, not by the creditor being in consumer credit. Against a system that
   *does* declare `consumer-credit`, the property still runs over every record in the trace,

@@ -85,7 +85,14 @@ from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
 
-__all__ = ["REAL_ARITHMETIC_LIMIT", "ProvedEngine", "UnsupportedConstructError"]
+__all__ = [
+    "REAL_ARITHMETIC_LIMIT",
+    "LogicDeclarationError",
+    "ProvedEngine",
+    "decision_runner",
+    "UnsupportedConstructError",
+    "read_declared_logic",
+]
 
 #: The limit every proof touching a `real` carries, stated on the result that makes the claim.
 REAL_ARITHMETIC_LIMIT = (
@@ -94,6 +101,78 @@ REAL_ARITHMETIC_LIMIT = (
     "property that depends on rounding can be proved here and still fail in execution."
 )
 _UNSET_LOGIC = object()
+
+
+class LogicDeclarationError(UnsupportedConstructError):
+    """A `sut.logic()` payload no solver-backed engine can read, with what to report about it.
+
+    Carries the summary and the details rather than only a message, because every refusal below
+    was already worded for a reader of a report and the two engines that read a declaration must
+    word them identically. A subclass of `UnsupportedConstructError` so a caller that only knows
+    the base class still refuses rather than crashing.
+    """
+
+    def __init__(self, summary: str, details: dict[str, Any]):
+        super().__init__(summary)
+        self.summary = summary
+        self.details = details
+
+
+def read_declared_logic(logic_data: Any) -> tuple[list[str], dict[str, str], list[str], Any]:
+    """The rules, the type table, the constraints and the declared `computes` of a `logic()`.
+
+    One reading of a declaration, shared by the state-property proof and by the self-composition
+    the counterfactual duty needs. `computes` is returned as a `set` of names, or `None` where the
+    system declared no directions at all — which is not the same as declaring it computes nothing,
+    and the two engines answer it differently.
+    """
+    if isinstance(logic_data, dict):
+        rules = logic_data.get("rules", [])
+        variables = logic_data.get("variables", {})
+        constraints = logic_data.get("constraints", [])
+        declared_computes = logic_data.get("computes")
+    elif hasattr(logic_data, "rules"):
+        rules = getattr(logic_data, "rules", [])
+        variables = getattr(logic_data, "variables", {})
+        constraints = getattr(logic_data, "constraints", [])
+        declared_computes = getattr(logic_data, "computes", None)
+    else:
+        tname = type(logic_data).__name__
+        raise LogicDeclarationError(
+            f"Not evaluated: sut.logic() returned unexpected type {tname}.", {}
+        )
+
+    if isinstance(declared_computes, (str, bytes)):
+        raise LogicDeclarationError(
+            "Not evaluated: sut.logic() declares `computes` as a string rather than a "
+            "collection of names, and read as one it is a set of characters naming nothing "
+            "the system computes. Silently accepted it would read every declared variable as "
+            "an input, which is the reading the declaration exists to replace.",
+            {"computes": repr(declared_computes)},
+        )
+
+    if declared_computes is not None:
+        try:
+            declared_computes = set(declared_computes)
+        except TypeError:
+            raise LogicDeclarationError(
+                "Not evaluated: sut.logic() declares `computes` as "
+                f"{type(declared_computes).__name__}, which is not a collection of names at "
+                "all, so nothing here can read which variables the system computes. A "
+                "direction declaration that cannot be read is refused rather than ignored.",
+                {"computes": repr(declared_computes)},
+            ) from None
+        not_names = sorted(repr(n) for n in declared_computes if not isinstance(n, str))
+        if not_names:
+            raise LogicDeclarationError(
+                "Not evaluated: sut.logic() declares `computes` entries that are not variable "
+                "names: " + ", ".join(not_names) + ". An entry naming no variable matches no "
+                "name in the property, so accepting it would silently read a computed output "
+                "as an input the situation supplies.",
+                {"computes": ", ".join(not_names)},
+            )
+
+    return rules, variables, constraints, declared_computes
 
 
 def _declare(name: str, var_types: dict[str, str], suffix: str = "") -> Any:
@@ -745,6 +824,30 @@ def _check_encoding_against_interpreter(
     return None
 
 
+def decision_runner(sut: SystemUnderTest, logic_data: Any) -> tuple[Any, str] | None:
+    """How to run one input through this system, and what to call that in a report.
+
+    The system's own `decide()` where it has one; otherwise the declared rules executed by the
+    reference interpreter, which is the only other thing here that *is* the system's procedure.
+    `None` when neither exists, so a caller can say so in its own words.
+
+    The rules alone, because `decide()` executes nothing else: the type table and the constraint
+    list reach only `logic()`, which nothing here calls, while handing them over lets a declaration
+    mismatch that has nothing to do with replaying an input refuse the interpreter construction and
+    report a reproducible finding not evaluated.
+    """
+    if hasattr(sut, "decide") and callable(sut.decide):
+        return sut.decide, "the system's own decide()"
+    if not isinstance(logic_data, dict) or "rules" not in logic_data:
+        return None
+    from reasonsmith.adapters.rules import RulesAdapter
+
+    return RulesAdapter(rules=logic_data.get("rules", [])).decide, (
+        "the declared logic from sut.logic(), executed by the reference rule "
+        "interpreter, because the system exposes no decide() to run"
+    )
+
+
 def _verify_counterexample(
     sut: SystemUnderTest,
     req: Requirement,
@@ -753,28 +856,14 @@ def _verify_counterexample(
 ) -> tuple[bool, str]:
     """Verify that feeding a solver counterexample to the SUT actually reproduces the violation."""
     try:
-        if hasattr(sut, "decide") and callable(sut.decide):
-            output_rec = sut.decide(ce_inputs)
-            ran_against = "the system's own decide()"
-        else:
-            from reasonsmith.adapters.rules import RulesAdapter
-
-            if not isinstance(logic_data, dict) or "rules" not in logic_data:
-                return (
-                    False,
-                    "System under test provides no decide() method to verify counterexample",
-                )
-            # The rules alone, because `decide()` executes nothing else: the type table and the
-            # constraint list reach only `logic()`, which nothing here calls, while handing them
-            # over lets a declaration mismatch that has nothing to do with replaying a
-            # counterexample refuse the interpreter construction and report a reproducible
-            # violation not evaluated.
-            temp_adapter = RulesAdapter(rules=logic_data.get("rules", []))
-            output_rec = temp_adapter.decide(ce_inputs)
-            ran_against = (
-                "the declared logic from sut.logic(), executed by the reference rule "
-                "interpreter, because the system exposes no decide() to run"
+        runner = decision_runner(sut, logic_data)
+        if runner is None:
+            return (
+                False,
+                "System under test provides no decide() method to verify counterexample",
             )
+        decide, ran_against = runner
+        output_rec = decide(ce_inputs)
 
         if not isinstance(output_rec, dict):
             return False, f"SUT decide() returned {type(output_rec).__name__}, expected dict"
@@ -828,51 +917,10 @@ class ProvedEngine:
                 {},
             )
 
-        if isinstance(logic_data, dict):
-            rules = logic_data.get("rules", [])
-            variables = logic_data.get("variables", {})
-            constraints = logic_data.get("constraints", [])
-            declared_computes = logic_data.get("computes")
-        elif hasattr(logic_data, "rules"):
-            rules = getattr(logic_data, "rules", [])
-            variables = getattr(logic_data, "variables", {})
-            constraints = getattr(logic_data, "constraints", [])
-            declared_computes = getattr(logic_data, "computes", None)
-        else:
-            tname = type(logic_data).__name__
-            return not_evaluated(
-                f"Not evaluated: sut.logic() returned unexpected type {tname}.", {}
-            )
-
-        if isinstance(declared_computes, (str, bytes)):
-            return not_evaluated(
-                "Not evaluated: sut.logic() declares `computes` as a string rather than a "
-                "collection of names, and read as one it is a set of characters naming nothing "
-                "the system computes. Silently accepted it would read every declared variable as "
-                "an input, which is the reading the declaration exists to replace.",
-                {"computes": repr(declared_computes)},
-            )
-
-        if declared_computes is not None:
-            try:
-                declared_computes = set(declared_computes)
-            except TypeError:
-                return not_evaluated(
-                    "Not evaluated: sut.logic() declares `computes` as "
-                    f"{type(declared_computes).__name__}, which is not a collection of names at "
-                    "all, so nothing here can read which variables the system computes. A "
-                    "direction declaration that cannot be read is refused rather than ignored.",
-                    {"computes": repr(declared_computes)},
-                )
-            not_names = sorted(repr(n) for n in declared_computes if not isinstance(n, str))
-            if not_names:
-                return not_evaluated(
-                    "Not evaluated: sut.logic() declares `computes` entries that are not variable "
-                    "names: " + ", ".join(not_names) + ". An entry naming no variable matches no "
-                    "name in the property, so accepting it would silently read a computed output "
-                    "as an input the situation supplies.",
-                    {"computes": ", ".join(not_names)},
-                )
+        try:
+            rules, variables, constraints, declared_computes = read_declared_logic(logic_data)
+        except LogicDeclarationError as exc:
+            return not_evaluated(exc.summary, exc.details)
 
         scope = _Scope(variables)
         solver = z3.Solver()
