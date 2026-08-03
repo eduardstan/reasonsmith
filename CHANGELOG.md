@@ -33,9 +33,10 @@ releases before it predate the file and are not reconstructed here.
   a name in `variables` but not in `computes` is an input, and a name in neither is one the system
   has **no notion of**. A property reading a name in that third state is refused, and so is one
   reading a declared output the exposed rules do not settle on every path. A declared *input* is
-  quantified over as it always was, flags and magnitudes alike, which is what keeps
-  `income >= 30000 implies approved` and `gdpr_art22_1_no_prohibited_decision_for_any_input`
-  provable — the latter's whole purpose being to range over flags no rule assigns.
+  quantified over where the property also reads a name the rules settle — the fix below narrows
+  that to what it always should have been — which is what keeps `income >= 30000 implies approved`
+  and `gdpr_art22_1_no_prohibited_decision_for_any_input` provable, the latter's whole purpose
+  being to range over flags no rule assigns.
 
   `RulesAdapter` derives `computes` from its own rules' assignment targets unless the caller
   overrides it, so no adapter in this repository is undeclared: the premise of that adapter is that
