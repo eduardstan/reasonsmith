@@ -110,10 +110,19 @@ def _declare(name: str, var_types: dict[str, str], suffix: str = "") -> Any:
 
 
 class _Scope:
-    """Static single assignment name table: current version per name, plus the free inputs."""
+    """Static single assignment name table: current version per name, plus the free inputs.
 
-    def __init__(self, var_types: Optional[dict[str, str]]):
+    `namespace` labels every constant this scope declares, and exists so the *same* rule block can
+    be encoded twice into one solver without the two copies collapsing into each other. An SSA
+    label is `name#version`, which is unique within one execution and identical across two, so two
+    copies sharing a solver would silently assert that the second execution's `approved#1` is the
+    first execution's — turning a property of a *pair* of runs into a property of one. The default
+    is the empty namespace, so a single-copy encoding is labelled exactly as it always was.
+    """
+
+    def __init__(self, var_types: Optional[dict[str, str]], namespace: str = ""):
         self.var_types: dict[str, str] = dict(var_types or {})
+        self.namespace = namespace
         self.current: dict[str, Any] = {}
         self.inputs: dict[str, Any] = {}
         self.uses_real_arithmetic = False
@@ -129,7 +138,7 @@ class _Scope:
     def read(self, name: str) -> Any:
         """Return the constant holding the current value of `name`, declaring it as a free input."""
         if name not in self.current:
-            const = self.note_sort(_declare(name, self.var_types))
+            const = self.note_sort(_declare(name, self.var_types, self.namespace))
             self.current[name] = const
             self.inputs[name] = const
         return self.current[name]
@@ -138,7 +147,7 @@ class _Scope:
         """Bind `name` to a fresh constant and return it."""
         version = self._versions.get(name, 0) + 1
         self._versions[name] = version
-        const = self.note_sort(_declare(name, self.var_types, f"#{version}"))
+        const = self.note_sort(_declare(name, self.var_types, f"{self.namespace}#{version}"))
         self.current[name] = const
         self._definitely_assigned.add(name)
         return const
