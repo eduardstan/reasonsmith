@@ -524,14 +524,29 @@ package proves has four of five legally owed reasons deleted. This engine is wha
 `test_form_completeness_and_reason_fidelity_are_now_separate_verdicts`).
 
 > **If the certificate engine reports `satisfied` at strength `probed`, then:** for every decision
-> the system exposed an artefact for, bounded proof enumeration to that artefact's own
-> `exact_depth` found the decision's reasons, and every reason holding a fact no other reason uses
-> was switched off alone and the system's own engine re-run on the perturbed interpretation. Each
-> such deletion moved the system's answer, so no reason was shown deleted, and the property held on
-> that decision's record with the measured count in place. The budget records how many inferences
-> were replayed, over how many decisions and how many switched-off reasons
+> the verdict covers, bounded proof enumeration to that artefact's own `exact_depth` found **at
+> least one** reason, and every reason holding a fact no other reason uses was switched off alone
+> and the system's own engine re-run on the perturbed interpretation. Each such deletion moved the
+> system's answer, so no reason was shown deleted, and the property held on that decision's record
+> with the measured count in place. The budget records how many inferences were replayed, over how
+> many decisions and how many switched-off reasons
 > (`test_the_certificate_verdict_carries_its_probe_budget`,
 > `test_an_engine_that_deletes_nothing_is_probed_and_never_proved`).
+
+**A decision whose enumeration found no reason at all is covered by no verdict here.** The
+antecedent above says *at least one* because the zero it would otherwise report is the absence of a
+measurement, not a measurement of zero: with nothing enumerated, nothing is switched off,
+`len(cert.deleted)` is zero, and a property reading
+`engines.certificate.DELETED_REASON_COUNT` comes out clean without exact inference having
+evaluated anything. `certificate.Certificate.verdict` already refuses to call such a query a `PASS`
+— *a zero value gap on an un-enumerated query is not agreement* — and this engine asks it rather
+than reading the count. Such a decision is dropped from the certified set, counted in
+`decisions_without_an_enumerated_reason`, and named in the summary of whatever verdict the
+remaining decisions carry; a run where *every* certificate is like that is **not evaluated**,
+naming the signal as unmeasured. The artefact's own `exact_depth` is the usual cause, and lowering
+it needs no intent — a misconfiguration, a program that grew a rule layer or a wrong query
+identifier produce the same artefact. Weaker evidence must not buy a stronger verdict
+(`test_a_decision_whose_reasons_were_never_enumerated_cannot_buy_satisfied`).
 
 *The domain, exactly.* The decisions the system's trace holds **and** for which `artifact()`
 returned an artefact rather than None. The enumeration is exact on *one* ground program and one
@@ -1216,6 +1231,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | A system that cannot supply the oracle is unattainable, and the adequacy duty is never downgraded to the presence check | `test_a_system_exposing_no_oracle_is_unattainable_and_names_the_signal`, `test_the_adequacy_duty_is_never_downgraded_to_the_presence_check` |
 | The deleted-reason count is measured, never read from the system's own record | `test_a_logged_completeness_count_never_settles_the_duty` |
 | A certificate verdict carries its probe budget, and exact inference behind a decision still reaches probed and no higher | `test_the_certificate_verdict_carries_its_probe_budget`, `test_an_engine_that_deletes_nothing_is_probed_and_never_proved` |
+| A decision whose reasons were never enumerated buys no verdict, and never `satisfied` | `test_a_decision_whose_reasons_were_never_enumerated_cannot_buy_satisfied` |
 | No artefact, a broken artefact, or a property the engine cannot ground ⇒ not evaluated | `test_a_trace_with_no_artifact_is_not_evaluated_never_satisfied`, `test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`, `test_the_engine_refuses_a_property_it_cannot_ground` |
 | A reason-deletion certificate detects a dropped reason and excludes compliance certification beyond its measured input | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_limits_exclude_compliance_certification`, `test_certificate_carries_its_limits` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |

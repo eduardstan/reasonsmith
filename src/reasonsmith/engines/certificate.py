@@ -39,6 +39,16 @@ What a reader must not break:
     Why this matters: `certificate.certify` never assumes such a reason is live, and neither may
     this engine assume it was dropped. Counting it either way would put a verdict on evidence the
     probe explicitly declined to produce.
+  - A certificate whose enumeration found *no* reason measures nothing, and is evidence for
+    nothing. It is dropped from the certified set, counted, and reported; a run where every
+    certificate is like that is NOT EVALUATED naming `artifact_logs_deleted_reason_count`.
+    Why this matters: `len(cert.deleted)` is zero on such a certificate for the same reason it is
+    zero on a decision whose reasons the engine all used, and the two are not the same fact.
+    `certificate.Certificate.verdict` already refuses to call an un-enumerated query a PASS — "a
+    zero value gap on an un-enumerated query is not agreement; exact inference never evaluated
+    it" — and this engine must ask for that rather than read the zero. Lowering the artefact's
+    own `exact_depth` to 0 would otherwise turn the demonstration's breached decision clean, which
+    is weaker evidence buying a stronger verdict.
 """
 
 from __future__ import annotations
@@ -250,6 +260,26 @@ class CertificateEngine:
                 ),
             )
 
+        # A certificate whose enumeration found no reason at all measured nothing: its zero
+        # deleted-reason count is the absence of a measurement, not a measurement of zero. This is
+        # the refusal `Certificate.verdict` already makes one layer down, asked for here.
+        unenumerated = sum(1 for _, cert, _ in certified if not cert.verdicts)
+        certified = [item for item in certified if item[1].verdicts]
+        if not certified:
+            return _result(
+                req,
+                Verdict.INCONCLUSIVE,
+                None,
+                (
+                    f"Not evaluated: bounded proof enumeration found no reason at all behind any "
+                    f"of the {unenumerated} certified decision(s), so {DELETED_REASON_COUNT} is "
+                    "unmeasured for every one of them and no reason was switched off. A zero "
+                    "deleted-reason count on a decision whose reasons were never enumerated is "
+                    "the absence of a measurement, not a measurement of zero — the artefact's own "
+                    "exact_depth is the usual cause. Nothing is claimed either way."
+                ),
+            )
+
         uncertified_reasons = sum(len(cert.uncertified) for _, cert, _ in certified)
         budget = {
             "trials": sum(_probes(cert) for _, cert, _ in certified),
@@ -266,6 +296,7 @@ class CertificateEngine:
             PROBE_BUDGET_KEY: budget,
             "decisions_certified": len(certified),
             "decisions_without_an_artifact": uncertifiable,
+            "decisions_without_an_enumerated_reason": unenumerated,
             "reasons_not_certifiable": uncertified_reasons,
             CERTIFICATES_KEY: [
                 {
@@ -290,6 +321,15 @@ class CertificateEngine:
         skipped = (
             f" {uncertifiable} decision(s) in the trace exposed no artefact and were not certified."
             if uncertifiable
+            else ""
+        )
+        # Named beside the caveat rather than folded into it: this one is not a reason the probe
+        # declined, it is a decision the enumeration never reached.
+        skipped += (
+            f" {unenumerated} decision(s) had no reason enumerated at all, so "
+            f"{DELETED_REASON_COUNT} is unmeasured for them and this verdict covers them not at "
+            "all."
+            if unenumerated
             else ""
         )
 
