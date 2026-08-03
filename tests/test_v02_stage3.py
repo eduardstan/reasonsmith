@@ -1411,19 +1411,18 @@ def test_a_declared_output_the_rules_never_settle_is_refused_a_proof():
     assert "do not assign it on every path" in result.evidence_summary
 
 
-def test_a_magnitude_declared_an_input_is_quantified_over_like_any_other():
-    """The joint the sort heuristic cut wrongly, cut correctly.
+def test_a_logged_magnitude_is_not_an_input_because_the_type_table_names_it():
+    """A name in `variables` alone is not a declared input, and cannot carry a `proved` violation.
 
-    A system declaring that its situation supplies both magnitudes and that its rules ignore them
-    is making the same shape of claim `gdpr_art22_1_no_prohibited_decision_for_any_input` quantifies
-    over, with numbers instead of flags. "For every admissible input the declared deviation is
-    within the margin" is then genuinely false, and reporting it violated is the engine working.
-    The heuristic refused this because the free names were arithmetic; the declaration admits it
-    because the system says the situation supplies them.
+    `variables` is a type table: its job is sorts. A caller listing the two Recital 71 magnitudes
+    there is doing what the field asks — naming a signal its system deals with, here one it merely
+    logs — and is not thereby saying the decision situation supplies them. Reading it as though it
+    were made `computes` widen what reaches the solver, and this system, which decides on a score
+    alone, was reported `violated` at `proved` on the solver's own `deviation = 1, margin = 0`.
 
-    That the verdict follows the declaration is the cost of taking one: an adapter calling an
-    output an input is answered about the system it described. `docs/semantics.md` §3.5 says so,
-    and it is the same trust `system_domains` is given.
+    Which is the verdict class `_check_magnitudes_are_computed` exists to stop, so it runs as an
+    additional filter over every logic and not as an alternative to the declaration. The duty falls
+    to the engine that reads the trace, where an unmeasured magnitude is reported unmeasured.
     """
     req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
     sut = RulesAdapter(
@@ -1441,8 +1440,44 @@ def test_a_magnitude_declared_an_input_is_quantified_over_like_any_other():
 
     result = evaluate_requirement(req, sut)
 
-    assert result.verdict == Verdict.VIOLATED
-    assert result.strength == Strength.PROVED
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert "reads nothing the declared rules assign" in result.evidence_summary
+
+
+def test_a_constraint_restating_the_duty_cannot_prove_the_system_satisfies_it():
+    """The other direction of the same defect: a system asserting the duty about itself.
+
+    One constraint naming the two magnitudes is enough to make the negated property unsatisfiable,
+    so the same system that was reported `violated` above is reported `satisfied` at `proved` —
+    on the strength of its own assertion, which no rendering names. `docs/semantics.md` §3 refuses
+    a self-declared verdict everywhere else, and it must not arrive at the top rung through a
+    constraint. The property still reads no name the rules assign, so the same filter answers both
+    directions.
+    """
+    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    sut = RulesAdapter(
+        rules=["approved = score >= 650"],
+        variables={
+            "score": "int",
+            "approved": "bool",
+            "scope_statements_declared_deviation": "real",
+            "artifact_logs_decision_margin": "real",
+        },
+        constraints=[
+            "score >= 0",
+            "score <= 1000",
+            "scope_statements_declared_deviation <= artifact_logs_decision_margin",
+        ],
+        declared_capabilities=set(_UNCOMPUTED_MAGNITUDE_SIGNALS),
+    )
+    assert sut.logic()["computes"] == ["approved"]
+
+    result = evaluate_requirement(req, sut)
+
+    assert result.strength is None
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert "reads nothing the declared rules assign" in result.evidence_summary
 
 
 def test_computes_is_derived_from_the_rules_and_must_name_declared_variables():
@@ -1548,9 +1583,9 @@ def test_computes_declared_as_a_string_is_refused_rather_than_read_as_characters
     """A bare string is iterable, and taking it silently widens every proof.
 
     `set("approved")` is six characters naming nothing the system computes, so the declaration
-    guard would find no output to check, the sort heuristic would already have been skipped, and
-    every declared variable would read as an input — the reading `docs/semantics.md` §3.5 says
-    hands back the `violated`-at-`proved` verdict the declaration exists to stop.
+    guard would find no output to check and every declared variable would read as an input — the
+    reading `docs/semantics.md` §3.5 says hands back the `violated`-at-`proved` verdict the
+    declaration exists to stop. Refused at the misdeclaration, before any solver call.
     """
     req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
 
