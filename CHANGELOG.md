@@ -27,14 +27,21 @@ releases before it predate the file and are not reconstructed here.
 
   `certificate.Certificate.verdict` already refuses to call an un-enumerated query a `PASS`, on the
   ground that a zero value gap on one is not agreement because exact inference never evaluated it.
-  The engine now asks for that refusal rather than reading the count. Such a certificate is dropped
-  from the certified set, counted in `decisions_without_an_enumerated_reason`, and named in the
-  summary of whatever verdict the remaining decisions carry, so a mixed trace still reports its real
-  breach and still says which decisions the verdict does not cover; a run where every certificate is
-  like that is *not evaluated*, naming `artifact_logs_deleted_reason_count` as unmeasured. A system
-  that genuinely enumerates reasons and deletes none still reaches `satisfied` at `probed`.
-  `docs/semantics.md` §3's certificate guarantee now says enumeration found *at least one* reason
-  and states what a decision without one is covered by.
+  The engine now makes that refusal, through `conformance.measured(cert)` — this package's single
+  predicate for whether a certificate measured anything at all, and the no-enumerated-reason clause
+  of that property — rather than reading the count. Such a certificate is dropped from the certified
+  set, counted in `decisions_without_an_enumerated_reason`, and named in the summary.
+
+  A violation needs one witness; a satisfaction needs complete evidence. A breach measured on a
+  decision that *was* enumerated is still reported `violated` at `probed`, naming the unmeasured
+  decisions beside it, while a run that would otherwise be `satisfied` is *not evaluated* the moment
+  one certified decision went unmeasured, naming `artifact_logs_deleted_reason_count` as unmeasured
+  for it: satisfaction over a subset of the trace is not satisfaction over the trace. Anything
+  weaker is defeated by the same move it was written to stop — declare `exact_depth=0` on every
+  decision but one genuinely clean one. A system that genuinely enumerates reasons and deletes none
+  still reaches `satisfied` at `probed`. `docs/semantics.md` §3's certificate guarantee now says
+  enumeration found *at least one* reason on *every* decision the verdict covers, and states the
+  asymmetry in the same words.
 
 ### Changed
 
