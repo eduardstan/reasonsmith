@@ -79,9 +79,9 @@ one that needed a **direction**, so `sut.logic()` may declare `computes` beside 
 names the system produces, as against the ones its situation supplies. The two together give three
 states — computed, input, *no notion of* — and `_check_declared_directions` refuses a property
 reading a name in the third state, or a declared output the rules do not settle on every path.
-A declared **input** is quantified over where the property also reads a name the rules settle, which
-is what keeps `income >= 30000 implies approved` and
-`gdpr_art22_1_no_prohibited_decision_for_any_input` provable.
+A declared **input** is quantified over where the property also reads a name the rules settle, or
+reads its free names as flags rather than magnitudes — which is what keeps
+`income >= 30000 implies approved` and `gdpr_art22_1_no_prohibited_decision_for_any_input` provable.
 `RulesAdapter` derives `computes` from its rules' assignment targets — the premise of that adapter
 is that the rules *are* the decision procedure — so no adapter here is undeclared, and a `computes`
 name outside `variables` is refused at construction. Nothing second-guesses the declaration: an
@@ -92,7 +92,8 @@ adapter calling an output an input is answered about the system it described, th
 name as an input made both `proved` verdicts a function of the caller's type table — `violated` over
 numbers nobody computes, and `satisfied` where a constraint of the system's own restates the duty.
 `docs/semantics.md` §3.5, *When the magnitudes are not the system's own*, states all of it, names
-every test, and states the cost: a duty over declared inputs alone cannot be `proved`.
+every test, and states the cost: a duty comparing declared-input magnitudes alone cannot be
+`proved`.
 
 `contains(signal, "phrase")` is the one atom that reads *what a statement says* rather than whether a
 field is blank, and it exists because a duty settled by `present()` alone accepts a reason of

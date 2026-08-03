@@ -1647,9 +1647,10 @@ def test_article_22_still_quantifies_over_flags_the_rules_never_assign():
     a decision that is solely automated and significantly affecting without an Article 22(2) basis.
     Its flags are free inputs of the exposed rules on purpose — quantifying over them is the whole
     duty — so a guard that refused every unassigned name would turn this proof into silence. This
-    SUT is a `RulesAdapter`, so it declares `computes` and `_check_declared_directions` is the
-    guard that runs: the flags are in `variables` and not in `computes`, which is the declaration
-    for an input the situation supplies, and an input is quantified over.
+    SUT is a `RulesAdapter`, so it declares `computes` and both guards run: the flags are in
+    `variables` and not in `computes`, which is the declaration for an input the situation supplies,
+    and the sort heuristic beside the declaration guard refuses only free *magnitudes*, so free
+    flags pass it. An input is quantified over.
     """
     req = load_pack("gdpr").get_requirement("gdpr_art22_1_no_prohibited_decision_for_any_input")
     flags = (

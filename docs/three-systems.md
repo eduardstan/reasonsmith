@@ -151,7 +151,8 @@ different programs. The duty stops being a question about the decisions the syst
 log.
 
 `logic()` also declares the *direction* of each variable — `computes` names the ones the system
-produces, and the rest of `variables` are the ones the application supplies. `RulesAdapter` derives
+produces, and the rest of `variables` are *at most* the ones the application supplies, since a type
+table can also name a signal the system merely logs. `RulesAdapter` derives
 that from the rules themselves, so this system says it computes what its rules assign and nothing
 more. It is what lets the engine tell an input it may quantify over from a name the system has no
 notion of, and refuse a proof about the latter rather than answer it from a constant the solver

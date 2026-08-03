@@ -28,8 +28,10 @@ What a reader must not break:
     executed" — a claim about the system, made from one sample trace.
   - `logic()` may declare `computes` beside `variables`, `rules` and `constraints`: the names the
     system *produces*, as against the ones its decision situation supplies. Nothing here requires
-    it, and logic that omits it is answered by the proved engine's older sort heuristic rather than
-    refused — but an adapter exposing logic and declaring no directions is leaving that engine
+    it: the proved engine's older sort heuristic runs whether or not directions are declared, so
+    logic that omits `computes` is answered by that heuristic alone rather than refused, and a
+    declaration narrows what reaches the solver and never widens it — but an adapter exposing logic
+    and declaring no directions is leaving that engine
     guessing, so `RulesAdapter` derives the declaration rather than let one go missing. It must be
     a collection of names and never a bare string, which reads as its own characters; the proved
     engine reports such logic not evaluated rather than take the reading. Declaring a computed name

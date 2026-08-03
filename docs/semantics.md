@@ -875,7 +875,7 @@ three states:
 | declaration | reading | the solver's free constant is |
 | --- | --- | --- |
 | in `computes` | an output the system produces | wrong unless the rules settle it |
-| in `variables`, not in `computes` | *at most* an input the situation supplies | right where the property also reads a computed name |
+| in `variables`, not in `computes` | *at most* an input the situation supplies | right unless the property reads only free names and compares them as magnitudes |
 | in neither list | a name the system has no notion of | an invention |
 
 The middle row says **at most**, and the qualification is the whole of what `variables` can carry.
@@ -883,7 +883,8 @@ It is a type table: its job is sorts, and a caller listing a name there is namin
 deals with — which may be one it merely *logs*. That is neither an input nor an output, the three
 states have no seat for it, and no declaration distinguishes it from a genuine input. So the middle
 row is a permission and not a licence: `_check_magnitudes_are_computed` below runs over declared
-logic too, and a property reading no computed name at all is refused whatever `variables` says.
+logic too, and a property that reads no name the rules assign and compares free **magnitudes** is
+refused whatever `variables` says.
 
 The outer boundary is **both** lists and not `variables` alone. `RulesAdapter` keeps `computes`
 inside `variables` and refuses to construct otherwise, but the protocol asks an adapter only for the
@@ -918,12 +919,14 @@ implies approved == True` reads three free magnitudes and one computed `approved
 `gdpr_art22_1_no_prohibited_decision_for_any_input` asks whether *any* admissible input yields a
 prohibited decision, ranging over Article 22 flags no rule assigns
 (`test_article_22_still_quantifies_over_flags_the_rules_never_assign`). Both are claims about what
-the system decides over its own input space, and proving them is this engine's whole purpose. Both
-read a name the rules do settle — `approved`, in each case — which is what makes them claims about
-this system rather than about the solver's choice of free constants. A property reading *only* free
-names is not, however many of them the type table lists, so a system whose rules decide on a score
-alone is refused a proof of the Recital 71 comparison in **both** directions: `violated`, on numbers
-it never computes (`test_a_logged_magnitude_is_not_an_input_because_the_type_table_names_it`), and
+the system decides over its own input space, and proving them is this engine's whole purpose, and
+both pass the heuristic below on its own terms: the first reads `approved`, a name the rules do
+settle, and the second reads free **flags** rather than free magnitudes. What the declaration may
+not do is admit what that heuristic refuses — a property reading no name the rules assign and
+comparing free magnitudes — however many of those magnitudes the type table lists. So a system whose
+rules decide on a score alone is refused a proof of the Recital 71 comparison in **both**
+directions: `violated`, on numbers it never computes
+(`test_a_logged_magnitude_is_not_an_input_because_the_type_table_names_it`), and
 `satisfied`, where a constraint of its own restates the duty
 (`test_a_constraint_restating_the_duty_cannot_prove_the_system_satisfies_it`). The second is the
 self-declaration §3 refuses everywhere else, and a constraint must not carry it to the top rung.
@@ -950,8 +953,8 @@ which is the one thing a declaration must never do. So both guards run wherever 
 declared, logic carrying none gets the answer it has today and never a wider one
 (`test_logic_that_declares_no_directions_keeps_the_sort_heuristic`), and a refusal on either path
 still reads as "this engine could not tell whether the system computes these numbers", not as "it
-does not". The cost is stated rather than hidden: a duty over declared inputs alone, reading no
-computed name, cannot be `proved` even where the declaration is exact.
+does not". The cost is stated rather than hidden: a duty comparing declared-input **magnitudes**
+alone, reading no name the rules assign, cannot be `proved` even where the declaration is exact.
 
 ---
 
@@ -1141,7 +1144,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | The same presence property is observed off a trace, probed against `decide()`, and proved against `logic()` | `test_a_record_duty_reaches_proved_when_the_system_exposes_its_logic`, `test_a_record_duty_reaches_probed_when_the_system_can_only_be_re_run` |
 | The ladder takes the strongest evidence produced, not the strongest engine available | `test_a_record_duty_the_solver_cannot_reach_falls_to_the_engine_that_can` |
 | A name the declared directions give the system no notion of is refused a proof, and a declared output the rules never settle is too | `test_a_magnitude_the_rules_never_compute_is_not_proved_violated`, `test_a_declared_output_the_rules_never_settle_is_refused_a_proof` |
-| A declared input is quantified over where the property also reads a name the rules settle | `test_article_22_still_quantifies_over_flags_the_rules_never_assign`, `test_property_holds_for_all_inputs_proved` |
+| A declared input is quantified over where the property also reads a name the rules settle, or reads its free names as flags rather than magnitudes | `test_article_22_still_quantifies_over_flags_the_rules_never_assign`, `test_property_holds_for_all_inputs_proved` |
 | A name the type table lists and the rules neither read nor write carries no `proved` verdict, in either direction | `test_a_logged_magnitude_is_not_an_input_because_the_type_table_names_it`, `test_a_constraint_restating_the_duty_cannot_prove_the_system_satisfies_it` |
 | Directions are derived from the rules, must name declared variables, and the sort heuristic filters declared and undeclared logic alike | `test_computes_is_derived_from_the_rules_and_must_name_declared_variables`, `test_logic_that_declares_no_directions_keeps_the_sort_heuristic` |
 | The two declarations together bound what the system has, and a `computes` that is a bare string is refused rather than read as its characters | `test_a_computed_name_outside_the_type_table_is_an_output_not_an_unknown`, `test_computes_declared_as_a_string_is_refused_rather_than_read_as_characters` |

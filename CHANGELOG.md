@@ -33,10 +33,11 @@ releases before it predate the file and are not reconstructed here.
   a name in `variables` but not in `computes` is an input, and a name in neither is one the system
   has **no notion of**. A property reading a name in that third state is refused, and so is one
   reading a declared output the exposed rules do not settle on every path. A declared *input* is
-  quantified over where the property also reads a name the rules settle — the fix below narrows
-  that to what it always should have been — which is what keeps `income >= 30000 implies approved`
-  and `gdpr_art22_1_no_prohibited_decision_for_any_input` provable, the latter's whole purpose
-  being to range over flags no rule assigns.
+  quantified over where the property also reads a name the rules settle, or reads its free names as
+  flags rather than magnitudes — the fix below narrows that to what it always should have been —
+  which is what keeps `income >= 30000 implies approved` and
+  `gdpr_art22_1_no_prohibited_decision_for_any_input` provable, the latter's whole purpose being to
+  range over flags no rule assigns.
 
   `RulesAdapter` derives `computes` from its own rules' assignment targets unless the caller
   overrides it, so no adapter in this repository is undeclared: the premise of that adapter is that
@@ -85,8 +86,8 @@ releases before it predate the file and are not reconstructed here.
   `gdpr_art22_1_no_prohibited_decision_for_any_input` still quantifies over the Article 22 flags no
   rule assigns; a system with no notion of the magnitudes is still `inconclusive`; and a malformed
   `computes` is still refused before any solver call. The stated cost is in `docs/semantics.md`
-  §3.5: a duty over declared inputs alone, reading no computed name, cannot be `proved` even where
-  the declaration is exact.
+  §3.5: a duty comparing declared-input magnitudes alone, reading no name the rules assign, cannot
+  be `proved` even where the declaration is exact.
 
 - **The README's conformance-check block is held to its builder** ([#93](https://github.com/eduardstan/reasonsmith/pull/93)).
   It was the one derived transcript byte-for-byte pins did not hold, and it went stale once already
