@@ -121,11 +121,12 @@ def gallery_report() -> ConformanceReport:
     Chosen because it is the run where the five readers have the most to differ about, and it
     is not the run `docs/report.html` already publishes:
 
-      - all three evidence rungs stand in one report — two duties `proved` by Z3, one
-        `observed` over the trace, one `unattainable` as built — so the strength lattice the
+      - verdicts and strengths are mixed in one report — two duties `proved` by Z3, one
+        `observed` over the trace, two `unattainable` as built (no `probed` rung: nothing
+        this system exposes leaves a duty to a bounded search) — so the strength lattice the
         affected individual is not shown is carrying something to be not shown;
-      - one duty is unattainable for a named missing capability, which the regulator's
-        rendering drops and the developer's keeps, and that block is the single most visible
+      - two duties are unattainable for named missing capabilities, which the regulator's
+        rendering drops and the developer's keeps, and those blocks are the single most visible
         difference between two expert readings on the page;
       - the system exposes both logic and a decision trace, so the plain-language account the
         affected individual is shown quotes two decisions the system actually recorded rather

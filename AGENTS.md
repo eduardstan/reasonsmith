@@ -254,9 +254,10 @@ gallery published there as `audiences.html`. Both files travel through the same 
 
 `docs/audiences.html` is the second generated page and the only one that publishes more than one
 rendering of a run: `docs/build_audiences.py` runs the shipped `symbolic_rules` system against the
-`ecoa` pack — the one run where all three evidence rungs and an unattainable duty stand together,
-so each projection has something to withhold — and embeds all five `--audience` renderings
-verbatim as `srcdoc` frames inside a sixth, full `render_html` page. That shell is not decoration:
+`ecoa` pack — the run that mixes verdicts and strengths most, two duties `proved`, one `observed`
+and two `unattainable` (no `probed` rung), so each projection has something to withhold — and
+embeds all five `--audience` renderings verbatim as `srcdoc` frames inside a sixth, full
+`render_html` page. That shell is not decoration:
 the design tokens live inside `render_html`'s stylesheet and are not exported, so being a report
 page is the only way the gallery can style itself without a second palette.
 `tests/test_docs_audiences.py` holds the page byte-for-byte to the builder and fails if the
