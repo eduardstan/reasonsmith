@@ -234,6 +234,54 @@ the decision's own margin (`always(scope_statements_declared_deviation <=
 artifact_logs_decision_margin)`), so the duty needs no invented number at all. If a constant is
 unavoidable, say in the pack description what it is, what its default is, and why it was chosen.
 
+## A group rate is not a fact about a decision, and nothing here checks one
+
+The rule above — prefer a bound the record supplies — has a limit worth writing down, because the
+place an author is most likely to reach for it is the place it fails. Nothing stops you writing a
+group-parity duty today. A `logical` spec such as
+
+```
+abs(scope_statements_group_a_approval_rate - scope_statements_group_b_approval_rate) <= 0.05
+```
+
+with both names in `requires` loads, validates and runs, and a report comes back with a verdict on
+it. **Do not read that verdict as a fairness finding.** Both operands are numbers the system
+supplied about itself, so the check compares a self-declaration with a self-declaration. Run the
+same system against a log declaring `0.80` and `0.79` and the duty is `satisfied` at `observed`;
+run it against a log declaring `0.80` and `0.40` and the same duty is `violated`. Nothing in
+reasonsmith recomputed either pair from the decisions in the trace, so what moved was the
+declaration and not the behaviour. This is the same objection as a `reason_is_specific` flag
+(*a phrase in a `spec`*, above), arriving as a number rather than a boolean and therefore looking
+like a measurement.
+
+There is no guard against this, and you should not expect one to catch you. Two protections do
+exist, and both are narrower than the hazard:
+
+- **The `requires` gate.** A system that declares neither rate is reported unattainable and is never
+  run, so it cannot reach `satisfied` on the duty — the same guarantee the domain gate buys. What it
+  does not do is judge a rate that *is* declared: a system willing to state a flattering figure is
+  exactly the system the gate lets through.
+- **The computed-magnitude guard on `proved`.** The proof rung refuses a property that reads free
+  names as magnitudes when the system's declared rules assign none of them, on the ground that
+  arithmetic over numbers nobody computed is not a fact about the system
+  (`docs/semantics.md` §3.5, *When the magnitudes are not the system's own*). So a parity spec does
+  not reach `proved` through a system whose rules never derive the rates. It says nothing about the
+  `observed` rung, which reads the trace as written and answers.
+
+The reason this is not merely unimplemented is that a group rate is a **population** statistic and
+every engine here answers about **one decision record**. That mismatch is why `ROADMAP.md` objective
+3 lists a design answer as the dependency rather than an engine, and why the GDPR Recital 71 row of
+[`refinement.md`](refinement.md) records that no requirement in this repository checks a fairness
+property. Read those before deciding a parity spec is close enough; nothing here promises the gap
+will close.
+
+The encoding gives you a second, quieter symptom, and it is worth knowing what you are looking at
+when you hit it. A property of one record can only read a field of that record, so a population
+figure has to be repeated identically in every line of the log. The trace then contains the same
+statistic three times, not three measurements, and the violated finding reads `failed at decision
+step(s) [0, 1, 2]` — three breaching decisions, when there was one number. The step indices in a
+parity finding count records, not findings, and they will overstate the breach every time.
+
 ## Verbatim text must be traceable to the print
 
 `verbatim_text` is quoted in reports, so it must be a character-faithful quotation of the official
