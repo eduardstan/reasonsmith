@@ -234,7 +234,7 @@ How each shipped requirement got from a clause of law to a formula — and, in a
 
 ## Can it use a different formalism? Engines and packs install
 
-Four engines ship here, but the set is not closed. An engine is discovered through the
+Seven engines ship here, but the set is not closed. An engine is discovered through the
 `reasonsmith.engines` entry-point group and a pack through `reasonsmith.packs`, so a Prolog, ASP or
 other-solver engine — and a regulation pack this repository does not carry — ships as *your* pip
 package and joins the run the moment it is installed, with no pull request here. The property

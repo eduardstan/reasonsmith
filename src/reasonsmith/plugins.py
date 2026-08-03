@@ -56,7 +56,15 @@ PACK_GROUP = "reasonsmith.packs"
 
 #: The engine names this repository ships. An entry point claiming one of these is refused; see
 #: the module docstring.
-BUILTIN_ENGINE_NAMES = ("record", "observed", "probed", "proved", "certificate", "temporal")
+BUILTIN_ENGINE_NAMES = (
+    "record",
+    "observed",
+    "probed",
+    "proved",
+    "certificate",
+    "temporal",
+    "counterfactual",
+)
 
 
 def discover(group: str, builtin_names: tuple[str, ...] = ()) -> list[tuple[str, Any]]:
