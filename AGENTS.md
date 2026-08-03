@@ -402,7 +402,12 @@ The release discipline lives in `CONTRIBUTING.md`, *Versioning and Releases*, an
 missed — and they must agree; no tracked markdown may carry a bare `#NN` outside code and
 anchors) and by the tag check in `.github/workflows/publish.yml`
 (a release whose tag is not `v` plus the pyproject version never builds). Bumping the version
-means closing `[Unreleased]` and opening a fresh one in the same change.
+means closing `[Unreleased]` and opening a fresh one in the same change. The same module pins
+prose counts against the shipped tree — the README's pack and engine counts, `ROADMAP.md`'s
+"Current state, for scale" line, and the same claims where the prose restates them spelled out —
+derived at test time from `spec.list_packs()` and the modules under `engines/` (never
+`BUILTIN_ENGINE_NAMES` alone, which once missed an entry). A new pack, engine or requirement
+means updating those sentences in the same change, or the pin fails.
 
 ## The front door
 
