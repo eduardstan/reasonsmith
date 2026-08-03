@@ -553,7 +553,7 @@ the same artefact. Weaker evidence must not buy a stronger verdict
 (`test_a_decision_whose_reasons_were_never_enumerated_cannot_buy_satisfied`).
 
 **A violation needs one witness; a satisfaction needs complete evidence.** So the two verdicts
-treat such a decision differently, and the asymmetry is the one *`proved`, over a trace* above
+treat such a decision differently, and the asymmetry is the one *`proved`, over a trace* below
 already states for a trace: a satisfied verdict is universal over it, a violated one existential.
 A breach measured on a decision that *was* enumerated is a witness and is still reported
 **violated** at `probed`, naming the unmeasured decisions in its summary. A run that would

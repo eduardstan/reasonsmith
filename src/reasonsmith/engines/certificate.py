@@ -339,8 +339,10 @@ class CertificateEngine:
             else ""
         )
         # Named beside the caveat rather than folded into it: this one is not a reason the probe
-        # declined, it is a decision the enumeration never reached.
-        skipped += (
+        # declined, it is a decision the enumeration never reached. Kept apart from `skipped`
+        # because the not-evaluated branch below states it in its own words and still owes the
+        # reader the decisions that exposed no artefact.
+        unmeasured = (
             f" {unenumerated} decision(s) had no reason enumerated at all, so "
             f"{DELETED_REASON_COUNT} is unmeasured for them and this verdict covers them not at "
             "all."
@@ -364,7 +366,8 @@ class CertificateEngine:
                     f"inference found {len(worst.verdicts)} reason(s) and the deletion probe "
                     f"showed the system's answer does not depend on {len(worst.deleted)} of them "
                     f"— {missing_reasons}. Attribution: {worst.attribution}"
-                    f"{caveat}{skipped} Measured against the inference artefact the system "
+                    f"{caveat}{skipped}{unmeasured} Measured against the inference artefact the "
+                    "system "
                     "exposed, not read from its decision log."
                 ),
                 details=details,
@@ -384,7 +387,8 @@ class CertificateEngine:
                     f"was shown deleted on the other {len(certified)}, but satisfaction over a "
                     "subset of the trace is not satisfaction over the trace: a violation needs "
                     "one witness, a satisfaction needs complete evidence. The artefact's own "
-                    f"exact_depth is the usual cause.{caveat} Nothing is claimed either way."
+                    f"exact_depth is the usual cause.{caveat}{skipped} Nothing is claimed either "
+                    "way."
                 ),
             )
 
