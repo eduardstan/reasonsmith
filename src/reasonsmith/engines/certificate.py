@@ -57,6 +57,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from reasonsmith.certificate import Certificate, certify
+from reasonsmith.conformance import measured
 from reasonsmith.report import CERTIFICATES_KEY, PROBE_BUDGET_KEY, RequirementResult
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
@@ -263,8 +264,8 @@ class CertificateEngine:
         # A certificate whose enumeration found no reason at all measured nothing: its zero
         # deleted-reason count is the absence of a measurement, not a measurement of zero. This is
         # the refusal `Certificate.verdict` already makes one layer down, asked for here.
-        unenumerated = sum(1 for _, cert, _ in certified if not cert.verdicts)
-        certified = [item for item in certified if item[1].verdicts]
+        unenumerated = sum(1 for _, cert, _ in certified if not measured(cert))
+        certified = [item for item in certified if measured(item[1])]
         if not certified:
             return _result(
                 req,
