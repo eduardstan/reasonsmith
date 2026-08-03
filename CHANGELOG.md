@@ -69,6 +69,33 @@ releases before it predate the file and are not reconstructed here.
 
 ### Fixed
 
+- **`probed` reported `satisfied` over a domain part of which it could not measure, and then
+  stated a replay count that was not true.** `engines/certificate.py` states the rule — *a
+  violation needs one witness; a satisfaction needs complete evidence* — and `record`, `observed`,
+  `proved` and `counterfactual` all keep it by construction. `probed` was the rung that did not.
+
+  - **A search in which any planned input raised is now reported not evaluated, never satisfied**,
+    naming how many inputs went unmeasured and what was found in the rest. A lender that answered
+    correctly up to 40000 and raised above it was reported `satisfied` on
+    `income >= 30000 -> approved` over a domain a quarter of which it had refused to be measured
+    on. The inputs a system raises on are not a random sample of the search space: they are the
+    band its author put outside what the system answers for, which is where a property is most at
+    risk. The refusal is asked on the satisfied path alone — a counterexample that reproduced is a
+    witness, and it stands however many inputs raised beside it — and it is asked *before* the
+    unreachable-antecedent guard, because where inputs raised, "the antecedent fired nowhere" is a
+    claim about the measured part while the unmeasured part is exactly what might have reached it.
+  - **The replay count was false in the data, not only in the rendering.** `evidence_summary`
+    travels into `--json` and therefore into every downstream consumer, and it read *"no
+    counterexample … in 35 input(s) replayed"* where 26 had been. The summary now counts the
+    inputs the property was actually read over, and `render._budget_line` — shared by the text and
+    HTML renderings — names `inputs_errored` beside the replay count. This also resolves a
+    self-contradiction the trigger guard had introduced, two counts of one search printed four
+    lines apart: the guard's domain string subtracted the errored inputs and the budget line did
+    not.
+  - **No verdict, strength or count moves for a system that errors on nothing**, which is every
+    shipped example: all three document builders regenerate byte-identically and no published
+    probe budget changes.
+
 - **Two summaries described a measurement the engine did not make.** Neither is a verdict change;
   both were sentences a reader would have checked a system against.
 

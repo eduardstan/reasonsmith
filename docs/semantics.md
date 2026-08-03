@@ -493,9 +493,23 @@ distance between this rung and `proved`. `proved` says *for every input admitted
 A property can hold across 200 replayed inputs and fail on the 201st, and no rendering of a probed
 verdict may present it otherwise (`test_probed_never_rounds_up_to_proved`). It also tells you nothing
 about inputs for which `decide()` or property evaluation raised: both are aggregated into the
-budget's `inputs_errored` count and skipped, not read as passes
+budget's `inputs_errored` count, and neither is ever read as a pass
 (`test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass`,
-`test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass`). One refusal is
+`test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pass`). Since a
+satisfaction needs complete evidence, a search in which *any* planned input raised is reported not
+evaluated rather than satisfied over the part that answered
+(`test_a_satisfaction_over_a_partly_unmeasurable_domain_is_not_a_satisfaction`). The inputs a system
+raises on are not a random sample of the space — they are the band its author put outside what it
+answers for — so satisfaction over the remainder is a claim about a domain the search chose after
+seeing which parts refused it. This is asked on the satisfied path alone, and it costs an unaffected
+system nothing: a system that errors on nothing earns the same verdict, strength and counts as
+before (`test_a_system_that_errors_on_nothing_still_earns_its_satisfaction`). It is asked *before*
+the unreachable-antecedent guard of §4, because where inputs raised, "the antecedent fired nowhere"
+would be a claim about the measured part alone while the unmeasured part is exactly what might have
+reached it. No summary, budget or rendering states a replay count larger than the number of inputs
+the property was read over, and `inputs_errored` is surfaced wherever the budget is rendered, so the
+counts a reader sees reconcile
+(`test_no_summary_or_budget_line_states_more_replays_than_were_measured`). One refusal is
 not an errored input: where a replayed decision records something that is not a statement for a
 signal a `contains()` atom reads, the whole run is reported not evaluated rather than counted and
 passed over — the same answer the observed engine gives for that shape off a trace, so the stronger

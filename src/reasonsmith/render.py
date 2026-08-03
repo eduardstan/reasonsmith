@@ -241,8 +241,20 @@ def _budget_line(budget: Mapping[str, Any]) -> str:
         if unestablished
         else ""
     )
+    # What raised is named beside what was replayed, never left to be recovered from `--json`.
+    # `trials` counts every input the search put through decide(); the ones that raised produced
+    # no decision to read the property over, so a line stating only `trials` overstates what was
+    # measured — and, where a summary elsewhere subtracts them, leaves two counts of one search
+    # for the reader to reconcile.
+    errored = budget.get("inputs_errored") or 0
+    unmeasured = (
+        f", {errored} of which raised rather than producing a decision, "
+        f"leaving {budget['trials'] - errored} measured"
+        if errored
+        else ""
+    )
     return (
-        f"{budget['trials']} input(s) replayed, seed {budget['seed']}, "
+        f"{budget['trials']} input(s) replayed{unmeasured}, seed {budget['seed']}, "
         f"input space: {fields or 'no field varied'}. Strategy: {budget['strategy']}{kind_limit}"
     )
 

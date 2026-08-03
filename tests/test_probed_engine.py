@@ -14,6 +14,7 @@ import pytest
 
 from reasonsmith.engines import probed
 from reasonsmith.engines.probed import DEFAULT_TRIALS, STRATEGY, ProbedEngine, plan_inputs
+from reasonsmith.render import _budget_line
 from reasonsmith.report import (
     PROBE_BUDGET_KEY,
     ConformanceReport,
@@ -139,7 +140,8 @@ def test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass():
 
     An input the system raises on yields no decision the property can be read over. Counting it
     as a pass would let a system that refuses most of the search space look thoroughly probed, so
-    the budget carries how many inputs produced nothing.
+    the budget carries how many inputs produced nothing — and, since a satisfaction needs complete
+    evidence, the run is not evaluated rather than satisfied over the part that answered.
     """
 
     class RefusingSUT(HonestSUT):
@@ -152,8 +154,8 @@ def test_an_input_the_system_cannot_decide_is_counted_not_read_as_a_pass():
 
     res = ProbedEngine.evaluate(_req(), RefusingSUT(), trials=60, seed=5)
 
-    assert res.verdict == Verdict.SATISFIED
-    assert res.strength == Strength.PROBED
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
     budget = res.details[PROBE_BUDGET_KEY]
     # Some inputs produced no decision, and the count of them is on the result rather than lost.
     assert 0 < budget["inputs_errored"] < budget["trials"]
@@ -172,10 +174,103 @@ def test_an_input_whose_property_cannot_be_evaluated_is_counted_not_read_as_a_pa
     req = _req(spec="1 / denominator == 1 / denominator", requires=("denominator",))
     res = ProbedEngine.evaluate(req, EchoSUT(), trials=20, seed=5)
 
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+    budget = res.details[PROBE_BUDGET_KEY]
+    assert 0 < budget["inputs_errored"] < budget["trials"]
+
+
+class BandedSUT(BaseSUT):
+    """A lender correct up to 40000 and raising above it.
+
+    The shape the unreachable-antecedent guard does not mask: the inputs it refuses are not a
+    random sample of the search space, they are the band its author put outside what the system
+    answers for, which is exactly where `income >= 30000 -> approved` is most at risk.
+    """
+
+    def __init__(self):
+        super().__init__({"income", "approved"})
+
+    def decisions(self):
+        return [
+            {"income": 20000, "approved": False},
+            {"income": 35000, "approved": True},
+        ]
+
+    def decide(self, case):
+        income = case.get("income", 0)
+        if income > 40000:
+            raise ValueError(f"income {income} is outside the scored band")
+        return {**case, "approved": income >= 30000}
+
+
+def test_a_satisfaction_over_a_partly_unmeasurable_domain_is_not_a_satisfaction():
+    """A violation needs one witness; a satisfaction needs complete evidence.
+
+    `engines/certificate.py` states the rule and every other rung keeps it by construction. This
+    is the rung that did not: it reported `satisfied` over a domain part of which it could not
+    measure, and the summary said so in no way a reader or a `--json` consumer could see.
+    """
+    res = ProbedEngine.evaluate(
+        _req(spec="income >= 30000 -> approved", requires=("income", "approved")),
+        BandedSUT(),
+    )
+
+    assert res.verdict == Verdict.INCONCLUSIVE
+    assert res.strength is None
+    assert res.details["reason"] == "inputs_unmeasured"
+    budget = res.details[PROBE_BUDGET_KEY]
+    assert budget["inputs_errored"] > 0
+    # The refusal names both halves of what it could and could not measure, and the count it
+    # claims to have searched is the measured one, never the planned one.
+    measured = budget["trials"] - budget["inputs_errored"]
+    assert f"{budget['inputs_errored']} of the {budget['trials']} input(s)" in res.evidence_summary
+    assert f"the other {measured}" in res.evidence_summary
+
+
+def test_a_system_that_errors_on_nothing_still_earns_its_satisfaction():
+    """The control: the guard above must cost an unaffected system nothing.
+
+    Same property, same trace, same budget — only the refusal band removed. A guard that also
+    withheld this verdict would have traded one false claim for a useless engine.
+    """
+
+    class UnbandedSUT(BandedSUT):
+        def decide(self, case):
+            return {**case, "approved": case.get("income", 0) >= 30000}
+
+    req = _req(spec="income >= 30000 -> approved", requires=("income", "approved"))
+    res = ProbedEngine.evaluate(req, UnbandedSUT())
+
     assert res.verdict == Verdict.SATISFIED
     assert res.strength == Strength.PROBED
     budget = res.details[PROBE_BUDGET_KEY]
-    assert 0 < budget["inputs_errored"] < budget["trials"]
+    assert budget["inputs_errored"] == 0
+    # The count in the summary is the measured count, and here it equals the planned one.
+    assert f"in {budget['trials']} input(s) replayed" in res.evidence_summary
+
+
+def test_no_summary_or_budget_line_states_more_replays_than_were_measured():
+    """3b: the overstatement was in `evidence_summary`, so it travelled into every consumer.
+
+    Two numbers about one search were printed four lines apart — the guard's domain string
+    subtracting the errored inputs and the budget line not. They must name the same search.
+    """
+    res = ProbedEngine.evaluate(
+        _req(spec="income >= 30000 -> approved", requires=("income", "approved")),
+        BandedSUT(),
+    )
+    budget = res.details[PROBE_BUDGET_KEY]
+    errored = budget["inputs_errored"]
+    measured = budget["trials"] - errored
+    assert errored > 0
+
+    line = _budget_line(budget)
+    assert f"{errored} of which raised rather than producing a decision" in line
+    assert f"leaving {measured} measured" in line
+    # No rendering of this search claims the property was read over more inputs than it was.
+    assert f"{budget['trials']} input(s) replayed," in line
+    assert f"in {budget['trials']} input(s) replayed" not in res.evidence_summary
 
 
 def test_a_counterexample_that_does_not_reproduce_is_not_evaluated():
