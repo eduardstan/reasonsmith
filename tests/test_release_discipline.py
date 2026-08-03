@@ -11,6 +11,11 @@ What this module is for:
     number kept in several places drifts by omission, and a drift is how a changelog describes
     a release the tree never was. `CITATION.cff` is the fourth place and was the one this guard
     originally missed — it was already stale when the first three were locked together.
+  - README.md and AGENTS.md never name a `reasonsmith` release number: the publication claim
+    lives once, in the README's *Dependencies & PyPI* paragraph, without a version (the PyPI
+    project page names the current one), and AGENTS.md points at the README. A number written
+    in either document goes stale at the next release — both once claimed 0.2.0 while 0.6.0
+    was current.
 
 What a reader must not break:
   - The markdown sweep reads the tracked set from `git ls-files`, never a hand-copied list — the
@@ -47,6 +52,12 @@ _INLINE_CODE = re.compile(r"`[^`]*`")
 _BARE_REFERENCE = re.compile(r"(?<!\[)(?<!\]\()#(\d+)(?!\w)")
 
 
+#: A `reasonsmith` mention immediately followed by a release number — the shape of a stale
+#: PyPI claim ("`reasonsmith` 0.2.0 is published on PyPI"). A pinned install like
+#: ``reasonsmith==0.6.0`` is a different shape and not what this guards against.
+_REASONS_MITH_VERSION_CLAIM = re.compile(r"reasonsmith`?\s*\d+\.\d+\.\d+")
+
+
 def _tracked_markdown_files() -> list[Path]:
     """Every markdown file git tracks, so a new file is covered the day it lands."""
     listing = subprocess.run(
@@ -79,6 +90,24 @@ def test_no_bare_reference_in_tracked_markdown():
     assert not offenders, (
         "tracked markdown has bare pull-request/issue reference(s) — link them as "
         "[#N](https://github.com/eduardstan/reasonsmith/pull/N):\n" + "\n".join(offenders)
+    )
+
+
+def test_markdown_names_no_reasonsmith_release():
+    """README.md and AGENTS.md never name a `reasonsmith` release number. The README's
+    *Dependencies & PyPI* paragraph owns the publication claim and deliberately names no
+    version (the PyPI page does); AGENTS.md points at the README rather than restating one.
+    A number in either document goes stale at the next release, as the 0.2.0 both once
+    claimed did by 0.6.0."""
+    offenders: list[str] = []
+    for path in (REPO_ROOT / "README.md", REPO_ROOT / "AGENTS.md"):
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            if _REASONS_MITH_VERSION_CLAIM.search(line):
+                offenders.append(f"{path.relative_to(REPO_ROOT)}:{lineno}: {line.strip()}")
+    assert not offenders, (
+        "README.md/AGENTS.md must not name a reasonsmith release number — `pip install "
+        "reasonsmith` and the PyPI project page carry that fact, and a version written here "
+        "goes stale at the next release:\n" + "\n".join(offenders)
     )
 
 

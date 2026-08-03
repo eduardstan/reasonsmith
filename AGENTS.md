@@ -330,10 +330,10 @@ gap in the document rather than describing a tool that does not exist.
 
 The live home is `https://reasonsmith.dev` (landing) with the conformance dossier at
 `https://reasonsmith.dev/report.html`; the old `eduardstan.github.io/reasonsmith` Pages URL is
-superseded and nothing should reintroduce it. `reasonsmith` 0.2.0 is published on PyPI:
-`pip install reasonsmith` is the user install the README's Quick Start leads with, and
-`pip install -e ".[dev]"` in a venv is the contributor install the README keeps below it
-for running the suite from a checkout. The forbidden string appears here deliberately:
+superseded and nothing should reintroduce it. `reasonsmith` is published on PyPI — the
+README's Quick Start and *Dependencies & PyPI* paragraphs own that claim and the install
+commands, and this file names no version, because one written here goes stale at the
+next release. The forbidden string appears here deliberately:
 this paragraph is the statement of the rule, and a rule that cannot name what it forbids
 is not a rule — any repository-wide check for it must exclude this file.
 
