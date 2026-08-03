@@ -105,6 +105,42 @@ waits on. The intake is the Discussion
 and the [pack proposal template](.github/ISSUE_TEMPLATE/pack_proposal.yml); the rules a pack must
 satisfy are in [`docs/authoring-packs.md`](docs/authoring-packs.md).
 
+## 5. Evidence that a system's inference is the semantics it claims
+
+**The gap.** A system declares what it computes; nothing here checks that the declaration is true.
+Every verdict this tool reaches stands on a claim the system makes about itself — the semantics its
+inference implements, the deviation it reports from that semantics, the decision domain it operates
+in — and no engine measures any of them against the system's behaviour. The measured consequence is
+finding 1 of [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md): two provenances whose
+decisions disagree with the semantics they claim, one on half the battery, were reported satisfied
+on every duty this tool could check, with verdicts identical to the exact oracle's. The same shape
+is stated twice more in that document — the error-risk duty "rewards the measurement, not the
+accuracy" (finding 1, *What has not changed*), and "a declaration is a self-declaration" about the
+domain gate (finding 3).
+
+**Measurable outcome.** A check in the suite that drives two systems differing *only* in whether
+their inference agrees with the semantics they declare — the same pack, the same inputs, the same
+declared semantics, one implementing it and one deviating from it — and fails unless the two reports
+differ on at least one requirement. Such a check cannot be written to pass today: the two reports
+are identical, which is what finding 1 measures rather than predicts. When it passes, finding 1's
+*What changed since this finding* section gains the row that says so; the finding itself stays as
+written, because it is the reason the objective exists.
+
+**Depends on.** A design answer before any code, on the same terms as objective 3, and the question
+is narrower than it looks: **what would a system have to expose for reasonsmith to establish
+agreement rather than take its word?** `engines/certificate.py` is the precedent worth studying — it
+took a claim previously read out of a log and made it something the tool measures against an
+artefact the system exposes — and the trap it avoided is the one to avoid here. A `semantics_matches`
+flag would be a second self-declaration wearing an engine's clothes; so would any design that needs
+the system to hand over the very number in dispute. It also depends on not assuming an oracle:
+finding 5 of the same document records that the deviation figures in that run exist because
+`nesyarena` ships an exact oracle beside each approximate provenance, which a deployed system does
+not have, so a design reachable only with one closes nothing outside a measurement harness. And it
+depends on the four-outcome discipline of [`docs/semantics.md`](docs/semantics.md) §4 holding: a
+system exposing nothing that grounds its claim must report *not evaluated*, never `satisfied`.
+The intake is the Discussion
+[*reasonsmith cleared two systems whose decisions are wrong — what should a pack do about it?*](https://github.com/eduardstan/reasonsmith/discussions/59).
+
 ---
 
 ## What is deliberately not on this roadmap
