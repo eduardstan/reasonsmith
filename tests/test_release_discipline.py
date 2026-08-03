@@ -53,9 +53,10 @@ _BARE_REFERENCE = re.compile(r"(?<!\[)(?<!\]\()#(\d+)(?!\w)")
 
 
 #: A `reasonsmith` mention immediately followed by a release number — the shape of a stale
-#: PyPI claim ("`reasonsmith` 0.2.0 is published on PyPI"). A pinned install like
+#: PyPI claim ("`reasonsmith` 0.2.0 is published on PyPI"). A `v` prefix is the same claim in
+#: another shape ("`reasonsmith` v0.6.0") and is caught too. A pinned install like
 #: ``reasonsmith==0.6.0`` is a different shape and not what this guards against.
-_REASONS_MITH_VERSION_CLAIM = re.compile(r"reasonsmith`?\s*\d+\.\d+\.\d+")
+_REASONS_MITH_VERSION_CLAIM = re.compile(r"reasonsmith`?\s*v?\d+\.\d+\.\d+")
 
 
 def _tracked_markdown_files() -> list[Path]:
@@ -98,7 +99,8 @@ def test_markdown_names_no_reasonsmith_release():
     *Dependencies & PyPI* paragraph owns the publication claim and deliberately names no
     version (the PyPI page does); AGENTS.md points at the README rather than restating one.
     A number in either document goes stale at the next release, as the 0.2.0 both once
-    claimed did by 0.6.0."""
+    claimed did by 0.6.0 — a `v` prefix is the same claim in another shape and is caught
+    too."""
     offenders: list[str] = []
     for path in (REPO_ROOT / "README.md", REPO_ROOT / "AGENTS.md"):
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
