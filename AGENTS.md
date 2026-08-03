@@ -80,9 +80,13 @@ names the subtree (stripping a top-level `always`, never an `eventually`) and
 `report.not_evaluated_for_unreachable_trigger` words the refusal once against the result model. Each
 rung then answers it with what it already holds — `proved` checks premises ∧ antecedent satisfiable
 (the premise check one quantifier deeper), `temporal` inherits it through the reduction, `observed`
-monitors the antecedent per position, `probed` counts the replays that reached it — and `probed` is
+monitors the antecedent per position, `probed` counts the replays that reached it, and
+`certificate` counts the certified decisions that reached it in the walk that already decides the
+property against the measured count — and `probed` is
 in that list because the ladder falls to it, so guarding the proof rung alone only moves a vacuous
-`satisfied` down a rung. Every rung asks it on the *satisfied* path alone: a violation names a
+`satisfied` down a rung, while `certificate` is in it for the opposite reason: the ladder gives
+`ecoa_reg_b_1002_9_b_2_principal_reasons_complete` that rung and no other, so nothing beneath it
+could catch the same empty claim. Every rung asks it on the *satisfied* path alone: a violation names a
 witness whose antecedent fired. What this cost is stated in `docs/semantics.md` §4 and must not be
 quietly undone: a creditor lawfully on the 12 CFR 1002.9(a)(2)(ii) disclosure branch is now neither
 accused nor cleared, because `not applicable` per decision is the honest verdict and the result model
