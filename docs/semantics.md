@@ -847,12 +847,13 @@ carry — where the measurement was made and the verdict is still withheld
 `artifacts.InferenceArtifact` is this package's own answer to *what a reason can be measured from*:
 what a reason-bearing artefact is, what it must expose for the deletion probe to measure reasons
 from it, and whether its inference is **monotone in its facts**. A nesyarena ground program is one
-family satisfying it (`artifacts/ground_program.py`), and it is the only one shipped; neither
-`artifacts/__init__.py` nor `certificate.py` imports a representation, which is what makes a second
-family — a knowledge graph, a reason trace, an extracted rule set, a decision tree — an adapter
-rather than a second branch in the core
+family satisfying it (`artifacts/ground_program.py`) and a reason trace is the second
+(`artifacts/reason_trace.py`); neither `artifacts/__init__.py` nor `certificate.py` imports a
+representation, which is what makes each of them — and a knowledge graph, an extracted rule set or a
+decision tree after them — an adapter rather than a second branch in the core
 (`test_the_ground_program_family_is_one_adapter_and_the_protocol_names_no_representation`,
-`test_the_protocol_is_satisfiable_without_a_ground_program`). None of those is implemented here.
+`test_the_protocol_is_satisfiable_without_a_ground_program`). The two shipped families do not report
+at the same strength, and the paragraph below on `recounted` is why.
 
 **Three states, and only the first is measured.** `engines/certificate.py` asks the declaration
 before it certifies anything, and asks it again of the measurement afterwards; every refusal is
@@ -899,13 +900,57 @@ monotone is a verdict over a subset, which the completeness rule above already r
 held a decision this instrument cannot read
 (`test_the_refusal_survives_a_whole_conformance_run_and_reaches_no_weaker_duty`).
 
-**A family whose reasons are extracted rather than enumerated exactly does not belong on this rung,
-and this protocol does not yet say so in code.** An LLM reason trace is not a proof object: a
-certificate over one claims strictly less than a certificate over a ground program and must not
-report at the same strength. The lattice cannot express that difference — `probed` records *how* a
-conclusion was reached and not *what it was reached about* (§4) — so admitting such a family needs a
-decision about the lattice before it needs an adapter. Stated here rather than guarded, because
-nothing in this tree can check a family's claim that its enumeration is exact.
+**A family whose reasons are recounted rather than enumerated reports one rung lower, and the rung
+is refused rather than trusted.** An LLM reason trace is not a proof object: a certificate over one
+claims strictly less than a certificate over a ground program and must not report at the same
+strength. This paragraph used to end there, saying the lattice could not express the difference and
+that admitting a second family therefore needed a decision about the lattice before it needed an
+adapter. That decision was made, and `Strength.RECOUNTED` is it.
+
+*What the rung is.* `recounted` is the rung a verdict reaches when the reason set the deletion probe
+ran over is one the **system recounted about its own inference**, rather than one enumerated from a
+model encoding. The probe is the same probe: every reason's private facts are switched off in turn
+and the system's own answer re-run. What differs is the reference set, and the difference is exactly
+the one the literature calls **faithfulness**: a self-explanation may be plausible and yet not
+describe the computation that produced the decision (A. Jacovi, Y. Goldberg, *Towards Faithfully
+Interpretable NLP Systems: How Should We Define and Evaluate Faithfulness?*, ACL 2020, 4198–4205;
+measured, as here, by erasure — J. DeYoung, S. Jain, N. F. Rajani, E. Lehman, C. Xiong, R. Socher,
+B. C. Wallace, *ERASER: A Benchmark to Evaluate Rationalized NLP Models*, ACL 2020, 4443–4458; and
+demonstrably failing on decoders — M. Turpin, J. Michael, E. Perez, S. R. Bowman, *Language Models
+Don't Always Say What They Think: Unfaithful Explanations in Chain-of-Thought Prompting*, NeurIPS
+2023). A probe over a recounted set can show that the answer does not depend on a reason the system
+recounted; it can never show that the set is all of them, which is what the `probed` rung's
+enumeration establishes and is why that rung is above this one.
+
+*Why a rung and not a basis.* §10's distinction decides it: evidence about a **different object** is
+a different basis, evidence about the **same object, less deeply** is a different rung. A reason
+trace makes a claim about the inference behind a decision, which is what the `artifact` basis is
+already about. It is merely a claim nothing here can check as hard. So the `artifact` row gains a
+member and no fifth basis exists
+(`test_a_recounted_reason_set_reports_one_rung_below_an_enumerated_one`).
+
+*Where the difference is enforced.* A family says which it is with `reasons_are_exact`, and
+**silence claims the weaker rung** — the opposite default from `monotone` above, because here the
+two answers are not both dangerous: guessing monotone accuses a compliant system, while guessing
+recounted only understates one (`test_a_family_that_does_not_say_claims_the_weaker_rung`). One
+certified decision whose set was recounted caps the whole run, the flag rides on the result
+(`report.EXACT_REASON_SET_KEY`), and `RequirementResult.__post_init__` **refuses** a result that
+claims above it — the same shape of structural refusal the probe budget and the plug-in ceiling
+already carry (`test_a_recounted_reason_set_cannot_be_reported_at_the_enumerated_rung`). Nothing
+here audits a family's claim that its enumeration is exact; what is new is that the claim has to be
+made, and that not making it costs a rung.
+
+**The second family, and what it does not reach.** `artifacts/reason_trace.py` is that adapter: a
+set of reasons the system recounts for one decision, each tested by suppressing its facts and
+re-running the system. It widens what can be certified from *systems that expose a ground program*
+to *systems that recount their reasons and can be re-run with a fact withheld* — a language model
+behind a `complete()` stub is one, and the whole of the coupling is one module, as
+`test_the_protocol_is_satisfiable_without_a_ground_program` said it would be. It does **not** reach
+a system that is only a log. The re-run is what makes the measurement independent of the rationale
+it is measuring; without it, `exact_value` and `engine_value` are the same self-report and every
+reason comes back live by construction. The auditors' blocker in the README — reach into systems
+that are only logs — is therefore narrowed and not closed. No shipped example system uses this
+family, so no shipped verdict moved.
 
 ### `proved` — `engines/proved.py`
 
@@ -1427,7 +1472,7 @@ alone, reading no name the rules assign, cannot be `proved` even where the decla
 
 ## 4. The lattice
 
-`unattainable < observed < probed < proved`, a strict total order
+`unattainable < observed < recounted < probed < proved`, a strict total order
 (`test_strength_lattice_ordering`, and `test_semantics_doc_states_the_lattice_the_code_defines`
 holds this sentence to the order the code defines). Comparison against anything that is not a
 `Strength` is refused rather than coerced (`test_strength_comparison_rejects_foreign_types`).
@@ -1436,6 +1481,10 @@ holds this sentence to the order the code defines). Comparison against anything 
 
 - `unattainable` — capability analysis stopped evaluation before an engine ran.
 - `observed` — a record or temporal conclusion was reached from the supplied trace.
+- `recounted` — a conclusion was reached by perturbing a reason set the *system* recounted, rather
+  than one enumerated from a model encoding. The same probe as `probed`, over evidence that is
+  second-hand about the thing it describes: only the `artifact` basis has such evidence, and §3
+  (*The inference artefact*) is where the rung is defined.
 - `probed` — a logical conclusion was reached by bounded replay through `decide()`.
 - `proved` — a logical conclusion was reached by solver reasoning over the valuations admitted by
   the declared constraints.
@@ -1762,6 +1811,9 @@ Two consequences of that report text, followed by a separate package-level termi
 | The deletion probe is one-directional, says so on the instrument, and flags the engine where a deletion moved its answer up rather than counting a retraction silently | `test_the_certificate_limits_state_the_probe_is_one_directional`, `test_a_retracted_reason_is_reported_deleted_and_the_engine_is_flagged_non_monotone` |
 | The inference artefact is reasonsmith's own abstraction, and a ground program is one adapter satisfying it | `test_the_ground_program_family_is_one_adapter_and_the_protocol_names_no_representation`, `test_the_protocol_is_satisfiable_without_a_ground_program`, `test_switching_a_fact_off_does_not_re_enumerate_the_reasons` |
 | An artefact the deletion definition of a reason does not apply to is not evaluated — declared non-monotone, declaring nothing, or contradicted by the probe — and never violated or satisfied | `test_an_artefact_declaring_non_monotone_inference_is_not_evaluated_and_names_why`, `test_an_artefact_that_declares_nothing_is_not_evaluated_rather_than_assumed_monotone`, `test_a_declaration_the_probe_contradicts_is_refused_rather_than_trusted`, `test_the_refusal_survives_a_whole_conformance_run_and_reaches_no_weaker_duty`, `test_a_certificate_over_a_non_monotone_artefact_carries_no_verdict` |
+| A reason set the system recounted reports at `recounted`, one rung below an enumerated one, and the same probe still finds a breach | `test_a_recounted_reason_set_reports_one_rung_below_an_enumerated_one`, `test_a_recounted_reason_the_answer_does_not_depend_on_is_still_a_breach` |
+| A family that does not declare its reason set exact claims the weaker rung, and no result may claim above the flag | `test_a_family_that_does_not_say_claims_the_weaker_rung`, `test_a_recounted_reason_set_cannot_be_reported_at_the_enumerated_rung` |
+| A recounted verdict is never rendered as a probed one, in any surface | `test_a_recounted_verdict_is_never_rendered_as_a_probed_one` |
 | The declaration can be refuted by the measurement and never confirmed by it, and a monotone system's verdict is unchanged | `test_the_absence_of_the_fingerprint_is_not_evidence_of_monotonicity`, `test_a_declared_monotone_system_reaches_the_verdict_it_always_did`, `test_a_declared_monotone_certificate_still_reports_pass_or_fail` |
 | A reason the probe cannot separate is never promoted to `deleted`, on an exhaustive enumeration or any other — the licence in `sufficient-reasons.md` is deliberately unused | `test_a_reason_the_probe_cannot_separate_is_never_promoted_to_deleted` |
 | Every private fact of a reason is switched off, so coverage does not depend on what a system's fields are called | `test_every_private_fact_of_a_reason_is_switched_off` |
@@ -2300,15 +2352,19 @@ docstring that no result, no count and no rendering carried:
 - a **counterfactual** duty is a property of a *pair* of executions, so `_engine_ladder` gives it
   two rungs and no trace rung beneath them;
 - the **certificate** duty is measured against the inference artefact behind a decision, so its
-  ladder is exactly one rung;
+  ladder reaches neither the trace rung beneath it nor the proof rung above it;
 - a **graded** duty (§9) is `inconclusive` at `strength=None`, which made it indistinguishable in
   the counts and in the headline from a duty an engine merely failed to settle.
 
 The answer is a second coordinate and **not** four more members of the lattice.
 `verdict.EvidenceBasis` says what a duty's evidence is *about*; `Strength` says how far a claim
-about it was pushed. The lattice did not move: no member was added, no member was re-ranked, and
-`test_semantics_doc_states_the_lattice_the_code_defines` still generates §4's sentence from
-`Strength` itself.
+about it was pushed. The lattice did not move for any of the three: no member was added for them,
+no member was re-ranked, and `test_semantics_doc_states_the_lattice_the_code_defines` generates §4's
+sentence from `Strength` itself. It has moved **once** since, and the distinction this section draws
+is what decided that it should: `recounted` is evidence about the *same* object as `artifact` —
+the inference behind a decision — reached less deeply, so it is a rung on that row and not a fifth
+basis (§3, *The inference artefact*). Evidence about a different object is a basis; evidence about
+the same object, less deeply, is a rung. That is the test to apply to the next candidate.
 
 ### The four bases, and the literature each names
 
@@ -2316,13 +2372,17 @@ about it was pushed. The lattice did not move: no member was added, no member wa
 |---|---|---|---|
 | `behavioural` | the system's own executions, one at a time | `unattainable`, `observed`, `probed`, `proved` | a **trace property** — Alpern & Schneider, *Defining Liveness*, IPL 21(4), 1985 |
 | `relational` | a *pair* of executions | `unattainable`, `probed`, `proved` | a **2-safety property** — Terauchi & Aiken, SAS 2005; a hyperproperty rather than a trace property — Clarkson & Schneider, JCS 18(6), 2010; self-composition as the proof method — Barthe, D'Argenio & Rezk, CSFW 2004; the duty itself — Kusner, Loftus, Russell & Silva, *Counterfactual Fairness*, NeurIPS 2017 |
-| `artifact` | the inference *behind* a decision, not what was decided | `unattainable`, `probed` | the **abductive explanation** — Ignatiev, Narodytska & Marques-Silva, AAAI 2019 (`docs/sufficient-reasons.md` §9 for the rest); the model-precise rather than behaviour-sampled side of formal XAI — Marques-Silva & Ignatiev, AAAI 2022 |
+| `artifact` | the inference *behind* a decision, not what was decided | `unattainable`, `recounted`, `probed` | the **abductive explanation** — Ignatiev, Narodytska & Marques-Silva, AAAI 2019 (`docs/sufficient-reasons.md` §9 for the rest); the model-precise rather than behaviour-sampled side of formal XAI — Marques-Silva & Ignatiev, AAAI 2022; and, for the `recounted` rung, the **faithfulness** of a self-reported rationale — Jacovi & Goldberg, ACL 2020; erasure as its measurement — DeYoung et al., ACL 2020; the failure it measures — Turpin, Michael, Perez & Bowman, NeurIPS 2023 |
 | `assessment` | how an open-textured predicate applies, per a named authority | `unattainable` alone | a **truth degree over a residuated lattice** — Hájek, *Metamathematics of Fuzzy Logic*, 1998; degree of truth is not degree of belief — Dubois & Prade, AMAI 32, 2001 |
 
 Every row's rung list is read off what an engine can actually reach, and the two are held together
 in both directions: no ladder may offer a rung its duty's basis refuses, and no basis may advertise
-a rung above `unattainable` that no shipped ladder offers
-(`test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach`). `unattainable` is in every row
+a rung *above* the strongest any shipped ladder offers
+(`test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach`). The second direction is a ceiling
+check rather than an equality because a ladder entry is chosen without executing the system, so the
+certificate branch cannot know whether the artefact behind a decision will enumerate its reasons or
+recount them and declares the stronger of the two; that the lower rung is reachable is shown by
+running the engine instead (`test_a_recounted_reason_set_reports_one_rung_below_an_enumerated_one`). `unattainable` is in every row
 because it is not an engine's conclusion — the capability gate is a set difference over declared
 signal names, identical for every duty, and it runs before any basis is consulted
 (`test_every_basis_admits_unattainable_so_the_capability_gate_is_never_bypassed`). The `assessment`
@@ -2339,7 +2399,7 @@ structural rather than conventional:
    `rank` (`test_the_evidence_bases_are_not_ordered`, `test_a_basis_is_never_compared_against_a_strength`).
 2. **A result may not carry a rung its basis does not admit.** `RequirementResult.__post_init__`
    refuses one, so a counterfactual duty cannot be reported `observed`, a certificate duty cannot
-   be reported `proved`, and an assessment duty cannot carry a rung at all
+   be reported `proved` or `observed`, and an assessment duty cannot carry a rung at all
    (`test_a_result_cannot_carry_a_rung_its_basis_does_not_admit`). Three sentences that lived in
    three module docstrings are now one refusal.
 3. **The basis is derived from the duty and never declared.** It is a function of the requirement

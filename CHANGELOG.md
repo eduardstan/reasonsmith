@@ -10,6 +10,26 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **The strength lattice gains a rung, and the inference-artefact protocol gains a second family.**
+  `Strength.RECOUNTED` sits between `observed` and `probed` and is the rung a reason-adequacy verdict
+  reaches when the reason set the deletion probe ran over is one the *system recounted about its own
+  inference*, rather than one enumerated from a model encoding. That is the **faithfulness** question
+  as the literature poses it (Jacovi & Goldberg, ACL 2020), measured the way that literature measures
+  it — by erasure (DeYoung et al., *ERASER*, ACL 2020) — on evidence a self-report demonstrably fails
+  to be (Turpin, Michael, Perez & Bowman, NeurIPS 2023). It is a rung on the `artifact` row and not a
+  fifth basis, by the test [`docs/semantics.md`](docs/semantics.md) §10 now states: evidence about a
+  different object is a basis, evidence about the same object less deeply is a rung. The rule that
+  gated the widening — a certificate over a reason trace claims strictly less than one over a ground
+  program and must not report at the same strength — was previously prose in §3 and is now a refusal
+  `RequirementResult.__post_init__` fires. A family declares `reasons_are_exact` and **silence claims
+  the weaker rung**, the opposite default from `monotone` and for a stated reason.
+  `artifacts/reason_trace.py` is the second family: the reasons a system recounts for one decision,
+  each tested by suppressing its facts and re-running the system. It widens what can be certified from
+  systems that expose a ground program to systems that recount their reasons and can be re-run with a
+  fact withheld — it does **not** reach a system that is only a log, so the README's auditors blocker
+  is narrowed and not closed. No shipped example system uses the new family, and **no shipped verdict
+  moved**; the generated documents change by one sentence, the one that words the `artifact` basis.
+
 - **The property language has a formal semantics, and it is a checked one.**
   `validate-pack --analyse` asks whether a requirement set is jointly satisfiable, whether one duty
   subsumes another, and whether a subformula is replaceable without changing a verdict — relations

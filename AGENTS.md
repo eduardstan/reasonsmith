@@ -67,11 +67,22 @@ premise is now **declared rather than assumed**. `artifacts/` is reasonsmith's o
 inference artefact — what a reason-bearing artefact is, what it must expose for the probe to measure
 reasons from it, and whether its inference is monotone — and `artifacts/ground_program.py` is one
 adapter over a nesyarena `GroundProgram`, which is why neither `artifacts/__init__.py` nor
-`certificate.py` imports nesyarena any more. A second family (knowledge graph, reason trace,
-extracted rule set, decision tree) is an adapter and not a branch in the core; none is implemented,
-and one whose reasons are *extracted* rather than enumerated exactly cannot take this rung until the
-strength lattice can say so — that is a captain decision, stated in `docs/semantics.md` §3 rather
-than slipped in. `engines/certificate.py` asks the declaration before it certifies and again of the
+`certificate.py` imports nesyarena any more. `artifacts/reason_trace.py` is the second
+family — the reasons a system *recounts* for one decision, each tested by suppressing its facts and
+re-running the system through a caller-supplied `answer` — and a knowledge graph, an extracted rule
+set or a decision tree after it is an adapter and not a branch in the core. A recounted reason set
+does not reach the ground program's rung: `Strength.RECOUNTED` sits between `observed` and `probed`,
+the `artifact` basis row admits it, a family declares `reasons_are_exact` and **silence claims the
+weaker rung** (the opposite default from `monotone`, because guessing monotone accuses a compliant
+system while guessing recounted only understates one), one recounted decision caps the run, and
+`RequirementResult._validate_reason_set` refuses a result claiming above
+`report.EXACT_REASON_SET_KEY`. It is a *rung* and not a fifth basis by the test §10 now states:
+different object, different basis; same object less deeply, different rung. It reaches no log-only
+system — the re-run is what makes the measurement independent of the rationale it measures — so the
+README's auditors blocker is narrowed, not closed. `docs/semantics.md` §3 (*The inference artefact*)
+is the contract and `tests/test_artifact_protocol.py` holds it.
+
+`engines/certificate.py` asks the declaration before it certifies and again of the
 measurement afterwards, and reports **not evaluated** — never violated, never satisfied, never
 downgraded to the presence check sharing the clause — for an artefact declaring non-monotone,
 declaring nothing, or declaring monotone where a deletion raised the system's answer. One refused

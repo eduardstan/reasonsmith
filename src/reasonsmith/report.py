@@ -37,6 +37,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any, cast
 
+from reasonsmith.artifacts import RECOUNTED_REASONS
 from reasonsmith.manyvalued import DEGREE_SOURCE_FIELDS
 from reasonsmith.rulelang import (
     STATE_FRAGMENTS,
@@ -140,6 +141,13 @@ ENGINE_PLUGIN_KEY = "engine_plugin"
 #: than spelled twice because a rendering reads it: a reader who is shown "the reasons stated were
 #: not all the reasons" is being shown this measurement and nothing else.
 CERTIFICATES_KEY = "certificates"
+
+#: Where a result measured against an inference artefact records whether the reason set it was
+#: measured against was *enumerated* from a model encoding or *recounted* by the system. False caps
+#: the result at `Strength.RECOUNTED`, and `__post_init__` refuses one that claims higher — the
+#: structural form of the rule `docs/semantics.md` §3 used to state in prose and gate a second
+#: artefact family on. See `artifacts.RECOUNTED_REASONS`.
+EXACT_REASON_SET_KEY = "reason_set_is_exact"
 
 #: The version of the `--json` envelope's *shape*, carried as `schema_version` on every
 #: `ConformanceReport.to_dict()`. It is a single integer and it is not the package version:
@@ -259,6 +267,11 @@ class RequirementResult:
         # repository never audited must not be able to make the tool claim more than it has.
         self._validate_plugin_claim()
 
+        # And an artefact whose reason set the system recounted cannot report above `recounted`,
+        # for the same reason again: the probe is the same probe, and what it was run against is
+        # not the same evidence.
+        self._validate_reason_set()
+
         # A vacuous-trigger result carries the trigger that never fired and the domain that was
         # searched. Refused here for the reason the probe budget is: those two are the whole of
         # the finding, and a result that cannot name them is not one a rendering can report.
@@ -324,8 +337,29 @@ class RequirementResult:
             )
         return names
 
+    def _validate_reason_set(self) -> None:
+        """Refuse a verdict claiming more than a recounted reason set can carry.
+
+        The rule `docs/semantics.md` §3 stated in prose for as long as the ground program was the
+        only family: a certificate over a reason set the system recounted claims strictly less than
+        one over a model encoding, and must not report at the same strength. The key is absent on
+        every result that is not measured against an inference artefact, so this refuses nothing
+        else.
+        """
+        exact = self.details.get(EXACT_REASON_SET_KEY)
+        if exact is None or exact:
+            return
+        if self.strength is not None and self.strength > Strength.RECOUNTED:
+            raise ValueError(
+                f"{self.requirement_id}: a result measured against a reason set the system "
+                f"recounted cannot be reported {self.strength}; {Strength.RECOUNTED} is the "
+                f"ceiling for it — {RECOUNTED_REASONS}"
+            )
+
     def _validate_probe_budget(self) -> None:
-        if self.strength != Strength.PROBED:
+        # `recounted` is a bounded search exactly as `probed` is — the same deletion probe over a
+        # different reason set — so it owes a reader the same budget.
+        if self.strength not in (Strength.PROBED, Strength.RECOUNTED):
             return
         budget = self.details.get(PROBE_BUDGET_KEY)
         if not isinstance(budget, Mapping):
@@ -738,6 +772,7 @@ def evaluate_graded_requirement(
 _CATEGORY_LABELS = (
     ("proved", "proved"),
     ("probed", "probed"),
+    ("recounted", "recounted"),
     ("observed", "observed"),
     ("violated", "violated"),
     ("inconclusive", "inconclusive"),
@@ -765,6 +800,7 @@ def _category_counts(
     counts = {
         "proved": satisfied_at(Strength.PROVED),
         "probed": satisfied_at(Strength.PROBED),
+        "recounted": satisfied_at(Strength.RECOUNTED),
         "observed": satisfied_at(Strength.OBSERVED),
         "violated": sum(1 for r in results if r.verdict == Verdict.VIOLATED),
         "inconclusive": sum(

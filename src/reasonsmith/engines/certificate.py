@@ -45,12 +45,17 @@ What a reader must not break:
     verdict over a subset, and the rule below — a satisfaction needs complete evidence — already
     refuses those. Reporting `violated` off the remainder would also leave the reader unable to see
     that the trace held a decision this instrument cannot read at all.
-  - The strength is PROBED and never PROVED. The certificate's reach is the decisions the system
-    supplied and the deletion probes those decisions admitted, and `RequirementResult` refuses to
-    construct the result without the budget that names both.
+  - The strength is PROBED or RECOUNTED, and never PROVED. The certificate's reach is the decisions
+    the system supplied and the deletion probes those decisions admitted, and `RequirementResult`
+    refuses to construct the result without the budget that names both. Which of the two rungs is
+    decided by the *artefacts* and not by the search: one certified decision whose reason set the
+    system recounted rather than enumerated caps the run at RECOUNTED, and the flag that says so
+    (`report.EXACT_REASON_SET_KEY`) travels on the result, where `_validate_reason_set` refuses a
+    claim above it.
     Why this matters: exact inference is exact *on one ground program and one base
     interpretation* — `certificate.LIMITS` says so in its own words. Nothing here establishes the
-    property for a decision the system did not expose.
+    property for a decision the system did not expose, and a rationale the system recounted
+    establishes less again: see `artifacts.RECOUNTED_REASONS`.
   - A reason the probe could not settle (`unseparable`, `inconclusive`, `undetermined`) is not
     counted as deleted, and the count of them is reported.
     Why this matters: `certificate.certify` never assumes such a reason is live, and neither may
@@ -108,15 +113,19 @@ from typing import Any
 
 from reasonsmith.artifacts import (
     MONOTONE_KEY,
+    RECOUNTED_REASONS,
     InferenceArtifact,
     deletion_semantics_refusal,
+    reason_set_is_exact,
 )
 from reasonsmith.certificate import Certificate, certify, certify_artifact
 from reasonsmith.conformance import measured
 from reasonsmith.report import (
     CERTIFICATES_KEY,
+    EXACT_REASON_SET_KEY,
     PROBE_BUDGET_KEY,
     RequirementResult,
+    evidence_basis,
     not_evaluated_for_unreachable_trigger,
 )
 from reasonsmith.rulelang import (
@@ -179,11 +188,16 @@ def _result(
     missing: tuple[str, ...] = (),
     details: dict[str, Any] | None = None,
 ) -> RequirementResult:
+    # The basis is stamped here as well as by `evaluate_requirement`, and it is the same derivation
+    # from the same requirement — `report.evidence_basis`, never a field of this engine's own. It
+    # has to be: `recounted` is a rung the *artifact* row admits and the default row does not, so a
+    # result carrying it could not be constructed at all before the stamp.
     return RequirementResult(
         requirement_id=req.id,
         source_clause=f"{req.source_document} {req.article_clause}",
         verdict=verdict,
         strength=strength,
+        basis=evidence_basis(req),
         signals_required=tuple(req.requires),
         signals_missing=missing,
         evidence_summary=summary,
@@ -309,6 +323,10 @@ class CertificateEngine:
         triggered_at: set[int] = set()
 
         certified: list[tuple[int, Certificate, bool]] = []
+        # The decisions whose reason set the system *recounted* rather than enumerated. One of them
+        # among the certified caps the whole verdict at `recounted`: a run is only as exact as its
+        # weakest artefact, exactly as a satisfaction is only as complete as its weakest decision.
+        recounted_at: set[int] = set()
         uncertifiable = 0
         for index, record in enumerate(records):
             try:
@@ -340,6 +358,11 @@ class CertificateEngine:
                         "program, or None for a decision it cannot open up."
                     ),
                 )
+            # The mapping form names the ground-program family in its own keyword names, and that
+            # family enumerates; every other family says for itself, and silence claims the weaker
+            # rung (`artifacts.reason_set_is_exact`).
+            if not (isinstance(supplied, Mapping) or reason_set_is_exact(supplied)):
+                recounted_at.add(index)
             # Asked of the declaration before anything is measured: an artefact this definition of
             # a reason does not apply to must not be probed and then explained away.
             declared = (
@@ -446,7 +469,15 @@ class CertificateEngine:
                 ),
             },
         }
+        # The rung this run may report at, decided by what the reason sets were rather than by what
+        # the search did: the probe is the same probe either way. `RequirementResult` refuses a
+        # result that claims more than the flag below allows, so this is a choice the result model
+        # checks rather than a convention this engine keeps.
+        exact_reason_sets = not recounted_at.intersection(index for index, _, _ in certified)
+        reached = Strength.PROBED if exact_reason_sets else Strength.RECOUNTED
+        recounted_note = "" if exact_reason_sets else f" Read at {reached}: {RECOUNTED_REASONS}."
         details: dict[str, Any] = {
+            EXACT_REASON_SET_KEY: exact_reason_sets,
             PROBE_BUDGET_KEY: budget,
             "decisions_certified": len(certified),
             "decisions_without_an_artifact": uncertifiable,
@@ -511,7 +542,7 @@ class CertificateEngine:
             return _result(
                 req,
                 Verdict.VIOLATED,
-                Strength.PROBED,
+                reached,
                 (
                     f"Violated on {len(breached)} of {len(certified)} certified decision(s): the "
                     f"stated reasons are not all the reasons. On decision #{breached[0][0]} exact "
@@ -519,7 +550,7 @@ class CertificateEngine:
                     f"showed the system's answer does not depend on {len(worst.deleted)} of them "
                     f"— {missing_reasons}. Attribution: {worst.attribution}"
                     f"{caveat}{skipped}{unmeasured} Measured against the inference "
-                    "artefact the system exposed, not read from its decision log."
+                    f"artefact the system exposed, not read from its decision log.{recounted_note}"
                 ),
                 details=details,
             )
@@ -583,7 +614,7 @@ class CertificateEngine:
         return _result(
             req,
             Verdict.SATISFIED,
-            Strength.PROBED,
+            reached,
             (
                 f"Probed over {len(certified)} certified decision(s), "
                 f"{len(triggered_at)} of which the duty's trigger reached"
@@ -596,7 +627,7 @@ class CertificateEngine:
                 + (" on those." if untriggered else ".")
                 + f"{untouched}{caveat}{skipped} Holds on the decisions whose artefact was "
                 "exposed and within the probes the budget below names; nothing here extends the "
-                "claim to a decision the system did not open up."
+                f"claim to a decision the system did not open up.{recounted_note}"
             ),
             details=details,
         )

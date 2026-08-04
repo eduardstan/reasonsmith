@@ -8,10 +8,10 @@ What this module is for:
   because that representation was named in the only signature the certificate had. This module is
   the abstraction that was missing. `InferenceArtifact` says what a reason-bearing artefact is and
   what it must expose for the deletion probe to measure reasons from it, and
-  `artifacts.ground_program.GroundProgramArtifact` is *one* family satisfying it. The knowledge
-  graphs, reason traces, extracted rule sets and decision trees of the paper's own taxonomy are
-  further families: none is implemented here, and each is now an adapter rather than a second
-  special case in `certificate.py`.
+  `artifacts.ground_program.GroundProgramArtifact` is *one* family satisfying it and
+  `artifacts.reason_trace.ReasonTraceArtifact` is the second. The knowledge graphs, extracted rule
+  sets and decision trees of the paper's own taxonomy are further families: none of those is
+  implemented here, and each is an adapter rather than a second special case in `certificate.py`.
 
   The load-bearing member is `monotone`. The deletion probe defines a reason as *a fact the answer
   would not have been reached without*, and measures it by switching facts off, one at a time. That
@@ -47,15 +47,17 @@ What a reader must not break:
     cannot stand in for it: on the ordinary exception, whose fact is in no rule body, nothing is
     ever switched off and no fingerprint is left. That is the counterfactual engine's
     no-declared-directions branch, asked one concept over.
-  - **The enumeration a family exposes must be exact, and a family whose reason set is not exact
-    does not belong on this rung.** An LLM reason trace is not a proof object: a certificate over
-    one claims strictly less than a certificate over a ground program, and must not report at the
-    same strength. This protocol does not model that difference and the lattice cannot express it —
-    `probed` records *how* a conclusion was reached and not *what it was reached about*
-    (`docs/semantics.md` §4). Adding a family whose reasons are extracted rather than enumerated
-    therefore needs a decision about the lattice before it needs an adapter.
-    Why this matters: the cheap version of this module would take any object that can list
-    something reason-shaped and hand its output the rung exact inference earned.
+  - **A family whose reason set is not exact reports one rung lower, and the rung is not optional.**
+    An LLM reason trace is not a proof object: a certificate over one claims strictly less than a
+    certificate over a ground program and must not report at the same strength. That used to be
+    inexpressible, and this paragraph used to say so; `Strength.RECOUNTED` is the rung that says it
+    and `report.RequirementResult._validate_reason_set` is the refusal that enforces it. A family
+    says which it is with `reasons_are_exact`, and **silence claims the weaker rung** — the opposite
+    of `monotone`, deliberately, because here the two answers are not both dangerous: an exact
+    family reported `recounted` has understated itself, and understating is the direction this
+    package is allowed to fail in.
+    Why this matters: the cheap version of this module would take any object that can list something
+    reason-shaped and hand its output the rung exact inference earned.
 """
 
 from __future__ import annotations
@@ -65,15 +67,44 @@ from typing import Any, Protocol, runtime_checkable
 __all__ = [
     "DECLARATION_REFUTED",
     "DECLARED_NON_MONOTONE",
+    "EXACT_REASONS_KEY",
     "MONOTONE_KEY",
+    "RECOUNTED_REASONS",
     "UNDECLARED_MONOTONICITY",
     "InferenceArtifact",
     "default_label",
     "deletion_semantics_refusal",
+    "reason_set_is_exact",
 ]
 
 #: The name of the declaration, on an artefact object and in the mapping form of `artifact()`.
 MONOTONE_KEY = "monotone"
+
+#: The name of the exactness declaration, on an artefact object and in the mapping form.
+EXACT_REASONS_KEY = "reasons_are_exact"
+
+
+#: Said on every verdict measured from a reason set the system recounted, and the whole of what
+#: separates `Strength.RECOUNTED` from `Strength.PROBED`. It is not a caveat on the probe — the
+#: probe is the same one — it is a statement about what the probe was run against.
+RECOUNTED_REASONS = (
+    "the reason set this verdict is measured against is one the system recounted, not one "
+    "enumerated from a model encoding, so the probe answers whether the system's own answer "
+    "depends on the reasons it says it used and not whether those are all the reasons it had. A "
+    "rationale can be complete, or can omit a reason the inference used, and no deletion probe "
+    "over the rationale itself can tell the two apart"
+)
+
+
+def reason_set_is_exact(artifact: object) -> bool:
+    """Whether this artefact's reasons were enumerated exactly, rather than recounted by the system.
+
+    Read with `getattr` and defaulting to **False**: a family that does not say claims the weaker
+    rung. See the module docstring — silence is refused for `monotone` and conceded here, because
+    a wrong guess about monotonicity accuses a compliant system while a wrong guess here only
+    understates one.
+    """
+    return bool(getattr(artifact, EXACT_REASONS_KEY, False))
 
 
 #: Said where an artefact declares its inference non-monotone. The refusal is structural: there is
@@ -143,11 +174,19 @@ class InferenceArtifact(Protocol):
     orders them by `repr` and the certificate names them by it. Nothing here is a nesyarena type:
     what a fact is belongs to the family, and the certificate only ever counts, sorts and switches
     them off.
+
+    One member is **optional and deliberately not annotated below**: `reasons_are_exact: bool`, True
+    where `reasons()` is an exact enumeration over a model encoding and absent or False where the
+    system recounted the set instead. It is read through `reason_set_is_exact` and never off the
+    attribute, and it is not a protocol member because a `runtime_checkable` protocol tests every
+    annotated member with `hasattr` — declaring it here would make a family that does not mention it
+    fail `isinstance`, which is the opposite of a default that claims the weaker rung.
     """
 
     #: Whether this artefact's inference is monotone in its facts: adding a fact never retracts a
     #: reason that held without it. None where the family cannot say — refused rather than assumed.
     monotone: bool | None
+
 
     #: The decision this artefact is the inference behind, named on the certificate.
     query: Any

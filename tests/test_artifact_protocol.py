@@ -34,9 +34,16 @@ from nesyarena.suts import ExactWMC, TopK
 from reasonsmith import artifacts, certificate, demo
 from reasonsmith.artifacts import InferenceArtifact, default_label
 from reasonsmith.artifacts.ground_program import GroundProgramArtifact
+from reasonsmith.artifacts.reason_trace import ReasonTraceArtifact
 from reasonsmith.certificate import certify, certify_artifact
 from reasonsmith.engines.certificate import DELETED_REASON_COUNT
-from reasonsmith.report import check_conformance, evaluate_requirement
+from reasonsmith.report import (
+    EXACT_REASON_SET_KEY,
+    PROBE_BUDGET_KEY,
+    RequirementResult,
+    check_conformance,
+    evaluate_requirement,
+)
 from reasonsmith.spec import load_pack
 from reasonsmith.verdict import Strength, Verdict
 
@@ -258,10 +265,9 @@ def test_a_certificate_over_a_non_monotone_artefact_carries_no_verdict():
 class _RuleTraceArtifact:
     """A second family, standing for none of them: reasons read off a table, no ground program.
 
-    It exists to hold the protocol honest. A family whose reason set is *extracted* rather than
-    enumerated exactly — an LLM reason trace, above all — is not made shippable by this class: it
-    would claim `probed` for evidence that is not exact inference, and the lattice cannot express
-    the difference (`docs/semantics.md` §3, *certificate*).
+    It exists to hold the protocol honest, and it declares `reasons_are_exact` nowhere on purpose:
+    a family that does not say claims the *weaker* rung, which is the one line of defence against a
+    family that lists something reason-shaped being handed the rung exact enumeration earned.
     """
 
     monotone = True
@@ -332,6 +338,140 @@ def test_the_ground_program_family_is_one_adapter_and_the_protocol_names_no_repr
             elif isinstance(node, ast.ImportFrom):
                 imported.add(node.module or "")
         assert not any(name.startswith("nesyarena") for name in imported), module.__name__
+
+
+# ------------------------------------------- the rung a recounted reason set reaches ----
+
+
+class _RecountingCreditSystem:
+    """A system that recounts its reasons instead of exposing an inference to enumerate.
+
+    Its decision turns on two facts and it says so. `unfaithful` adds a third reason to what it
+    recounts and to nothing else — the rationale item the answer does not depend on, which is the
+    failure mode the faithfulness literature names and the one this family can measure.
+    """
+
+    system_domains = ("consumer-credit",)
+
+    def __init__(self, *, unfaithful: bool = False, monotone: bool | None = True):
+        self._unfaithful, self._monotone = unfaithful, monotone
+
+    def capabilities(self) -> set[str]:
+        return {"decision_id", "artifact_logs_reason_explanation", DELETED_REASON_COUNT}
+
+    def decisions(self) -> list[dict[str, Any]]:
+        return [{
+            "decision_id": "LM-1",
+            "artifact_logs_reason_explanation": "R01 — income; R02 — recent delinquency",
+        }]
+
+    @staticmethod
+    def _answer(suppressed: frozenset) -> float:
+        """The system re-run: only `income` and `delinquency` move it, whatever it recounted."""
+        return sum(0.5 for f in ("income", "delinquency") if f not in suppressed)
+
+    def logic(self) -> Any:
+        return None
+
+    def artifact(self, decision: dict[str, Any]):
+        recounted = {
+            "R01 — income": frozenset({"income"}),
+            "R02 — recent delinquency": frozenset({"delinquency"}),
+        }
+        if self._unfaithful:
+            recounted["R03 — thin file"] = frozenset({"file_thickness"})
+        return ReasonTraceArtifact(
+            decision["decision_id"],
+            recounted,
+            self._answer,
+            engine_name="stub-decoder",
+            claimed_semantics="free-text rationale",
+            monotone=self._monotone,
+        )
+
+
+def test_a_recounted_reason_set_reports_one_rung_below_an_enumerated_one():
+    """The rung, doing the job it was added for.
+
+    The same duty, the same probe, the same verdict — and a rung lower, because the reason set was
+    recounted by the system rather than enumerated from a model encoding. That difference was
+    previously inexpressible, which is why the second artefact family was gated on it
+    (`docs/semantics.md` §3).
+    """
+    result = evaluate_requirement(_duty(), _RecountingCreditSystem())
+
+    assert result.verdict == Verdict.SATISFIED
+    assert result.strength == Strength.RECOUNTED
+    assert result.strength < Strength.PROBED
+    assert result.details[EXACT_REASON_SET_KEY] is False
+    assert artifacts.RECOUNTED_REASONS in result.evidence_summary
+    # And the enumerating family still reaches the rung above, on the same duty.
+    enumerated = check_conformance(demo.deployed_credit_system(), load_pack("ecoa"))
+    assert next(
+        r for r in enumerated.results if r.requirement_id == ADEQUACY
+    ).strength == Strength.PROBED
+
+
+def test_a_recounted_reason_the_answer_does_not_depend_on_is_still_a_breach():
+    """The rung is lower; it is not weaker about what it did measure.
+
+    A rationale item no deletion moves is measured exactly as a dropped reason is, and reported
+    `violated` — at `recounted`, which is the whole of the difference.
+    """
+    result = evaluate_requirement(_duty(), _RecountingCreditSystem(unfaithful=True))
+
+    assert result.verdict == Verdict.VIOLATED
+    assert result.strength == Strength.RECOUNTED
+    assert "R03 — thin file" in result.evidence_summary
+
+
+def test_a_recounted_reason_set_cannot_be_reported_at_the_enumerated_rung():
+    """The refusal, on the model of the ones `__post_init__` already carries.
+
+    Expressing the difference is half the work; a result model that lets an engine claim the rung
+    above anyway would leave the other half as a comment.
+    """
+    with pytest.raises(ValueError, match="recounted cannot be reported probed"):
+        RequirementResult(
+            requirement_id=ADEQUACY,
+            source_clause="12 CFR 1002.9(b)(2)",
+            verdict=Verdict.SATISFIED,
+            strength=Strength.PROBED,
+            signals_required=(DELETED_REASON_COUNT,),
+            evidence_summary="every recounted reason is one the answer depends on",
+            details={
+                EXACT_REASON_SET_KEY: False,
+                PROBE_BUDGET_KEY: {
+                    "trials": 3, "strategy": "deletion probe", "seed": "none",
+                    "input_space": {"decisions certified": 1},
+                },
+            },
+        )
+
+
+def test_a_family_that_does_not_say_claims_the_weaker_rung():
+    """Silence about exactness concedes, where silence about monotonicity refuses.
+
+    The two defaults go opposite ways on purpose: guessing monotone accuses a compliant system,
+    while guessing recounted only understates one — the direction this package may fail in.
+    """
+    assert artifacts.reason_set_is_exact(_RuleTraceArtifact()) is False
+    assert artifacts.reason_set_is_exact(GroundProgramArtifact) is True
+    assert isinstance(
+        _RecountingCreditSystem().artifact({"decision_id": "LM-1"}), InferenceArtifact
+    )
+
+
+def test_a_recounted_verdict_is_never_rendered_as_a_probed_one():
+    """§10's presentation rule: a weaker rung must not read as the rung above, in any surface."""
+    report = check_conformance(_RecountingCreditSystem(), load_pack("ecoa"))
+
+    text = report.render_text()
+    assert "[RECOUNTED] " + ADEQUACY in text
+    assert "recounted measures one the system recounted" in text
+    card = report.render_html().split(ADEQUACY, 1)[1].split("</article>", 1)[0]
+    assert "RECOUNTED — What Was Searched" in card
+    assert "PROBED — What Was Searched" not in card
 
 
 def test_switching_a_fact_off_does_not_re_enumerate_the_reasons():

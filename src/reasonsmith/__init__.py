@@ -14,7 +14,7 @@ What this module is for:
     demo.py         ECOA / Reg B credit and GDPR Art. 22 clinical, end to end
 
   The v0.2 conformance surface:
-    verdict.py      the strength lattice (unattainable < observed < probed < proved) and verdicts
+    verdict.py      the strength lattice (unattainable < observed < recounted < probed < proved)
     spec.py         requirements with verbatim provenance, loaded from packs/*.toml
     sut.py          the system-under-test protocol: capabilities, a decision trace, exposed logic
     report.py       the unattainable analysis and the conformance report
