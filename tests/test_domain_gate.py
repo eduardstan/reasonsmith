@@ -202,6 +202,8 @@ def test_a_pack_that_has_not_classified_a_requirement_is_refused(tmp_path):
         "requires": '["signal_a"]',
         "binding": "true",
         "scope": '""',
+        "deontic_type": '"obligation"',
+        "defeasibility": '"strict"',
     }
 
     def write(extra: str) -> str:

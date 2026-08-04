@@ -122,6 +122,8 @@ requires = ["reason"]
 binding = false
 scope = ""
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
 """
     pack_file.write_text(
         '[pack]\nid = "contradictory"\n'

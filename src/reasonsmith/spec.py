@@ -26,6 +26,15 @@ What a reader must not break:
     missing `domains` to empty would put that false positive straight back, since empty is the
     wildcard. The vocabulary is the pack author's and not any regulation's, which is a claim the
     pack must carry rather than hide — see `DECISION_DOMAINS` and `docs/authoring-packs.md`.
+  - `deontic_type` and `defeasibility` classify the *clause*, are required fields with no default,
+    and no engine reads either. They exist so the recurring shape of the fourth column of
+    `docs/refinement.md` can be counted rather than asserted.
+    Why this matters: "the general rule is formalised, the exception is not" was said of the
+    shipped packs often enough to look like one missing construct. It is measurable, and the
+    measurement is in `docs/refinement.md`, *The defeasibility census*. Carrying the fields is the
+    whole of what this repository does with them: nothing here reasons defeasibly, and a reader
+    who takes `defeasible-modelled` for a defeasible engine has read a claim the pack does not
+    make.
   - Every signal name a `spec` reads *unconditionally* must appear in `requires`. A name read only
     inside a disjunction whose every branch is settled by `present()` atoms, and which does not
     occur in all of those branches, is exempt, and deliberately so.
@@ -77,6 +86,56 @@ REQUIREMENT_FIELDS = (
     "binding",
     "scope",
     "domains",
+    "deontic_type",
+    "defeasibility",
+)
+
+
+#: What kind of normative sentence the clause is. This is a classification of the **clause**, not
+#: of the property that stands for it, and the two can differ: GDPR Article 22(1) is a prohibition
+#: whose shipped `record` property is a logging obligation, and that divergence is a finding
+#: `docs/refinement.md` records rather than a mismatch this field papers over.
+#:
+#: `reparation` is the contrary-to-duty member: a duty whose antecedent is a violation or a harm,
+#: which classical deontic logic cannot state without paradox and which the shipped result model —
+#: a Boolean property of decision records — cannot express at all. It is listed here because
+#: EU AI Act Article 55(1)(c) has that shape; what it does *not* buy is any machinery, and no
+#: engine reads this field.
+#:
+#: There is deliberately no default. A duty nobody has classified is a duty whose refinement was
+#: not examined, which is the same argument `binding`, `scope` and `domains` make.
+DEONTIC_TYPES = (
+    "obligation",
+    "permission",
+    "prohibition",
+    "reparation",
+)
+
+
+#: Whether the clause states something that switches the duty off, and whether the property
+#: carries it. Two different things are told apart here on purpose, because conflating them was
+#: the thing that made the gap look bigger than it is:
+#:
+#: - a **defeater** is an exception that overrides an otherwise-applicable duty — 12 CFR
+#:   1002.9(a)(1)(ii)'s *unless notice is provided in accordance with paragraph (c)*, GDPR
+#:   Article 22(2)'s *paragraph 1 shall not apply if*. Modelling one needs a priority between
+#:   rules, which this property language has no notion of.
+#: - a **trigger** is the clause's condition of application — adverse action having been taken,
+#:   the model having systemic risk. It is an antecedent, and `rulelang` already expresses one:
+#:   `ecoa_reg_b_1002_9_b_2_specific_reasons` carries its own. What is missing there is a signal,
+#:   not a construct.
+#:
+#: A duty carrying both is classified by its defeater, since that is the harder gap;
+#: `docs/refinement.md`, *The defeasibility census*, names the rows where that hides a trigger.
+#: A defeater counts only where the clause states it in the requirement's own `verbatim_text` or
+#: in a source `docs/legal-sources.md` retrieved — the same discipline every other claim about
+#: the law in this repository is held to. The census understates by whatever a wider retrieval
+#: would find, and that limit is named in the document rather than hidden here.
+DEFEASIBILITY_CLASSES = (
+    "strict",
+    "defeasible-modelled",
+    "defeasible-unmodelled",
+    "trigger-unmodelled",
 )
 
 
@@ -275,6 +334,8 @@ class Requirement:
     binding: bool
     scope: str
     domains: tuple[str, ...]
+    deontic_type: str
+    defeasibility: str
 
     def __post_init__(self) -> None:
         if not isinstance(self.binding, bool):
@@ -289,6 +350,18 @@ class Requirement:
             object.__setattr__(self, "domains", normalize_domains(self.domains))
         except (TypeError, ValueError) as exc:
             raise type(exc)(f"Requirement {self.id!r}: field 'domains': {exc}") from exc
+        for name, vocabulary in (
+            ("deontic_type", DEONTIC_TYPES),
+            ("defeasibility", DEFEASIBILITY_CLASSES),
+        ):
+            value = getattr(self, name)
+            if value not in vocabulary:
+                raise ValueError(
+                    f"Requirement {self.id!r}: field {name!r} is {value!r}, which is not one of "
+                    f"{', '.join(repr(v) for v in vocabulary)}. This classification has no "
+                    "default: see docs/refinement.md, *The defeasibility census*, for what each "
+                    "member claims and how to decide which one a clause is."
+                )
         if self.formalism not in VALID_FORMALISMS:
             raise ValueError(
                 f"Invalid formalism {self.formalism!r}; must be one of {VALID_FORMALISMS}"
@@ -332,6 +405,8 @@ class Requirement:
             "binding": self.binding,
             "scope": self.scope,
             "domains": list(self.domains),
+            "deontic_type": self.deontic_type,
+            "defeasibility": self.defeasibility,
         }
 
 
@@ -502,6 +577,8 @@ def load_pack(name_or_path: str | Path) -> Pack:
                 binding=rdata["binding"],
                 scope=rdata["scope"],
                 domains=tuple(rdata["domains"]),
+                deontic_type=rdata["deontic_type"],
+                defeasibility=rdata["defeasibility"],
             )
         except (TypeError, ValueError) as exc:
             # Both become a load error: a caller of `load_pack` is told the pack is refused and

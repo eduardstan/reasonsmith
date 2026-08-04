@@ -10,6 +10,24 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **Every shipped requirement now says what kind of duty it is and whether the law states an
+  exception to it, and the recurring "the general rule is formalised, the exception is not" claim
+  is a number rather than an impression.** `[[requirement]]` blocks carry two new required fields
+  with no default, `deontic_type` (`obligation`, `permission`, `prohibition`, `reparation`) and
+  `defeasibility` (`strict`, `defeasible-modelled`, `defeasible-unmodelled`, `trigger-unmodelled`),
+  refused at load time outside those vocabularies. **No engine reads either field**; they are
+  carried so `docs/refinement.md`, *The defeasibility census*, can be derived from the packs and
+  held to them by `tests/test_docs_refinement.py`. The measurement: of the 28 shipped requirements,
+  **3** have an exception the law states and the property does not carry — 12 CFR 1002.9(a)(1)'s
+  paragraph (c) notice, GDPR Article 22(2)'s three bases, and Article 53(1)(b)'s *without
+  prejudice* proviso — **1** has one the property does carry, in the propositional structure the
+  language already has, and **12** have an unmodelled *trigger*, which is a missing signal rather
+  than a missing construct. On this evidence rebuilding the property language on prioritized
+  defaults is not justified, and the census states the three limits of that conclusion rather than
+  leaving them to be found. `deontic_type` came out 23 obligations, 4 prohibitions, 1 reparation
+  (Article 55(1)(c), whose antecedent is a harm and not the violation of any duty in any shipped
+  pack) and **no** permissions.
+
 - **A pack can be checked against itself: `reasonsmith validate-pack <pack> --analyse`.**
   `src/reasonsmith/analysis.py` reads a pack as a set of formulas and answers four questions no
   `check` run can, reusing the Z3 encoding in `engines/proved.py` rather than building a second

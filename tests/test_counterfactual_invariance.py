@@ -160,6 +160,8 @@ def _requirement(spec: str = SPEC, requires: tuple[str, ...] = (OUTCOME, PROTECT
         binding=True,
         scope="",
         domains=("consumer-credit",),
+        deontic_type="obligation",
+        defeasibility="strict",
     )
 
 

@@ -55,6 +55,8 @@ _TIMING = Requirement(
     binding=True,
     scope="",
     domains=(),
+    deontic_type="obligation",
+    defeasibility="strict",
 )
 
 

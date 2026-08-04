@@ -24,6 +24,8 @@ requires = [
 binding = true
 scope = "high-risk"
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
 
 [[requirement]]
 id = "eu_ai_act_art12_2_traceability_monitoring"
@@ -44,6 +46,8 @@ requires = [
 binding = true
 scope = "high-risk"
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
 
 [[requirement]]
 id = "eu_ai_act_art13_1_transparency_deployers"
@@ -65,6 +69,8 @@ requires = [
 binding = true
 scope = "high-risk"
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
 
 [[requirement]]
 id = "eu_ai_act_art13_2_instructions_for_use"
@@ -82,3 +88,5 @@ requires = [
 binding = true
 scope = "high-risk"
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"

@@ -52,6 +52,8 @@ def _logical_req(
         binding=binding,
         scope=scope,
         domains=(),
+        deontic_type="obligation",
+        defeasibility="strict",
     )
 
 
@@ -861,6 +863,8 @@ def _record_req(spec: str, requires: tuple[str, ...], req_id: str = "rec_r1") ->
         binding=True,
         scope="",
         domains=(),
+        deontic_type="obligation",
+        defeasibility="strict",
     )
 
 
@@ -1175,6 +1179,8 @@ def _temporal_req(
         binding=True,
         scope="",
         domains=(),
+        deontic_type="obligation",
+        defeasibility="strict",
     )
 
 

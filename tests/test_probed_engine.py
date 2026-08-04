@@ -53,6 +53,8 @@ def _req(
         binding=True,
         scope="",
         domains=(),
+        deontic_type="obligation",
+        defeasibility="strict",
     )
 
 

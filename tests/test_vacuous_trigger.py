@@ -71,6 +71,8 @@ def _req(spec: str = DUTY, formalism: str = "logical", requires=("income", "appr
         binding=True,
         scope="",
         domains=(),
+        deontic_type="obligation",
+        defeasibility="strict",
     )
 
 

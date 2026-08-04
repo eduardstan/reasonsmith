@@ -28,6 +28,8 @@ requires = [
 binding = true
 scope = "general-purpose"
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
 
 [[requirement]]
 id = "eu_ai_act_art53_1_b_downstream_documentation"
@@ -49,6 +51,8 @@ requires = [
 binding = true
 scope = "general-purpose"
 domains = []
+deontic_type = "obligation"
+defeasibility = "defeasible-unmodelled"
 
 [[requirement]]
 id = "eu_ai_act_art53_1_c_copyright_policy"
@@ -68,6 +72,8 @@ requires = [
 binding = true
 scope = "general-purpose"
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
 
 [[requirement]]
 id = "eu_ai_act_art53_1_d_training_content_summary"
@@ -87,6 +93,8 @@ requires = [
 binding = true
 scope = "general-purpose"
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
 
 [[requirement]]
 id = "eu_ai_act_art55_1_a_model_evaluation"
@@ -106,6 +114,8 @@ requires = [
 binding = true
 scope = "general-purpose"
 domains = []
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"
 
 [[requirement]]
 id = "eu_ai_act_art55_1_b_systemic_risk_assessment"
@@ -125,6 +135,8 @@ requires = [
 binding = true
 scope = "general-purpose"
 domains = []
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"
 
 [[requirement]]
 id = "eu_ai_act_art55_1_c_serious_incident_reporting"
@@ -146,6 +158,8 @@ requires = [
 binding = true
 scope = "general-purpose"
 domains = []
+deontic_type = "reparation"
+defeasibility = "trigger-unmodelled"
 
 [[requirement]]
 id = "eu_ai_act_art55_1_d_cybersecurity_protection"
@@ -165,3 +179,5 @@ requires = [
 binding = true
 scope = "general-purpose"
 domains = []
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"

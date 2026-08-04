@@ -68,6 +68,8 @@ def _requirement(spec: str, formalism: str, requires: tuple[str, ...]) -> Requir
         binding=True,
         scope="",
         domains=(),
+        deontic_type="obligation",
+        defeasibility="strict",
     )
 
 

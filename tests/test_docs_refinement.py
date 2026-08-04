@@ -20,9 +20,15 @@ What a reader must not break:
 from __future__ import annotations
 
 import re
+from collections import Counter
 from pathlib import Path
 
-from reasonsmith.spec import list_packs, load_pack
+from reasonsmith.spec import (
+    DEFEASIBILITY_CLASSES,
+    DEONTIC_TYPES,
+    list_packs,
+    load_pack,
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REFINEMENT = REPO_ROOT / "docs" / "refinement.md"
@@ -49,14 +55,18 @@ def _shipped_requirement_ids() -> set[str]:
 def _documented_requirement_ids() -> set[str]:
     """The ids the record names, read from the first cell of each of its table rows.
 
-    The first column is "the clause", and by convention it carries the requirement id as its only
-    code span, so the mapping from row to requirement is machine-checkable rather than eyeballed.
+    The first column is "the clause", and by convention it is the citation, a `<br>`, and the
+    requirement id as its only code span, so the mapping from row to requirement is
+    machine-checkable rather than eyeballed. The `<br>` is what tells a refinement row from the
+    census tables further up, whose first cell is a backticked classification name and not an id.
     """
     documented: set[str] = set()
     for line in _document().splitlines():
         if not line.startswith("|"):
             continue
         first_cell = line.split("|")[1]
+        if "<br>" not in first_cell:
+            continue
         documented.update(_CODE_SPAN.findall(first_cell))
     return documented
 
@@ -79,6 +89,84 @@ def test_the_refinement_record_covers_every_shipped_requirement():
         + ", ".join(invented)
         + ". Remove the row, or restore the requirement."
     )
+
+
+def _shipped_requirements() -> list:
+    return [req for name in list_packs() for req in load_pack(name).requirements]
+
+
+def _census_counts() -> dict[str, int]:
+    """The counts the document states, read from the two census tables.
+
+    A census row is a table row whose first cell is one backticked classification name and whose
+    second cell is a number, optionally bolded. Nothing else in the document has that shape, and
+    a row that loses its number simply stops being read — which the test below catches, because
+    every vocabulary member must be found.
+    """
+    counts: dict[str, int] = {}
+    for line in _document().splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = line.split("|")
+        if len(cells) < 3:
+            continue
+        names = _CODE_SPAN.findall(cells[1])
+        number = cells[2].strip().strip("*")
+        if len(names) == 1 and number.isdigit():
+            counts[names[0]] = int(number)
+    return counts
+
+
+def test_every_shipped_requirement_carries_both_classifications():
+    """A duty nobody classified is a duty whose refinement was not examined.
+
+    The loader already refuses a `[[requirement]]` block missing either field, so this test cannot
+    fail without that refusal having been weakened — which is the point of asserting it here,
+    where the census that depends on the fields is checked.
+    """
+    for req in _shipped_requirements():
+        assert req.deontic_type in DEONTIC_TYPES, (
+            f"{req.id}: deontic_type {req.deontic_type!r} is outside the vocabulary"
+        )
+        assert req.defeasibility in DEFEASIBILITY_CLASSES, (
+            f"{req.id}: defeasibility {req.defeasibility!r} is outside the vocabulary"
+        )
+
+
+def test_the_census_matches_the_packs():
+    """The stated numbers are derived, so a new requirement fails the build until it is counted.
+
+    This is the one claim in the document that is a measurement rather than a judgement, and a
+    measurement that silently falls behind the packs is worse than none: the number decides
+    whether the property language gets rebuilt on prioritized defaults.
+    """
+    requirements = _shipped_requirements()
+    measured = Counter(r.deontic_type for r in requirements)
+    measured.update(r.defeasibility for r in requirements)
+    stated = _census_counts()
+
+    for name in DEONTIC_TYPES + DEFEASIBILITY_CLASSES:
+        assert name in stated, (
+            f"docs/refinement.md, *The defeasibility census*, states no count for {name!r}. "
+            "Every member of both vocabularies gets a row, including one with no members."
+        )
+        assert stated[name] == measured[name], (
+            f"docs/refinement.md states {stated[name]} requirement(s) classified {name!r}; the "
+            f"shipped packs hold {measured[name]}. Re-count the census and re-read the prose "
+            "around it — the number it reports is the answer to whether this property language "
+            "gets rebuilt on prioritized defaults."
+        )
+
+
+def test_the_census_names_every_unmodelled_defeater():
+    """Three ids carry the whole finding, so the document may not report a bare number."""
+    document = _document()
+    for req in _shipped_requirements():
+        if req.defeasibility == "defeasible-unmodelled":
+            assert f"`{req.id}`" in document, (
+                f"{req.id} is classified defeasible-unmodelled and the census does not name it. "
+                "The count is only useful if a reader can go and read the three clauses."
+            )
 
 
 def test_the_refinement_record_names_the_decision_domain_gap():

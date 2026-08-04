@@ -57,6 +57,8 @@ def _requirement(**overrides) -> Requirement:
         "binding": True,
         "scope": "",
         "domains": (),
+        "deontic_type": "obligation",
+        "defeasibility": "strict",
     }
     fields.update(overrides)
     return Requirement(**fields)
@@ -257,6 +259,8 @@ def test_loader_rejects_missing_field(tmp_path, field_name):
         "binding": 'true',
         "scope": '""',
         "domains": '[]',
+        "deontic_type": '"obligation"',
+        "defeasibility": '"strict"',
     }
     del fields[field_name]
     body = "[[requirement]]\n" + "".join(f"{k} = {v}\n" for k, v in fields.items())
@@ -276,6 +280,7 @@ def test_loader_rejects_requires_as_bare_string(tmp_path):
         'verbatim_text = "quoted"\nstakeholder = "deployer"\nformalism = "record"\n'
         'spec = "present(per_decision_reason_string)"\nrationale = "Why."\n'
         'requires = "per_decision_reason_string"\nbinding = true\nscope = ""\ndomains = []\n'
+        'deontic_type = "obligation"\ndefeasibility = "strict"\n'
     )
     with pytest.raises(ValueError, match="must be an array of signal names"):
         load_pack(_write_pack(tmp_path, body))
@@ -288,6 +293,7 @@ def test_loader_rejects_blank_and_duplicate_fields(tmp_path):
         'verbatim_text = {verbatim}\nstakeholder = "deployer"\nformalism = "record"\n'
         'spec = "present(a)"\nrationale = "Why."\nrequires = {requires}\n'
         'binding = true\nscope = ""\ndomains = []\n'
+        'deontic_type = "obligation"\ndefeasibility = "strict"\n'
     )
     with pytest.raises(ValueError, match="verbatim_text.*non-empty"):
         load_pack(_write_pack(tmp_path, base.format(verbatim='"   "', requires='["a"]')))
@@ -310,7 +316,7 @@ def test_loader_rejects_empty_pack_and_bad_formalism(tmp_path):
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "vibes"\n'
         'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\n'
-        'scope = ""\ndomains = []\n'
+        'scope = ""\ndomains = []\ndeontic_type = "obligation"\ndefeasibility = "strict"\n'
     )
     with pytest.raises(ValueError, match="Invalid formalism"):
         load_pack(_write_pack(tmp_path, body))
@@ -322,7 +328,7 @@ def test_loader_error_names_the_offending_block(tmp_path):
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
         'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\n'
-        'scope = ""\ndomains = []\n'
+        'scope = ""\ndomains = []\ndeontic_type = "obligation"\ndefeasibility = "strict"\n'
     )
     bad = good.replace('id = "r1"', 'id = "r2"').replace('spec = "present(a)"\n', "")
     with pytest.raises(ValueError, match=r"custom\.toml \[\[requirement\]\] #2 \('r2'\)"):
@@ -335,7 +341,7 @@ def test_loader_rejects_an_unknown_field(tmp_path):
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
         'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\n'
-        'scope = ""\ndomains = []\n'
+        'scope = ""\ndomains = []\ndeontic_type = "obligation"\ndefeasibility = "strict"\n'
     )
     with pytest.raises(ValueError, match=r"custom\.toml.*unknown field\(s\): stakeholders"):
         load_pack(_write_pack(tmp_path, good + 'stakeholders = "deployer"\n'))
@@ -1098,7 +1104,7 @@ def test_a_pack_scope_outside_the_vocabulary_is_refused_at_load(tmp_path):
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
         'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\n'
-        'scope = "hihg-risk"\ndomains = []\n'
+        'scope = "hihg-risk"\ndomains = []\ndeontic_type = "obligation"\ndefeasibility = "strict"\n'
     )
     with pytest.raises(ValueError, match=r"'r1'.*'scope'.*not a known regulatory class"):
         load_pack(_write_pack(tmp_path, body))
@@ -1118,7 +1124,7 @@ def test_a_blank_scope_is_a_typo_not_an_absent_class(tmp_path):
         '[[requirement]]\nid = "r1"\nsource_document = "Doc"\narticle_clause = "Art. 1"\n'
         'verbatim_text = "q"\nstakeholder = "deployer"\nformalism = "record"\n'
         'spec = "present(a)"\nrationale = "Why."\nrequires = ["a"]\nbinding = true\n'
-        'scope = "   "\ndomains = []\n'
+        'scope = "   "\ndomains = []\ndeontic_type = "obligation"\ndefeasibility = "strict"\n'
     )
     with pytest.raises(ValueError, match=r"'r1'.*'scope'.*not a known regulatory class"):
         load_pack(_write_pack(tmp_path, body))
@@ -1190,6 +1196,7 @@ def _spec_pack(tmp_path: Path, formalism: str, spec: str, requires: str = '["sig
         'verbatim_text = "q"\nstakeholder = "deployer"\n'
         f'formalism = "{formalism}"\nspec = {spec!r}\nrationale = "Why."\n'
         f"requires = {requires}\nbinding = true\nscope = \"\"\ndomains = []\n"
+        'deontic_type = "obligation"\ndefeasibility = "strict"\n'
     )
     return _write_pack(tmp_path, body)
 

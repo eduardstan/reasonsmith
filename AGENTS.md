@@ -248,6 +248,24 @@ domain is never reported satisfied on a domain-limited duty. It does not model t
 a decision (12 CFR 1002.9 fires on adverse action, not on being a creditor), and it does not check
 that a system declaring `consumer-credit` issues credit.
 
+Two further required fields, `deontic_type` and `defeasibility`, classify the **clause** and are
+read by **no engine at all**. They exist because "the general rule is formalised, the exception is
+not" was said of the fourth column of `docs/refinement.md` often enough to look like one missing
+construct, and a classification carried by the loader makes it countable. The count is
+`docs/refinement.md`, *The defeasibility census*, derived from the packs by
+`tests/test_docs_refinement.py` — a requirement added without the fields is refused by `load_pack`,
+and one added with them fails the build until the census is re-counted. Three things must not be
+undone: a **defeater** (an exception overriding an otherwise-applicable duty) is not a **trigger**
+(a condition of application, already expressible as an implication's antecedent and missing only a
+signal), and collapsing them is what made the gap look like 28 omissions when it measures 3; a
+defeater counts only where the clause states it in `verbatim_text` or in a source
+`docs/legal-sources.md` retrieved, so raising the number means retrieving a clause, never
+classifying from memory; and neither field may grow an engine, a fragment or a rung without the
+census saying so — the answer it gives today is that **rebuilding the property language on
+prioritized defaults is not justified**, with 1 defeater already modelled in ordinary propositional
+structure. `docs/authoring-packs.md`, *The two classifications no engine reads*, is the rule for an
+author.
+
 An engine and a pack can be **installed rather than vendored**. `plugins.py` is the whole of it —
 `importlib.metadata.entry_points` over `reasonsmith.engines` and `reasonsmith.packs` — and it is
 deliberately not a plug-in framework: no registry, no lifecycle, no manifest. A discovered engine

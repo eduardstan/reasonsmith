@@ -32,6 +32,8 @@ requires = [
 binding = true
 scope = ""
 domains = []
+deontic_type = "prohibition"
+defeasibility = "defeasible-unmodelled"
 
 [[requirement]]
 id = "gdpr_art22_1_no_prohibited_decision_for_any_input"
@@ -60,6 +62,8 @@ requires = [
 binding = true
 scope = ""
 domains = []
+deontic_type = "prohibition"
+defeasibility = "defeasible-modelled"
 
 [[requirement]]
 id = "gdpr_art22_3_safeguards_human_intervention"
@@ -77,6 +81,8 @@ requires = [
 binding = true
 scope = ""
 domains = []
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"
 
 [[requirement]]
 id = "gdpr_recital71_meaningful_explanation"
@@ -98,6 +104,8 @@ requires = [
 binding = false
 scope = ""
 domains = []
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"
 
 [[requirement]]
 id = "gdpr_recital71_error_risk_minimised"
@@ -119,3 +127,5 @@ requires = [
 binding = false
 scope = ""
 domains = []
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"

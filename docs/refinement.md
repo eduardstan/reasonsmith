@@ -133,6 +133,124 @@ It is stated once, here, rather than twenty-eight times:
   applicability gate would need a `not_applicable` verdict a *record* can carry, which is a change
   to the result model rather than to a pack.
 
+## The defeasibility census
+
+The fourth column reads, over and over, as one sentence: *the general rule is formalised, the
+exception is not*. Said often enough that looked like a single missing construct — a pack language
+built on prioritized defaults, the premise Catala is built on (Merigoux, Chataing & Protzenko, ICFP
+2021) and the shape defeasible deontic logic gives rules (Governatori's PCL / Regorous). Before
+rebuilding anything on that premise it is worth knowing how many of these twenty-eight entries the
+premise is actually true of. This section is that count, and it is a count rather than an
+impression because every shipped requirement now carries the classification in its own
+`[[requirement]]` block: `deontic_type` and `defeasibility`, required fields with no default,
+refused at load time if they are not members of `spec.DEONTIC_TYPES` and
+`spec.DEFEASIBILITY_CLASSES`. **No engine reads either field.** They are carried so the claim can
+be checked, and `tests/test_docs_refinement.py` derives every number below from the packs, so a
+requirement added without them fails the build and one added with them fails it until this section
+is re-counted.
+
+**The distinction the count turns on.** Two different things were being called the same gap:
+
+- A **defeater** is an exception that overrides an otherwise-applicable duty. 12 CFR
+  1002.9(a)(1)(ii) — *unless notice is provided in accordance with paragraph (c) of this section*.
+  GDPR Article 22(2) — *Paragraph 1 shall not apply if the decision …*. Modelling one needs a
+  priority between rules, and `rulelang.py` has no notion of priority. This is the gap prioritized
+  defaults are for.
+- A **trigger** is the clause's condition of application: adverse action having been taken, the
+  model having systemic risk, the processing being profiling. A trigger is an *antecedent*, and
+  the property language already expresses one — `ecoa_reg_b_1002_9_b_2_specific_reasons` carries
+  the (a)(2)(i) trigger as the antecedent of an implication, and
+  `report.not_evaluated_for_unreachable_trigger` answers the case where it fires nowhere. What is
+  missing for the others is a **signal**: nothing in a decision record says *this was an adverse
+  action*, and no gate says *this model has systemic risk*. A rewrite on prioritized defaults would
+  not supply one.
+
+A duty with both is classified by its defeater, which is the harder gap; the trigger it also has is
+still named in its row above. A defeater counts only where the clause states it in the
+requirement's own `verbatim_text` or in a source `docs/legal-sources.md` retrieved — the discipline
+every other claim about the law here is held to.
+
+**The count, over all twenty-eight shipped requirements:**
+
+| `defeasibility` | Requirements | What it says |
+|---|---|---|
+| `defeasible-unmodelled` | **3** | The law states an exception; the property does not carry it. |
+| `defeasible-modelled` | 1 | The law states an exception; the property carries it. |
+| `trigger-unmodelled` | 12 | No defeater. The clause's condition of application is not modelled. |
+| `strict` | 12 | No defeater, and the property's reach is the clause's. |
+
+The three are `ecoa_reg_b_1002_9_a_1_timing_of_notice` (paragraph (c)'s incomplete-application
+notice defeats the 30-day bound), `gdpr_art22_1_automated_decision_prohibition` (Article 22(2)'s
+three bases disapply paragraph 1) and `eu_ai_act_art53_1_b_downstream_documentation` (the clause's
+own *without prejudice to* proviso on intellectual property and trade secrets, which is why that
+property cannot tell documentation lawfully redacted from documentation simply missing). The one
+that is modelled is `gdpr_art22_1_no_prohibited_decision_for_any_input`, and it is worth reading
+before deciding anything: **its property carries the Article 22(2) derogation as a disjunction in
+the consequent, in the language as it stands.** One defeater, written as ordinary propositional
+structure, no priority relation required.
+
+**So the answer is three of twenty-eight, and the honest reading of it is that the rewrite is not
+justified by this evidence.** Twelve of the entries are triggers, and a trigger needs a signal, not
+a construct. Twelve more are strict, and their fourth columns are the other three gaps this
+document already names — presence is not adequacy, the trace is a sample, organisational facts are
+outside every engine. The one defeater that was modelled was modelled without new machinery. What
+prioritized defaults would buy, on today's packs, is a cleaner statement of at most three duties,
+one of which — the *without prejudice* proviso — is not obviously a priority between rules at all.
+
+**Three limits of this count, stated rather than left to be discovered.**
+
+1. **It reads only the law this repository retrieved.** 12 CFR 1002.4(a) is classified `strict`
+   because the text under Provision 4 of `docs/legal-sources.md` states no exception — and
+   § 1002.8's special purpose credit programs, which permit a creditor to consider a prohibited
+   basis, is an exception to exactly that prohibition. It is not retrieved, so it is not counted.
+   Widening the retrieval would raise the number, and the way to raise it honestly is to retrieve
+   the clause, not to classify from memory.
+2. **A defeater is a fact about the clause, not about how badly the property is wrong.** GDPR
+   Article 22(4)'s *unless point (a) or (g) of Article 9(2) applies* is a defeater inside a
+   paragraph no shipped requirement formalises, so it is counted nowhere.
+3. **`trigger-unmodelled` is not a lesser gap.** It is the largest single item in this document
+   (*Two axes of reach are modelled, and the trigger is still not one*) and it is unchanged by
+   anything here. Twelve is the count of duties whose reach exceeds their clause's; the census
+   only says that a different construct is what would close it.
+
+### What the deontic classification found
+
+The second field, `deontic_type`, was added on the argument that every duty here is a Boolean
+property of records, with no obligation/permission/prohibition distinction and no contrary-to-duty
+structure. The classification is of the **clause**, never of the property that stands for it. It
+came out:
+
+| `deontic_type` | Requirements |
+|---|---|
+| `obligation` | 23 |
+| `prohibition` | 4 |
+| `reparation` | 1 |
+| `permission` | **0** |
+
+Three findings, and each is a fact about the shipped packs rather than about the taxonomy:
+
+- **No shipped requirement is a permission, and one duty contains one.** 12 CFR 1002.9(a)(2) lets
+  a creditor choose between a statement of reasons and a disclosure of the right to obtain one,
+  and 12 CFR 1002.9(c)(3) — retrieved, not shipped — reads *At its option, a creditor may inform
+  the applicant orally*. The permission is inside the obligation, expressed as a disjunction, which
+  is what the language already does with it. The empty row is honest and it is small: on this
+  evidence the permission/obligation distinction has nothing yet to do.
+- **One clause's deontic type and its property's disagree, and it is already the sharpest row in
+  the GDPR table.** `gdpr_art22_1_automated_decision_prohibition` classifies as a `prohibition`
+  because Article 22(1) is one; its `record` property is a *logging obligation*, so a system that
+  makes exactly the prohibited decision satisfies it by logging that decision. That mismatch was
+  written in its fourth column before this field existed. The field makes it countable, which is
+  all a classification should claim to do.
+- **`reparation` has exactly one member and it does not quite fit.** EU AI Act Article 55(1)(c) is
+  a duty to report a serious incident, so it has the contrary-to-duty shape — the antecedent is
+  the bad thing having happened. But a *serious incident* is defined by Article 3(49) as an
+  outcome, not as the breach of another obligation, and no obligation in any shipped pack is its
+  antecedent. So it is a reparation duty whose trigger is a harm rather than a violation, and the
+  classical contrary-to-duty paradoxes — where the obligation to repair conflicts with the
+  obligation not to have caused the harm — do not arise on this one clause. One member, and the
+  member is the easy case. That is not evidence that the structure is needed; it is evidence that
+  the shipped packs have not yet met a duty that needs it.
+
 ## One of the four signal categories is empty, and no sourced statute fills it
 
 `docs/authoring-packs.md` names four Section 6.3 signal-name prefixes. Three are exercised by the

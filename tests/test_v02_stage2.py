@@ -131,6 +131,8 @@ class TestJSONLAdapter:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         result = evaluate_requirement(req, sut)
         assert result.verdict == Verdict.VIOLATED
@@ -156,6 +158,8 @@ class TestJSONLAdapter:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         result = evaluate_requirement(req, sut)
         assert result.strength == Strength.UNATTAINABLE
@@ -186,6 +190,8 @@ class TestJSONLAdapter:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         result = evaluate_requirement(req, sut)
         assert result.strength == Strength.UNATTAINABLE
@@ -285,6 +291,8 @@ def test_record_and_temporal_formalisms_route_through_report():
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
 
     record = evaluate_requirement(
@@ -319,6 +327,8 @@ def test_temporal_presence_agrees_with_record_presence_for_falsy_values(value):
         "binding": True,
         "scope": "",
         "domains": (),
+        "deontic_type": "obligation",
+        "defeasibility": "strict",
     }
     record = Requirement(
         id="record_presence", formalism="record", spec="present(signal_a)", **fields
@@ -352,6 +362,8 @@ class TestRecordEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         records = list(sut.decisions())
         result = RecordEngine.evaluate(req, sut, records)
@@ -376,6 +388,8 @@ class TestRecordEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         records = list(sut.decisions())
         result = RecordEngine.evaluate(req, sut, records)
@@ -412,6 +426,8 @@ class TestRecordEngine:
                     binding=True,
                     scope="",
                     domains=(),
+                    deontic_type="obligation",
+                    defeasibility="strict",
                 ),
                 sut,
                 records,
@@ -460,6 +476,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         records = [
             {"signal_a": True, "signal_b": True},
@@ -484,6 +502,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         records = [{"signal_a": True}, {"signal_a": False}]
 
@@ -507,6 +527,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
 
         satisfied = ObservedEngine.evaluate(
@@ -536,6 +558,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
 
         result = ObservedEngine.evaluate(
@@ -563,6 +587,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
 
         result = ObservedEngine.evaluate(
@@ -587,6 +613,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
 
         result = ObservedEngine.evaluate(
@@ -611,6 +639,8 @@ class TestObservedEngine:
             "binding": True,
             "scope": "",
             "domains": (),
+            "deontic_type": "obligation",
+            "defeasibility": "strict",
         }
         presence = Requirement(
             id="temp_present_false", spec="always(present(signal_a))", **fields
@@ -635,6 +665,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         records = [
             {"signal_a": True, "signal_b": True, "id": 0},
@@ -668,6 +700,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         result = ObservedEngine.evaluate(req, sut, records)
         assert result.verdict == Verdict.INCONCLUSIVE
@@ -692,6 +726,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         records = [{"signal_a": True}, {"signal_a": float("nan")}]
         result = ObservedEngine.evaluate(req, sut, records)
@@ -727,6 +763,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         result = ObservedEngine.evaluate(req, sut, [{"signal_b": 0.2}, {"signal_b": 0.3}])
         assert result.verdict == Verdict.INCONCLUSIVE
@@ -748,6 +786,8 @@ class TestObservedEngine:
             binding=True,
             scope="",
             domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
         )
         records = [{"signal_a": True}, {"signal_a": True}]
         result = ObservedEngine.evaluate(req, sut, records)

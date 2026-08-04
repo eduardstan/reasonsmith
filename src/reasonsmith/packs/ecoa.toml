@@ -31,6 +31,8 @@ requires = [
 binding = true
 scope = ""
 domains = ["consumer-credit"]
+deontic_type = "obligation"
+defeasibility = "defeasible-unmodelled"
 
 [[requirement]]
 id = "ecoa_reg_b_1002_9_a_2_written_statement"
@@ -58,6 +60,8 @@ requires = [
 binding = true
 scope = ""
 domains = ["consumer-credit"]
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"
 
 [[requirement]]
 id = "ecoa_reg_b_1002_9_b_2_specific_reasons"
@@ -91,6 +95,8 @@ requires = [
 binding = true
 scope = ""
 domains = ["consumer-credit"]
+deontic_type = "prohibition"
+defeasibility = "trigger-unmodelled"
 
 [[requirement]]
 id = "ecoa_reg_b_1002_9_b_2_principal_reasons_complete"
@@ -120,6 +126,8 @@ requires = [
 binding = true
 scope = ""
 domains = ["consumer-credit"]
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"
 
 [[requirement]]
 id = "ecoa_reg_b_1002_4_a_no_disparate_treatment"
@@ -151,3 +159,5 @@ requires = [
 binding = true
 scope = ""
 domains = ["consumer-credit"]
+deontic_type = "prohibition"
+defeasibility = "strict"

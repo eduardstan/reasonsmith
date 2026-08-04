@@ -97,6 +97,8 @@ def _requirement() -> Requirement:
         binding=True,
         scope="",
         domains=(),
+        deontic_type="obligation",
+        defeasibility="strict",
     )
 
 
@@ -308,6 +310,8 @@ requires = ["signal_a"]
 binding = true
 scope = ""
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
 """
 
 

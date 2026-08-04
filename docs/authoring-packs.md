@@ -60,11 +60,13 @@ requires = ["signal_a", "signal_b"]
 binding = true                # true = legal obligation, false = interpretive recital/guidance
 scope = "high-risk"           # or "" for a duty that is not class-limited
 domains = ["consumer-credit"] # or [] for a duty that is about no particular kind of decision
+deontic_type = "obligation"   # what kind of normative sentence the clause is
+defeasibility = "strict"      # whether the clause states an exception, and whether `spec` carries it
 ```
 
 A `[[requirement]]` block carries **exactly** these fields: `id`, `source_document`,
 `article_clause`, `verbatim_text`, `stakeholder`, `formalism`, `spec`, `rationale`, `requires`,
-`binding`, `scope`, `domains`. Omitting one, or adding a field nothing reads, is a load-time error — an
+`binding`, `scope`, `domains`, `deontic_type`, `defeasibility`. Omitting one, or adding a field nothing reads, is a load-time error — an
 omitted field would break source traceability, and an unread field would look like data the
 codebase acts on when it does not.
 
@@ -82,6 +84,8 @@ codebase acts on when it does not.
 | `requires` | The signal names the system must be capable of emitting for the requirement to be checkable at all. A system missing one is reported unattainable on the missing signal, without being run. It is a conjunction — see "An either/or clause" below before listing a branch of one here. |
 | `binding` | Whether this duty is a legally binding obligation (`true`) or an interpretive recital/guidance item (`false`). |
 | `scope` | The regulatory class the duty is limited to, from the fixed vocabulary `prohibited`, `high-risk`, `limited-risk`, `minimal-risk`, `general-purpose`; `""` means the duty is not class-limited. |
+| `deontic_type` | What kind of normative sentence the **clause** is, from `reasonsmith.spec.DEONTIC_TYPES`: `obligation`, `permission`, `prohibition`, or `reparation` (a duty whose antecedent is a violation or a harm). It classifies the clause and not the property, and the two may differ — see "the two classifications no engine reads" below. |
+| `defeasibility` | Whether the clause states something that switches the duty off, and whether `spec` carries it, from `reasonsmith.spec.DEFEASIBILITY_CLASSES`: `strict`, `defeasible-modelled`, `defeasible-unmodelled`, `trigger-unmodelled`. |
 | `domains` | The kinds of decision the duty is about, from `reasonsmith.spec.DECISION_DOMAINS`; `[]` means the duty is about no particular kind. A different axis from `scope`, gated separately, and matched by intersection — see "the decision-domain vocabulary is yours, not the regulation's" below before writing one. |
 
 Signal names conventionally start with the Section 6.3 taxonomy prefixes (`provenance_`,
@@ -195,9 +199,36 @@ observed engine reports a log holding a single decision not evaluated rather tha
 violated. `ecoa_reg_b_1002_9_a_2_written_statement` is the worked example, and `docs/refinement.md`
 records what its disjunction still does not capture.
 
+## The two classifications no engine reads
+
+`deontic_type` and `defeasibility` are carried by the loader and read by nothing else. They exist
+so that one recurring claim about the shipped packs — *the general rule is formalised, the
+exception is not* — can be counted rather than repeated, and the count is
+`docs/refinement.md`, **The defeasibility census**. Read that section before writing either field;
+it states what each member claims, and the discipline the classification is held to. Three rules
+matter when you are the one writing them:
+
+- **Classify the clause, not your property.** GDPR Article 22(1) is a `prohibition` even though the
+  property shipped for it is a presence check on a log. Where the two disagree, that disagreement
+  belongs in the fourth column of the refinement record, and this field is what makes it countable.
+- **A defeater is not a trigger.** *Unless notice is provided in accordance with paragraph (c)* is
+  a defeater — it overrides an otherwise-applicable duty, and it is what
+  `defeasible-modelled`/`defeasible-unmodelled` are about. *When adverse action is taken* is a
+  trigger: a condition of application, expressible today as the antecedent of an implication if a
+  signal for it exists. A clause with both is classified by its defeater.
+- **Only sourced exceptions count.** A defeater counts where the clause states it in your
+  `verbatim_text`, or in a clause `docs/legal-sources.md` retrieved. An exception you know about
+  from memory is a reason to retrieve the clause, not a reason to write
+  `defeasible-unmodelled`.
+
+Nothing here reasons defeasibly, and neither field changes any verdict. A pack that writes
+`defeasible-modelled` is claiming its own `spec` carries the exception, in the ordinary
+propositional structure the language already has — the way
+`gdpr_art22_1_no_prohibited_decision_for_any_input` carries Article 22(2)'s three bases.
+
 ## binding, scope and domains have no default
 
-None of the three has a default, here or in the loader. Defaulting a missing `binding` to `true`
+None of the three has a default, here or in the loader, and neither does either classification above. Defaulting a missing `binding` to `true`
 would silently promote an unclassified item to a legal obligation, and defaulting it to `false`
 would silently demote a statutory duty out of the compliance headline. Defaulting a missing
 `scope` to `""`, or a missing `domains` to `[]`, would leave an unclassified duty reachable for

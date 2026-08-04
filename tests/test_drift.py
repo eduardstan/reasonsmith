@@ -70,6 +70,8 @@ requires = ["artifact_logs_event_log"]
 binding = true
 scope = ""
 domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
 """,
         encoding="utf-8",
     )
