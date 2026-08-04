@@ -10,6 +10,19 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **`until` and `since` in the property language, on a real duty and a recorded reversal.** Both
+  are written as binary prefix calls — `until(left, right)`, `since(left, right)` — classified into
+  the `temporal` fragment and rendered to rtamt's infix form by `engines/observed.to_stl`. **The
+  mapping is the whole of it: rtamt has parsed both operators all along, and no temporal semantics
+  is implemented in this repository.** `until` shipped on the evidence
+  `ROADMAP.md` §2 demanded — `ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out`, 12 CFR
+  1002.9(c)(2), whose obligation runs from a notice of incompleteness and ends when the applicant
+  supplies the information or when the designated period lapses. `since` shipped **without** such a
+  duty, by an explicit decision of 2026-08-04, and §2 of the roadmap now records that as a reversal
+  rather than dropping the condition it set. The new requirement is the second in any shipped pack
+  whose clause states a defeater the property carries, so `docs/refinement.md`'s census moves to 2;
+  it is `unattainable` on every shipped example system, and no existing verdict moved.
+
 - **Every shipped requirement now says what kind of duty it is and whether the law states an
   exception to it, and the recurring "the general rule is formalised, the exception is not" claim
   is a number rather than an impression.** `[[requirement]]` blocks carry two new required fields

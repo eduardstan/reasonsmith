@@ -232,11 +232,33 @@ present to both the temporal and record engines
 parse is reported not evaluated rather than guessed at
 (`test_unexpressible_formula_reports_not_evaluated`).
 
-The temporal fragment is narrower than rtamt's own syntax on purpose: `TEMPORAL_OPERATORS` holds the
-prefix call forms a Python parser accepts, so rtamt's infix `until` and `since` are not in this
-language. A pack needing one is a finding to record here, not a reason to widen the language until
-it fits — widening it to accommodate one stubborn duty is how a property language becomes an untyped
-string again. No shipped duty needs one.
+The temporal fragment is written in prefix call form, because this language parses through Python's
+`ast`; rtamt writes its operators infix. For the one-operand operators of
+`UNARY_TEMPORAL_OPERATORS` the two spellings coincide. For `until` and `since` they do not, and the
+difference was for a long time the whole of why this language did not have them: rtamt has parsed
+both all along. They are now `BINARY_TEMPORAL_OPERATORS`, written `until(left, right)` and
+`since(left, right)`, held to the same arity check the one-operand operators get, classified into
+the `temporal` fragment, and rendered back to rtamt's infix form by `engines/observed.to_stl`
+(`test_the_binary_operators_are_temporal_operators_of_the_language`,
+`test_a_binary_temporal_spec_classifies_as_temporal`,
+`test_the_arity_check_reaches_the_binary_operators`,
+`test_the_rendered_form_is_rtamt_infix_and_rtamt_monitors_it`). **That mapping is the whole of what
+this package adds. No temporal semantics is implemented here**, and a second implementation of one
+is the thing to refuse if it is ever proposed: the monitor this package already depends on owns
+them, which is why the rendered text is handed to rtamt in a test rather than merely compared
+against a string.
+
+`until` was added on the evidence of a clause that needs it —
+`ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out`, 12 CFR 1002.9(c)(2), whose obligation runs
+from a notice of incompleteness and ends either when the applicant supplies the information or when
+the designated period lapses (`test_the_shipped_incompleteness_duty_uses_until`). `since` was added
+as its dual **without such a clause**: the retrieved corpus holds none, and the decision to add it
+anyway was taken deliberately and is recorded as a reversal in `ROADMAP.md` §2. It is exercised by
+`test_the_rendered_form_is_rtamt_infix_and_rtamt_monitors_it` for that reason — nothing else stands
+between an operator no shipped duty uses and its rotting unrendered. The discipline the roadmap
+states is unchanged for any operator after these two: a pack needing one is a finding to record
+here first, not a reason to widen the language until it fits, because widening a property language
+to accommodate one stubborn duty is how it becomes an untyped string again.
 
 Two other degenerate shapes are refused at this same shared parse boundary. A Boolean literal may
 be a comparison operand in a non-temporal property (`approved == True`) but may not stand alone as a

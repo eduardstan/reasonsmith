@@ -144,6 +144,7 @@ PROVISIONS = {
     "12 CFR 1002.9(a)(1)": ("ecoa", None),
     "12 CFR 1002.9(a)(2)": ("ecoa", None),
     "12 CFR 1002.9(b)(2)": ("ecoa", None),
+    "12 CFR 1002.9(c)(2)": ("ecoa", None),
     "12 CFR 1002.4(a)": ("ecoa_general_rules", None),
 }
 

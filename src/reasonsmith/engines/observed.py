@@ -77,6 +77,7 @@ import rtamt
 
 from reasonsmith.report import RequirementResult, not_evaluated_for_unreachable_trigger
 from reasonsmith.rulelang import (
+    BINARY_TEMPORAL_OPERATORS,
     CONTAINS_CALL,
     FLAG_THRESHOLD,
     PRESENCE_CALL,
@@ -180,7 +181,51 @@ def _render_stl(
             )
         return f"({synthetic} >= {PRESENCE_THRESHOLD})"
 
-    return _ATOM_CALL.sub(replace, spec), presence_signals, contains_signals
+    rendered = _render_binary_temporal(_ATOM_CALL.sub(replace, spec))
+    return rendered, presence_signals, contains_signals
+
+
+_BINARY_TEMPORAL = re.compile(rf"\b({'|'.join(sorted(BINARY_TEMPORAL_OPERATORS))})\s*\(")
+
+
+def _render_binary_temporal(text: str) -> str:
+    """Rewrite `until(a, b)` and `since(a, b)` into the infix form rtamt parses.
+
+    The property language writes them as prefix calls because it parses through Python's `ast`;
+    rtamt has had both as infix operators all along. This is the whole of the mapping between the
+    two spellings — no temporal semantics is implemented here or anywhere else in this package.
+
+    Rewriting is textual for the reason the atom rewriting above is: `req.spec` reaches rtamt as
+    written, arrows included, so an AST round-trip would spell `->` as `Implies(...)`, which rtamt
+    does not read. A call head a `contains()` phrase merely quotes is skipped for the same reason.
+    """
+    mask = string_literal_mask(text)
+    for match in _BINARY_TEMPORAL.finditer(text):
+        if mask[match.start()]:
+            continue
+        depth = 0
+        comma = close = -1
+        for i in range(match.end() - 1, len(text)):
+            if mask[i]:
+                continue
+            if text[i] == "(":
+                depth += 1
+            elif text[i] == ")":
+                depth -= 1
+                if depth == 0:
+                    close = i
+                    break
+            elif text[i] == "," and depth == 1 and comma < 0:
+                comma = i
+        if close < 0 or comma < 0:
+            raise UnsupportedConstructError(
+                f"{match.group(1)}() takes two operands: {text!r}"
+            )
+        left = _render_binary_temporal(text[match.end() : comma])
+        right = _render_binary_temporal(text[comma + 1 : close])
+        tail = _render_binary_temporal(text[close + 1 :])
+        return f"{text[: match.start()]}(({left}) {match.group(1)} ({right})){tail}"
+    return text
 
 
 def to_stl(spec: str) -> str:

@@ -38,7 +38,7 @@ system: TruncatingCreditSystem
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 5 requirements · 5 binding: 3 observed, 1 violated, 1 not evaluated
+headline: 6 requirements · 6 binding: 3 observed, 1 violated, 1 not evaluated, 1 unattainable
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
@@ -59,6 +59,11 @@ REQUIREMENT FINDINGS:
     summary: Violated on 1 of 2 certified decision(s): the stated reasons are not all the reasons. On decision #1 exact inference found 5 reason(s) and the deletion probe showed the system's answer does not depend on 4 of them — C05 — Insufficient number of credit references provided; C03 — Delinquent past or present credit obligations; C04 — Too many recent inquiries on credit bureau report; C02 — Length of time credit has been established is too short. Attribution: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799. Measured against the inference artefact the system exposed, not read from its decision log.
     offending record: decision APP-1042 (step 1)
     probe budget: 13 input(s) replayed, seed none — the proof enumeration and the deletion probes are deterministic, input space: decisions certified (2 values), decisions whose joint search did not finish (0 values), facts switched off (10 values), joint deletion patterns tried (1 values). Strategy: for each decision the system exposed an inference artefact for, its reasons are enumerated exactly by bounded proof enumeration over the ground program and scored by exact weighted model counting; every fact of a reason that no other reason uses is then switched off alone and the system's own engine re-run on the perturbed interpretation. A reason a single deletion moves the engine on is one its answer depends on. A reason no single deletion moves is then put to a second search, because two reasons jointly necessary and individually removable look exactly like two dropped ones: the subset-minimal *joint* deletions the engine notices are enumerated over the remaining facts, and a reason is counted here only where that enumeration ran to exhaustion and met no fact of it. The probe only ever switches a fact off, never on
+  [UNATTAINABLE] ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(c)(2)): inconclusive
+    requires: artifact_logs_incompleteness_notice_sent
+    domain limit: consumer-credit
+    MISSING SIGNALS: artifact_logs_incompleteness_notice_sent
+    summary: Unattainable as built: the system declares no capability to emit artifact_logs_incompleteness_notice_sent, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
   [NOT EVALUATED] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): inconclusive
     requires: artifact_logs_decision_record, applicant_prohibited_basis
     domain limit: consumer-credit
@@ -116,7 +121,7 @@ system: TruncatingCreditSystem
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 5 requirements · 5 binding: 3 observed, 1 violated, 1 not evaluated
+headline: 6 requirements · 6 binding: 3 observed, 1 violated, 1 not evaluated, 1 unattainable
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
@@ -132,6 +137,9 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Violated on 1 of 2 certified decision(s): the stated reasons are not all the reasons. On decision #1 exact inference found 5 reason(s) and the deletion probe showed the system's answer does not depend on 4 of them — C05 — Insufficient number of credit references provided; C03 — Delinquent past or present credit obligations; C04 — Too many recent inquiries on credit bureau report; C02 — Length of time credit has been established is too short. Attribution: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799. Measured against the inference artefact the system exposed, not read from its decision log.
     probe budget: 13 input(s) replayed, seed none — the proof enumeration and the deletion probes are deterministic, input space: decisions certified (2 values), decisions whose joint search did not finish (0 values), facts switched off (10 values), joint deletion patterns tried (1 values). Strategy: for each decision the system exposed an inference artefact for, its reasons are enumerated exactly by bounded proof enumeration over the ground program and scored by exact weighted model counting; every fact of a reason that no other reason uses is then switched off alone and the system's own engine re-run on the perturbed interpretation. A reason a single deletion moves the engine on is one its answer depends on. A reason no single deletion moves is then put to a second search, because two reasons jointly necessary and individually removable look exactly like two dropped ones: the subset-minimal *joint* deletions the engine notices are enumerated over the remaining facts, and a reason is counted here only where that enumeration ran to exhaustion and met no fact of it. The probe only ever switches a fact off, never on
+  [UNATTAINABLE] ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(c)(2)): inconclusive
+    domain limit: consumer-credit
+    summary: Unattainable as built: the system declares no capability to emit artifact_logs_incompleteness_notice_sent, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
   [NOT EVALUATED] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): inconclusive
     domain limit: consumer-credit
     summary: Not evaluated: the system exposes no decide(), so there is no twin decision to run. A counterfactual is what the system would have decided, and a decision log records only what it did — no trace, however long, establishes one. Limit of this duty: it is invariance under one named variable holding all others fixed, so it is a property of treatment and says nothing about effects. A proxy is invisible to it — a rule set that never reads the protected variable and decides by postcode is satisfied here — and a disparate impact is not a thing it can find. It also reaches exactly one variable: a system answerable on several prohibited bases is answered here about the one this duty names.
@@ -171,6 +179,7 @@ WHETHER THOSE WERE ALL THE REASONS
     "C02 — Length of time credit has been established is too short"
 
 WHAT THIS REPORT COULD NOT CHECK
+    1 duty: the system supplied nothing any check here could read, so it was not checked either way.
     1 duty: no check in this report could settle it, so it was left open rather than answered.
 
 REQUIREMENT FINDINGS:
@@ -178,6 +187,7 @@ REQUIREMENT FINDINGS:
   ecoa_reg_b_1002_9_a_2_written_statement (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(2)): satisfied
   ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
   ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated
+  ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(c)(2)): inconclusive
   ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): inconclusive
 
 LIMITS OF THIS REPORT
@@ -294,7 +304,7 @@ system: CreditScoringPipeline
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 5 requirements · 5 binding: 3 observed, 1 not evaluated, 1 unattainable
+headline: 6 requirements · 6 binding: 3 observed, 1 not evaluated, 2 unattainable
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
@@ -314,6 +324,11 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     MISSING SIGNALS: artifact_logs_deleted_reason_count
     summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for artifact_logs_deleted_reason_count, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
+  [UNATTAINABLE] ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(c)(2)): inconclusive
+    requires: artifact_logs_incompleteness_notice_sent
+    domain limit: consumer-credit
+    MISSING SIGNALS: artifact_logs_incompleteness_notice_sent
+    summary: Unattainable on the evidence supplied: no record in the supplied decision trace carries a value for artifact_logs_incompleteness_notice_sent, and the system declared no capabilities, so nothing here can discharge this requirement. Read from that trace alone; a longer trace could show the system emitting these signals.
   [NOT EVALUATED] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): inconclusive
     requires: artifact_logs_decision_record, applicant_prohibited_basis
     domain limit: consumer-credit
@@ -522,8 +537,8 @@ unattested.
 for: [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) is a real run against five
 `nesyarena` provenances, and `docs/nesyarena-conformance-report.md` is its regenerable evidence.
 Missing: properties worth differentiating a system on, and the fifth pack moved this the wrong way.
-Twenty-one of the twenty-eight shipped requirements are now presence checks, up from thirteen of
-nineteen, against three `logical`, three `temporal` and one `counterfactual` one — so a battery of engines mostly agrees by
+Twenty-one of the twenty-nine shipped requirements are now presence checks, up from thirteen of
+nineteen, against three `logical`, four `temporal` and one `counterfactual` one — so a battery of engines mostly agrees by
 construction, and more so than before `packs/gpai.toml` shipped. That pack's eight Article 53 and 55
 duties are document-production duties, for which presence is the correct refinement and no stronger
 property exists to write; the breadth is real and it is not depth

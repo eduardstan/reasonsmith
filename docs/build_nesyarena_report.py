@@ -115,6 +115,14 @@ UNDECLARED_SIGNALS = (
         "that content duty is judged on the other branch, the reason explanation",
     ),
     (
+        "artifact_logs_incompleteness_notice_sent",
+        "the system answers a query about a program it was given; it receives no application, so "
+        "there is nothing incomplete about one and no notice of incompleteness to send. It gates "
+        "the one duty here whose obligation has an end as well as a beginning, 12 CFR "
+        "1002.9(c)(2), which is therefore reported unattainable rather than judged against a "
+        "period no applicant was ever given",
+    ),
+    (
         "artifact_logs_deleted_reason_count",
         "unlike every other signal here, this one is not something the system emits into a "
         "record: reasonsmith measures it itself from an inference artefact the system exposes "

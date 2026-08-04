@@ -9,7 +9,7 @@ Each objective gives a **measurable outcome** — a check that fails today and w
 objective is met — and what it **depends on**. Where the honest answer is that an objective is
 blocked, or deliberately not started, that is written down rather than left as an implied "soon".
 
-Current state, for scale: **5 packs, 28 requirements, 7 engines** (`record`, `observed`, `probed`,
+Current state, for scale: **5 packs, 29 requirements, 7 engines** (`record`, `observed`, `probed`,
 `certificate` — also at `probed` — `proved`, the temporal proof engine, also at `proved`, and the
 counterfactual engine, which spans both `proved` and `probed`).
 `reasonsmith validate-pack ecoa eu_ai_act gdpr gpai table7` prints what each contains.
@@ -35,21 +35,34 @@ establishes it and it stays at `observed`. Closing *that* needs the reasoning th
 need — a bounded search over generated traces, or a finite-trace decision procedure — and no shipped
 duty uses the operator, so it waits for one, on the same terms as objective 2.
 
-## 2. `until` and `since` in the temporal fragment
+## 2. `until` and `since` in the temporal fragment — **met, and one half of it is a reversal**
 
-**The gap.** `TEMPORAL_OPERATORS` holds the prefix call forms a Python parser accepts, so rtamt's
-infix `until` and `since` are not in this property language.
+**What met it.** `ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out` — 12 CFR 1002.9(c)(2). A
+sweep of every statute `docs/legal-sources.md` retrieved found the duty this objective was waiting
+for: the creditor's obligation runs from a notice of incompleteness and ends one of two ways, the
+designated period lapsing in silence or the information arriving. An obligation with an end as well
+as a beginning is what `until` states and what no state property of one decision record can. The
+duty is shipped in the `ecoa` pack, accepted by `load_pack`, classified `temporal`, monitored by
+the observed engine, and carries its row in [`docs/refinement.md`](docs/refinement.md).
 
-Stated in [`docs/semantics.md`](docs/semantics.md) §2.
+The implementation is a **syntax mapping and nothing else**: rtamt has parsed both operators as
+infix all along, this language writes prefix calls because it parses through Python's `ast`, and
+`engines/observed.to_stl` renders one spelling into the other. No temporal semantics is implemented
+in this repository, and none may be.
 
-**Measurable outcome.** A shipped requirement whose `spec` uses one of the two, accepted by
-`load_pack`, monitored by the observed engine, and carrying its own row in `docs/refinement.md`.
+**`since` was added without a qualifying duty, by the captain's explicit decision of 2026-08-04.**
+The sweep found no clause in the retrieved corpus with the `since` shape. That was reported, and
+the decision was taken anyway, to add the two as a dual pair. This paragraph is the record of it,
+because a roadmap that quietly drops the condition it set is worse than one that never set it. It
+is exercised only by a test (`test_the_rendered_form_is_rtamt_infix_and_rtamt_monitors_it`), which
+is the whole of what keeps it from rotting unrendered.
 
-**Depends on — and is deliberately blocked by — objective 4.** No shipped duty needs either
-operator. `docs/semantics.md` §2 says a pack needing one is a finding to record there, not a reason
-to widen the language until it fits, because widening a property language to accommodate one
-stubborn duty is how it becomes an untyped string again. So this objective waits for a real duty
-that cannot be written without it. It is on the roadmap to be found, not to be started.
+**The discipline this section describes still governs every operator after these two.** A pack
+needing one is a finding to record in [`docs/semantics.md`](docs/semantics.md) §2 first, not a
+reason to widen the language until it fits — widening a property language to accommodate one
+stubborn duty is how it becomes an untyped string again. What changed is that one duty was found
+and one operator was added over the objection; what did not change is the rule, or the standard of
+evidence the next operator has to meet.
 
 ## 3. A fairness property, anywhere — **met**
 
@@ -102,7 +115,7 @@ first to exercise it.
 
 **What it did not settle, and the honest cost of it.** The judgement this objective names — whether
 another pack is worth more than depth on the ones that ship — is *less* settled than before, not
-more. Twenty-one of the twenty-eight shipped requirements are now presence checks, up from thirteen
+more. Twenty-one of the twenty-nine shipped requirements are now presence checks, up from thirteen
 of nineteen, because Article 53 and Article 55 are document-production duties for which presence is
 the correct refinement and no stronger property exists to write
 ([`docs/refinement.md`](docs/refinement.md), *presence is not adequacy*). Breadth bought that way is

@@ -94,12 +94,21 @@ FLAG_THRESHOLD = 0.5
 #: engine's `ALWAYS` is this constant.
 ALWAYS_OPERATOR = "always"
 
-#: The temporal operators of the language, in the prefix call form a Python parser accepts.
-#: rtamt's infix `until` and `since` are deliberately absent: they do not parse here, so a spec
-#: using one is refused at load time rather than accepted into a fragment nothing can classify.
-TEMPORAL_OPERATORS = frozenset(
+#: The one-operand temporal operators of the language, in the prefix call form a Python parser
+#: accepts.
+UNARY_TEMPORAL_OPERATORS = frozenset(
     {"always", "eventually", "once", "historically", "next", "prev", "rise", "fall"}
 )
+
+#: The two-operand temporal operators, written in the same prefix call form `implies(a, b)` uses.
+#: rtamt parses both as infix operators already; the language exposes them as prefix calls because
+#: it parses through Python's `ast`, and `engines/observed.to_stl` renders them back to the infix
+#: form the monitor reads. Nothing here implements their semantics — the monitor this package
+#: already depends on does.
+BINARY_TEMPORAL_OPERATORS = frozenset({"until", "since"})
+
+#: Every temporal operator of the language.
+TEMPORAL_OPERATORS = UNARY_TEMPORAL_OPERATORS | BINARY_TEMPORAL_OPERATORS
 
 #: The non-temporal function calls, with their arity.
 VALUE_CALLS = {"implies": 2, "Implies": 2, "abs": 1, "min": 2, "max": 2}
@@ -544,11 +553,14 @@ def expression_kind(node: ast.AST) -> str:
             counterfactual_arguments(node)
             return "boolean"
         if name in TEMPORAL_OPERATORS:
-            if len(node.args) != 1:
+            operands = 2 if name in BINARY_TEMPORAL_OPERATORS else 1
+            if len(node.args) != operands:
                 raise UnsupportedConstructError(
-                    f"{name} takes one operand, got {len(node.args)}: {ast.unparse(node)!r}"
+                    f"{name} takes {operands} operand(s), got {len(node.args)}: "
+                    f"{ast.unparse(node)!r}"
                 )
-            _require_kind(expression_kind(node.args[0]), "boolean", node.args[0])
+            for argument in node.args:
+                _require_kind(expression_kind(argument), "boolean", argument)
             return "boolean"
         arity = VALUE_CALLS.get(name)
         if arity is None:

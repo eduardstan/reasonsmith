@@ -44,14 +44,14 @@ credit** ([`docs/findings-nesyarena.md`](findings-nesyarena.md), finding 3;
 
 ## 2. Depth is uneven, and here is the shape of it
 
-Five packs ship, with 28 requirements between them. Counted by the fragment each property is
+Five packs ship, with 29 requirements between them. Counted by the fragment each property is
 written in:
 
 | formalism | requirements | what it asks |
 |---|---:|---|
 | `record` | 21 | a conjunction of `present(signal)` — the field is there |
 | `logical` | 3 | any other property of one decision record |
-| `temporal` | 3 | a property over the trace |
+| `temporal` | 4 | a property over the trace |
 | `counterfactual` | 1 | invariance under one named protected variable |
 
 **Three quarters of the shipped duties are presence checks.** Reproduce the count with

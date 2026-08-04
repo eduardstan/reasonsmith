@@ -435,7 +435,8 @@ by the tool itself as `analysis.MUTATION_LIMIT`:
   good duty.
 
 Read that way, the numbers put a figure on what [`ROADMAP.md`](ROADMAP.md) §4 states in words —
-twenty-one of twenty-eight shipped requirements are presence checks. Six of the ten duties above
+twenty-one of the twenty-eight shipped requirements were presence checks when this was measured.
+Six of the ten duties above
 cannot tell any of thirty rule sets apart. Five of those six are inert for a reason the report
 already gives without mutating anything (a signal the system has no notion of, an undeclared
 regulatory class, a counterfactual the system exposes no protected variable for), which is the

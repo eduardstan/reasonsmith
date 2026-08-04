@@ -114,7 +114,14 @@ about it, and declining to read one was a defect the label caused rather than th
 temporal duty reaches Z3 in exactly one shape: `engines/temporal.py` reduces `always(f)` — with `f`
 free of temporal operators — to `f` and hands it to the proved engine, which is exact because over a
 finite trace `always(f)` holds iff `f` holds at every position and every position is a decision the
-exposed logic admits. `eventually(f)` and every nested shape stay at `observed`, deliberately, and
+exposed logic admits. `until(l, r)` and `since(l, r)` are the two binary temporal operators, and they are a **syntax
+mapping and nothing else**: rtamt has parsed both infix all along, this language writes prefix calls
+because it parses through Python's `ast`, and `engines/observed.to_stl` renders one into the other.
+Never implement their semantics here. `until` shipped on the evidence of
+`ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out`; `since` shipped without a qualifying duty by
+an explicit decision recorded as a reversal in `ROADMAP.md` §2, and `docs/semantics.md` §2 states
+both, along with the discipline that still governs the next operator.
+`eventually(f)` and every nested shape stay at `observed`, deliberately, and
 the asymmetry between a universal satisfied verdict and an existential violated one travels on the
 result as `TRACE_SEMANTICS` (`docs/semantics.md` §3, *`proved`, over a trace*). Two limits of the trace
 rung are stated rather than silent: rtamt cannot render a comparison against a Boolean constant, and
