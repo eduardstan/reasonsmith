@@ -463,6 +463,28 @@ derived at test time from `spec.list_packs()` and the modules under `engines/` (
 `BUILTIN_ENGINE_NAMES` alone, which once missed an entry). A new pack, engine or requirement
 means updating those sentences in the same change, or the pin fails.
 
+`analysis.py` is the only module that reads a **pack** rather than a system's evidence, reached
+through `validate-pack --analyse`: joint satisfiability with an unsatisfiable core, entailment and
+equivalence between requirements, vacuity, and — with `--system-module` — a mutation score per duty.
+It has no encoding of its own. `_ast_to_z3` and `_Scope` are `engines/proved.py`'s, `_PackScope`
+overrides only `present`/`contains` (the two atoms that have no meaning when there is no rule block
+to assign anything, so each becomes one uninterpreted Boolean plus the `contains implies present`
+axiom `rulelang.contains_literal` implements), and the system-relative domain is
+`proved.encode_logic_domain`, the same one the proof rung quantifies over. Four things must not be
+undone: the vacuity definition is the one in `docs/semantics.md` §8 and **must keep coinciding with
+`report.not_evaluated_for_unreachable_trigger`** on the case that rule already handles — that
+agreement is `test_vacuity_coincides_with_the_unreachable_trigger_rule` and a disagreement is a
+finding to report, never a definition to widen on either side; only the *satisfied* side and only
+the *outermost* replaceable occurrence is reported, because a looser rule prints false alarms and
+an analysis nobody reads is worth nothing; a question the encoding cannot reach is skipped **by
+name** into `PackAnalysis.skipped` (the counterfactual fragment, a non-`always` temporal spec, a
+property naming what the system has no notion of — that last through `_check_declared_directions`,
+the proof rung's own refusal, asked here because the vacuity question inherits it); and a mutation
+score reaches only a system exposing its rules through `logic()`, which is not most audited systems,
+so `MUTATION_LIMIT` travels on every analysis carrying one and **no number here may be rendered as a
+coverage claim**. Findings do not change `validate-pack`'s exit code. The measured figures live in
+RESULTS.md, *Pack Analysis Note*, never in a test.
+
 ## The front door
 
 Before editing the CLI, read the maintenance contracts in `src/reasonsmith/cli.py`'s module

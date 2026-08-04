@@ -24,6 +24,16 @@ reasonsmith validate-pack my_pack.toml
 0. It stops at the first pack the loader refuses and exits 1, naming the file and, when a
 `[[requirement]]` is at fault, its block and id.
 
+Add `--analyse` to have the pack checked against *itself* rather than only parsed: whether its
+requirements are jointly satisfiable, which of them entail or are equivalent to which, and which
+are vacuously discharged. Two of those catch mistakes this guide can only warn about — a second
+requirement whose property is the first one written differently, and a duty whose property no
+evidence could make matter. Findings do not change the exit code; they are for you to read.
+Add `--system-module <module>:<attribute>` as well — which imports and executes that module — and
+vacuity is asked over the inputs that system's declared logic admits, and each duty gets a mutation
+score against single-point mutants of that system's rules. `docs/semantics.md` §8 states what each
+answer means, and what a mutation score is not.
+
 ## Structure
 
 ```toml

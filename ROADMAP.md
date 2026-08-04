@@ -109,6 +109,14 @@ the correct refinement and no stronger property exists to write
 real breadth and it is not depth. **A sixth pack that is another eight presence checks makes this
 worse, and a proposal should say which of its duties reaches above `record`.**
 
+There is now a measurement beside that count rather than only the count.
+`reasonsmith validate-pack <pack> --analyse --system-module …` mutates a system's declared rules
+and reports how many mutants each duty notices; against the shipped symbolic rule set, six of the
+ten ECOA and GDPR duties cannot tell any of thirty rule sets apart
+([RESULTS.md](RESULTS.md), *Pack Analysis Note*). Read the limits there before quoting the number:
+it reaches only a system that exposes its rules, which is one of the four systems this repository
+ships, and it is not a coverage figure.
+
 **Measurable outcome.** Each additional pack lands with: a retrieval record in
 [`docs/legal-sources.md`](docs/legal-sources.md); verbatim quotes that
 `test_pack_quotes_found_verbatim_in_legal_sources_report` accepts character-for-character; a live

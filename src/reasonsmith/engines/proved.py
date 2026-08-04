@@ -98,6 +98,7 @@ __all__ = [
     "LogicDeclarationError",
     "ProvedEngine",
     "decision_runner",
+    "encode_logic_domain",
     "UnsupportedConstructError",
     "read_declared_logic",
 ]
@@ -243,6 +244,42 @@ class _Scope:
         """True when every encoded path writes `name` before the property is evaluated."""
         return name in self._definitely_assigned
 
+    def present(self, name: str) -> Any:
+        """This scope's `present(name)`. See `_present_to_z3` for what it encodes and refuses.
+
+        A method rather than a free function so that a scope encoding a property against something
+        other than a rule block — `reasonsmith.analysis`, which reasons about a pack's formulas
+        with no system to assign anything — can say what the atom means there without a second
+        copy of `_ast_to_z3`. Everything above the atoms stays one implementation, which is the
+        agreement obligation `contains()` is already held to.
+        """
+        if not self.is_definitely_assigned(name):
+            raise UnsupportedConstructError(
+                f"{PRESENCE_CALL}({name}) cannot be proved: the declared rules do not assign "
+                f"{name!r} on every path, so the exposed logic does not establish that every "
+                "decision carries it"
+            )
+        const = self.read(name)
+        if const.sort() == z3.StringSort():
+            return z3.Not(z3.InRe(const, _blank_string_re()))
+        return z3.BoolVal(True)
+
+    def contains(self, signal: str, phrase: str) -> Any:
+        """This scope's `contains(signal, phrase)`. See `_contains_to_z3`."""
+        if not self.is_definitely_assigned(signal):
+            raise UnsupportedConstructError(
+                f"{CONTAINS_CALL}({signal}, ...) cannot be proved: the declared rules do not "
+                f"assign {signal!r} on every path, so the exposed logic does not establish what "
+                "every decision says"
+            )
+        const = self.read(signal)
+        if const.sort() != z3.StringSort():
+            raise UnsupportedConstructError(
+                f"{CONTAINS_CALL}({signal}, ...) reads recorded text, but the declared rules give "
+                f"{signal!r} sort {const.sort()}"
+            )
+        return _contains_string_z3(const, phrase)
+
     def snapshot(self) -> tuple[dict[str, Any], set[str]]:
         return dict(self.current), set(self._definitely_assigned)
 
@@ -323,17 +360,7 @@ def _present_to_z3(node: ast.Call, scope: _Scope) -> Any:
         raise UnsupportedConstructError(
             f"{PRESENCE_CALL}() takes one signal name: {ast.unparse(node)!r}"
         )
-    name = node.args[0].id
-    if not scope.is_definitely_assigned(name):
-        raise UnsupportedConstructError(
-            f"{PRESENCE_CALL}({name}) cannot be proved: the declared rules do not assign "
-            f"{name!r} on every path, so the exposed logic does not establish that every "
-            "decision carries it"
-        )
-    const = scope.read(name)
-    if const.sort() == z3.StringSort():
-        return z3.Not(z3.InRe(const, _blank_string_re()))
-    return z3.BoolVal(True)
+    return scope.present(node.args[0].id)
 
 
 def _any_string_re() -> Any:
@@ -406,19 +433,7 @@ def _contains_to_z3(node: ast.Call, scope: _Scope) -> Any:
       would prove a property about a program nobody wrote.
     """
     signal, phrase = contains_arguments(node)
-    if not scope.is_definitely_assigned(signal):
-        raise UnsupportedConstructError(
-            f"{CONTAINS_CALL}({signal}, ...) cannot be proved: the declared rules do not assign "
-            f"{signal!r} on every path, so the exposed logic does not establish what every "
-            "decision says"
-        )
-    const = scope.read(signal)
-    if const.sort() != z3.StringSort():
-        raise UnsupportedConstructError(
-            f"{CONTAINS_CALL}({signal}, ...) reads recorded text, but the declared rules give "
-            f"{signal!r} sort {const.sort()}"
-        )
-    return _contains_string_z3(const, phrase)
+    return scope.contains(signal, phrase)
 
 
 def _check_magnitudes_are_computed(node: ast.AST, scope: _Scope) -> None:
@@ -666,6 +681,30 @@ def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
         raise UnsupportedConstructError(f"Unsupported function call: {ast.unparse(node)!r}")
 
     raise UnsupportedConstructError(f"Unsupported language construct: {type(node).__name__}")
+
+
+def encode_logic_domain(
+    logic_data: Any, timeout_ms: int = 5000
+) -> tuple[_Scope, z3.Solver, list[str], Any]:
+    """Encode a `logic()` payload's constraints and rules into a fresh solver.
+
+    The inputs a system's declared logic and constraints admit, as this engine understands them,
+    and nothing else — no property is asserted. `ProvedEngine.evaluate` builds its domain here, and
+    so does `reasonsmith.analysis` when it asks a vacuity question against the same domain the
+    engine would have quantified over. Extracted rather than copied for the reason the atom methods
+    on `_Scope` are methods: two encodings of one system that disagree is the defect this module
+    already guards against between itself and the interpreter.
+    """
+    rules, variables, constraints, declared_computes = read_declared_logic(logic_data)
+    scope = _Scope(variables)
+    solver = z3.Solver()
+    solver.set("timeout", timeout_ms)
+    for c_text in constraints:
+        c_z3 = _ast_to_z3(parse_expression(c_text), scope)
+        solver.add(_as_bool(c_z3, f"System constraint {c_text!r}"))
+    for r_text in rules:
+        _encode_block(ast.parse(r_text, mode="exec").body, scope, solver)
+    return scope, solver, rules, declared_computes
 
 
 def _as_bool(expr: Any, what: str) -> Any:
@@ -926,21 +965,12 @@ class ProvedEngine:
             )
 
         try:
-            rules, variables, constraints, declared_computes = read_declared_logic(logic_data)
+            read_declared_logic(logic_data)
         except LogicDeclarationError as exc:
             return not_evaluated(exc.summary, exc.details)
 
-        scope = _Scope(variables)
-        solver = z3.Solver()
-        solver.set("timeout", timeout_ms)
-
         try:
-            for c_text in constraints:
-                c_z3 = _ast_to_z3(parse_expression(c_text), scope)
-                solver.add(_as_bool(c_z3, f"System constraint {c_text!r}"))
-
-            for r_text in rules:
-                _encode_block(ast.parse(r_text, mode="exec").body, scope, solver)
+            scope, solver, rules, declared_computes = encode_logic_domain(logic_data, timeout_ms)
 
             # Every rule is encoded by now, so `scope` knows which names the rules assign — which
             # is what both guards need and why they are asked here rather than while the property

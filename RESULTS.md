@@ -367,3 +367,90 @@ Nothing else in this file was re-measured on this branch. Section 1 (`nesyarena`
 The README used to say `torch` was never installed and that, without it, "98 tests pass while `tests/test_e6_findings.py` and `tests/test_learning_parity.py` fail to collect". That caveat is now replaced by the measured numbers above: torch is installed in the environment used to produce this file, both named modules collect and run, and pytest collects 107 items (plus 3 modules skipped at collection time), not 98.
 
 Two nesyarena tests still cannot pass here — not for lack of torch, but for lack of `ltn` (LTNtorch) and `problog`, which live behind nesyarena's separate `backends` and `oracles` extras and were out of scope for this task. `torch` remains outside reasonsmith's own declared dependencies (`pyproject.toml` is unchanged); it was installed only in the separate environment used to measure nesyarena's suite here.
+
+---
+
+## Pack Analysis Note (2026-08-04)
+
+`reasonsmith validate-pack <pack> --analyse` reads a pack as a set of formulas rather than as a
+checklist to run a system against (`src/reasonsmith/analysis.py`, `docs/semantics.md` §8). The
+figures below were measured on branch `fm/rs-w0-pack-analysis` with the commands quoted, in the
+same environment as the section above (`pip install -e ".[dev]"`, `nesyarena==0.1.0`, no torch).
+They name **no commit**, for the reason [`docs/report.html`](docs/report.html) names none: the
+commit carrying this section does not exist while the section is written, and a hash put here would
+name a different one. What makes them reconstructible is the command, which a reader can run.
+
+### Equivalence, found without a human reading either TOML block
+
+```sh
+reasonsmith validate-pack eu_ai_act --analyse
+```
+
+```text
+  equivalent: eu_ai_act_art12_1_automatic_logging <=> eu_ai_act_art12_2_traceability_monitoring
+```
+
+That overlap was recorded in prose in [`docs/refinement.md`](docs/refinement.md) after a human read
+the two `[[requirement]]` blocks. It is now a finding the tool reaches on its own. All five shipped
+packs report their requirement sets **jointly satisfiable**, and none is vacuous on its own
+formulas — over the unconstrained signal model only a tautology would be, which is what keeps the
+pack-only rendering free of false alarms.
+
+### Mutation score per duty — symbolic rule set, ECOA and GDPR
+
+```sh
+reasonsmith validate-pack ecoa --analyse \
+  --system-module reasonsmith.examples.symbolic_rules:system_under_test
+reasonsmith validate-pack gdpr --analyse \
+  --system-module reasonsmith.examples.symbolic_rules:system_under_test
+```
+
+Domain: **30 single-point mutants** of the system's **14 declared rules** — one comparison, boolean
+connective, number or recorded statement changed per mutant. A duty "detects" a mutant when its
+verdict or its strength differs from the same duty's against the unmutated rules.
+
+| Duty | Detected | Score |
+|---|---|---|
+| `ecoa_reg_b_1002_9_a_2_written_statement` | 5 / 30 | 0.17 |
+| `ecoa_reg_b_1002_9_b_2_specific_reasons` | 2 / 30 | 0.07 |
+| `ecoa_reg_b_1002_9_a_1_timing_of_notice` | 0 / 30 | 0.00 |
+| `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` | 0 / 30 | 0.00 |
+| `ecoa_reg_b_1002_4_a_no_disparate_treatment` | 0 / 30 | 0.00 |
+| `gdpr_recital71_error_risk_minimised` | 6 / 30 | 0.20 |
+| `gdpr_art22_3_safeguards_human_intervention` | 3 / 30 | 0.10 |
+| `gdpr_art22_1_automated_decision_prohibition` | 0 / 30 | 0.00 |
+| `gdpr_art22_1_no_prohibited_decision_for_any_input` | 0 / 30 | 0.00 |
+| `gdpr_recital71_meaningful_explanation` | 0 / 30 | 0.00 |
+
+**This is not a coverage number, and must not be read as one.** Two limits travel with it, printed
+by the tool itself as `analysis.MUTATION_LIMIT`:
+
+- Mutation analysis reaches **only a system that exposes its decision logic as a rule block**
+  through `sut.logic()`, which is not most audited systems. Of the systems this repository ships,
+  one qualifies: the neural scorer, the probabilistic scorer and the language model have nothing to
+  mutate, and every duty gets *no score at all* rather than a low one. A number covering one system
+  of four says nothing about the fourteen duties the other three are checked against.
+- Where it does run, the score is sensitivity to **these thirty mutants** and to no others. It does
+  not measure how much of a system a duty covers, and a duty scoring 1.0 would not thereby be a
+  good duty.
+
+Read that way, the numbers put a figure on what [`ROADMAP.md`](ROADMAP.md) §4 states in words —
+twenty-one of twenty-eight shipped requirements are presence checks. Six of the ten duties above
+cannot tell any of thirty rule sets apart. Five of those six are inert for a reason the report
+already gives without mutating anything (a signal the system has no notion of, an undeclared
+regulatory class, a counterfactual the system exposes no protected variable for), which is the
+verdict working rather than the duty failing. The sixth, `ecoa_reg_b_1002_9_a_1_timing_of_notice`,
+is `proved` satisfied against every one of the thirty — and the vacuity check names why on the same
+run: the system's own seven-day batch window bounds every notice below thirty days, so the clause's
+ninety-day counteroffer branch is replaceable by any formula and the duty is settled before any
+rule the mutants touch is read.
+
+### Suite after this change
+
+```sh
+pytest -q && ruff check .
+```
+
+**681 passed**, 0 failed, 0 skipped; `ruff check .` reports no findings. The count includes the 14
+tests of `tests/test_pack_analysis.py`, and supersedes the `226 passed` of the note above as the
+current-suite figure.

@@ -10,6 +10,24 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **A pack can be checked against itself: `reasonsmith validate-pack <pack> --analyse`.**
+  `src/reasonsmith/analysis.py` reads a pack as a set of formulas and answers four questions no
+  `check` run can, reusing the Z3 encoding in `engines/proved.py` rather than building a second
+  one: whether the requirement set is **jointly satisfiable** (with an unsatisfiable core naming
+  the duties that cannot hold together); which requirements **entail or are equivalent to** which —
+  the EU AI Act Article 12(1)/12(2) overlap `docs/refinement.md` recorded in prose after a human
+  read the TOML is now found by the tool; which are **vacuously discharged**, on the
+  Kupferman–Vardi definition restricted to the fragments this repository ships and stated in
+  `docs/semantics.md` §8; and, with `--system-module`, a **mutation score per duty** over
+  single-point mutants of the system's declared rules. Findings do not change the exit code: a pack
+  the loader accepts is a valid pack. The vacuity rule coincides with the existing
+  `report.not_evaluated_for_unreachable_trigger` on the case that rule already handles — that
+  agreement is `test_vacuity_coincides_with_the_unreachable_trigger_rule` and is the acceptance
+  test of the definition — and the general rule additionally catches vacuous *passes*, which the
+  special case cannot. The mutation score reaches **only a system exposing its decision logic as a
+  rule block**, which is not most audited systems; `analysis.MUTATION_LIMIT` says so on every
+  analysis carrying one, and `RESULTS.md` (*Pack Analysis Note*) carries the measured figures.
+
 - **A decision trace can state its own clock.** A record may carry `sut.TIME_DOMAIN_KEY` — a
   mapping of event kind to the timestamp that event happened at — so *when the clock started* is a
   recorded fact rather than something a latency number the system computes about itself implies.

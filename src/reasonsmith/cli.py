@@ -68,6 +68,15 @@ What a reader must not break:
     so the packs a `check` run can load are exactly the packs `validate-pack` accepts.
     Why this matters: the front door must not have a second, looser idea of a valid pack that
     a stranger could validate a pack with and then fail to check against.
+  - `validate-pack --analyse` adds `reasonsmith.analysis`'s findings about the pack's formulas —
+    joint satisfiability, entailment and equivalence between requirements, vacuous discharge —
+    and **does not change the exit code**. A pack the loader accepts is a valid pack; a finding
+    is something for its author to read, not a refusal. `--analyse --system-module` imports and
+    executes a module exactly as `check --system-module` does, and asks vacuity over that
+    system's declared logic as well as reporting a mutation score per duty.
+    Why this matters: the exit code means "the loader accepted this pack" and nothing else, so
+    a script gating on it does not start failing when an analysis learns to say more. And a flag
+    that loads and runs the user's code must read as one wherever it appears.
   - `check --help` ends in worked examples, and the first one is the run that reports a
     *violation* — the reason-deletion certificate against
     `reasonsmith.examples.truncating_credit_system`. Every command there runs after
@@ -234,8 +243,11 @@ def main(args: list[str] | None = None) -> int:
             "     --capabilities, or a --system-module that does not import, names no such\n"
             "     attribute, or is not a SystemUnderTest).\n"
             "exit codes for validate-pack:\n"
-            "  0  every pack loaded and printed.\n"
-            "  1  a pack the loader refuses, naming the file and the requirement at fault."
+            "  0  every pack loaded and printed. --analyse findings do not change this: a\n"
+            "     pack the loader accepts is a valid pack, and a finding is for its author.\n"
+            "  1  a pack the loader refuses, naming the file and the requirement at fault, or\n"
+            "     a --system-module that does not import, names no such attribute, is not a\n"
+            "     SystemUnderTest, or was given without --analyse."
         ),
     )
     parser.add_argument(
@@ -378,10 +390,52 @@ def main(args: list[str] | None = None) -> int:
         nargs="+",
         help=f"Pack name or TOML file path. Built-in packs: {', '.join(list_packs())}",
     )
+    validate_parser.add_argument(
+        "--analyse",
+        "--analyze",
+        action="store_true",
+        dest="analyse",
+        help=(
+            "Also analyse the pack as a set of formulas: whether its requirements are jointly "
+            "satisfiable, which of them entail or are equivalent to which, and which are "
+            "vacuously discharged. Findings are printed and do not change the exit code — a "
+            "pack with findings is still a pack the loader accepts"
+        ),
+    )
+    validate_parser.add_argument(
+        "--system-module",
+        default=None,
+        metavar="MODULE:ATTRIBUTE",
+        help=(
+            "With --analyse: IMPORTS AND EXECUTES the named Python module and takes ATTRIBUTE "
+            "from it as the system under test, exactly as `check --system-module` does. Vacuity "
+            "is then asked over the inputs that system's declared logic and constraints admit "
+            "rather than over every assignment to the signals, and a mutation score per duty is "
+            "reported — which reaches only a system exposing its rules through logic()"
+        ),
+    )
 
     parsed = parser.parse_args(args)
 
     if parsed.command == "validate-pack":
+        if parsed.system_module is not None and not parsed.analyse:
+            print(
+                f"Error: --system-module '{parsed.system_module}' imports and runs a system, "
+                "which validate-pack has nothing to do with unless --analyse is also given. Add "
+                "--analyse, or drop --system-module.",
+                file=sys.stderr,
+            )
+            return 1
+        analysis_sut = None
+        if parsed.system_module is not None:
+            cwd = os.getcwd()
+            if cwd not in sys.path:
+                sys.path.insert(0, cwd)
+            try:
+                analysis_sut = load_system_module(parsed.system_module)
+            except ValueError as exc:
+                print(f"Error: {exc}", file=sys.stderr)
+                return 1
         for name in parsed.pack:
             try:
                 pack = load_pack(name)
@@ -389,6 +443,10 @@ def main(args: list[str] | None = None) -> int:
                 print(f"Error validating pack {name!r}: {exc}", file=sys.stderr)
                 return 1
             print(format_pack(pack))
+            if parsed.analyse:
+                from reasonsmith.analysis import analyse_pack, render_analysis
+
+                print(render_analysis(analyse_pack(pack, analysis_sut)))
         return 0
 
     if parsed.command == "check":

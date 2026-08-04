@@ -1653,6 +1653,12 @@ Two consequences of that report text, followed by a separate package-level termi
 | The affected-individual artefact is a derivation and not a subset of an expert one, emits no heading it has nothing to put under, and does not let the disclaimer dominate its page | `test_the_lay_view_derives_content_no_expert_view_carries`, `test_the_lay_view_never_puts_a_heading_over_an_empty_box`, `test_the_lay_page_does_not_let_the_disclaimer_dominate` |
 | Two audiences differ by content and not by framing, and an unknown audience is refused rather than widened | `test_two_audiences_differ_by_content_not_framing`, `test_an_unknown_audience_is_refused_rather_than_widened`, `test_the_cli_offers_the_five_audiences_and_refuses_a_sixth` |
 | The unprojected rendering is the full report and is the auditor's | `test_the_default_rendering_is_the_full_report_and_the_auditors` |
+| A pack is jointly satisfiable, or its unsatisfiable core names the duties that cannot hold together | `test_every_shipped_pack_is_jointly_satisfiable`, `test_a_contradictory_pack_is_reported_unsatisfiable_with_its_core` |
+| Two requirements carrying the same property are found equivalent by the tool, with no human reading either TOML block | `test_the_eu_ai_act_logging_duties_are_reported_equivalent` |
+| Vacuity coincides with the unreachable-trigger rule on the case that rule already handles, and the case is exercised | `test_vacuity_coincides_with_the_unreachable_trigger_rule`, `test_the_unreachable_trigger_case_is_actually_exercised` |
+| The general vacuity rule catches a vacuous pass the trigger rule does not, and reports none on the shipped packs' own formulas | `test_the_general_rule_catches_a_vacuous_pass_the_trigger_rule_does_not`, `test_no_shipped_pack_is_vacuous_on_its_own_formulas` |
+| A question the analysis cannot encode is skipped by name and never answered | `test_the_counterfactual_fragment_is_skipped_by_name_and_never_answered` |
+| A mutation score travels with its limit, a system without rules gets none, and a duty no mutant moves is named | `test_a_mutation_score_travels_with_its_limit_and_a_system_without_rules_gets_none`, `test_a_duty_no_mutant_moves_is_named_as_having_no_discriminating_power` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |
 
 ---
@@ -1753,3 +1759,136 @@ the reader would like:
   when a key is removed, renamed, or changes type or meaning, and not when one is added;
   `test_version_2_is_this_shape` pins the key set at each level to the current number, so a
   shape change made without moving it fails the suite.
+
+---
+
+## 8. What a *pack* means, checked against itself
+
+Everything above is about a system's evidence. `reasonsmith validate-pack <pack> --analyse`
+(`src/reasonsmith/analysis.py`) asks four questions about the duties themselves, which no `check`
+run can answer because none of them is about any system.
+
+The encoding is **`engines/proved.py`'s**, reached through the same `_ast_to_z3` and the same
+`_Scope`. Exactly two things are said differently, and only where there is no system to say them
+about: with no rule block, `present(signal)` and `contains(signal, "phrase")` have nothing to be
+established by, so each becomes one uninterpreted Boolean constant shared across the whole pack,
+with the single axiom `rulelang.contains_literal` itself implements — a value the record does not
+carry contains no phrase. Every connective, comparison and arithmetic operator stays the engine's.
+That matters for the reason the ASCII fold matters: a second encoding that disagreed with the first
+would report findings about a pack the engines do not run.
+
+**Joint satisfiability.** Is there any decision record at all that discharges every requirement of
+the pack at once? A pack whose duties contradict each other reports systems violated for a reason
+that is the pack's, and the unsatisfiable core names which duties cannot hold together
+(`test_every_shipped_pack_is_jointly_satisfiable`,
+`test_a_contradictory_pack_is_reported_unsatisfiable_with_its_core`).
+
+**Subsumption and equivalence.** Does one requirement's property entail another's? An equivalence
+reported here holds under *every* interpretation of the record atoms, so it holds for every system:
+no system can satisfy one of the pair and violate the other, and a reader must not take two
+agreeing verdicts for two independent checks. The shipped instance is EU AI Act Article 12(1) and
+12(2), whose properties are byte-identical — a fact `docs/refinement.md` recorded in prose after a
+human read the TOML, and which the tool now finds on its own
+(`test_the_eu_ai_act_logging_duties_are_reported_equivalent`). The abstraction is **sound for what
+it reports and incomplete for what it does not**: two properties it does not relate are not thereby
+distinguishable by any system.
+
+### Vacuity, defined for this evidence model
+
+Kupferman and Vardi define vacuity against model checking a transition system, and Beer et al. gave
+the subformula-replacement formulation this uses. Over a finite trace plus this repository's Z3
+encoding it needs its own statement, because a loose one produces false alarms and an analysis that
+cries wolf is an analysis nobody reads. The definition, restricted to the fragments this repository
+ships:
+
+> A requirement is **vacuously discharged** on a given evidence domain when some subformula of its
+> `spec` can be replaced by *any* well-formed formula of the same fragment without changing the
+> verdict.
+
+Three things settle what that means here.
+
+- **The domain is named on every finding.** With no system it is every assignment to the signals
+  the properties read, where only a tautologous property is vacuous — and none of the shipped packs
+  is (`test_no_shipped_pack_is_vacuous_on_its_own_formulas`). With a system exposing `logic()` it is
+  the domain the proof rung itself quantifies over: the inputs the declared logic and constraints
+  admit.
+- **The check is two-point and it is exact, not a heuristic.** The target is one AST *occurrence*,
+  so it occurs once, so the property is monotone or antitone in it; every replacement's value lies
+  pointwise between the two Boolean constants, and a verdict equal at both ends is equal
+  throughout. Only the outermost replaceable occurrence is reported: a subformula of a replaceable
+  subformula is replaceable too and says nothing new.
+- **Only the satisfied side is reported**, which is the restriction `engines/proved.py` already
+  observes when it asks about an unreachable antecedent, and for the same reason: a violated
+  verdict names a witness, and a witness is evidence about the system whatever else in the property
+  could have been different.
+
+**It coincides with the rule that was already here, and that agreement is the acceptance test.**
+§4 (*A duty whose trigger never fired is not evaluated, at every rung*) refuses an implication whose
+antecedent nothing in an engine's domain satisfies. That is exactly the case where the implication's
+*consequent* is replaceable: if the antecedent is false everywhere the implication holds whatever
+the consequent says, and conversely, taking the replacement to be a contradiction gives that the
+antecedent is false everywhere. `test_vacuity_coincides_with_the_unreachable_trigger_rule` asserts
+the two agree on every shipped implication against a system whose trigger fires and one whose never
+does, and `test_the_unreachable_trigger_case_is_actually_exercised` keeps the agreement from being
+between two rules that both always say no. Should they ever disagree, the divergence is a finding to
+report here — not a definition to widen on either side.
+
+**The general rule catches vacuous passes the special case does not.** Against the shipped symbolic
+rule set, `ecoa_reg_b_1002_9_a_1_timing_of_notice` is `proved` satisfied and its trigger does fire,
+so §4's rule says nothing about it — and its ninety-day counteroffer branch is nevertheless
+replaceable by any formula, because that system's own batch window bounds every notice below thirty
+days and the first disjunct settles the duty on every admissible input
+(`test_the_general_rule_catches_a_vacuous_pass_the_trigger_rule_does_not`). That is a fact about
+this system and this duty together, and it is not a defect in either.
+
+### Mutation coverage, and what a score is not
+
+With a system, the analysis mutates the rule block that system exposes through `logic()` — one
+change per mutant: a comparison swapped for its neighbour or its opposite, a conjunction for a
+disjunction, a number moved by one, a recorded statement blanked — rebuilds it as a `RulesAdapter`
+over the mutated rules, re-runs the whole pack, and counts the mutants whose verdict or strength
+each duty noticed. A duty no mutant moves has no discriminating power against these mutants, and is
+named as such.
+
+**A mutation score is not a coverage claim**, and `analysis.MUTATION_LIMIT` says so on every
+analysis that carries one (`test_a_mutation_score_travels_with_its_limit_and_a_system_without_rules_gets_none`). Two limits, both plain:
+
+- It reaches **only a system that exposes its decision logic as a rule block**, which is not most
+  audited systems. A decision log, a probabilistic scorer and a language model have nothing to
+  mutate, and every duty gets no score at all rather than a low one.
+- Where it runs, the number is sensitivity to **these** mutants and to no others. It does not
+  measure how much of a system a duty covers, and a duty scoring 1.0 is not thereby a good duty.
+
+The mutant is a fresh adapter over the mutated rules rather than the original system with its
+`logic()` swapped, so its `decide()` and its `logic()` are the same mutated program; the baseline is
+the same construction over the unmutated rules. Otherwise the proof rung would report the
+divergence between a mutated declaration and an unmutated procedure, and the count would measure
+that instead.
+
+The measured scores against the shipped symbolic rule set are in `RESULTS.md`, with the commit they
+were taken at, because a number belongs where its provenance can travel with it.
+
+### Where these questions come from
+
+None of the four is invented here, and naming the sources is also how a reader checks that the
+definitions were not bent to fit the code.
+
+- **Vacuity.** O. Kupferman and M. Y. Vardi, *Vacuity detection in temporal model checking*
+  (STTT 4(2), 2003; first at CHARME 1999) give the formulation used above — a subformula does not
+  affect a property when replacing it changes nothing — and I. Beer, S. Ben-David, C. Eisner and
+  Y. Rodeh, *Efficient detection of vacuity in temporal model checking* (Formal Methods in System
+  Design 18(2), 2001) give the single-occurrence replacement check that makes it decidable in
+  practice. §8 restricts both to the fragments of `rulelang.py`, over a finite trace and this
+  repository's Z3 encoding, because the original setting is model checking a transition system and
+  a definition carried across unexamined would report vacuity where there is none.
+- **Satisfiability and subsumption of a rule set** are the oldest questions asked of a formalised
+  regulation, and the framing this repository works in is T. J. M. Bench-Capon and F. P. Coenen,
+  *Isomorphism and legal knowledge based systems* (Artificial Intelligence and Law 1(1), 1992):
+  a legal knowledge base should stay *isomorphic* to its source — one rule per provision, in the
+  source's own structure, so that a change in the law is a local change in the model and a lawyer
+  can check one against the other. That is what `verbatim_text` and `drift.py` are for. Every
+  requirement carries the provision's own words and its citation, and the monthly drift check
+  re-fetches the official text and reports `match`, `differ` or `could-not-verify` per requirement
+  without ever editing a pack. `--analyse` is the other half of the same discipline: isomorphism
+  keeps a pack faithful to the source, and these checks ask whether the formulas it grew are
+  consistent, non-redundant and doing work.
