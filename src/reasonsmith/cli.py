@@ -415,7 +415,41 @@ def main(args: list[str] | None = None) -> int:
         ),
     )
 
+    tui_parser = subparsers.add_parser(
+        "tui",
+        help="Explore a conformance report interactively (install reasonsmith[tui])",
+    )
+    tui_parser.add_argument("--system", "-s", help="Path to a JSONL decision log")
+    tui_parser.add_argument(
+        "--system-module",
+        metavar="MODULE:ATTRIBUTE",
+        help="Import a SystemUnderTest or zero-argument factory",
+    )
+    tui_parser.add_argument(
+        "--pack",
+        "-p",
+        required=True,
+        help=f"Pack name or TOML path. Built-in packs: {', '.join(list_packs())}",
+    )
+    tui_parser.add_argument("--system-name", default="SUT")
+    tui_parser.add_argument("--system-scope", "--scope", default=None)
+    tui_parser.add_argument("--system-domain", action="append", dest="system_domains", default=None)
+    tui_parser.add_argument("--audience", choices=sorted(AUDIENCES), default="auditor")
+
     parsed = parser.parse_args(args)
+
+    if parsed.command == "tui":
+        if bool(parsed.system) == bool(parsed.system_module):
+            print("Error: give exactly one of --system or --system-module.", file=sys.stderr)
+            return 1
+        from reasonsmith.tui import main as tui_main
+
+        tui_args = list(args if args is not None else sys.argv[1:])
+        try:
+            return tui_main(tui_args[1:])
+        except (TypeError, ValueError, OSError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
 
     if parsed.command == "validate-pack":
         if parsed.system_module is not None and not parsed.analyse:
@@ -506,9 +540,7 @@ def main(args: list[str] | None = None) -> int:
                 return 1
         else:
             try:
-                sut = JSONLAdapter(
-                    parsed.system, declared_capabilities=declared_capabilities
-                )
+                sut = JSONLAdapter(parsed.system, declared_capabilities=declared_capabilities)
             except Exception as exc:
                 print(f"Error loading system log {parsed.system!r}: {exc}", file=sys.stderr)
                 return 1

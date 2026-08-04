@@ -10,6 +10,12 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **Interactive TUI:** an optional `reasonsmith[tui]` Textual interface and `reasonsmith tui` entry
+  point explore the same conformance report as the text, JSON, and HTML renderers. The interface
+  keeps verdict categories and report limits explicit, and includes a terminal-native evidence
+  graph visualization for demos.
+
+
 - **`until` and `since` in the property language, on a real duty and a recorded reversal.** Both
   are written as binary prefix calls — `until(left, right)`, `since(left, right)` — classified into
   the `temporal` fragment and rendered to rtamt's infix form by `engines/observed.to_stl`. **The

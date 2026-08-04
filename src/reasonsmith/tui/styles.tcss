@@ -1,0 +1,63 @@
+Screen {
+    background: #10151c;
+}
+
+#overview {
+    height: auto;
+    margin: 1 2;
+    padding: 1 2;
+    border: round #4d718c;
+    background: #17222c;
+}
+
+#main-pane {
+    height: 1fr;
+    margin: 0 2;
+}
+
+#requirements-pane {
+    width: 48%;
+    border: round #4d718c;
+    padding: 0 1;
+}
+
+#detail-pane {
+    width: 52%;
+    border: round #4d718c;
+    padding: 0 2;
+    overflow-y: auto;
+}
+
+.pane-title {
+    color: #8dd6ff;
+    text-style: bold;
+    padding: 0 1;
+}
+
+DataTable {
+    height: 1fr;
+}
+
+#detail {
+    height: 1fr;
+    padding: 0 1;
+}
+
+#limits {
+    height: auto;
+    max-height: 5;
+    margin: 1 2 0 2;
+    padding: 1 2;
+    color: #b5bdc7;
+    border: round #6d6040;
+    background: #201e17;
+}
+
+#help-screen {
+    width: 60;
+    height: auto;
+    padding: 2 4;
+    border: double #8dd6ff;
+    background: #17222c;
+    align: center middle;
+}

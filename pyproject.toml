@@ -39,9 +39,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.4", "hypothesis>=6.100"]
+tui = ["textual==8.2.8"]
+tui-dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.4", "hypothesis>=6.100", "textual==8.2.8"]
 
 [project.scripts]
 reasonsmith = "reasonsmith.cli:main"
+reasonsmith-tui = "reasonsmith.tui:main"
 
 [project.urls]
 Homepage = "https://reasonsmith.dev"
@@ -68,7 +71,7 @@ addopts = "-q"
 # stdout byte-for-byte — a stricter check than a line count, and one the coverage process cannot
 # see. They ship in the wheel so the documented commands run, not because the library imports
 # them, so leaving them in would measure the demonstration and report it as library coverage.
-omit = ["*/reasonsmith/examples/*"]
+omit = ["*/reasonsmith/examples/*", "*/reasonsmith/tui/*"]
 
 [tool.coverage.report]
 # Load-bearing, not cosmetic. `--cov-fail-under=N` is decided by
