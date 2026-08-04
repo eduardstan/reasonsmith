@@ -759,6 +759,28 @@ was an assertion that the answer did not depend on that reason, made where a del
 facts moved the answer. `docs/example-output.md`'s drift window is the shipped instance and it now
 reads `not certifiable`.
 
+**A reason the probe cannot separate is never promoted to `deleted`, and the licence that says it
+could is deliberately unused.** The definition in
+[`sufficient-reasons.md`](sufficient-reasons.md) would, on its face, license the promotion: on a
+*complete* enumeration, a reason that shares all of its facts with another reason was not needed —
+and so can be reported as having failed to state it. The licence rests on completeness, and
+completeness rests on the artefact's declaration that its inference is monotone — the declaration
+*The inference artefact* below can refute and never confirm. An accusation minted from that
+licence would therefore rest on an unverifiable self-report by the very system under audit, the one
+premise this rung refuses everywhere else. So a reason the probe cannot separate — `unseparable`,
+and with it `inconclusive` and `undetermined` — always stays uncertified, counted deleted by
+nothing and live by nothing, and the pass only ever moves a reason *out* of `deleted`
+(`test_a_reason_the_probe_cannot_separate_is_never_promoted_to_deleted`).
+
+The refusal is a gate, not a wall, and the gate is named: an **independent** check that an
+artefact's inference is monotone — independent meaning not derived from the artefact's own
+declaration, however strongly that declaration were worded — would make the promotion available,
+and only a check does. A stronger declaration is not the condition. No such check exists in this
+tree, and the one fingerprint the probe can leave is a deletion that moves the answer *up*, whose
+absence proves nothing (*The inference artefact* below; `test_the_absence_of_the_fingerprint_is_not_evidence_of_monotonicity`).
+Until one exists, the licence in [`sufficient-reasons.md`](sufficient-reasons.md) stays deliberately
+unused, and the reader who reaches for it is pointed back here from its §8.
+
 > **If it reports `violated` at strength `probed`, then:** on at least one certified decision, the
 > deletion probe showed the system's answer does not depend on a reason exact inference found. The
 > result names the decision, the reasons, and the certificate's own attribution — which inference
@@ -1714,6 +1736,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | The inference artefact is reasonsmith's own abstraction, and a ground program is one adapter satisfying it | `test_the_ground_program_family_is_one_adapter_and_the_protocol_names_no_representation`, `test_the_protocol_is_satisfiable_without_a_ground_program`, `test_switching_a_fact_off_does_not_re_enumerate_the_reasons` |
 | An artefact the deletion definition of a reason does not apply to is not evaluated — declared non-monotone, declaring nothing, or contradicted by the probe — and never violated or satisfied | `test_an_artefact_declaring_non_monotone_inference_is_not_evaluated_and_names_why`, `test_an_artefact_that_declares_nothing_is_not_evaluated_rather_than_assumed_monotone`, `test_a_declaration_the_probe_contradicts_is_refused_rather_than_trusted`, `test_the_refusal_survives_a_whole_conformance_run_and_reaches_no_weaker_duty`, `test_a_certificate_over_a_non_monotone_artefact_carries_no_verdict` |
 | The declaration can be refuted by the measurement and never confirmed by it, and a monotone system's verdict is unchanged | `test_the_absence_of_the_fingerprint_is_not_evidence_of_monotonicity`, `test_a_declared_monotone_system_reaches_the_verdict_it_always_did`, `test_a_declared_monotone_certificate_still_reports_pass_or_fail` |
+| A reason the probe cannot separate is never promoted to `deleted`, on an exhaustive enumeration or any other — the licence in `sufficient-reasons.md` is deliberately unused | `test_a_reason_the_probe_cannot_separate_is_never_promoted_to_deleted` |
 | Every private fact of a reason is switched off, so coverage does not depend on what a system's fields are called | `test_every_private_fact_of_a_reason_is_switched_off` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |
 | One run renders as five audience artefacts, and no two audiences disagree about a verdict | `test_the_five_audiences_all_render`, `test_no_audience_sees_a_different_verdict_from_another` |

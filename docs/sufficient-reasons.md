@@ -316,7 +316,10 @@ invariant to keep when tuning it.
   license it — a reason no fact of which is relevant needs no attribution — and the implementation
   deliberately does not, so this pass can only ever move a reason *out* of `deleted`. Minting new
   accusations out of a search whose completeness rests on a monotonicity declaration nothing here
-  confirms is a decision to make on purpose, not a corollary to fall into.
+  confirms is a decision to make on purpose, not a corollary to fall into. That deliberate limit is
+  recorded in [`semantics.md`](semantics.md) §3 (*certificate*), which is the authoritative statement
+  of the decision and of the independent-monotonicity check under which it would reverse; nothing
+  here is read in its place.
 - **It does not make the reasons correct.** The certificate still says only that the engine used all
   the reasons exact inference found, on this program and this interpretation.
 - **It does not measure a group.** Nothing here says anything about a set of reasons a notice owes

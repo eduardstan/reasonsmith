@@ -330,3 +330,40 @@ def test_the_three_not_certified_states_are_reported_apart():
     partial = certify(**_artifact(budget=1))
     assert len(partial.undetermined) == 3
     assert partial.unseparable == [] and partial.inconclusive == []
+
+
+def test_a_reason_the_probe_cannot_separate_is_never_promoted_to_deleted():
+    """`docs/semantics.md` §3 records this as a deliberate limit: a shared-fact reason is never
+    promoted to `deleted` on the completeness of the enumeration alone.
+
+    The fixture's `{a, b}` reason shares every fact with a sibling — no private fact — so it is
+    `unseparable`. The engine answers a constant, so deleting anything at all leaves its answer
+    where it is and the joint search is exhaustive in one probe: exactly the *complete enumeration*
+    on which `docs/sufficient-reasons.md` §5 Definition 8 would license reporting such a reason
+    `deleted` ("was not needed"). It must not be. The licence is deliberately unused, because its
+    completeness rests on the artefact's self-declared monotonicity — a declaration nothing here
+    confirms (`docs/semantics.md` §3, *The inference artefact*) — so promotion would mint an
+    accusation out of it. The two siblings `{a, b}` shares its facts with are genuinely `deleted`,
+    which is why the test is not an amnesty.
+    """
+
+    class _ConstantEngine:
+        supports_grad = False
+        name = "reference:constant-engine"
+        claimed_semantics = "distribution semantics"
+
+        def infer(self, program, base, queries):
+            return {q: 0.5 for q in queries}
+
+    q, a, b, c, d = Atom("q"), Atom("a"), Atom("b"), Atom("c"), Atom("d")
+    program = GroundProgram((Rule(q, (a, b)), Rule(q, (a, c)), Rule(q, (b, d))))
+    base = {a: 0.6, b: 0.5, c: 0.4, d: 0.3}
+    cert = certify(program, base, q, _ConstantEngine(), 1, monotone=True)
+
+    statuses = {frozenset(v.reason): v.status for v in cert.verdicts}
+    assert statuses[frozenset({a, b})] == "unseparable"
+    assert statuses[frozenset({a, c})] == "deleted"
+    assert statuses[frozenset({b, d})] == "deleted"
+    # The licence's own precondition is met — the enumeration terminated — and the rule still holds.
+    assert cert.search is not None and cert.search.exhaustive
+    assert frozenset({a, b}) not in [frozenset(v.reason) for v in cert.deleted]
