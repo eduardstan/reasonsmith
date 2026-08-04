@@ -1,63 +1,167 @@
+/* reasonsmith TUI — Apple-inspired translucent surface motion */
+
 Screen {
-    background: #10151c;
+    background: #0a1018;
+    color: #e9eef7;
 }
 
-#overview {
+Header {
+    dock: top;
+    height: 1;
+    background: rgba(40, 60, 80, 0.55);
+    text-style: bold;
+}
+
+#hero {
     height: auto;
-    margin: 1 2;
+    margin: 1 2 0 2;
+    padding: 0 1 1 1;
+    border: round #557799;
+    background: rgba(28, 44, 60, 0.45);
+}
+
+#audience-tabs {
+    height: 1;
+    padding: 0 1;
+    color: #6f7d8c;
+}
+
+.tab-active {
+    background: #2a4762;
+    color: #f8fbff;
+    text-style: bold;
+}
+
+.tab-idle {
+    color: #6f7d8c;
+}
+
+#title-line {
+    height: auto;
+    margin: 0 0 1 0;
     padding: 1 2;
-    border: round #4d718c;
-    background: #17222c;
+    border: tall #2c3f55;
+    background: rgba(18, 28, 40, 0.6);
+}
+
+#counters {
+    height: auto;
+    padding: 0 1 1 1;
+    color: #b3c0cf;
+}
+
+#system-caption {
+    height: auto;
+    padding: 0 1 1 1;
+    color: #ffbe6b;
+}
+
+#filter {
+    margin: 1 2 0 2;
+    border: round #3c5775;
+    background: rgba(20, 30, 44, 0.55);
+    color: #e9eef7;
 }
 
 #main-pane {
     height: 1fr;
-    margin: 0 2;
+    margin: 1 2 0 2;
 }
 
 #requirements-pane {
     width: 48%;
-    border: round #4d718c;
-    padding: 0 1;
-}
-
-#detail-pane {
-    width: 52%;
-    border: round #4d718c;
-    padding: 0 2;
-    overflow-y: auto;
+    border: round #557799;
+    background: rgba(20, 30, 44, 0.55);
 }
 
 .pane-title {
+    height: 1;
+    padding: 0 1;
     color: #8dd6ff;
     text-style: bold;
-    padding: 0 1;
+}
+
+#detail, #evidence, #raw {
+    padding: 1 2;
+}
+
+#evidence-tabs {
+    width: 52%;
+    background: rgba(20, 30, 44, 0.55);
 }
 
 DataTable {
     height: 1fr;
+    background: transparent;
 }
 
-#detail {
-    height: 1fr;
-    padding: 0 1;
+DataTable > .datatable--header {
+    background: #2a4762;
+    color: #d8e3f0;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #2a4762;
+    color: #ffd766;
+    text-style: bold;
+}
+
+DataTable > .datatable--hover {
+    background: #1f3349;
+    color: #f0f6fc;
 }
 
 #limits {
     height: auto;
-    max-height: 5;
+    max-height: 4;
     margin: 1 2 0 2;
     padding: 1 2;
-    color: #b5bdc7;
+    color: #d9c285;
     border: round #6d6040;
-    background: #201e17;
+    background: rgba(40, 36, 24, 0.7);
+}
+
+#insights {
+    height: 1;
+    margin: 1 2 1 2;
+    padding: 0 2;
+    color: #c8d2e0;
 }
 
 #help-screen {
-    width: 60;
+    width: 64;
     height: auto;
     padding: 2 4;
     border: double #8dd6ff;
     background: #17222c;
     align: center middle;
+}
+
+TabbedContent {
+    height: 1fr;
+}
+
+Tabs {
+    height: 3;
+    background: rgba(60, 95, 130, 0.45);
+}
+
+Tab {
+    background: transparent;
+    color: #c8d2e0;
+}
+
+Tab.-active {
+    background: #2a4762;
+    color: #ffd766;
+    text-style: bold;
+}
+
+.flash-on {
+    text-style: bold reverse;
+}
+
+.flash-off {
+    text-style: none;
 }
