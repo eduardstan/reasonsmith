@@ -28,6 +28,14 @@ What a reader must not break:
     is written once: `rulelang.implication_antecedent` names the subtree,
     `report.not_evaluated_for_unreachable_trigger` words the refusal, and every rung asks it of
     the domain it quantifies over.
+  - The time domain the monitor counts on is a parameter of `evaluate`, defaulting to
+    `sut.ORDINAL_DOMAIN`, and `TimeDomain.ticks` is the only source of the `time` series. A duty
+    asked for on any other domain is reported `NOT EVALUATED`, never `satisfied`.
+    Why this matters: the record index is what this engine has always counted, and a deadline duty
+    that means days is currently answered by a latency number the system computes about itself. A
+    trace that gained event timestamps must neither lose the verdict it had nor silently have its
+    record indices relabelled as seconds; both are refused by making the domain something a caller
+    states rather than something this function assumes.
   - Flag and magnitude roles must be read from the formula itself, never from what the trace
     happened to contain. Asking `var >= 0.5` (or `0.5 <= var`) is the one way a pack asks for a
     flag rather than a measured magnitude. A bare Boolean atom is a third role: the formula places
@@ -82,7 +90,12 @@ from reasonsmith.rulelang import (
     validate_temporal_property,
 )
 from reasonsmith.spec import Requirement
-from reasonsmith.sut import SystemUnderTest
+from reasonsmith.sut import (
+    ORDINAL_DOMAIN,
+    SystemUnderTest,
+    TimeDomain,
+    read_time_domain,
+)
 from reasonsmith.verdict import Strength, Verdict
 
 #: The threshold a pack uses to read a signal as a flag. Everything else a variable is compared
@@ -258,8 +271,44 @@ class ObservedEngine:
         req: Requirement,
         sut: SystemUnderTest,
         records: list[dict[str, Any]],
+        time_domain: TimeDomain | None = None,
     ) -> RequirementResult:
         clause = f"{req.source_document} {req.article_clause}"
+
+        # The domain the duty is to be counted on is a stated input, not a convention of this
+        # function. It defaults to `ORDINAL_DOMAIN` — the record index, which is what every
+        # shipped duty is asked for and what a caller passing nothing keeps getting — so a trace
+        # that gained event timestamps does not thereby lose a verdict it used to have.
+        required = ORDINAL_DOMAIN if time_domain is None else time_domain
+        if not required.is_ordinal:
+            stated = read_time_domain(records)
+            missing = (
+                "this trace records no event times at all, so there is no clock to count on"
+                if stated.is_ordinal
+                else (
+                    "this trace records event times, but the monitor's only time axis is the "
+                    "record index: no metric or interval semantics reads them yet"
+                )
+            )
+            return RequirementResult(
+                requirement_id=req.id,
+                source_clause=clause,
+                verdict=Verdict.INCONCLUSIVE,
+                strength=None,
+                signals_required=tuple(req.requires),
+                evidence_summary=(
+                    f"Not evaluated: {req.spec!r} was asked for on the {required.kind!r} time "
+                    f"domain, and {missing}. A duty needing a real clock is never reported "
+                    "satisfied off a trace whose time is the record index."
+                ),
+                details={
+                    "time_domain_required": required.kind,
+                    "time_domain_stated_by_trace": stated.kind,
+                    "records_observed": len(records),
+                },
+                binding=req.binding,
+                scope=req.scope,
+            )
 
         if len(records) < MINIMUM_TRACE_LENGTH:
             reason = (
@@ -337,8 +386,9 @@ class ObservedEngine:
         magnitude_vars.difference_update(presence_signals)
         magnitude_vars.difference_update(contains_signals)
 
-        # Build dataset for rtamt
-        time_series: dict[str, list[float]] = {"time": list(range(len(records)))}
+        # Build dataset for rtamt. The time axis comes from the stated domain and nowhere else,
+        # so a later metric semantics is a new `TimeDomain.kind` rather than an edit here.
+        time_series: dict[str, list[float]] = {"time": required.ticks(len(records))}
         unmeasured: dict[str, int] = {}
         non_boolean_atoms: dict[str, int] = {}
         non_text_atoms: dict[str, int] = {}

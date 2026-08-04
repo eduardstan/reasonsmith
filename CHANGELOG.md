@@ -8,6 +8,32 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Added
+
+- **A decision trace can state its own clock.** A record may carry `sut.TIME_DOMAIN_KEY` — a
+  mapping of event kind to the timestamp that event happened at — so *when the clock started* is a
+  recorded fact rather than something a latency number the system computes about itself implies.
+  The three events 12 CFR 1002.9(a)(1) counts from are told apart by their event kinds, which is
+  the case that made this worth having (`docs/refinement.md`,
+  `ecoa_reg_b_1002_9_a_1_timing_of_notice`).
+- **The monitor's time domain is a stated parameter.** `ObservedEngine.evaluate` takes a
+  `sut.TimeDomain`, defaulting to `sut.ORDINAL_DOMAIN`, and `TimeDomain.ticks` is the only source
+  of the `time` series. A metric or interval semantics is now a new domain and a new branch rather
+  than a re-reading of every property; none is added here.
+
+### Changed
+
+- `--json` envelope `schema_version` is **2**. It gains `time_domain`, the clock the trace a run
+  read stated. The bump is for meaning, not for the key: under version 1 a temporal bound counted
+  records and the document did not say so.
+
+### Notes
+
+- Nothing shipped changes verdict. A log that states no clock is `"ordinal"` and is answered on the
+  record index exactly as before, a log that gained event timestamps keeps the verdict it had, and
+  a duty asked for on any other domain is reported *not evaluated*, never `satisfied`
+  (`docs/semantics.md` §2, §5; `tests/test_time_domain.py`).
+
 ## [0.7.0] - 2026-08-04
 
 ### Added

@@ -257,6 +257,36 @@ Two things about the encoding are this project's own and are load-bearing:
 - **Time is the record index.** The monitor is fed `time = 0..n-1`, one step per record, in the order
   the trace supplied them. A temporal bound counts decisions, not seconds. A violation at step *t*
   is the record at position *t* (`test_temporal_violated_returns_offending_segment`).
+
+  That is now a **stated domain rather than a convention**. `sut.TimeDomain` names the clock a run
+  counts on, `ObservedEngine.evaluate` takes it as a parameter defaulting to `sut.ORDINAL_DOMAIN`,
+  and `TimeDomain.ticks` is the only place the `time` series comes from
+  (`test_a_timeless_log_still_gets_the_record_index`,
+  `test_passing_the_ordinal_domain_is_the_same_run_as_passing_nothing`). A decision record may
+  carry its own clock under the reserved key `sut.TIME_DOMAIN_KEY` — a mapping of event kind to
+  the timestamp that event happened at, which is how the three events 12 CFR 1002.9(a)(1) counts
+  from are told apart (`test_a_record_may_carry_event_timestamps_and_event_kinds`,
+  `test_the_three_events_the_clause_counts_from_are_distinguishable`).
+
+  Three things about it are deliberate. A log carrying no such key states **no** clock and
+  acquires none by being read (`test_a_log_without_event_times_states_no_time_domain`,
+  `test_an_unread_or_empty_trace_states_no_time_domain`). A log that does carry one is still
+  answered on the record index, so recording when things happened never costs a system a verdict
+  it already had (`test_a_clocked_log_keeps_the_verdict_a_timeless_one_would_have_had`). And a
+  duty asked for on any other domain is **not evaluated, never satisfied** — on a timeless log
+  because there is no clock to count on, and on a clocked one because no metric or interval
+  semantics reads those timestamps yet
+  (`test_a_duty_needing_a_clock_is_not_evaluated_and_never_satisfied`,
+  `test_the_refusal_says_which_of_the_two_gaps_it_hit`,
+  `test_only_the_ordinal_domain_has_a_time_axis`). No shipped duty asks for one, and none can: the property language has no way to state
+  a domain, so requiring one is a caller's act until an interval semantics gives a pack the words.
+  What that leaves open is the gap `docs/refinement.md` records against
+  `ecoa_reg_b_1002_9_a_1_timing_of_notice` — a deadline is still checked against a latency number
+  the system computes about itself, and the recorded events are evidence nothing yet reads.
+
+  The `--json` envelope carries `time_domain`: the clock the trace this run read *stated*,
+  `"ordinal"` for every shipped example, and never a claim that a verdict was counted on
+  timestamps (`test_the_report_states_the_clock_the_trace_stated`).
 - **Flags and magnitudes are read off the formula, never off the trace.** `var >= 0.5` (or
   `0.5 <= var`) is the one comparison pattern treated as a flag instead of requiring a measured
   magnitude. For such a variable, Boolean values become 1.0/0.0, any other present non-numeric
@@ -1371,6 +1401,12 @@ Two consequences of that report text, followed by a separate package-level termi
   not govern the system, and nothing checks that a system declaring `consumer-credit` issues credit
   (`test_report_limits_exclude_legal_determination_and_scope_inference`,
   `test_a_domain_outside_the_vocabulary_is_refused`, `test_the_two_domain_gates_never_disagree`).
+- reasonsmith does not measure elapsed time. Every verdict is counted on the record index (§2), so
+  a deadline duty is answered by whatever duration the system computes about itself. A record may
+  now state which event its clock started at, and nothing reads those timestamps: a duty asked for
+  on that domain is not evaluated rather than answered off decision counts
+  (`test_a_duty_needing_a_clock_is_not_evaluated_and_never_satisfied`,
+  `test_only_the_ordinal_domain_has_a_time_axis`).
 - Separately, the package emits a **reason-deletion certificate**, a measured artifact about which
   reasons an approximate engine dropped. It does not issue a **compliance certification**. The
   artifact detects a dropped reason and carries its separate limits
@@ -1618,5 +1654,5 @@ the reader would like:
   made. The envelope carries its own shape version, `schema_version`, so a consumer can tell one
   release's shape from another's without inferring it from the package version. It increments
   when a key is removed, renamed, or changes type or meaning, and not when one is added;
-  `test_version_1_is_this_shape` pins the key set at each level to the current number, so a
+  `test_version_2_is_this_shape` pins the key set at each level to the current number, so a
   shape change made without moving it fails the suite.

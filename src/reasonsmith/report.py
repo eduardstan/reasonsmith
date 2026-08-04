@@ -45,7 +45,12 @@ from reasonsmith.rulelang import (
     parse_property,
 )
 from reasonsmith.spec import Pack, Requirement, normalize_domains, normalize_scope
-from reasonsmith.sut import SystemUnderTest, _validate_capability_collection
+from reasonsmith.sut import (
+    ORDINAL_TIME,
+    SystemUnderTest,
+    _validate_capability_collection,
+    read_time_domain,
+)
 from reasonsmith.verdict import Strength, Verdict
 
 LIMITS = (
@@ -110,7 +115,14 @@ CERTIFICATES_KEY = "certificates"
 #: increment when a key is added, because a consumer reading known keys is unaffected.
 #: `tests/test_json_schema_version.py` pins the key set at each level to this number, so a
 #: change to the shape fails the suite until this number moves with it.
-JSON_SCHEMA_VERSION = 1
+#:
+#: Version 2 adds `time_domain` and is a bump under that rule rather than in spite of it: adding
+#: the key is not what moved the number, the *meaning* of every temporal verdict in the envelope
+#: did. Under version 1 a bound in a temporal `spec` counted records, and that a reader had to
+#: know from `docs/semantics.md` §2 rather than from the document in front of them. Version 2
+#: states the clock the run was answered on, so a parser can tell a verdict counted in decisions
+#: from one counted on any later domain instead of assuming the first.
+JSON_SCHEMA_VERSION = 2
 
 #: The two signals a decision record is read for when a report is asked what the system itself
 #: said about a decision: what it recorded as the decision, and what it stated as the reason.
@@ -508,6 +520,14 @@ class ConformanceReport:
     is why it is not in `to_dict`: the JSON record is the findings record, and a conformance
     document is not the place a production decision log gets republished. A rendering that shows
     it — today only the affected-individual projection — is quoting the log, never summarising it.
+
+    `time_domain` is the clock the trace this run read *states* (`sut.read_time_domain`), and it
+    is in `to_dict` because it qualifies every temporal verdict there. `"ordinal"` is a log that
+    says nothing about time, which is every log until one carries `sut.TIME_DOMAIN_KEY`, and it is
+    also what an unread trace reports — a run that needed no trace read no clock either. `"event"`
+    says the log records when things happened; it does not say a verdict was counted on those
+    timestamps, because none is: every duty is answered on the record index until a metric
+    semantics exists (`docs/semantics.md` §2).
     """
 
     pack_id: str
@@ -516,6 +536,7 @@ class ConformanceReport:
     system_scope: str | None = None
     system_domains: tuple[str, ...] = ()
     limits: str = LIMITS
+    time_domain: str = ORDINAL_TIME
     decisions: tuple[DecisionAccount, ...] = ()
 
     def __post_init__(self) -> None:
@@ -675,6 +696,7 @@ class ConformanceReport:
             "counts": self.counts,
             "results": [r.to_dict() for r in self.results],
             "limits": self.limits,
+            "time_domain": self.time_domain,
         }
 
     def to_json(self, indent: int | None = None) -> str:
@@ -1294,5 +1316,6 @@ def check_conformance(
         system_scope=system_scope,
         system_domains=sys_domains,
         results=tuple(results),
+        time_domain=read_time_domain(resources.records_read()).kind,
         decisions=decision_accounts(resources.records_read()),
     )

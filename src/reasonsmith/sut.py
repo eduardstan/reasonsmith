@@ -60,6 +60,16 @@ What a reader must not break:
     Why this matters: `set("reasons")` would declare seven single-character capabilities, and a
     capability map would declare the signals it marks False as available — the overclaim this tool
     exists to prevent.
+  - A decision record may carry its own clock under the reserved `TIME_DOMAIN_KEY`, and
+    `read_time_domain` is the one place a trace is asked what clock it states. A trace carrying no
+    such key is `ORDINAL_DOMAIN` — the record index, which is what every reader here has always
+    counted on — so a timeless log never acquires a clock by having been read.
+    Why this matters: a deadline duty today reads one latency number the system computes about
+    itself, and which event it was counted from is that system's own claim (`docs/refinement.md`,
+    the `ecoa_reg_b_1002_9_a_1_timing_of_notice` row). The recorded events are what would let an
+    engine check it. Nothing does yet: `TimeDomain.ticks` refuses every domain but the ordinal one,
+    so a duty asked for on a real clock is reported not evaluated rather than answered off record
+    indices relabelled as time.
   - `CAPABILITY_TAXONOMY` documents the four Section 6.3 categories that signal names are
     conventionally prefixed with (`provenance_`, `artifact_logs_`, ...). It is a reference for pack
     and adapter authors, not a validator: nothing here checks a name against it, and a pack is free
@@ -71,6 +81,7 @@ What a reader must not break:
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Optional, Protocol, runtime_checkable
 
@@ -89,6 +100,111 @@ CAPABILITY_TAXONOMY = (
     "stability_signals",
     "scope_statements",
 )
+
+
+#: The reserved decision-record key carrying that decision's own clock: a mapping of event-kind
+#: name to the timestamp that event happened at, e.g.
+#: ``{"completed_application_received": "2026-06-01T09:00:00Z",
+#:    "applicant_notified": "2026-06-15T09:00:00Z"}``.
+#:
+#: It is dunder-spelled because it is not a signal: nothing in the property language reads it, it
+#: is never a name in a `spec`, and no capability declares it. What it records is *which* event a
+#: duration was counted from, which today is the one thing a latency number a system computes
+#: about itself cannot say (`docs/refinement.md`, the `ecoa_reg_b_1002_9_a_1_timing_of_notice`
+#: row). Event kinds are the record's own vocabulary; `ECOA_1002_9_A_1_EVENTS` is the worked case
+#: and not a closed list.
+TIME_DOMAIN_KEY = "__time_domain__"
+
+#: The time domain the monitor counts on today: the record index, one tick per decision, in the
+#: order the trace supplied them (`docs/semantics.md` §2, *Time is the record index*).
+ORDINAL_TIME = "ordinal"
+
+#: The time domain of a trace whose records carry `TIME_DOMAIN_KEY`. Recording it is all this
+#: repository does with it: no metric or interval semantics reads those timestamps, and a duty
+#: asked for on this domain is *not evaluated* rather than answered off the record index.
+EVENT_TIME = "event"
+
+#: The domains a trace may declare and a duty may be asked for on.
+TIME_DOMAINS = (ORDINAL_TIME, EVENT_TIME)
+
+#: The events 12 CFR 1002.9(a)(1) counts its notification deadline from — the worked case, and the
+#: reason a recorded clock is worth having. Paragraphs (i), (ii) and (iii) each start a 30-day
+#: clock at a different event and (iv) starts a 90-day one; `applicant_notified` is where all four
+#: stop. A record naming which of these it holds a timestamp for states what the clause needs and
+#: a single latency number cannot. Reference names for a pack and adapter author, not a validator:
+#: nothing here checks an event kind against them.
+ECOA_1002_9_A_1_EVENTS = (
+    "completed_application_received",
+    "adverse_action_on_incomplete_application",
+    "adverse_action_on_existing_account",
+    "counteroffer_notified",
+    "applicant_notified",
+)
+
+
+@dataclass(frozen=True)
+class TimeDomain:
+    """The clock a decision trace states, and the axis a monitor is fed.
+
+    `kind` is one of `TIME_DOMAINS`. `events` is empty for `ORDINAL_TIME`, and otherwise holds one
+    entry per record — that record's event-kind-to-timestamp mapping, or None for a record that
+    carries none.
+
+    `ticks` is deliberately the only way the axis is produced, and it refuses every domain but the
+    ordinal one. That refusal is the seam: a metric or interval semantics is a new `kind` and a new
+    branch here, and until one exists a caller asking for a real clock is told so rather than
+    handed record indices wearing a clock's name.
+    """
+
+    kind: str
+    events: tuple[Mapping[str, str] | None, ...] = ()
+
+    @property
+    def is_ordinal(self) -> bool:
+        return self.kind == ORDINAL_TIME
+
+    def ticks(self, length: int) -> list[int]:
+        """The `length` time points a monitor over this domain is fed."""
+        if not self.is_ordinal:
+            raise ValueError(
+                f"No time axis exists for the {self.kind!r} time domain: reasonsmith counts "
+                "decisions, not seconds"
+            )
+        return list(range(length))
+
+
+#: The domain of every trace that states no clock, and the domain every shipped duty is asked for
+#: on. Shared because it carries no per-record state.
+ORDINAL_DOMAIN = TimeDomain(ORDINAL_TIME)
+
+
+def read_time_domain(records: Iterable[Mapping[str, Any]]) -> TimeDomain:
+    """The time domain a decision trace states, read off the records themselves.
+
+    `ORDINAL_DOMAIN` unless at least one record carries `TIME_DOMAIN_KEY`, so a log that says
+    nothing about time acquires no clock by having been read — the backwards-compatible answer,
+    stated once here rather than assumed at every reader.
+    """
+    events: list[Mapping[str, str] | None] = []
+    clocked = False
+    for record in records:
+        stamps = record.get(TIME_DOMAIN_KEY)
+        if stamps is None:
+            events.append(None)
+            continue
+        if not isinstance(stamps, Mapping):
+            raise TypeError(
+                f"{TIME_DOMAIN_KEY} must map an event-kind name to a timestamp, got "
+                f"{type(stamps).__name__}"
+            )
+        for kind, stamp in stamps.items():
+            if not isinstance(kind, str) or not kind.strip():
+                raise ValueError(f"Event kind must be a non-empty name, got {kind!r}")
+            if not isinstance(stamp, str) or not stamp.strip():
+                raise ValueError(f"Event {kind!r} must carry a timestamp, got {stamp!r}")
+        clocked = True
+        events.append(dict(stamps))
+    return TimeDomain(EVENT_TIME, tuple(events)) if clocked else ORDINAL_DOMAIN
 
 
 def _validate_capability_collection(declared: Any, subject: str) -> None:

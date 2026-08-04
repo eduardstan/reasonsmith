@@ -30,7 +30,7 @@ def sample_report() -> ConformanceReport:
     return check_conformance(demo.deployed_credit_system(), load_pack("ecoa"))
 
 
-#: Every key `ConformanceReport.to_dict()` emits, at version 1.
+#: Every key `ConformanceReport.to_dict()` emits, at version 2.
 _TOP_LEVEL_KEYS = {
     "schema_version",
     "system_name",
@@ -41,9 +41,10 @@ _TOP_LEVEL_KEYS = {
     "counts",
     "results",
     "limits",
+    "time_domain",
 }
 
-#: Every key `RequirementResult.to_dict()` emits, at version 1. The results list is part of the
+#: Every key `RequirementResult.to_dict()` emits, at version 2. The results list is part of the
 #: envelope's shape, so a change here is a change to the version's promise just as much as one
 #: at the top level.
 _RESULT_KEYS = {
@@ -70,9 +71,9 @@ def test_the_version_survives_serialisation(sample_report: ConformanceReport) ->
     assert json.loads(sample_report.to_json())["schema_version"] == JSON_SCHEMA_VERSION
 
 
-def test_version_1_is_this_shape(sample_report: ConformanceReport) -> None:
+def test_version_2_is_this_shape(sample_report: ConformanceReport) -> None:
     """The pin. Changing the shape means changing this test, which means reading the convention."""
-    assert JSON_SCHEMA_VERSION == 1
+    assert JSON_SCHEMA_VERSION == 2
     payload = sample_report.to_dict()
     assert set(payload) == _TOP_LEVEL_KEYS
     assert payload["results"], "the fixture must exercise at least one result"
