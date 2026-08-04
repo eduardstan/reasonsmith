@@ -8,6 +8,8 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-04
+
 ### Added
 
 - **The first fairness property this repository checks: counterfactual invariance under one named
