@@ -58,6 +58,16 @@ Four kinds of gap recur, and naming them once keeps the table short:
   system that can be opened up, and every system that cannot is reported `unattainable` on it —
   never returned to the presence check, which would answer a different question under the same
   duty's name.
+
+  **A third escape now exists as machinery, and no row below uses it.** `undetermined(signal,
+  "predicate", "authority")` states in the property that the predicate is open-textured and names
+  who settles it, and `degree(signal, "predicate")` gives it a truth degree over an algebra the pack
+  declares. Both report *not evaluated* — neither turns an adjective into a verdict — so what they
+  change is that the gap is stated by the duty rather than only by this column.
+  `docs/semantics.md` §9 is the semantics, `docs/authoring-packs.md` is how to write one, and
+  `ROADMAP.md` objective 6 is what a first shipped duty would have to bring: a clause, a named
+  authority retrieved into `docs/legal-sources.md`, and — for a degree — a real assessment behind
+  the scale. Until then every row below that says the predicate was not modelled still says it.
 - **The trace is a sample.** An `observed` or `record` verdict covers exactly the records supplied,
   and nothing establishes that they are representative, complete or unfiltered
   (`docs/semantics.md` §1). Any clause whose duty runs over the lifetime of a system —

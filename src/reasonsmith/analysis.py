@@ -229,6 +229,18 @@ def _state_property(req: Requirement) -> tuple[Optional[ast.Expression], str]:
             f"{req.id}: the counterfactual fragment is a property of a pair of executions, which "
             "this analysis does not encode"
         )
+    if req.formalism == "undetermined":
+        return None, (
+            f"{req.id}: the duty rests on a predicate the law states without a sharp boundary, "
+            "which no engine here settles and this two-valued encoding has no atom for. Whether it "
+            "entails another duty is a question about a predicate nobody has applied"
+        )
+    if req.formalism == "graded":
+        return None, (
+            f"{req.id}: the graded fragment is read over a residuated lattice, and every question "
+            "this analysis asks is a Boolean satisfiability question. Encoding a degree as one "
+            "more uninterpreted Boolean would answer about a formula the pack did not write"
+        )
     if req.formalism == "temporal":
         reduced = state_property_under_always(req.spec)
         if reduced is None:

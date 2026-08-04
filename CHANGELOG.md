@@ -10,6 +10,38 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **Machinery for open-textured predicates — the words the law states without a sharp boundary —
+  and no shipped duty that uses it.** Twenty-one of twenty-nine shipped requirements are presence
+  checks, and the fourth column of `docs/refinement.md` says the same thing row after row:
+  *meaningful*, *sufficiently detailed*, *adequate*, *appropriate* were not modelled. Two new
+  fragments answer different halves of that. `undetermined(signal, "predicate", "authority")` is a
+  predicate **no engine settles**, reported *not evaluated* and naming who resolves it, reusing the
+  path `not_evaluated_for_unreachable_trigger` established rather than a mechanism beside it — one
+  such atom leaves the whole formula unsettled, so its presence conjuncts are no longer answered and
+  reported as the duty's. `degree(signal, "predicate")` is a **truth degree**, read over a residuated
+  lattice in `src/reasonsmith/manyvalued.py` — Łukasiewicz, Gödel and product, each stored with its
+  residuum and checked against the residuation law rather than asserted to satisfy it. Four
+  constraints are structural rather than conventional. **The algebra is declared**: a pack shipping a
+  graded duty without `[grading] algebra` is refused at load, naming what is missing, and the
+  declaration reaches that pack's graded requirements and no others. **The degree has a declared
+  source**: it comes from a `manyvalued.Grading` a caller passes to `check_conformance` — never from
+  the audited system, which would be the `reason_is_specific` self-declaration wearing a lattice's
+  clothes — and `RequirementResult` refuses a degree that does not carry the authority, scale and
+  method that fixed it, the shape `PROBE_BUDGET_FIELDS` already forces. **A degree is a distinct
+  evidence basis and never a rescaled verdict**: `render.degree_sentence` is the only place any
+  rendering formats one, a result carrying a degree carries no `strength`, and the
+  affected-individual projection is shown the duty as unsettled in words and never the number. **A
+  two-valued duty cannot acquire a degree**: `classify_fragment` gates it exactly as it gates the
+  counterfactual atom, and a `degree()` atom under a comparison — which is a compliance threshold,
+  the pack author's number presented as the regulation's — or under a temporal operator is a load
+  error. A graded duty is reported *not evaluated* with its degree carried beside it as a
+  measurement: turning one into `satisfied` needs a threshold no statute states, and that is a legal
+  reading this tool does not make. **The strength lattice did not move**, no engine was added, and no
+  shipped verdict changed — the two fragments are dispatched after the capability gate, so a system
+  that can show nothing is `unattainable` exactly as it was and never a low degree. `docs/semantics.md`
+  §9 is the contract, including the presentation rule; `ROADMAP.md` objective 6 is what a first
+  shipped duty would have to bring.
+
 - **`validate-pack --analyse` has a decision procedure for temporal duties, beside rtamt rather
   than instead of it.** The analysis decided a pack's questions with Z3 over one decision record,
   so a `temporal` spec reached it only through the `always(state property)` reduction and every

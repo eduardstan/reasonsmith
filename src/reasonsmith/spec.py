@@ -56,6 +56,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
+from reasonsmith.manyvalued import ALGEBRAS, algebra_named
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
     classify_fragment,
@@ -63,7 +64,14 @@ from reasonsmith.rulelang import (
     unconditional_signal_names,
 )
 
-VALID_FORMALISMS = ("record", "temporal", "logical", "counterfactual")
+VALID_FORMALISMS = (
+    "record",
+    "temporal",
+    "logical",
+    "counterfactual",
+    "undetermined",
+    "graded",
+)
 PACKS_DIR = Path(__file__).parent / "packs"
 
 #: Exactly the fields a [[requirement]] block carries. A pack that omits one is
@@ -327,7 +335,9 @@ class Requirement:
     article_clause: str
     verbatim_text: str
     stakeholder: str
-    formalism: Literal["record", "temporal", "logical", "counterfactual"]
+    formalism: Literal[
+        "record", "temporal", "logical", "counterfactual", "undetermined", "graded"
+    ]
     spec: str
     rationale: str
     requires: tuple[str, ...]
@@ -336,6 +346,7 @@ class Requirement:
     domains: tuple[str, ...]
     deontic_type: str
     defeasibility: str
+    algebra: str = ""
 
     def __post_init__(self) -> None:
         if not isinstance(self.binding, bool):
@@ -366,6 +377,7 @@ class Requirement:
             raise ValueError(
                 f"Invalid formalism {self.formalism!r}; must be one of {VALID_FORMALISMS}"
             )
+        self._check_algebra()
         # Traceability is the point of a pack: a requirement with a blank source
         # document, clause or quotation cannot be checked against the print, so it
         # is malformed rather than merely incomplete.
@@ -391,6 +403,50 @@ class Requirement:
         if len(set(self.requires)) != len(self.requires):
             raise ValueError(f"Requirement {self.id!r}: 'requires' contains duplicate signal names")
 
+    def _check_algebra(self) -> None:
+        """A graded duty carries an algebra; every other duty carries none.
+
+        Both halves are the same rule seen from two sides, and both are refusals.
+
+        A graded duty **without** one cannot be read at all: which residuated lattice the
+        connectives are read over decides what a conjunction of two `0.5`s means, so a missing
+        declaration is not a default to fill in but a semantics nobody chose. The message names
+        `[grading] algebra` because that is where a pack states it.
+
+        A two-valued duty **with** one is refused for the reason the whole open-texture design
+        exists: a duty with a sharp boundary must not acquire a degree because the machinery is now
+        installed. The pack loader passes the pack's declared algebra to graded requirements only,
+        so a pack that ships one graded duty beside twenty presence checks leaves those twenty
+        exactly as two-valued as they were.
+        """
+        if not isinstance(self.algebra, str):
+            raise ValueError(
+                f"Requirement {self.id!r}: field 'algebra' must be a string, got "
+                f"{type(self.algebra).__name__}"
+            )
+        object.__setattr__(self, "algebra", self.algebra.strip().lower())
+        if self.formalism == "graded":
+            if not self.algebra:
+                raise ValueError(
+                    f"Requirement {self.id!r} is a graded duty and declares no algebra. A truth "
+                    "degree is read over a residuated lattice, and which one changes what a "
+                    "conjunction of two 0.5s means, so it is a stated parameter of the pack and "
+                    "never a default this tool picks. Declare it in the pack's [grading] table — "
+                    f"`algebra = \"...\"`, one of {', '.join(sorted(ALGEBRAS))} — and see "
+                    "docs/semantics.md §9."
+                )
+            try:
+                algebra_named(self.algebra)
+            except ValueError as exc:
+                raise ValueError(f"Requirement {self.id!r}: field 'algebra': {exc}") from exc
+        elif self.algebra:
+            raise ValueError(
+                f"Requirement {self.id!r} declares algebra {self.algebra!r} but its formalism is "
+                f"{self.formalism!r}, which is two-valued. A duty with a sharp boundary does not "
+                "acquire a truth degree because a pack declares an algebra; only a spec carrying a "
+                "degree() atom is classified 'graded' — see docs/semantics.md §9."
+            )
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -407,18 +463,27 @@ class Requirement:
             "domains": list(self.domains),
             "deontic_type": self.deontic_type,
             "defeasibility": self.defeasibility,
+            "algebra": self.algebra,
         }
 
 
 @dataclass(frozen=True)
 class Pack:
-    """A collection of formal requirements with source metadata."""
+    """A collection of formal requirements with source metadata.
+
+    `algebra` is the pack's declared reading of the connectives for its graded duties, from the
+    `[grading]` table of the TOML file, and `""` when the pack ships none. It is a parameter of the
+    pack rather than of a requirement because a pack that read two duties over two lattices would be
+    a pack whose conjunction means two things, and because a reader of one verdict must be able to
+    find the declaration in one place. See `Requirement._check_algebra` and `docs/semantics.md` §9.
+    """
 
     id: str
     title: str
     description: str
     requirements: tuple[Requirement, ...]
     source_metadata: dict = field(default_factory=dict)
+    algebra: str = ""
 
     def __post_init__(self) -> None:
         if not self.requirements:
@@ -443,6 +508,7 @@ class Pack:
             "description": self.description,
             "requirements": [r.to_dict() for r in self.requirements],
             "source_metadata": dict(self.source_metadata),
+            "algebra": self.algebra,
         }
 
 
@@ -468,7 +534,10 @@ def _check_spec(req: Requirement, where: str) -> None:
             "'record' — a conjunction of present(signal) atoms; 'temporal' — anything using a "
             "temporal operator; 'counterfactual' — a lone counterfactually_invariant(outcome, "
             "protected) atom, which is a property of a pair of executions and may be the whole of "
-            "a spec or no part of one; 'logical' — any other property of a single decision record."
+            "a spec or no part of one; 'undetermined' — anything using undetermined(signal, "
+            "predicate, authority), the open-textured predicate no engine here settles; 'graded' — "
+            "anything using degree(signal, predicate), read over the pack's declared algebra; "
+            "'logical' — any other property of a single decision record."
         )
 
     unrequired = sorted(set(unconditional_signal_names(node)) - set(req.requires))
@@ -522,6 +591,29 @@ def load_pack(name_or_path: str | Path) -> Pack:
     description = pack_info.get("description", "")
 
     source_meta = data.get("source", {})
+
+    # The pack's declared reading of the connectives for its graded duties. Refused here when it
+    # names an algebra this package has no reading for, rather than at the first graded requirement:
+    # a pack whose only graded duty is later removed would otherwise carry a misspelling forever.
+    grading_table = data.get("grading", {})
+    if not isinstance(grading_table, Mapping):
+        raise ValueError(
+            f"{path}: [grading] must be a table declaring `algebra`, got "
+            f"{type(grading_table).__name__}"
+        )
+    unknown_grading = sorted(set(grading_table) - {"algebra"})
+    if unknown_grading:
+        raise ValueError(
+            f"{path}: [grading] carries unknown key(s): {', '.join(unknown_grading)}. The table "
+            "declares exactly one thing, `algebra`; where a degree came from is the caller's "
+            "`manyvalued.Grading` and never the pack's — see docs/semantics.md §9"
+        )
+    pack_algebra = grading_table.get("algebra", "")
+    if pack_algebra:
+        try:
+            pack_algebra = algebra_named(pack_algebra).name
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{path}: [grading] algebra: {exc}") from exc
 
     raw_reqs = data.get("requirement", [])
     if not raw_reqs:
@@ -579,6 +671,10 @@ def load_pack(name_or_path: str | Path) -> Pack:
                 domains=tuple(rdata["domains"]),
                 deontic_type=rdata["deontic_type"],
                 defeasibility=rdata["defeasibility"],
+                # Handed to a graded requirement and to no other, which is the whole of the
+                # guarantee that a pack shipping one graded duty leaves its two-valued duties
+                # two-valued: `Requirement._check_algebra` refuses a non-graded duty carrying one.
+                algebra=pack_algebra if rdata["formalism"] == "graded" else "",
             )
         except (TypeError, ValueError) as exc:
             # Both become a load error: a caller of `load_pack` is told the pack is refused and
@@ -593,6 +689,7 @@ def load_pack(name_or_path: str | Path) -> Pack:
         description=description,
         requirements=tuple(reqs),
         source_metadata=source_meta,
+        algebra=pack_algebra,
     )
 
 

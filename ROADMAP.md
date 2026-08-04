@@ -189,6 +189,47 @@ system exposing nothing that grounds its claim must report *not evaluated*, neve
 The intake is the Discussion
 [*reasonsmith cleared two systems whose decisions are wrong — what should a pack do about it?*](https://github.com/eduardstan/reasonsmith/discussions/59).
 
+## 6. The first duty written with an open-textured predicate
+
+**The gap.** [`docs/semantics.md`](docs/semantics.md) §9 opens by stating it: twenty-one of the
+twenty-nine shipped requirements are presence checks, and the fourth column of
+[`docs/refinement.md`](docs/refinement.md) says the same thing row after row — *meaningful*,
+*sufficiently detailed*, *adequate*, *appropriate*, *without undue delay* were not modelled. Presence
+is not a bad proxy for those predicates; it is a refusal to model them at all. §9 also states what is
+now true and what is not: **the machinery exists and no shipped duty uses it**
+(`test_no_shipped_pack_uses_either_open_texture_construct`), because which statutory predicate
+becomes the first `undetermined` or `graded` one is a legal reading and not an engineering decision.
+
+Two questions stand between the machinery and a shipped duty, and neither is code:
+
+- **Which clause, and which reading.** A predicate belongs in `undetermined()` when its application
+  to facts is settled by an institution — and the pack must then be able to *name* that institution
+  from the retrieval record, on the same discipline `docs/legal-sources.md` already imposes on a
+  quotation. It belongs in `degree()` when the predicate is vague rather than merely unsettled, which
+  is a claim about the clause and not about the evidence.
+- **What a degree would have to come from.** A `Grading` names an authority, a scale and a method,
+  and nothing in this repository supplies one. A shipped graded duty needs a real assessment behind
+  it or it is a fixture with a statute's name on it.
+
+**Measurable outcome.** One shipped requirement whose `formalism` is `undetermined` or `graded`,
+with: its clause and the words of its open-textured predicate quoted in `verbatim_text`; the
+authority named from a source `docs/legal-sources.md` retrieved, for the `undetermined` case; a
+`docs/refinement.md` row whose fourth column names what is *still* left out after the construct is
+used, since neither construct closes a gap by itself; and — for the `graded` case — a `[grading]`
+algebra declared, with a paragraph in the pack description saying why that lattice and not another,
+on the same terms this repository demands of an invented threshold.
+`test_no_shipped_pack_uses_either_open_texture_construct` is the check that fails today and would
+have to be rewritten, not deleted, when this closes: it is what keeps the machinery from acquiring a
+duty by accident.
+
+**Depends on.** A legal reading, which is the captain's, and an assessment for the graded case. It
+deliberately does **not** depend on any further engine work: §9 states that neither fragment reaches
+an engine and that no rung of the lattice means *graded*, and a duty landing on either construct is
+reported *not evaluated* with its finding beside it. One thing it makes concrete rather than
+resolves: a graded reading has no place on the strength lattice, so **a graded verdict is one of
+several pressures on that scale's shape**, alongside the counterfactual fragment's two rungs and the
+certificate engine's single one. That structure gets designed once and was not designed here.
+
 ---
 
 ## What is deliberately not on this roadmap

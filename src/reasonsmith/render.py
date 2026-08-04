@@ -36,7 +36,9 @@ from typing import Any
 from reasonsmith.report import (
     _CATEGORY_LABELS,
     CERTIFICATES_KEY,
+    OPEN_TEXTURE_KEY,
     PROBE_BUDGET_KEY,
+    TRUTH_DEGREE_KEY,
     ConformanceReport,
 )
 from reasonsmith.verdict import Strength, Verdict
@@ -259,6 +261,31 @@ def _budget_line(budget: Mapping[str, Any]) -> str:
     )
 
 
+def degree_sentence(reading: Mapping[str, Any]) -> str:
+    """The one rendering of a truth degree there is, in text and in HTML alike.
+
+    **This is the presentation rule of `docs/semantics.md` §9 in code.** A degree is never rendered
+    as a percentage, never as a score, never as a verdict, and never alone: the numeral, the algebra
+    it was combined over, and the authority, scale and method that fixed it are one sentence that
+    cannot be split, because there is one function that writes it and no rendering formats the
+    number by another route. A reader handed `0.7` reads *seventy percent compliant*; a reader
+    handed this sentence reads what was assessed, by whom, and against what.
+
+    `report.RequirementResult._validate_truth_degree` is the other half: a result cannot carry the
+    numeral without the fields this sentence needs, so the sentence can never be short of them.
+    """
+    source = reading["source"]
+    atoms = ", ".join(
+        f"{name} at {value}" for name, value in sorted(dict(reading["atoms"]).items())
+    )
+    return (
+        f"holds to degree {reading['degree']} over the {reading['algebra']} algebra "
+        f"({atoms}). This is a measurement and not a verdict, and no share of one: the clause "
+        f"states no threshold on it and this tool invents none. Degrees assessed by "
+        f"{source['authority']}, on the scale {source['scale']}, by {source['method']}."
+    )
+
+
 #: How each category of `_CATEGORY_LABELS` is drawn in the HTML report: (style class, icon).
 #: Keyed by the same keys, so a category added there and forgotten here raises rather than
 #: silently rendering no pill.
@@ -414,6 +441,22 @@ def render_text(report: ConformanceReport, audience: str | None = None) -> str:
                         named.append(f"step {step}")
                 plural = "" if len(named) == 1 else "s"
                 lines.append(f"    offending record{plural}: {', '.join(named)}")
+            # Both open-texture lines ride on `evidence_summary`, the flag that decides
+            # whether this audience is shown an engine's account of what it established. They are
+            # deliberately not a projection field of their own: the one audience that suppresses
+            # that account is the affected individual, who is shown these duties by
+            # `_lay_sections` as duties nothing settled, and a lay reader handed a number on a
+            # lattice would read it as a score whatever sentence surrounded it.
+            open_texture = r.details.get(OPEN_TEXTURE_KEY)
+            if view.evidence_summary and open_texture:
+                for atom in open_texture:
+                    lines.append(
+                        f"    open-textured predicate: whether {atom['signal']} is "
+                        f"{atom['predicate']!r} is settled by {atom['authority']}, not here"
+                    )
+            reading = r.details.get(TRUTH_DEGREE_KEY)
+            if view.evidence_summary and reading:
+                lines.append(f"    truth degree: {degree_sentence(reading)}")
             budget = r.details.get(PROBE_BUDGET_KEY)
             if view.probe_budget and budget:
                 lines.append(f"    probe budget: {_budget_line(budget)}")
@@ -742,6 +785,38 @@ def render_html(
                     "<strong>VIOLATED IN TRACE — Execution Counterexample Witness "
                     f"({counted}):</strong>"
                     f"{witness_table}{truncation_note}"
+                    "</div>"
+                )
+
+            open_texture = r.details.get(OPEN_TEXTURE_KEY)
+            if view.evidence_summary and open_texture:
+                atom_items = "".join(
+                    "<li>whether <code>{}</code> is {} — settled by {}, not here</li>".format(
+                        html.escape(str(atom["signal"])),
+                        html.escape(repr(atom["predicate"])),
+                        html.escape(str(atom["authority"])),
+                    )
+                    for atom in open_texture
+                )
+                details_html += (
+                    '<div class="callout-box callout-unattainable">'
+                    "<strong>NOT EVALUATED — Open-Textured Predicate:</strong>"
+                    f"<ul>{atom_items}</ul>"
+                    '<div class="callout-note">Nothing here says this duty is met and nothing '
+                    "here says it is breached. The predicate has no sharp boundary and this tool "
+                    "does not settle one in place of the named authority.</div>"
+                    "</div>"
+                )
+
+            reading = r.details.get(TRUTH_DEGREE_KEY)
+            if view.evidence_summary and reading:
+                details_html += (
+                    '<div class="callout-box callout-probe">'
+                    "<strong>NOT EVALUATED — Truth Degree Measured:</strong><br>"
+                    f"{html.escape(degree_sentence(reading))}"
+                    '<div class="callout-note">A degree is a distinct evidence basis, not a '
+                    "rescaled verdict: it is not a percentage of compliance and it carries no rung "
+                    "of the evidence lattice.</div>"
                     "</div>"
                 )
 

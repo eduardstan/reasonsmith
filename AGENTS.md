@@ -225,6 +225,28 @@ trigger as an implication, which removed a false violation against a creditor la
 the cross-cutting rule stated above and in `docs/semantics.md` §4.
 `docs/findings-nesyarena.md` shows those ECOA duties landing on a real system.
 
+Two fragments exist for **open-textured predicates** — the words a clause states without a sharp
+boundary, which the fourth column of `docs/refinement.md` names over and over (*meaningful*,
+*sufficiently detailed*, *adequate*) — and **no shipped duty uses either**, which
+`test_no_shipped_pack_uses_either_open_texture_construct` keeps true. `undetermined(signal,
+"predicate", "authority")` is a predicate no engine settles, reported *not evaluated* naming who
+does; `degree(signal, "predicate")` is a truth degree read over a residuated lattice in
+`manyvalued.py` (Łukasiewicz, Gödel, product, each checked against the residuation law). Neither
+reaches an engine: `report._evaluate_requirement` dispatches both **after** the capability gate and
+before `_engine_ladder`, which is the whole of the guarantee that a system showing nothing is still
+`unattainable` and never a low degree. Six things must not be undone: the algebra is a **pack**
+parameter (`[grading] algebra`) refused at load when missing and handed to graded requirements only,
+so a two-valued duty cannot acquire one; the degree comes from a `manyvalued.Grading` a caller
+passes to `check_conformance` and never from the audited system, with authority/scale/method forced
+onto the result the way `PROBE_BUDGET_FIELDS` forces the search budget; `render.degree_sentence` is
+the only place any rendering formats a degree and a result carrying one carries **no strength**, so
+`0.7` can never read as a fraction of a rung — the strength lattice did not move and `graded` is not
+one; a graded atom under a comparison (a compliance threshold) or a temporal operator is a **load
+error**; an ungraded atom and an empty trace are *not evaluated*, never `0.0` and never `1.0`; and
+nothing turns a degree into a verdict, because that needs a threshold no statute states. Read
+`docs/semantics.md` §9 — which carries the presentation rule — before touching any of it, and
+`ROADMAP.md` objective 6 for what a first shipped duty would owe.
+
 `requires` is a conjunctive gate, so a branch of an either/or clause must not be listed in it: the
 loader (`spec._check_spec`, via `rulelang.unconditional_signal_names`) exempts a signal read only
 inside a disjunction, because gating one branch reports a system that lawfully took the other

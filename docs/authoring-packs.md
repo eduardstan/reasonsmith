@@ -78,7 +78,7 @@ codebase acts on when it does not.
 | `source_document`, `article_clause` | The statute and clause the duty comes from. Together they are the citation a finding is reported against. |
 | `verbatim_text` | The exact words of the clause, quoted for the report. |
 | `stakeholder` | Whose interest the duty protects. |
-| `formalism` | Which **fragment** of the property language `spec` is written in: `record` (a conjunction of `present(signal)` atoms), `temporal` (anything using a temporal operator), `logical` (any other property of one decision record), `counterfactual` (the one relational atom — see "There is a fourth fragment" below). It says what the property *is*; it does not decide which engine answers it. The loader parses `spec`, works out the fragment and refuses a mismatch. |
+| `formalism` | Which **fragment** of the property language `spec` is written in: `record` (a conjunction of `present(signal)` atoms), `temporal` (anything using a temporal operator), `logical` (any other property of one decision record), `counterfactual` (the one relational atom), `undetermined` and `graded` (predicates the law states without a sharp boundary — see "A predicate the law states without a boundary" below). It says what the property *is*; it does not decide which engine answers it. The loader parses `spec`, works out the fragment and refuses a mismatch. |
 | `spec` | The property, as a formula. Never prose — see "One property language" below. |
 | `rationale` | What the duty asks, in English, for a human reading the pack. Nothing derives a verdict from its wording. |
 | `requires` | The signal names the system must be capable of emitting for the requirement to be checkable at all. A system missing one is reported unattainable on the missing signal, without being run. It is a conjunction — see "An either/or clause" below before listing a branch of one here. |
@@ -115,7 +115,7 @@ Two load-time checks make `formalism` mean something:
   exact and not merely compatible: a presence conjunction is also a well-formed `logical` property,
   and accepting it as one would cost the record engine's per-signal, per-record diagnostics.
 
-There is a fourth fragment and it behaves unlike the other three.
+There are three further fragments and each behaves unlike the first three.
 `counterfactually_invariant(outcome_signal, protected_signal)` — hold every input fixed, move one
 named variable, and the decision must not move — is a property of a *pair* of executions and
 classifies into `counterfactual`. Both arguments are signal names and never expressions, the two
@@ -130,6 +130,9 @@ Both names still belong in `requires` — the protected one is what the engine r
 when a system has no notion of it — but it is the single name the capability gate does not
 subtract, so a duty written this way never tells an adopter to start logging a prohibited basis.
 
+The fifth and sixth are `undetermined` and `graded`, for predicates the law states without a sharp
+boundary; both are below, under *A predicate the law states without a boundary*.
+
 **The fragment does not pick the engine.** How strongly a duty can be discharged is a fact about the
 system under test, not about the pack: `report._engine_ladder` collects every engine the fragment
 and the system's exposed surface allow, and takes the strongest evidence produced. A presence
@@ -141,6 +144,51 @@ under the same duty's name rather than the same one with weaker evidence.
 If a duty cannot be written in this language, that is a finding to record in `docs/semantics.md` —
 not a reason to widen the language until it fits. Widening it to accommodate one stubborn duty is
 how a property language becomes an untyped string again.
+
+## A predicate the law states without a boundary — two ways to write it
+
+Most of what a shipped pack has left out is not a construct. It is a *predicate*: *meaningful*,
+*sufficiently detailed*, *adequate*, *appropriate*. Twenty-one of the twenty-nine shipped
+requirements are presence checks and the fourth column of [`refinement.md`](refinement.md) says so
+row after row. There are two ways to write one, and both are the fifth and sixth fragments.
+
+**`undetermined(signal, "predicate", "authority")`** says this tool does not settle the predicate
+and names who does. The duty is reported *not evaluated*, the result names both, and the reader is
+told that nothing here says the duty is met and nothing here says it is breached. One such atom
+anywhere leaves the whole formula unsettled, so `present(r) and undetermined(r, "meaningful", …)` is
+not answered by its presence conjunct. Use it when the honest answer is that applying the predicate
+to these facts is somebody else's job — a supervisory authority, a court, a published guideline —
+and name that body specifically enough that a reader knows where to take it. The signal argument
+still belongs in `requires`: a system that cannot emit the thing the predicate is about is
+`unattainable`, and that answer is not displaced by this construct.
+
+**`degree(signal, "predicate")`** says the predicate is *vague* rather than merely unsettled — that
+it has no sharp boundary even when every fact is known — and asks for a truth degree. Writing one
+commits the pack to two further things:
+
+- **Declare the algebra.** A `[grading]` table at pack level, `algebra = "lukasiewicz"` /
+  `"godel"` / `"product"`. A pack with a graded duty and no such table is refused at load, because
+  which residuated lattice the connectives are read over decides what a conjunction of two `0.5`s
+  means and no reader could tell which one answered. The declaration reaches the pack's graded
+  requirements and no others, so a pack that ships one graded duty leaves its presence checks
+  exactly as two-valued as they were.
+- **Know that the pack does not supply the degrees.** They come from a
+  `reasonsmith.manyvalued.Grading` a *caller* passes to `check_conformance`, naming the authority
+  that fixed the scale, what the scale is and how the degrees were obtained. A degree the audited
+  system asserts about itself is the `reason_is_specific` self-declaration wearing a lattice's
+  clothes (*a phrase in a `spec`*, below), and this design refuses it in the same terms.
+
+Two shapes are load errors, and both are the same refusal. A `degree()` atom under a **comparison or
+arithmetic** — `degree(r, "detailed") >= 0.8` — states a threshold, which is the pack author's number
+presented as the regulation's, and is exactly the hazard *a number in a `spec`* describes arriving
+on a lattice. A `degree()` atom under a **temporal operator** asks for a many-valued reading of
+`always` or `until`, and this repository implements no temporal semantics at any rung.
+
+**Nothing turns a degree into a verdict**, here or anywhere. A graded duty is reported *not
+evaluated* with the degree carried beside it as a measurement, and what discharges the duty is a
+legal reading. Read [`semantics.md`](semantics.md) §9 in full before writing either atom — in
+particular the presentation rule, which is why a degree never appears in a report without the
+authority, scale, method and algebra that fixed it.
 
 ## A phrase in a `spec` is the clause's own words, never the pack's
 

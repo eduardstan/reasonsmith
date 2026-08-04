@@ -81,6 +81,50 @@ CONTAINS_CALL = "contains"
 #: never from the trace. See `engines/counterfactual.py` and `docs/semantics.md` §3.
 COUNTERFACTUAL_CALL = "counterfactually_invariant"
 
+#: The atom for a predicate the law states in words with no sharp boundary, which **no engine here
+#: settles** — `undetermined(signal, "predicate", "authority")`.
+#:
+#: It is the fourth atom whose first argument is a signal *name* rather than an expression, and it
+#: exists because the fourth column of `docs/refinement.md` says the same thing over and over:
+#: *meaningful*, *sufficiently detailed*, *adequate*, *appropriate* were not modelled, and a
+#: presence check stood in for each. Roughly three quarters of that already happened incidentally,
+#: through whichever not-evaluated path a duty happened to fall down. This makes it a construct: the
+#: pack states, in the property itself, which predicate is open-textured and **which authority would
+#: settle it** — a supervisory authority, a court, a published guideline — and the result names
+#: both. It is never silently true and never silently false.
+#:
+#: The signal argument is load-bearing and is not decoration. It is what puts the name into
+#: `requires`, so a system that cannot emit the thing the predicate is about is reported
+#: `unattainable` by the capability gate before this atom is ever reached. An undetermined duty is
+#: therefore not a way for every system to get the same answer.
+UNDETERMINED_CALL = "undetermined"
+
+#: The atom whose value is a **truth degree** rather than a truth value —
+#: `degree(signal, "predicate")`.
+#:
+#: The other half of the same problem, and a different half. `undetermined()` is the conservative
+#: reading: the predicate is not settled here, so nothing is claimed. But vagueness is not missing
+#: information — *sufficiently detailed* has no sharp boundary even when every fact is known, which
+#: is what many-valued logic exists for. This atom's degree comes from a declared source outside the
+#: system (`manyvalued.Grading`), and the connectives above it are read over an algebra the pack
+#: declares (`manyvalued.ALGEBRAS`). Neither is optional and neither has a default.
+#:
+#: Nothing here turns a degree into a verdict. See `manyvalued` and `docs/semantics.md` §9.
+DEGREE_CALL = "degree"
+
+#: Every atom whose first argument is a signal *name* the engine binds to a field or a variable,
+#: rather than an expression to be computed. Named once because two walkers ask the same question of
+#: it — `_bare_boolean_parts`, deciding which names are read as flags, and `_value_signal_names`,
+#: deciding which are read as magnitudes — and an atom added to one tuple and forgotten in the other
+#: would give its signal a role the property never gave it.
+_SIGNAL_ARGUMENT_CALLS = (
+    PRESENCE_CALL,
+    CONTAINS_CALL,
+    COUNTERFACTUAL_CALL,
+    UNDETERMINED_CALL,
+    DEGREE_CALL,
+)
+
 #: The characters `contains()` folds, and the only ones. See `fold_ascii_case`.
 _ASCII_UPPER = frozenset(chr(code) for code in range(ord("A"), ord("Z") + 1))
 
@@ -118,7 +162,13 @@ VALUE_CALLS = {"implies": 2, "Implies": 2, "abs": 1, "min": 2, "max": 2}
 #: across records with a temporal operator; `counterfactual` is the one relational fragment — a
 #: property of a *pair* of executions rather than of any trace, and the only one nothing that reads
 #: a decision log may discharge.
-FRAGMENTS = ("record", "logical", "temporal", "counterfactual")
+#:
+#: `undetermined` and `graded` are the two open-texture fragments, and they are fragments rather
+#: than a flag for the reason `counterfactual` is: the fragment is what decides which engines may
+#: discharge a duty, and neither of these may be discharged by any of them. A spec with no
+#: `degree()` atom can never be classified `graded`, which is the whole of the guarantee that a duty
+#: with a sharp boundary does not acquire a truth degree because the machinery now exists.
+FRAGMENTS = ("record", "logical", "temporal", "counterfactual", "undetermined", "graded")
 
 #: The fragments that are properties of a single decision record, and can therefore be discharged
 #: by an engine that reasons about one decision at a time (the solver, the replay search) as well
@@ -287,6 +337,98 @@ def counterfactual_arguments(node: ast.Call) -> tuple[str, str]:
             "Name the decision as the outcome and the protected variable as the second argument"
         )
     return outcome.id, protected.id
+
+
+def _signal_and_literals(node: ast.Call, call: str, roles: tuple[str, ...]) -> tuple[str, ...]:
+    """A signal name followed by non-empty string literals, refusing every other shape.
+
+    Shared by `undetermined_arguments` and `degree_arguments` because the two atoms have the same
+    argument discipline `contains()` set: the first argument names one field of one decision record,
+    so it is a name and not an expression, and every argument after it is a literal the *pack* fixes
+    rather than a value the audited system supplies. A predicate word or an authority read out of
+    the system's own log would be the `reason_is_specific` self-declaration with an extra step.
+    """
+    expected = 1 + len(roles)
+    if len(node.args) != expected:
+        raise UnsupportedConstructError(
+            f"{call}() takes a signal name and {', '.join(roles)}: {ast.unparse(node)!r}"
+        )
+    signal, *literals = node.args
+    if not isinstance(signal, ast.Name):
+        raise UnsupportedConstructError(
+            f"{call}() is about one signal of the decision record, so its first argument is a "
+            f"signal name and not an expression: {ast.unparse(node)!r}"
+        )
+    values: list[str] = []
+    for role, literal in zip(roles, literals, strict=True):
+        if not isinstance(literal, ast.Constant) or not isinstance(literal.value, str):
+            raise UnsupportedConstructError(
+                f"{call}()'s {role} is fixed by the pack, so it is a string literal and never a "
+                f"name: {ast.unparse(node)!r}"
+            )
+        if not literal.value.strip():
+            raise UnsupportedConstructError(
+                f"{call}()'s {role} must be stated: {ast.unparse(node)!r} leaves it blank, which "
+                "reports the reader a name for nothing"
+            )
+        values.append(literal.value)
+    return (signal.id, *values)
+
+
+def undetermined_arguments(node: ast.Call) -> tuple[str, str, str]:
+    """The signal, the open-textured predicate and the authority of an `undetermined()` atom.
+
+    All three are required, and the authority most of all: the point of the construct is that this
+    tool does not settle the predicate and says who would. An atom that named no authority would be
+    an ordinary not-evaluated result with extra syntax.
+    """
+    signal, predicate, authority = _signal_and_literals(
+        node, UNDETERMINED_CALL, ("the open-textured predicate", "the authority that settles it")
+    )
+    return signal, predicate, authority
+
+
+def degree_arguments(node: ast.Call) -> tuple[str, str]:
+    """The signal and the open-textured predicate of a `degree()` atom.
+
+    Deliberately no third argument naming where the degree came from: that is one account for the
+    whole run and it belongs to the `Grading` supplied beside the pack, not to the pack. A pack that
+    could name its own degree source would be naming an assessment nobody performed.
+    """
+    signal, predicate = _signal_and_literals(
+        node, DEGREE_CALL, ("the open-textured predicate",)
+    )
+    return signal, predicate
+
+
+def _atom_calls(node: ast.AST, call: str) -> tuple[ast.Call, ...]:
+    return tuple(
+        child
+        for child in ast.walk(node)
+        if isinstance(child, ast.Call)
+        and isinstance(child.func, ast.Name)
+        and child.func.id == call
+    )
+
+
+def undetermined_atoms(node: ast.AST) -> tuple[tuple[str, str, str], ...]:
+    """Every `undetermined()` atom of a property, as (signal, predicate, authority) triples."""
+    return tuple(undetermined_arguments(call) for call in _atom_calls(node, UNDETERMINED_CALL))
+
+
+def has_undetermined_atom(node: ast.AST) -> bool:
+    """True when `undetermined()` occurs anywhere in a property."""
+    return bool(_atom_calls(node, UNDETERMINED_CALL))
+
+
+def has_degree_atom(node: ast.AST) -> bool:
+    """True when `degree()` occurs anywhere in a property."""
+    return bool(_atom_calls(node, DEGREE_CALL))
+
+
+def degree_atoms(node: ast.AST) -> tuple[tuple[str, str], ...]:
+    """Every `degree()` atom of a property, as (signal, predicate) pairs."""
+    return tuple(degree_arguments(call) for call in _atom_calls(node, DEGREE_CALL))
 
 
 def counterfactual_atom(node: ast.AST) -> tuple[str, str] | None:
@@ -552,6 +694,17 @@ def expression_kind(node: ast.AST) -> str:
         if name == COUNTERFACTUAL_CALL:
             counterfactual_arguments(node)
             return "boolean"
+        if name == UNDETERMINED_CALL:
+            undetermined_arguments(node)
+            return "boolean"
+        if name == DEGREE_CALL:
+            # Boolean in the *type* system of this language, and a degree only under the graded
+            # reading. Saying "number" here would let it stand as an operand of arithmetic and of a
+            # comparison, which is exactly what `manyvalued.degree_of` refuses: a comparison of two
+            # degrees is a threshold, and a threshold in a shipped pack is the pack author's number
+            # presented as the regulation's.
+            degree_arguments(node)
+            return "boolean"
         if name in TEMPORAL_OPERATORS:
             operands = 2 if name in BINARY_TEMPORAL_OPERATORS else 1
             if len(node.args) != operands:
@@ -593,6 +746,59 @@ def validate_property(node: ast.AST) -> None:
             "Nothing here discharges a combination, and admitting one would let the part that is "
             "a property of one decision be answered off a trace and reported as the duty"
         )
+    # The two open-texture atoms answer different questions and a formula asking both answers
+    # neither. `undetermined()` says nothing here settles the predicate, so the duty is not
+    # evaluated whatever else the formula says; `degree()` says the predicate is graded and asks for
+    # the whole formula to be read over the declared algebra. A spec carrying both would be graded
+    # by classification and never graded in fact, which is a pack author told a semantics ran that
+    # did not.
+    if has_undetermined_atom(node) and has_degree_atom(node):
+        raise UnsupportedConstructError(
+            f"{ast.unparse(node)!r} uses both {UNDETERMINED_CALL}() and {DEGREE_CALL}(). The first "
+            "says no engine here settles the predicate and the second asks for it to be graded "
+            "over the pack's algebra; a duty is one or the other. Split the clause, or decide "
+            "which reading the predicate gets — see docs/semantics.md §9"
+        )
+    # A graded atom under a temporal operator would need a many-valued reading of the operator, and
+    # this package implements no temporal semantics of its own at any rung (see the module docstring
+    # of `ltlf.py` and `engines/observed.to_stl`). Refused at load rather than reported not
+    # evaluated at run time, so the pack author learns it where the spec is written.
+    for call in (
+        child
+        for child in ast.walk(node)
+        if isinstance(child, ast.Call)
+        and isinstance(child.func, ast.Name)
+        and child.func.id in TEMPORAL_OPERATORS
+    ):
+        if has_degree_atom(call):
+            raise UnsupportedConstructError(
+                f"{ast.unparse(call)!r} puts a {DEGREE_CALL}() atom under a temporal operator. A "
+                "many-valued reading of a temporal operator is a temporal semantics, and this "
+                "package implements none — the graded fragment is a property of one decision "
+                "record, quantified over the trace by the infimum of its per-record degrees "
+                "(docs/semantics.md §9)"
+            )
+    # A graded atom under a comparison **states a threshold**, and this is the one place a graded
+    # pack could launder a compliance cut-off into something that looks like a formula:
+    # `degree(x, "p") >= 0.8` says eight tenths discharges the duty, which no statute says. Under
+    # arithmetic it asks for a number on a scale this package has not defined. Both are refused
+    # where the spec is written rather than reported not evaluated at run time — the pack author is
+    # the person who can fix it.
+    for parent in (
+        child
+        for child in ast.walk(node)
+        if isinstance(child, (ast.Compare, ast.BinOp, ast.UnaryOp))
+        and not isinstance(getattr(child, "op", None), ast.Not)
+    ):
+        if has_degree_atom(parent):
+            raise UnsupportedConstructError(
+                f"{ast.unparse(parent)!r} puts a {DEGREE_CALL}() atom under a comparison or "
+                "arithmetic. A comparison of degrees is a threshold, and a threshold written into "
+                "a pack is the author's number presented as the regulation's; arithmetic on a "
+                "degree asks for a number on a scale this package has not defined. A graded atom "
+                "stands under the boolean connectives and under an implication, and nowhere else "
+                "(docs/semantics.md §9)"
+            )
     kind = expression_kind(node)
     if kind not in ("boolean", "unknown"):
         raise UnsupportedConstructError(
@@ -793,7 +999,7 @@ def _bare_boolean_parts(node: ast.AST) -> tuple[tuple[str, ...], tuple[bool, ...
             if name in TEMPORAL_OPERATORS or name in ("implies", "Implies"):
                 for argument in current.args:
                     visit(argument, True)
-            elif name not in (PRESENCE_CALL, CONTAINS_CALL, COUNTERFACTUAL_CALL):
+            elif name not in _SIGNAL_ARGUMENT_CALLS:
                 for argument in current.args:
                     visit(argument)
 
@@ -817,7 +1023,7 @@ def _value_signal_names(node: ast.AST) -> set[str]:
     if (
         isinstance(node, ast.Call)
         and isinstance(node.func, ast.Name)
-        and node.func.id in (PRESENCE_CALL, CONTAINS_CALL, COUNTERFACTUAL_CALL)
+        and node.func.id in _SIGNAL_ARGUMENT_CALLS
     ):
         return set()
     names: set[str] = set()
@@ -920,6 +1126,15 @@ def classify_fragment(spec: str) -> str:
     node = parse_property(spec)
     if counterfactual_atom(node) is not None:
         return "counterfactual"
+    # `undetermined` is asked before everything else that follows, and it dominates: one atom no
+    # engine settles leaves the whole formula unsettled, so a spec carrying one is not a `record`
+    # duty with an asterisk. Classifying it by its presence conjuncts would answer the settleable
+    # part and report the answer as the duty's, which is the substitution presence-as-a-proxy
+    # already is and this construct exists to end.
+    if has_undetermined_atom(node):
+        return "undetermined"
+    if has_degree_atom(node):
+        return "graded"
     if has_temporal_operator(node):
         validate_temporal_property(node)
         return "temporal"
@@ -1049,6 +1264,32 @@ def eval_expression(node: ast.AST, env: dict[str, Any]) -> Any:
                 f"{protected!r} differed and nothing else had. That is a property of a pair of "
                 "executions, and it is established by encoding the declared rules twice or by "
                 "replaying a paired input — never read off a log"
+            )
+        if name == UNDETERMINED_CALL:
+            # Refused rather than answered, and for the same reason the counterfactual atom is: this
+            # interpreter is what every trace-reading engine evaluates through, so refusing here is
+            # what makes "no engine settles an open-textured predicate" a fact about the code rather
+            # than a convention `report._engine_ladder` is trusted to keep. Answering `False` would
+            # report a system violated on a predicate nobody applied, and `True` would clear it.
+            signal, predicate, authority = undetermined_arguments(node)
+            raise UnsupportedConstructError(
+                f"{UNDETERMINED_CALL}({signal}, {predicate!r}, {authority!r}) is a predicate the "
+                "law states without a sharp boundary, and nothing here settles it. It is neither "
+                f"true nor false of this record: {authority} settles it, and this tool reports "
+                "that rather than guessing"
+            )
+        if name == DEGREE_CALL:
+            # Refused here too, and the refusal is what keeps a two-valued engine from reading a
+            # graded atom as a flag. A degree is read only by `manyvalued.degree_of`, over an
+            # algebra a pack declared and against a grading a caller supplied; neither exists in
+            # this interpreter's environment, and inventing a truthiness for the atom would let the
+            # record engine answer a graded duty off a log.
+            signal, predicate = degree_arguments(node)
+            raise UnsupportedConstructError(
+                f"{DEGREE_CALL}({signal}, {predicate!r}) has a truth degree and not a truth value. "
+                "It is read over the algebra the pack declares, against a grading whose source is "
+                "declared beside it, and never off a decision record as a flag — see "
+                "reasonsmith.manyvalued and docs/semantics.md §9"
             )
         args = [eval_expression(arg, env) for arg in node.args]
         if name in ("implies", "Implies"):

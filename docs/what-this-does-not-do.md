@@ -53,6 +53,8 @@ written in:
 | `logical` | 3 | any other property of one decision record |
 | `temporal` | 4 | a property over the trace |
 | `counterfactual` | 1 | invariance under one named protected variable |
+| `undetermined` | 0 | a predicate no engine here settles, and who does |
+| `graded` | 0 | a truth degree over an algebra the pack declares |
 
 **Three quarters of the shipped duties are presence checks.** Reproduce the count with
 `reasonsmith validate-pack ecoa eu_ai_act gdpr gpai table7`, which prints each requirement's
@@ -68,7 +70,12 @@ when the fifth pack shipped — from 13 of 19 to 21 of 28.
 Presence is also not adequacy, at the level of the individual duty: a reason field that is filled
 in is not a reason that is sufficient. Where a clause supplies its own list of insufficient
 wordings, this tool uses it and can go no further
-([`docs/refinement.md`](refinement.md), *presence is not adequacy*).
+([`docs/refinement.md`](refinement.md), *presence is not adequacy*). The two zero rows above are the
+machinery for the rest of that problem, shipped with no duty on it: a pack can now say that
+*meaningful* is open-textured and name who settles it, or carry a truth degree for it, and neither
+turns the adjective into a verdict — a graded duty is reported *not evaluated* with its degree
+beside it as a measurement ([`docs/semantics.md`](semantics.md) §9). Which clause gets the first one
+is a legal reading ([`ROADMAP.md`](../ROADMAP.md) §6).
 
 ## 3. A rung is not a grade
 

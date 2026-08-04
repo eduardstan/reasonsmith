@@ -2067,3 +2067,174 @@ definitions were not bent to fit the code.
   without ever editing a pack. `--analyse` is the other half of the same discipline: isomorphism
   keeps a pack faithful to the source, and these checks ask whether the formulas it grew are
   consistent, non-redundant and doing work.
+
+---
+
+## 9. Open-textured predicates
+
+Twenty-one of the twenty-nine shipped requirements are presence checks. The fourth column of
+[`refinement.md`](refinement.md) says the same thing over and over about the rest — *meaningful*,
+*sufficiently detailed*, *adequate*, *appropriate*, *without undue delay* were not modelled — and a
+`present(signal)` atom stood in for each. That is not a bad proxy for those predicates. It is a
+refusal to model them at all, and the largest single gap this tool has.
+
+This section is the semantics of the machinery for them. **No shipped duty uses it**
+(`test_no_shipped_pack_uses_either_open_texture_construct`), and which statutory predicate becomes
+the first graded one is a legal reading rather than an engineering decision.
+
+Two constructs answer different halves of the problem and compose rather than compete.
+
+### `undetermined(signal, "predicate", "authority")` — the predicate nothing here settles
+
+Some predicates are open-textured because their application to facts is contested and is settled by
+an institution rather than by a computation. The construct says so in the property itself, naming
+the predicate and **who would settle it**, and the result carries both
+(`test_an_undetermined_atom_is_reported_undetermined_and_names_its_authority`).
+
+The verdict is `inconclusive` at `strength=None` — this package's *not evaluated* — and the path is
+the one `not_evaluated_for_unreachable_trigger` already established rather than a mechanism beside
+it. Roughly three quarters of this behaviour already happened, incidentally: a duty whose predicate
+nobody had narrowed fell down whichever un-evaluated path its shape happened to take, and the report
+said an engine had fallen short rather than that the *law* had not been narrowed. What the construct
+adds is that the pack states which predicate is open-textured, and the reader is told who resolves
+it.
+
+Three things it is deliberately not. Not `unattainable`: the gap is in the formalisation, not in the
+system, and telling an adopter to change a system because a statute uses the word *meaningful* is
+the wrong instruction. Not `not applicable`: the duty reaches the system, and only its application
+to these facts is unsettled. And never `satisfied` or `violated` at any strength, because nothing
+here applied the predicate — which is why `rulelang.eval_expression` **refuses** the atom rather
+than answering it (`test_an_undetermined_atom_is_refused_by_the_two_valued_interpreter`). Every
+trace-reading engine evaluates through that interpreter, so the refusal is a fact about the code
+rather than a convention `report._engine_ladder` is trusted to keep — the same argument the
+counterfactual atom's refusal rests on.
+
+One atom leaves the whole formula unsettled, and `classify_fragment` says so before anything else
+except the counterfactual question
+(`test_an_undetermined_duty_dominates_the_settleable_parts_of_its_formula`). Answering the presence
+conjunct of `present(r) and undetermined(r, "meaningful", …)` and reporting that as the duty's
+verdict is the substitution presence-as-a-proxy already is.
+
+### `degree(signal, "predicate")` — vagueness, which is not missing information
+
+`undetermined()` is the conservative reading. It is also not the whole problem: *sufficiently
+detailed* has no sharp boundary **even when every fact is known**, which is exactly the case
+two-valued logic mishandles and many-valued logic exists for. `degree(signal, "predicate")` is an
+atom whose value is a truth degree in [0, 1]; `reasonsmith.manyvalued` is the reading.
+
+Four things are declared and none is defaulted.
+
+**The algebra is a stated parameter of the pack.** Which residuated lattice the connectives are read
+over decides what a conjunction of two `0.5`s means — Łukasiewicz says `0`, Gödel says `0.5`,
+product says `0.25` (`test_the_three_algebras_disagree_about_a_conjunction_of_two_halves`) — so a
+pack shipping a graded duty without `[grading] algebra` is refused at load, naming what is missing
+(`test_a_pack_shipping_a_graded_duty_without_an_algebra_is_refused_at_load`), and a name outside
+`manyvalued.ALGEBRAS` is refused where it is written
+(`test_a_pack_declaring_an_algebra_this_package_cannot_read_is_refused`). The three shipped members
+are the three fundamental continuous t-norms, each stored with its residuum, and each is checked
+against the residuation law rather than asserted to satisfy it
+(`test_each_algebra_is_a_residuated_lattice_on_the_grid`). A fourth member is a row in that table
+and nothing else.
+
+**The degree has a declared source, and it travels with the verdict.** A degree a system asserts
+about itself is the `reason_is_specific` self-declaration wearing a lattice's clothes, so a
+`Grading` is supplied to `check_conformance` beside the pack — third-party evidence, in the way a
+decision trace is first-party evidence — and it names the authority that fixed the scale, what the
+scale is, and how the degrees were obtained (`test_a_grading_must_state_who_fixed_the_scale`). The
+result model refuses a degree that does not carry all three
+(`test_a_result_cannot_carry_a_degree_without_the_source_that_fixed_it`), the same shape
+`PROBE_BUDGET_FIELDS` already forces on a bounded search.
+
+**The degree is quantified over the trace by the infimum**, which is the graded reading of "holds at
+every decision" and the lattice meet in every algebra here
+(`test_the_degree_of_a_trace_is_the_infimum_of_its_records`). It is deliberately not an average: an
+average lets a long run of compliant decisions pay for a bad one, which is not what a universal duty
+says. An empty trace therefore yields **no degree at all** rather than the top of the lattice —
+having observed nothing is not evidence graded 1.0, and answering `1.0` there would be
+`combine_verdicts`' vacuous `satisfied` rewritten as a number
+(`test_a_graded_duty_with_no_grading_or_no_trace_is_not_evaluated`).
+
+**A predicate nobody assessed is not a predicate assessed as false.** A grading that scores no
+degree for an atom the property reads leaves the duty *not evaluated*, never at `0.0`
+(`test_an_ungraded_atom_is_not_evaluated_and_never_a_degree_of_zero`).
+
+Everything in a graded formula with no `degree()` atom under it is answered by the two-valued
+interpreter every other engine already uses, and mapped to `1.0`/`0.0`. That is not an optimisation:
+it is what keeps `present()`'s treatment of a blank string and `contains()`' ASCII fold meaning the
+same thing inside a graded formula and outside one
+(`test_the_crisp_parts_of_a_graded_formula_mean_what_they_mean_everywhere_else`).
+
+### The presentation rule, decided before anything renders a degree
+
+**A truth degree is a distinct evidence basis and never a rescaled verdict.** A reader handed `0.7`
+reads *seventy percent compliant*. [`authoring-packs.md`](authoring-packs.md) already forbids that
+move for a group-parity duty, and the objection is stronger here, because a degree looks like a
+measurement of the duty itself rather than of a rate the system declared. The rule, in four parts:
+
+1. **A degree is never rendered alone.** The numeral, the algebra it was combined over, and the
+   authority, scale and method that fixed it are one sentence. `render.degree_sentence` is the only
+   place any rendering formats a degree, and
+   `report.RequirementResult._validate_truth_degree` refuses a result that could not fill it — so
+   the sentence can never be short of its parts and no surface can print the number by another route
+   (`test_no_rendering_prints_a_bare_degree_without_the_source_that_fixed_it`, which checks the text
+   report, the HTML dossier, the JSON envelope and all five audience projections).
+2. **A degree is never a percentage and never a score.** It is not scaled to 100, not drawn as a
+   bar, and not compared against another duty's.
+3. **A degree carries no rung of the evidence lattice.** A result carrying one carries no
+   `strength`, refused in the result model
+   (`test_a_result_carrying_a_degree_cannot_carry_a_strength`), so nobody can read the number as a
+   fraction of a proof. **The strength lattice did not move**: no member was added, and `graded` is
+   not a rung.
+4. **A lay reader is shown the duty as unsettled, in words, and never the number**
+   (`test_the_lay_audience_is_shown_the_duty_as_unsettled_and_never_the_number`). The
+   affected-individual projection already suppresses an engine's account and already reports a
+   `strength=None` result as a duty nothing here could settle; a degree shown there would be read as
+   a score whatever sentence surrounded it.
+
+### What a graded duty's verdict is, and why it is not derived from the degree
+
+`inconclusive` at `strength=None`, with the degree carried as a measurement beside it. That is the
+design and not a stub.
+
+Turning a degree into `satisfied` needs a threshold. No statute states one for *sufficiently
+detailed*, so a cut-off written into a shipped pack would be the pack author's number presented as
+the regulation's — the objection [`authoring-packs.md`](authoring-packs.md) already makes about an
+invented bound, arriving on a lattice instead of as a constant in a `spec`. The property language
+refuses to let a pack state one at all: a `degree()` atom under a comparison or under arithmetic is
+refused at load (`test_a_graded_atom_under_arithmetic_or_a_comparison_is_refused`), because
+`degree(x, "p") >= 0.8` *is* the claim that eight tenths discharges the duty.
+
+So the machinery measures, the measurement travels with its algebra and its source, and what
+discharges the duty is a legal reading this tool does not make.
+
+### The failure mode this is designed against
+
+A graded semantics makes every duty *answerable*. That would destroy the single most valuable
+property this tool has: **it refuses rather than guessing.** `unattainable` and `not evaluated` stay
+reachable and are not quietly replaced by a low truth degree.
+
+The order in `report._evaluate_requirement` is what enforces it. Both open-texture fragments are
+dispatched **after** the capability gate, so a system that can show nothing is `unattainable`
+exactly as it was before any of this existed, and never a low degree
+(`test_a_system_that_can_show_nothing_is_unattainable_and_never_graded`). Neither fragment reaches
+an engine at all: no rung of the ladder may claim to have settled a predicate this tool refuses to
+settle.
+
+### Two limits, and one thing that is now a decision rather than an omission
+
+- **A graded atom under a temporal operator is refused at load**
+  (`test_a_graded_atom_under_a_temporal_operator_is_refused_at_load`). A many-valued reading of
+  `always` or `until` is a temporal semantics, and this repository implements none at any rung —
+  rtamt monitors and `flloat` decides. The graded fragment is a property of one decision record,
+  quantified over the trace by the infimum, and nothing here reads a degree across positions.
+- **A spec using both constructs is refused**
+  (`test_a_spec_using_both_open_texture_atoms_is_refused`). One says nothing here settles the
+  predicate and the other asks for it to be graded; a formula carrying both would be classified
+  `graded` and never graded in fact, which is a pack author told a semantics ran that did not.
+- **A two-valued duty cannot acquire a degree**, and the gate is `classify_fragment`, exactly as it
+  is for the counterfactual atom: a spec with no `degree()` atom is never classified `graded`, and a
+  requirement carrying an algebra beside a two-valued formalism is refused
+  (`test_a_two_valued_duty_cannot_acquire_a_degree`). A pack that declares an algebra hands it to
+  its graded requirements and to no others, so shipping one graded duty leaves its presence checks
+  as two-valued as they were
+  (`test_a_pack_declaring_an_algebra_leaves_its_two_valued_duties_two_valued`).
