@@ -544,6 +544,29 @@ so **renaming or deleting a test breaks the build if that test is named there** 
 document in the same commit. It is also where a claim the code cannot support belongs: report the
 gap in the document rather than describing a tool that does not exist.
 
+`docs/language.md` is the **definition of the property language** — the grammar, and the denotation
+`⟦·⟧_{M,A} : Spec → (𝒫(Trace_M) ⇀ A)` over a structure (a finite trace, or an input space) and a
+declared algebra (`𝔹` as a degenerate residuated lattice, not a separate system), typed over sets
+of traces uniformly so the counterfactual atom is the 2-safety property it is. It is a *description*
+of `rulelang.py` and never a second front end: the parser stays CPython's plus the whitelist, and
+`tests/test_language_definition.py` generates from the grammar, refuses each refusal the document
+keys by id, and holds the claim-to-test map the way `test_docs_semantics.py` holds `semantics.md`'s.
+The four encodings are recast there as implementations of one denotation, with the existing
+differential tests — `test_the_encoder_and_the_interpreter_answer_the_same`,
+`test_the_solvers_fold_is_the_interpreters_fold`,
+`test_the_ltlf_backend_agrees_with_the_monitor` — named as their conformance evidence. Three
+refusals in the code are stated there as **consequences of the definition** rather than as policy,
+and must not be re-explained as policy: no many-valued reading of a temporal operator (hence no
+graded atom under one), no value at the empty trace (the lattice top is the vacuous `satisfied`
+rewritten as a number), and unawareness as `unattainable` (the relational atom quantifies over pairs
+of admissible inputs, and an unaware system admits none). §4 reports **four shapes where the rtamt
+rendering and the definition disagree** — `%` (ANTLR error-recovers by dropping the token and
+`spec.parse()` does not raise), a chained comparison (rtamt left-associates over robustness where
+the language conjoins), `<->` (rtamt's `iff` robustness is negative whenever the two margins
+differ), and the known exact tie. All four are latent, `MONITOR_DIVERGENCES` is the exclusion list,
+and it is pinned twice: every row must still diverge and no shipped spec may use one. Fixing one
+means deleting its row and its §4 paragraph in the same change.
+
 ## The web home and the install surface
 
 The live home is `https://reasonsmith.dev` (landing) with the conformance dossier at

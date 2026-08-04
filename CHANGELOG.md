@@ -10,6 +10,40 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **The property language has a formal semantics, and it is a checked one.**
+  `validate-pack --analyse` asks whether a requirement set is jointly satisfiable, whether one duty
+  subsumes another, and whether a subformula is replaceable without changing a verdict — relations
+  between formulas of a language, meaningful only once the language is defined. It existed as a
+  whitelist in `rulelang.py` and four separate translations out of it.
+  [`docs/language.md`](docs/language.md) defines it: an EBNF grammar checked against the parser
+  rather than written beside it, and the denotation the captain's decision record settled —
+  `⟦·⟧_{M,A} : Spec → (𝒫(Trace_M) ⇀ A)`, parameterised by the structure `M` (a finite trace, or an
+  input space) and the algebra `A` (`𝔹` as a degenerate instance of a residuated lattice, not a
+  separate system), over sets of traces uniformly so that the counterfactual atom is typed as the
+  2-safety property it is. The four encodings — the `rulelang` interpreter, the Z3 encoding, the
+  rtamt rendering and the LTLf mapping — are recast as implementations of that one denotation, with
+  the differential tests that already existed named as their conformance evidence. Three things the
+  code does that read as policy are now consequences of the definition: a `degree()` atom under a
+  temporal operator is refused because there is no many-valued reading of a temporal operator; an
+  empty trace has no value because the tool refuses the lattice top the mathematics would give it;
+  and unawareness is `unattainable` rather than `satisfied` because the relational atom quantifies
+  over pairs of admissible inputs and an unaware system admits none. `tests/test_language_definition.py`
+  generates from the grammar, refuses every refusal the document names by id, and holds the
+  document's claim-to-test map to the suite. **Nothing in the language changed and no shipped
+  verdict moved.**
+
+- **Reported: four shapes on which the trace-rung implementation and the definition disagree.**
+  Writing the denotation down found three, beside one already documented, all at `observed` and all
+  **latent** — no shipped pack writes any of them, and a test now keeps that true. rtamt's lexer has
+  no `%` and ANTLR error-recovers by dropping the token without raising, so the monitor answers
+  about a formula nobody wrote; rtamt left-associates a chained comparison over robustness values,
+  where the language and the Z3 encoding read it as a conjunction; and rtamt's `iff` robustness is
+  negative whenever the two sides' margins differ, so an equivalence between two false operands is
+  reported violated. The fourth is the known exact-tie boundary. Each is reported rather than fixed
+  — which side moves is a decision about an engine's contract — and each is pinned twice, excluded
+  by name from the new conformance test and asserted to still diverge, so neither a silent addition
+  nor a landed fix leaves the list stale. See `docs/language.md` §4.
+
 - **Equivalence became a connective the graded fragment can read, instead of a comparison the
   author never wrote.** `preprocess_spec` rewrote `φ <=> ψ` into `(φ) == (ψ)` textually, before the
   Python parse. Over the Booleans that is sound — equivalence *is* equality of truth values — but

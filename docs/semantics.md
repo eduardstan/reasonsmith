@@ -118,6 +118,13 @@ constructed at all without the search budget that produced it
 
 ## 2. The property language
 
+**The definition lives in [`docs/language.md`](language.md)** — the grammar, checked against the
+parser; the denotation `⟦·⟧_{M,A}`, a partial map from sets of traces to a declared algebra, of
+which every engine below is an implementation; and the four implementations named as such, with
+their differential tests as the conformance evidence. That document also reports four shapes on
+which the trace-rung implementation and the definition disagree (`docs/language.md` §4). This
+section says what the language *is* for a reader of a verdict; go there for what a formula *means*.
+
 There is **one** property language, in `rulelang.py`, and `formalism` names which fragment of it a
 requirement's `spec` belongs to. The four fragments are decided by the shape of the formula, not by
 the word a pack author typed: `classify_fragment` returns `counterfactual` when the formula is the
