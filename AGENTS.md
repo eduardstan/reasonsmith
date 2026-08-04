@@ -482,7 +482,13 @@ prose counts against the shipped tree — the README's pack and engine counts, `
 "Current state, for scale" line, and the same claims where the prose restates them spelled out —
 derived at test time from `spec.list_packs()` and the modules under `engines/` (never
 `BUILTIN_ENGINE_NAMES` alone, which once missed an entry). A new pack, engine or requirement
-means updating those sentences in the same change, or the pin fails.
+means updating those sentences in the same change, or the pin fails. It also pins the CI coverage
+floor, which for a long time never failed: `--cov-fail-under=N` compares `round(total, precision)`
+against N and pytest-cov defaults `precision` to 0, so a real 92.79% rounded to 93 and the job
+exited 0 while its own summary printed `FAIL`. `[tool.coverage.report] precision = 2` in
+`pyproject.toml` is what makes the floor real — for both workflows and a local run — and
+`test_the_coverage_floor_fails_a_total_below_it` asks `should_fail_under` itself rather than a
+literal. The floor is raised deliberately and never lowered to meet the code.
 
 `analysis.py` is the only module that reads a **pack** rather than a system's evidence, reached
 through `validate-pack --analyse`: joint satisfiability with an unsatisfiable core, entailment and
