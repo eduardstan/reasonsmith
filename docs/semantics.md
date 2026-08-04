@@ -584,8 +584,9 @@ package proves has four of five legally owed reasons deleted. This engine is wha
 > decision the system exposed an artefact for, bounded proof enumeration to that artefact's own
 > `exact_depth` found **at least one** reason — not one of them was left unmeasured — and every
 > reason holding a fact no other reason uses was switched off alone
-> and the system's own engine re-run on the perturbed interpretation. Each such deletion moved the
-> system's answer, so no reason was shown deleted, and the property held on that decision's record
+> and the system's own engine re-run on the perturbed interpretation. Every reason no such single
+> deletion moved was then put to the joint search below, and no reason came back deleted from it
+> either, so no reason was shown deleted, and the property held on that decision's record
 > with the measured count in place. The budget records how many inferences were replayed, over how
 > many decisions and how many switched-off reasons
 > (`test_the_certificate_verdict_carries_its_probe_budget`,
@@ -688,7 +689,53 @@ counts facts rather than reasons for that reason. Probing one such fact per reas
 `repr` order — made coverage a function of what a system's fields are *called*: two systems alike
 but for a field name got materially different probes, and whether a defeater was ever exercised was
 decided alphabetically (`test_every_private_fact_of_a_reason_is_switched_off`). A fact shared with
-another reason is still switched off by nobody, which is the `unseparable` case above.
+another reason is still switched off by nobody in that pass, which is the `unseparable` case above.
+
+**A reason no single deletion moves is not thereby deleted, and reading it so was this rung's
+sharpest defect.** Two reasons that are *jointly* necessary and *individually* removable each leave
+the engine's answer exactly where it was — the engine falls back from one to the other — so a probe
+that only ever switches one fact off at a time reported both `deleted`, and this rung accused a
+system of omitting two reasons its inference demonstrably used. That is unsoundness in the direction
+that matters: a false accusation, from an instrument whose purpose is to make one only on measured
+evidence. So the definition of a reason the answer depends on is now written down —
+[`sufficient-reasons.md`](sufficient-reasons.md), which specialises Ignatiev, Narodytska and
+Marques-Silva's abductive explanation and its contrastive dual to the deletions the artefact admits
+— and measured. A **contrastive set** is a subset-minimal set of facts whose *joint* deletion moves
+the engine; a fact is **relevant** iff it lies in one; a reason is `live` where a fact private to it
+is relevant, and `deleted` only where **no** fact of it is
+(`test_two_jointly_necessary_reasons_are_no_longer_reported_deleted`,
+`test_the_reason_the_engine_really_ignores_is_still_reported_deleted`,
+`test_the_duty_no_longer_reports_this_system_violated_on_the_two_it_uses`).
+
+The declaration the section below turns on is what makes this available at all: upward closure of
+"the engine moved" is what makes a subset-minimal moving set a contrastive set, what makes the
+whole-space probe settle the lattice in one, and what lets the search skip the facts a single
+deletion already answered. It is one premise and not two.
+
+**`deleted` is universal over the contrastive sets, so it is claimed only where the enumeration
+finished.** `live` is existential and one contrastive set establishes it. The enumeration is
+exponential where the single-fact pass was linear, so it is bounded, and the bound travels: its
+probes are counted into `trials` and whether it *finished* rides in `input_space`, under the
+discipline `PROBE_BUDGET_FIELDS` already forces
+(`test_the_joint_search_budget_travels_into_the_verdict`). A search that ran out of budget reports
+its unresolved reasons `undetermined` — never `deleted` — so a shorter search names **fewer**
+missing reasons than a complete one and never more. There is no setting of the budget at which this
+rung accuses a system it would otherwise have cleared
+(`test_a_partial_enumeration_degrades_to_undetermined_and_never_to_deleted`,
+`test_no_budget_makes_this_instrument_name_more_missing_reasons_than_a_complete_search`).
+
+**The three not-certified states are reported apart, because they are three different facts about
+the evidence.** `unseparable` is a reason with no fact of its own to attribute a movement to;
+`inconclusive` is a probe that moved exact inference not at all, so there was no signal to read;
+`undetermined` is a reason the joint search did not resolve — its budget ran out, or the only
+relevant fact it holds is shared with another reason and the dependence cannot be attributed to one
+rather than the other. `uncertified` remains their union, because all three mean the same thing to a
+verdict: counted deleted by nothing and live by nothing
+(`test_the_three_not_certified_states_are_reported_apart`). What one bucket had been hiding is worth
+naming: a reason called `deleted` off one private fact while a *shared* fact of it moves the engine
+was an assertion that the answer did not depend on that reason, made where a deletion of one of its
+facts moved the answer. `docs/example-output.md`'s drift window is the shipped instance and it now
+reads `not certifiable`.
 
 > **If it reports `violated` at strength `probed`, then:** on at least one certified decision, the
 > deletion probe showed the system's answer does not depend on a reason exact inference found. The

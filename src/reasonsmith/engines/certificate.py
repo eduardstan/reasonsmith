@@ -51,11 +51,17 @@ What a reader must not break:
     Why this matters: exact inference is exact *on one ground program and one base
     interpretation* — `certificate.LIMITS` says so in its own words. Nothing here establishes the
     property for a decision the system did not expose.
-  - A reason the probe could not switch off in isolation (`unseparable`, `inconclusive`) is not
+  - A reason the probe could not settle (`unseparable`, `inconclusive`, `undetermined`) is not
     counted as deleted, and the count of them is reported.
     Why this matters: `certificate.certify` never assumes such a reason is live, and neither may
     this engine assume it was dropped. Counting it either way would put a verdict on evidence the
     probe explicitly declined to produce.
+  - The joint-deletion search's probes are counted into `trials` and whether it *finished* is
+    carried in `input_space`, beside the reasons it left `undetermined`.
+    Why this matters: a reason is `deleted` only where that enumeration ran to exhaustion
+    (`docs/sufficient-reasons.md` §7), so how far it got is not a curiosity about performance — it
+    is the bound on what every `deleted` here claims, and `PROBE_BUDGET_FIELDS` exists so a bound
+    a reader cannot see cannot be relied on.
   - A certificate whose enumeration found *no* reason measures nothing, and is evidence for
     nothing. It is dropped from the certified set, counted, and reported, and no run holding one
     reports SATISFIED: it is NOT EVALUATED naming `artifact_logs_deleted_reason_count`.
@@ -141,7 +147,7 @@ ARTIFACT_METHOD = "artifact"
 #: shape rather than shown a TypeError from four frames down. A system of any other family returns
 #: an `artifacts.InferenceArtifact` instead, which is the whole of what a second family costs.
 ARTIFACT_KEYS = (
-    "program", "base", "query", "adapter", "exact_depth", "monotone", "tol", "labels",
+    "program", "base", "query", "adapter", "exact_depth", "monotone", "tol", "labels", "budget",
 )
 
 #: What the search does, named on every result it produces.
@@ -149,9 +155,13 @@ STRATEGY = (
     "for each decision the system exposed an inference artefact for, its reasons are enumerated "
     "exactly by bounded proof enumeration over the ground program and scored by exact weighted "
     "model counting; every fact of a reason that no other reason uses is then switched off alone "
-    "and the system's own engine re-run on the perturbed interpretation. A reason no such deletion "
-    "moves the engine on, where it moved exact inference, is a reason the engine's answer does "
-    "not depend on, and is counted here. The probe only ever switches a fact off, never on"
+    "and the system's own engine re-run on the perturbed interpretation. A reason a single "
+    "deletion "
+    "moves the engine on is one its answer depends on. A reason no single deletion moves is then "
+    "put to a second search, because two reasons jointly necessary and individually removable look "
+    "exactly like two dropped ones: the subset-minimal *joint* deletions the engine notices are "
+    "enumerated over the remaining facts, and a reason is counted here only where that enumeration "
+    "ran to exhaustion and met no fact of it. The probe only ever switches a fact off, never on"
 )
 
 #: There is no seed: the enumeration and every probe are determined by the artefact. The budget
@@ -227,8 +237,13 @@ def _env(record: Mapping[str, Any], cert: Certificate) -> dict[str, Any]:
 
 def _probes(cert: Certificate) -> int:
     """Inferences this certificate replayed: one baseline, plus one per fact it switched off and
-    re-ran the engine on. A fact whose deletion does not move exact inference costs no re-run."""
-    return 1 + sum(v.engine_probes for v in cert.verdicts)
+    re-ran the engine on, plus every joint deletion pattern the contrastive search re-ran it on.
+    A fact whose deletion does not move exact inference costs no re-run."""
+    return (
+        1
+        + sum(v.engine_probes for v in cert.verdicts)
+        + (cert.search.probes if cert.search else 0)
+    )
 
 
 class CertificateEngine:
@@ -410,6 +425,9 @@ class CertificateEngine:
             )
 
         uncertified_reasons = sum(len(cert.uncertified) for _, cert, _ in certified)
+        undetermined_reasons = sum(len(cert.undetermined) for _, cert, _ in certified)
+        joint_reasons = sum(len(cert.jointly_necessary) for _, cert, _ in certified)
+        searches = [cert.search for _, cert, _ in certified if cert.search is not None]
         budget = {
             "trials": sum(_probes(cert) for _, cert, _ in certified),
             "strategy": STRATEGY,
@@ -419,6 +437,13 @@ class CertificateEngine:
                 "facts switched off": sum(
                     len(v.probe_facts) for _, cert, _ in certified for v in cert.verdicts
                 ),
+                # The joint search's own two numbers. `docs/sufficient-reasons.md` §7: a partial
+                # enumeration may still report a reason live and may never report one deleted, so
+                # whether it finished is the field carrying the whole of what `deleted` claims.
+                "joint deletion patterns tried": sum(s.probes for s in searches),
+                "decisions whose joint search did not finish": sum(
+                    1 for s in searches if not s.exhaustive
+                ),
             },
         }
         details: dict[str, Any] = {
@@ -427,6 +452,8 @@ class CertificateEngine:
             "decisions_without_an_artifact": uncertifiable,
             "decisions_without_an_enumerated_reason": unenumerated,
             "reasons_not_certifiable": uncertified_reasons,
+            "reasons_undetermined_by_the_joint_search": undetermined_reasons,
+            "reasons_live_only_jointly": joint_reasons,
             CERTIFICATES_KEY: [
                 {
                     "decision_index": index,
@@ -445,6 +472,12 @@ class CertificateEngine:
             f" {uncertified_reasons} reason(s) could not be switched off in isolation and are "
             "counted neither way."
             if uncertified_reasons
+            else ""
+        ) + (
+            f" {undetermined_reasons} of those are reasons the joint-deletion search did not "
+            "resolve, so they are not counted deleted: a bounded enumeration names fewer missing "
+            "reasons than a complete one, never more."
+            if undetermined_reasons
             else ""
         )
         skipped = (

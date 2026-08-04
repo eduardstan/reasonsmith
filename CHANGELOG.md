@@ -27,6 +27,26 @@ releases before it predate the file and are not reconstructed here.
   special case cannot. The mutation score reaches **only a system exposing its decision logic as a
   rule block**, which is not most audited systems; `analysis.MUTATION_LIMIT` says so on every
   analysis carrying one, and `RESULTS.md` (*Pack Analysis Note*) carries the measured figures.
+- **A subset-minimal sufficient reason is defined, and the certificate measures it.** The deletion
+  probe switched each reason off *alone*, so two reasons jointly necessary and individually
+  removable were both reported `deleted` and this tool accused a system of omitting two reasons its
+  inference demonstrably used — unsoundness in the direction that matters. `docs/sufficient-
+  reasons.md` is the definition: Ignatiev, Narodytska and Marques-Silva's abductive explanation and
+  its contrastive dual, specialised to the deletions `artifacts.InferenceArtifact` admits, with the
+  Reiter minimal-hitting-set duality it rests on and the published sources it comes from.
+  `reasonsmith.explanations` is the measurement — the MARCO seed/shrink/grow enumeration with Z3 as
+  the oracle over the subset lattice and the system's own engine as the membership oracle — and
+  `certificate.certify_artifact` now decides every candidate-`deleted` reason against it. The
+  monotonicity declaration [#112](https://github.com/eduardstan/reasonsmith/pull/112) added for a
+  soundness reason turns out to be the precondition the
+  theory needs; it is one premise and not two.
+- **A reason the joint search does not resolve is `undetermined`, and the search's bound travels.**
+  `deleted` is universal over the contrastive sets and is claimed only where the enumeration ran to
+  exhaustion; `live` is existential and one contrastive set establishes it. So a shorter search
+  names *fewer* missing reasons than a complete one and never more, and there is no setting of the
+  budget at which this rung accuses a system it would otherwise have cleared. The probes spent and
+  whether the enumeration finished ride in `details[PROBE_BUDGET_KEY]` under the discipline
+  `PROBE_BUDGET_FIELDS` already forces.
 
 - **A decision trace can state its own clock.** A record may carry `sut.TIME_DOMAIN_KEY` — a
   mapping of event kind to the timestamp that event happened at — so *when the clock started* is a
@@ -50,6 +70,14 @@ releases before it predate the file and are not reconstructed here.
   it needs an adapter (`docs/semantics.md` §3, *The inference artefact*).
 
 ### Changed
+
+- **`uncertified` was one bucket doing three jobs.** `Certificate.unseparable`,
+  `.inconclusive` and `.undetermined` report apart — a reason with no fact of its own, a probe that
+  carried no exact signal, and a reason the joint search left open — and `uncertified` stays their
+  union, because all three mean the same thing to a verdict. One consequence is visible in the
+  shipped transcripts: a reason called `deleted` off one private fact while a *shared* fact of it
+  moves the engine now reads `not certifiable`, because the old label asserted the answer did not
+  depend on a reason a deletion of whose facts moved the answer.
 - **A reason is no longer measured under a definition that does not apply to it.** The reason-
   adequacy duty `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` reports *not evaluated*, naming
   why, for an artefact that declares its inference non-monotone, declares nothing at all, or

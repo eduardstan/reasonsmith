@@ -246,10 +246,18 @@ def test_the_certificate_verdict_carries_its_probe_budget():
 
     budget = result.details[PROBE_BUDGET_KEY]
     assert all(field in budget for field in PROBE_BUDGET_FIELDS)
-    # One baseline inference plus one replay per *fact* the probe switched off — every private
-    # fact of every reason, not one per reason.
-    assert budget["trials"] == 9
-    assert budget["input_space"] == {"decisions certified": 1, "facts switched off": 8}
+    # One baseline inference, plus one replay per *fact* the probe switched off — every private
+    # fact of every reason, not one per reason — plus the joint-deletion search's own probes. Here
+    # that search is one probe: deleting every remaining fact together leaves this truncating
+    # engine where it was, which settles the whole lattice (`docs/sufficient-reasons.md` §4,
+    # Corollary 3).
+    assert budget["trials"] == 10
+    assert budget["input_space"] == {
+        "decisions certified": 1,
+        "facts switched off": 8,
+        "joint deletion patterns tried": 1,
+        "decisions whose joint search did not finish": 0,
+    }
     assert "deterministic" in budget["seed"]
 
     # The invariant is enforced at construction, not at rendering: strip the budget and the

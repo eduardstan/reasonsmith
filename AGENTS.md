@@ -39,6 +39,27 @@ Release Note", records how that was verified; the repo publishes no tag).
 - No check asserts branding or presentation. Limits tests pin semantic boundary clauses, not full
   prose.
 
+What a `deleted` reason **is** is written down in `docs/sufficient-reasons.md` — read it before
+touching `certificate.py` or `explanations.py`. The probe used to switch each reason off *alone*,
+which answers a question about single facts and reports about reasons: two reasons jointly necessary
+and individually removable each leave the engine's answer where it was, so both were reported
+`deleted` and the tool accused a system of omitting reasons its inference demonstrably used. The
+definition is Ignatiev/Narodytska/Marques-Silva's abductive explanation and its contrastive dual,
+specialised to the deletions `artifacts.InferenceArtifact` admits, resting on Reiter's minimal-
+hitting-set duality; published sources only, listed in §9. `explanations.contrastive_sets` measures
+it with the MARCO seed/shrink/grow loop, Z3 as the oracle over the subset lattice and the system's
+own engine as the membership oracle. Four things must not be undone: the monotonicity declaration is
+what every lemma rests on, so this is one premise with the artefact protocol and not two; `live` is
+existential and one contrastive set establishes it while `deleted` is universal and needs the
+enumeration to have **finished**, so a partial search reports `undetermined` and there is no budget
+at which this instrument names more missing reasons than a complete search; the pass only ever moves
+a reason *out* of `deleted` and never promotes an `unseparable` one into it, which §8 states as a
+decision rather than an omission; and the search's probes and whether it terminated travel in
+`details[PROBE_BUDGET_KEY]` exactly as `PROBE_BUDGET_FIELDS` forces, because how far it got is the
+bound on every `deleted`. `Certificate.uncertified` is now the union of three separately reported
+states — `unseparable`, `inconclusive`, `undetermined` — and `tests/test_sufficient_reasons.py`
+holds all of it.
+
 The reason-deletion probe is **one-directional** — it switches a fact off, never on — so `deleted`
 means *the answer did not depend on this reason under this interpretation*, and on an engine that is
 not monotone in its inputs a lawfully retracted reason is indistinguishable from a dropped one. That

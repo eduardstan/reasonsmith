@@ -8,6 +8,8 @@ What this module is for:
     table7.toml     the duty schema, transcribed verbatim from the paper
     evidence.py     the emitter — minimal evidence records, with every field it could not produce
     certificate.py  the reason-deletion certificate, over nesyarena's exact oracle
+    explanations.py subset-minimal sufficient reasons over the deletions an artefact admits, which
+                    is how the certificate tells a jointly necessary reason from a dropped one
     conformance.py  the Table 19 checks, including stratified per-group ones
     demo.py         ECOA / Reg B credit and GDPR Art. 22 clinical, end to end
 
