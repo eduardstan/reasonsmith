@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import json
-import time
-from typing import Any, Iterable
+from typing import Any
 
 from textual import on
 from textual.app import App, ComposeResult
@@ -25,24 +24,22 @@ from textual.widgets import (
 
 from reasonsmith.report import ConformanceReport
 from reasonsmith.tui.data import TuiOptions, result_rows
+from reasonsmith.tui.widgets import (
+    AudienceTabs,
+    CounterBar,
+    InsightsBar,
+    LimitsFooter,
+    Sparkline,
+    SystemCaption,
+    TitleBar,
+    VerdictBadge,
+)
 
-VERDICT_COLORS = {
-    "proved": "#7ad9a6",
-    "probed": "#5dc4d8",
-    "observed": "#3aa0c0",
-    "violated": "#f08484",
-    "inconclusive": "#e8c97e",
-    "not_evaluated": "#9aa4b2",
-    "unattainable": "#b08db5",
-    "not_applicable": "#6f7d8c",
-}
-
-
-SPARK = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
+__all__ = ["ReasonsmithApp", "HelpScreen"]
 
 
 class ReasonsmithApp(App[None]):
-    """A keyboard-first report explorer with an evidence graph view."""
+    """A keyboard-first report explorer composed of focused widgets."""
 
     TITLE = "reasonsmith · evidence explorer"
     CSS_PATH = "styles.tcss"
@@ -61,8 +58,14 @@ class ReasonsmithApp(App[None]):
         Binding("?", "help", "Help"),
         Binding("escape", "close_overlay", "Close"),
     ]
-    AUDIENCES = ("auditor", "developer", "deployer", "regulator", "affected-individual")
-    PACKS = ("ecoa", "gdpr", "eu_ai_act", "gpai", "table7")
+    AUDIENCES: tuple[str, ...] = (
+        "auditor",
+        "developer",
+        "deployer",
+        "regulator",
+        "affected-individual",
+    )
+    PACKS: tuple[str, ...] = ("ecoa", "gdpr", "eu_ai_act", "gpai", "table7")
 
     audience_index: reactive[int] = reactive(0)
     pack_index: reactive[int] = reactive(0)
@@ -83,7 +86,6 @@ class ReasonsmithApp(App[None]):
             self.pack_index = 0
         self.rows: list[dict[str, Any]] = list(result_rows(report))
         self._selected_index = 0
-        self._last_update = time.monotonic()
 
     @property
     def audience(self) -> str:
@@ -102,10 +104,10 @@ class ReasonsmithApp(App[None]):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Container(
-            Static(self._audience_tabs(), id="audience-tabs"),
-            Static(self._title_line(), id="title-line"),
-            Static(self._counters(), id="counters"),
-            Static(self._system_caption(), id="system-caption"),
+            AudienceTabs(id="audience-tabs"),
+            TitleBar(id="title-bar"),
+            CounterBar(self.report),
+            SystemCaption(id="system-caption"),
             id="hero",
         )
         yield Input(placeholder="Filter requirements by id or source — /", id="filter")
@@ -120,21 +122,38 @@ class ReasonsmithApp(App[None]):
                     yield Markdown(self._render_evidence(), id="evidence")
                 with TabPane("Raw", id="tab-raw"):
                     yield Markdown(self._render_raw(), id="raw")
-        yield Static(self._limits_widget(), id="limits")
-        yield Static(self._insights(), id="insights")
+        yield LimitsFooter(self.report.limits)
+        yield InsightsBar(id="insights-bar")
         yield Footer()
 
     def on_mount(self) -> None:
+        self._wire_components()
         self._refresh_table()
-        self.set_interval(0.4, self._tick_clock)
         self.set_interval(2.5, self._tick_insights)
 
-    def _tick_clock(self) -> None:
-        if self.demo_running:
-            self.query_one("#counters", Static).update(self._counters())
+    def _wire_components(self) -> None:
+        tabs = self.query_one("#audience-tabs", AudienceTabs)
+        tabs.current = self.audience
+
+        title = self.query_one("#title-bar", TitleBar)
+        title.system_name = self.report.system_name
+        title.pack = self.pack
+        title.audience = self.audience
+        title.selected = self.selected
+
+        counter = self.query_one("#hero CounterBar")
+        del counter
+
+        caption = self.query_one("#system-caption", SystemCaption)
+        caption.audience = self.audience
+
+        insights = self.query_one("#insights-bar", InsightsBar)
+        insights.report = self.report
+        insights.selected_id = self.selected["id"] if self.selected else "—"
 
     def _tick_insights(self) -> None:
-        self.query_one("#insights", Static).update(self._insights())
+        insights = self.query_one("#insights-bar", InsightsBar)
+        insights.selected_id = self.selected["id"] if self.selected else "—"
 
     def _refresh_table(self) -> None:
         table = self.query_one("#requirements", DataTable)
@@ -147,12 +166,13 @@ class ReasonsmithApp(App[None]):
                 and self.filter_text.lower() not in row["source"].lower()
             ):
                 continue
+            spark_widget = Sparkline(row)
             table.add_row(
                 row["verdict"].upper(),
                 row["strength"],
                 row["id"][:48],
                 row["source"][:24],
-                _sparkline_for(row),
+                spark_widget.render(),
                 key=str(index),
             )
         if self.rows:
@@ -167,11 +187,18 @@ class ReasonsmithApp(App[None]):
         self._refresh_panes()
 
     def _refresh_panes(self) -> None:
-        self.query_one("#title-line", Static).update(self._title_line())
+        title = self.query_one("#title-bar", TitleBar)
+        title.selected = self.selected
+
         self.query_one("#detail", Markdown).update(self._render_detail())
         self.query_one("#evidence", Markdown).update(self._render_evidence())
         self.query_one("#raw", Markdown).update(self._render_raw())
-        self.query_one("#counters", Static).update(self._counters())
+
+        counter = self.query_one("#hero CounterBar")
+        counter.refresh()
+
+        insights = self.query_one("#insights-bar", InsightsBar)
+        insights.selected_id = self.selected["id"] if self.selected else "—"
 
     @on(Input.Changed, "#filter")
     def _on_filter_changed(self, event: Input.Changed) -> None:
@@ -205,13 +232,12 @@ class ReasonsmithApp(App[None]):
 
     def action_cycle_pack(self) -> None:
         self.pack_index = (self.pack_index + 1) % len(self.PACKS)
-        self.query_one("#title-line", Static).update(self._title_line())
+        self._refresh_after_pack_change()
         self._flash(f"Pack → {self.pack}")
 
     def action_cycle_audience(self) -> None:
         self.audience_index = (self.audience_index + 1) % len(self.AUDIENCES)
-        self.query_one("#audience-tabs", Static).update(self._audience_tabs())
-        self._refresh_panes()
+        self._refresh_after_audience_change()
         self._flash(f"Audience → {self.audience}")
 
     def action_refresh_view(self) -> None:
@@ -223,44 +249,41 @@ class ReasonsmithApp(App[None]):
 
     def action_toggle_demo(self) -> None:
         self.demo_running = not self.demo_running
-        self.query_one("#system-caption", Static).update(self._system_caption())
+        caption = self.query_one("#system-caption", SystemCaption)
+        caption.demo_running = self.demo_running
 
     def action_close_overlay(self) -> None:
         if isinstance(self.screen, HelpScreen):
             self.pop_screen()
 
+    def _refresh_after_pack_change(self) -> None:
+        title = self.query_one("#title-bar", TitleBar)
+        title.pack = self.pack
+
+    def _refresh_after_audience_change(self) -> None:
+        tabs = self.query_one("#audience-tabs", AudienceTabs)
+        tabs.current = self.audience
+        title = self.query_one("#title-bar", TitleBar)
+        title.audience = self.audience
+        caption = self.query_one("#system-caption", SystemCaption)
+        caption.audience = self.audience
+        self._refresh_panes()
+
     def _flash(self, message: str) -> None:
         self.notify(message, title="reasonsmith tui")
 
-    def _flash_class(self) -> str:
-        return "flash-on" if (time.monotonic() - self._last_update) < 0.8 else "flash-off"
-
-    def _audience_tabs(self) -> str:
-        active = self.audience
-        rendered: list[str] = []
-        for name in self.AUDIENCES:
-            style = "tab-active" if name == active else "tab-idle"
-            rendered.append(f"[{style}] {name} [/]")
-        return "  ".join(rendered)
-
-    def _title_line(self) -> str:
-        row = self.selected
-        if row is None:
-            return f"[b]{self.report.system_name}[/b] · [cyan]{self.pack}[/cyan] · no selection"
-        verdict_style = self._verdict_style(row["verdict"])
-        return (
-            f"[b]{self.report.system_name}[/b]  ·  pack [cyan]{self.pack}[/cyan]  ·  "
-            f"audience [cyan]{self.audience}[/cyan]\n"
-            f"  viewing [b]{row['id']}[/b]   "
-            f"[{verdict_style}]● {row['verdict'].upper()}[/]   "
-            f"strength [b]{row['strength']}[/]   "
-            f"binding {'[green]yes[/]' if row['binding'] else '[red]no[/]'}"
-        )
-
-    def _system_caption(self) -> str:
-        mode = "DEMO LOOP ENGAGED" if self.demo_running else "READY"
-        scope = self._audience_caption(self.audience)
-        return f"[b]{mode}[/b]   ·   {scope}"
+    def _verdict_style(self, verdict: str) -> str:
+        return {
+            "proved": "green",
+            "probed": "cyan",
+            "observed": "blue",
+            "violated": "red",
+            "inconclusive": "yellow",
+            "not_evaluated": "grey",
+            "unattainable": "magenta",
+            "not_applicable": "dim",
+            "satisfied": "green",
+        }.get(verdict, "white")
 
     def _audience_caption(self, audience: str) -> str:
         captions = {
@@ -272,45 +295,36 @@ class ReasonsmithApp(App[None]):
         }
         return captions.get(audience, audience)
 
-    def _counters(self) -> str:
-        counts = self.report.counts
-        cells: list[str] = []
-        for key in (
-            "proved",
-            "probed",
-            "observed",
-            "violated",
-            "inconclusive",
-            "not_evaluated",
-            "unattainable",
-            "not_applicable",
-        ):
-            color = VERDICT_COLORS[key]
-            cells.append(f"[{color}]●[/] [b]{counts[key]}[/] [dim]{key.replace('_', ' ')}[/]")
-        return "   ".join(cells)
-
     def _render_detail(self) -> str:
         row = self.selected
         if row is None:
             return "No requirements were reported."
-        verdict_style = self._verdict_style(row["verdict"])
+        verdict = str(row.get("verdict", ""))
+        strength = str(row.get("strength", ""))
+        binding = bool(row.get("binding", False))
+        verdict_style = self._verdict_style(verdict)
         lines = [
             f"# {row['id']}",
-            f"**Verdict:** [{verdict_style}]{row['verdict']}[/]   "
-            f"**Strength:** [b]{row['strength']}[/]   "
-            f"**Binding:** {'yes' if row['binding'] else 'no'}",
-            f"**Source:** {row['source']}",
+            f"**Verdict:** [{verdict_style}]{verdict}[/]   "
+            f"**Strength:** [b]{strength}[/]   "
+            f"**Binding:** {'yes' if binding else 'no'}",
+            f"**Source:** {row.get('source', '')}",
             "",
             "## Evidence",
-            row["evidence"] or "No evidence summary was emitted.",
+            str(row.get("evidence") or "No evidence summary was emitted."),
             "",
             "## Required signals",
-            ", ".join(row["required"]) or "None declared",
+            ", ".join(row.get("required") or []) or "None declared",
         ]
-        if row["missing"]:
-            lines.extend(["", "## Missing signals", ", ".join(row["missing"])])
+        missing = row.get("missing") or []
+        if missing:
+            lines.extend(["", "## Missing signals", ", ".join(missing)])
+        badge = VerdictBadge(verdict).render()
         lines.extend(
             [
+                "",
+                "## Verdict badge",
+                badge,
                 "",
                 f"## Audience · {self.audience}",
                 self._audience_caption(self.audience),
@@ -322,21 +336,25 @@ class ReasonsmithApp(App[None]):
         row = self.selected
         if row is None:
             return "No requirements were reported."
+        audience = self.audience
         cells = [
-            ("verdict", row["verdict"]),
-            ("strength", row["strength"]),
-            ("binding", str(row["binding"])),
-            ("audience", self.audience),
+            ("verdict", row.get("verdict", "")),
+            ("strength", row.get("strength", "")),
+            ("binding", str(row.get("binding", False))),
+            ("audience", audience),
         ]
         lines = ["# Evidence graph", "", "| field | value |", "| --- | --- |"]
         for field, value in cells:
             lines.append(f"| {field} | {value} |")
-        spark = _sparkline_for(row)
+        spark_widget = Sparkline(row)
         lines.extend(
             [
                 "",
-                "## Sparkline",
-                f"`{spark}`",
+                "## Sparkline widget",
+                f"`{spark_widget.render()}`",
+                "",
+                "## Evidence badge",
+                VerdictBadge(str(row.get("verdict", ""))).render(),
                 "",
                 "## Detail JSON",
                 "```json",
@@ -366,61 +384,6 @@ class ReasonsmithApp(App[None]):
         )
         lines.append("```")
         return "\n".join(lines)
-
-    def _limits_widget(self) -> str:
-        return f"[LIMITS]  {self.report.limits}"
-
-    def _insights(self) -> str:
-        counts = self.report.counts
-        total = sum(int(counts[k]) for k in counts)
-        if total == 0:
-            return "No findings to summarize."
-        sample = self.selected
-        highlight = sample["id"] if sample else "—"
-        return (
-            f"[b]Now:[/b] {highlight} · "
-            f"[b]Hero counts:[/b] proved {counts['proved']} · "
-            f"observed {counts['observed']} · "
-            f"violated {counts['violated']} · "
-            f"unattainable {counts['unattainable']}"
-        )
-
-    def _verdict_style(self, verdict: str) -> str:
-        return {
-            "proved": "green",
-            "probed": "cyan",
-            "observed": "blue",
-            "violated": "red",
-            "inconclusive": "yellow",
-            "not_evaluated": "grey",
-            "unattainable": "magenta",
-            "not_applicable": "dim",
-        }.get(verdict, "white")
-
-
-def _sparkline_for(row: dict[str, Any]) -> str:
-    values: list[float] = []
-    for key in ("proved", "probed", "observed", "violated"):
-        if key in row:
-            values.append(float(row.get(key, 0) or 0))
-    if isinstance(row.get("details"), dict):
-        for value in row["details"].values():
-            if isinstance(value, (int, float)) and not isinstance(value, bool):
-                values.append(float(value))
-    if not values:
-        return _spark_block("+")
-    lo, hi = min(values), max(values)
-    if hi == lo:
-        return _spark_block("■")
-    bars: list[str] = []
-    for v in values:
-        idx = int((v - lo) / (hi - lo) * (len(SPARK) - 1))
-        bars.append(SPARK[idx])
-    return "".join(bars)
-
-
-def _spark_block(chars: Iterable[str]) -> str:
-    return "".join(list(chars)[:8])
 
 
 class HelpScreen(Static):
