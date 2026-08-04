@@ -74,8 +74,8 @@ Four kinds of gap recur, and naming them once keeps the table short:
 - **The property's reach is not the clause's scope.** Most clauses below are triggered — by adverse
   action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
   evaluated over every record in a trace is checked outside that trigger too. Two axes of a
-  clause's scope are modelled — the regulatory class (`scope`, used by six of the nineteen duties)
-  and the decision domain (`domains`, used by six) — and both are gates about the *system*. A
+  clause's scope are modelled — the regulatory class (`scope`, used by fourteen of the twenty-eight
+  duties) and the decision domain (`domains`, used by seven) — and both are gates about the *system*. A
   trigger *inside* a decision is not a gate at all: the two 12 CFR 1002.9(b)(2) duties carry their
   own in the property, at the price of being reported *not evaluated* where it never fires.
 
@@ -87,7 +87,7 @@ Act's own five-member vocabulary; fourteen duties use it — six `high-risk` (th
 `general-purpose` duties of `packs/gpai.toml`, which are the first requirements in this repository
 to use that class at all. `domains` is
 the *kind of decision* the duty is about — the ECOA rows and the Table 7 ECOA and FDA rows use it,
-six duties in all — and it is
+seven duties in all — and it is
 matched by intersection against what the system declares. A system that declares neither is reported
 `not_applicable` on every duty that limits either, never `satisfied`, and reasonsmith infers neither
 (`docs/semantics.md` §4).
@@ -100,7 +100,7 @@ on a *different* requirement, arriving for the wrong reason. Those four ECOA dut
 not applicable against all five of that run's systems.
 
 **What the gate still does not do, and every row in the ECOA and GDPR tables below inherits it.**
-It is stated once, here, rather than nineteen times:
+It is stated once, here, rather than twenty-eight times:
 
 - **The vocabulary is this repository's, not any regulation's.** `DECISION_DOMAINS` is a coarse,
   openly-authored list, and it is wrong somewhere: no statute defines a list of decision domains,

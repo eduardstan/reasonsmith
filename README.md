@@ -543,9 +543,9 @@ needs a pack set whose fourth column someone other than its author has reviewed
 
 ## Roadmap
 
-[**`ROADMAP.md`**](ROADMAP.md) is the public backlog: four numbered objectives, each with the gap
-it closes, a measurable outcome that fails today, and what it depends on — including the two that
-are deliberately blocked and why. It also lists what is deliberately *not* planned, so a proposal
+[**`ROADMAP.md`**](ROADMAP.md) is the public backlog: five numbered objectives, each with the gap
+it closes, a measurable outcome that fails today, and what it depends on — including the one that
+is deliberately blocked and why. It also lists what is deliberately *not* planned, so a proposal
 for one of those gets an answer rather than silence.
 
 The repository has [`good first issue`](https://github.com/eduardstan/reasonsmith/labels/good%20first%20issue)

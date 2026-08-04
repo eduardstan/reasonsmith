@@ -222,7 +222,7 @@ system declares its own capabilities.
 
 The rungs are unchanged by the route: run against the whole `ecoa` pack, the symbolic system still
 comes back `proved` and the probabilistic one `probed` on `ecoa_reg_b_1002_9_b_2_specific_reasons`.
-Of the pack's three other duties, `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` is unattainable
+Of the pack's four other duties, `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` is unattainable
 on all three systems, because none of these adapters exposes the inference artefact its
 `artifact_logs_deleted_reason_count` is measured from — and that duty is never answered by anything
 weaker (`docs/semantics.md` §3, *certificate*). The two `temporal` duties are unattainable on the
@@ -230,7 +230,11 @@ probabilistic and neural systems, which declare no `artifact_logs_decision_recor
 system declares one, and there the two split on the shape of the property rather than on the
 surface: `1002.9(a)(1)` is `always(f)` over a state property, so it reduces and the solver proves it,
 while `1002.9(a)(2)` reads `artifact_logs_right_to_reasons_disclosure` — a signal these rules never
-assign, so the presence atom cannot be proved and the duty lands on the trace at `observed`. Two
+assign, so the presence atom cannot be proved and the duty lands on the trace at `observed`. The
+pack's fifth duty is the one relational one: `1002.4(a)` comes back `unattainable` on all three
+systems, and the engine reports that rather than `satisfied` — none of these lenders reads an
+`applicant_prohibited_basis` the property could hold fixed, and unawareness of one is not a
+discharge (`docs/semantics.md` §3, *counterfactual*). Two
 temporal duties, one system, two different rungs, and neither of them a fact about the word
 `temporal`.
 
