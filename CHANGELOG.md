@@ -27,6 +27,25 @@ releases before it predate the file and are not reconstructed here.
   read stated. The bump is for meaning, not for the key: under version 1 a temporal bound counted
   records and the document did not say so.
 
+- **The deletion probe states its direction, and keeps the one fingerprint of an engine that
+  breaks it.** `certificate.LIMITS` and `docs/semantics.md` §3 (*certificate*) now say that the
+  probe only switches facts off, never on: `deleted` means *the answer did not depend on this
+  reason under this interpretation*, and on a system whose reasons can be retracted by an added
+  fact — a policy exception evaluated after the rules fire — a lawfully withdrawn reason is
+  reported deleted exactly as a dropped one is, and can drive `violated` against a creditor whose
+  notice was right. The limit is disclosed rather than repaired. What is repaired is the signal:
+  the sign of `engine_drop` is no longer taken in absolute value, so a deletion that moves the
+  engine's answer *up* is reported as `non_monotone` on the reason verdict, on the certificate, and
+  in the engine's own summary and `details`. A defeated reason is still counted deleted — it was
+  probed cleanly — and is deliberately not moved into an inconclusive bucket, which would lose the
+  flag.
+
+- **The certificate probes every private fact of a reason, not one of them.** Coverage was decided
+  by `repr` sort order, so two systems alike but for a field name got materially different probes.
+  The probe budget now counts *facts switched off* rather than *reasons switched off*, and its
+  trial count rises accordingly (the shipped demonstration goes from 6 to 9 replayed inferences).
+  No shipped verdict moves.
+
 ### Notes
 
 - Nothing shipped changes verdict. A log that states no clock is `"ordinal"` and is answered on the

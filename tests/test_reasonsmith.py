@@ -189,6 +189,102 @@ def test_certificate_limits_exclude_compliance_certification():
     assert "does not certify the engine on any other input" in certificate.LIMITS
 
 
+# ------------------------------------- the direction and reach of the probe ----
+
+
+class RetractingAdapter:
+    """An engine whose reasons are defeasible: while the exception fact holds it withdraws the
+    reason `retracts` supports, and answers without it.
+
+    The defeat lives in the engine rather than in the program because a definite Horn program is
+    monotone by construction — which is also where a policy exception lives in a deployment, being
+    evaluated after the underwriting rules fire.
+    """
+
+    supports_grad = False
+
+    def __init__(self, exception, retracts):
+        self.exception, self.retracts = exception, retracts
+        self.name = "defeasible:exception-retracts-a-reason"
+        self.claimed_semantics = "distribution semantics"
+
+    def infer(self, program, base, queries):
+        from nesyarena.oracle import wmc
+
+        fired = base.get(self.exception, 0.0) > 0.5
+        out = {}
+        for q in queries:
+            kept = [pr for pr in program.proof_supports(q, 1)
+                    if not (fired and self.retracts in pr)]
+            out[q] = wmc(kept, base) if kept else 0.0
+        return out
+
+
+def defeasible_case(other_fact: str):
+    """Two reasons: {a, b}, which the exception retracts, and {exception, other_fact}, which it
+    supports. `other_fact` is named by the caller because under a one-fact-per-reason probe its
+    name decided — through `repr` sort order alone — whether the exception was ever switched off.
+    """
+    q, a, b = Atom("q"), Atom("a"), Atom("b")
+    exception, other = Atom("policy_exception"), Atom(other_fact)
+    program = GroundProgram((Rule(q, (a, b)), Rule(q, (exception, other))))
+    base = {a: 0.9, b: 0.9, exception: 1.0, other: 0.5}
+    cert = certify(program, base, q, RetractingAdapter(exception, a), exact_depth=1)
+    return cert, {"q": q, "a": a, "b": b, "exception": exception, "other": other}
+
+
+@pytest.mark.parametrize("other_fact", ["a_other", "z_other"])
+def test_every_private_fact_of_a_reason_is_switched_off(other_fact):
+    """Coverage is a property of the reason, not of what its facts happen to be called.
+
+    Probing one private fact per reason made two systems alike but for a field name get materially
+    different probes: `repr` sort order decided which fact was reached and which was never tried.
+    """
+    cert, atom = defeasible_case(other_fact)
+    probed = {frozenset(v.reason): v.probe_facts for v in cert.verdicts}
+
+    assert probed[frozenset({atom["a"], atom["b"]})] == tuple(
+        sorted((atom["a"], atom["b"]), key=repr))
+    assert set(probed[frozenset({atom["exception"], atom["other"]})]) == {
+        atom["exception"], atom["other"]}
+    # Every private fact moved exact inference here, so each one cost an engine re-run, and the
+    # budget the engine reports counts facts rather than reasons.
+    assert sum(v.engine_probes for v in cert.verdicts) == 4
+
+
+@pytest.mark.parametrize("other_fact", ["a_other", "z_other"])
+def test_a_retracted_reason_is_reported_deleted_and_the_engine_is_flagged_non_monotone(other_fact):
+    """The probe only switches facts off, so a withdrawn reason is indistinguishable from a
+    dropped one — and the rise it leaves behind is the one signal that says so.
+
+    This is a disclosure, not a fix: the reason is still counted deleted, because a defeated reason
+    is probed cleanly and hiding it in an inconclusive bucket would lose the signal below.
+    """
+    cert, atom = defeasible_case(other_fact)
+    statuses = {frozenset(v.reason): v.status for v in cert.verdicts}
+
+    # The retracted reason, reported exactly as a dropped one is.
+    assert statuses[frozenset({atom["a"], atom["b"]})] == "deleted"
+
+    # And the fingerprint: deleting the exception raised the engine's answer.
+    (flagged,) = cert.non_monotone
+    assert flagged.reason == frozenset({atom["exception"], atom["other"]})
+    assert flagged.probe_fact == atom["exception"]
+    assert flagged.engine_drop < -cert.tol       # the answer rose when the fact was removed
+    assert flagged.non_monotone
+    assert certificate.NON_MONOTONE_REMARK[1:] in flagged.detail   # sentence-cased in place
+    assert "may not be monotone" in cert.render()
+    assert cert.to_dict()["reasons_non_monotone"] == 1
+
+
+def test_the_certificate_limits_state_the_probe_is_one_directional():
+    """`deleted` is a claim under one interpretation, and the limits must say so in their words."""
+    assert "one-directional" in certificate.LIMITS
+    assert "under this interpretation" in certificate.LIMITS
+    assert "retracted" in certificate.LIMITS
+    assert certificate.LIMITS in defeasible_case("z_other")[0].render()
+
+
 # ----------------------------------------- what the probe cannot certify ----
 
 

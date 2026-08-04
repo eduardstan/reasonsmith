@@ -355,7 +355,7 @@ Four Table 7 demos contributed by Alessandro Boni — EU AI Act Art. 13 (row 1),
 
 What was measured on this branch, at commit `8b4c72042443dfdb116c851d67f6dc3884392665`, in the same venv against PyPI `nesyarena==0.1.0`:
 
-- `python -m reasonsmith.demo`, run twice: **905 lines**, byte-identical, `md5sum` `954ba56adb96646647b63aae147b0c2b`. This is the transcript committed in [`docs/example-output.md`](docs/example-output.md), and the pair of numbers `tests/test_docs_example_output.py` checks that file's header against.
+- `python -m reasonsmith.demo`, run twice: **910 lines**, byte-identical, `md5sum` `b55ab948a3075deef7c35b954afad8d5`. This is the transcript committed in [`docs/example-output.md`](docs/example-output.md), and the pair of numbers `tests/test_docs_example_output.py` checks that file's header against.
 - `pytest`: **226 passed**. That is the whole current suite (`test_docs_example_output.py` 1, `test_html_report.py` 15, `test_reasonsmith.py` 47, `test_v02_core.py` 93, `test_v02_stage2.py` 45, `test_v02_stage3.py` 25), not the v0.1 suite the `35 passed` row counts, and it supersedes the `189 passed` in the PyPI Release Note as the current-suite figure.
 
 Nothing else in this file was re-measured on this branch. Section 1 (`nesyarena`'s own suite) and every Table 19 conformance figure remain the 2026-07-31 measurements at `reasonsmith` commit `9411ca60a70c0d4f72f12a038e01d9d65c70c03f`, and the four new sections add no figure to them.

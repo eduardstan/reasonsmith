@@ -242,9 +242,10 @@ def test_the_certificate_verdict_carries_its_probe_budget():
 
     budget = result.details[PROBE_BUDGET_KEY]
     assert all(field in budget for field in PROBE_BUDGET_FIELDS)
-    # One baseline inference plus one replay per reason the probe could switch off.
-    assert budget["trials"] == 6
-    assert budget["input_space"] == {"decisions certified": 1, "reasons switched off": 5}
+    # One baseline inference plus one replay per *fact* the probe switched off — every private
+    # fact of every reason, not one per reason.
+    assert budget["trials"] == 9
+    assert budget["input_space"] == {"decisions certified": 1, "facts switched off": 8}
     assert "deterministic" in budget["seed"]
 
     # The invariant is enforced at construction, not at rendering: strip the budget and the

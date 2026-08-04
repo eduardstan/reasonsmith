@@ -39,6 +39,19 @@ Release Note", records how that was verified; the repo publishes no tag).
 - No check asserts branding or presentation. Limits tests pin semantic boundary clauses, not full
   prose.
 
+The reason-deletion probe is **one-directional** — it switches a fact off, never on — so `deleted`
+means *the answer did not depend on this reason under this interpretation*, and on an engine that is
+not monotone in its inputs a lawfully retracted reason is reported deleted exactly as a dropped one
+is, driving `violated` against a compliant system. The limit is disclosed, not repaired
+(`certificate.LIMITS`, `docs/semantics.md` §3, the `docs/refinement.md` row). Three things must not
+be undone: the sign of `engine_drop` is kept, so a deletion that raises the engine's answer is
+flagged `non_monotone` on the verdict, the certificate and the engine's summary — that flag is the
+only fingerprint the condition leaves; a defeated reason is still counted `deleted` and must never
+be moved into the `unseparable`/inconclusive bucket, which would lose the flag; and **every**
+private fact of a reason is switched off, not the first in `repr` order, because coverage decided by
+a field's name gave two otherwise identical systems different probes. The budget therefore counts
+facts switched off, not reasons.
+
 In v0.2 the first rule becomes structural. A verdict carries the strength of the evidence behind it
 (`verdict.py`), and `RequirementResult.__post_init__` refuses to construct a result that claims more
 than it has — including `strength=None` for "no engine here evaluated this", which is deliberately

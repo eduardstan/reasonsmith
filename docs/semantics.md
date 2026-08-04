@@ -664,6 +664,36 @@ principal. And nothing about a system that lies about its own artefact — a sys
 program it did not run is a system misdescribing itself to its auditor, which *the assumption all
 six share* below already covers.
 
+**And — the sharpest of them — nothing about a system whose reasons can be *retracted*.** The probe
+is one-directional: it only ever sets a fact's probability to zero, never raises one and never adds
+a fact. So `deleted` means *the engine's answer did not depend on this reason under this
+interpretation*, and on an engine that is not monotone in its inputs — a policy exception evaluated
+after the underwriting rules fire, the ordinary shape of one — a reason the engine lawfully
+*withdrew* is reported deleted exactly as a reason it dropped by defect is. That is a false
+accusation against a system whose notice stated its reasons correctly, and this rung can drive a
+`violated` verdict on it. The limit is written on the instrument (`certificate.LIMITS`,
+`test_the_certificate_limits_state_the_probe_is_one_directional`) rather than repaired, because
+repairing it needs an inference artefact that can say whether its inference is monotone, and
+nothing here can ask. Two things follow, and both are deliberate. **The retracted reason is still
+counted deleted** — it was probed cleanly and the measurement is right about the question it asked;
+the question is what is wrong, and moving it into an inconclusive bucket would lose the signal
+below. **The one fingerprint such an engine leaves is kept:** a deletion that moves the engine's
+answer *up*. The sign of `engine_drop` is not taken in absolute value, a reason it happens on is
+reported `non_monotone` on the verdict, on the certificate and in the result's own summary and
+`details`, and the reader is told in as many words that every deleted reason beside it may be a
+retraction (`test_a_retracted_reason_is_reported_deleted_and_the_engine_is_flagged_non_monotone`).
+It is a remark and not a verdict: the flag is evidence about the *engine*, and its absence is not
+evidence that the engine is monotone, since a retraction whose fact no reason of the enumeration
+holds is never switched off at all.
+
+*The reach of the probe, exactly.* **Every** fact of a reason that no other reason uses is switched
+off, one at a time, and one whose deletion moves the engine settles the reason live. The budget
+counts facts rather than reasons for that reason. Probing one such fact per reason — the first in
+`repr` order — made coverage a function of what a system's fields are *called*: two systems alike
+but for a field name got materially different probes, and whether a defeater was ever exercised was
+decided alphabetically (`test_every_private_fact_of_a_reason_is_switched_off`). A fact shared with
+another reason is still switched off by nobody, which is the `unseparable` case above.
+
 > **If it reports `violated` at strength `probed`, then:** on at least one certified decision, the
 > deletion probe showed the system's answer does not depend on a reason exact inference found. The
 > result names the decision, the reasons, and the certificate's own attribution — which inference
@@ -1549,6 +1579,8 @@ Two consequences of that report text, followed by a separate package-level termi
 | A decision whose reasons were never enumerated buys no verdict, and never `satisfied` | `test_a_decision_whose_reasons_were_never_enumerated_cannot_buy_satisfied` |
 | No artefact, a broken artefact, or a property the engine cannot ground ⇒ not evaluated | `test_a_trace_with_no_artifact_is_not_evaluated_never_satisfied`, `test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`, `test_the_engine_refuses_a_property_it_cannot_ground` |
 | A reason-deletion certificate detects a dropped reason and excludes compliance certification beyond its measured input | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_limits_exclude_compliance_certification`, `test_certificate_carries_its_limits` |
+| The deletion probe is one-directional, says so on the instrument, and flags the engine where a deletion moved its answer up rather than counting a retraction silently | `test_the_certificate_limits_state_the_probe_is_one_directional`, `test_a_retracted_reason_is_reported_deleted_and_the_engine_is_flagged_non_monotone` |
+| Every private fact of a reason is switched off, so coverage does not depend on what a system's fields are called | `test_every_private_fact_of_a_reason_is_switched_off` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |
 | One run renders as five audience artefacts, and no two audiences disagree about a verdict | `test_the_five_audiences_all_render`, `test_no_audience_sees_a_different_verdict_from_another` |
 | No audience projection drops the limits, or the notice that duties went unchecked | `test_every_audience_keeps_the_limits`, `test_every_audience_keeps_the_notice_that_duties_went_unchecked` |

@@ -16,7 +16,7 @@ what the tool would print. Regenerate any block by running the command shown abo
 - **Environment:** Python 3.12.9, Linux, `nesyarena` at the commit `pyproject.toml` pinned when
   these transcripts were captured (`57720fa212834689692e171882272140f1d1fed7`); re-run since
   against the PyPI release `nesyarena==0.1.0` now pinned, byte-for-byte identical
-- **Demo transcript:** 905 lines, `md5sum` `954ba56adb96646647b63aae147b0c2b` — the same length and
+- **Demo transcript:** 910 lines, `md5sum` `b55ab948a3075deef7c35b954afad8d5` — the same length and
   hash [RESULTS.md](../RESULTS.md) reports, which is what lets the two files be checked against
   each other
 
@@ -122,10 +122,10 @@ reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not cert
 
   [           used] C01 — Income insufficient for amount of credit requested  (score 0.765600)
                     facts: dti_above_policy(APP-1042), income_verified(APP-1042)
-                    deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason.
+                    deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [        DELETED] C02 — Length of time credit has been established is too short  (score 0.697200)
                     facts: file_thin(APP-1042), history_under_24_months(APP-1042)
-                    deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                    deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [        DELETED] C03 — Delinquent past or present credit obligations  (score 0.632000)
                     facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
                     deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 but leaves the engine unchanged: the engine's answer does not depend on this reason.
@@ -134,7 +134,7 @@ reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not cert
                     deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 but leaves the engine unchanged: the engine's answer does not depend on this reason.
   [        DELETED] C05 — Insufficient number of credit references provided  (score 0.511200)
                     facts: application_complete(APP-1042), references_under_policy(APP-1042)
-                    deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                    deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
 
 MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
   - C02 — Length of time credit has been established is too short: file_thin(APP-1042), history_under_24_months(APP-1042)
@@ -145,7 +145,7 @@ MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact i
 ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799.
 
 LIMITS OF THIS CERTIFICATE
-  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 Exact inference on the same program and the same base interpretation recovers every one of them:
 
@@ -158,10 +158,10 @@ reasons: 5 found by exact inference, 5 used by the engine, 0 deleted, 0 not cert
 
   [           used] C01 — Income insufficient for amount of credit requested  (score 0.765600)
                     facts: dti_above_policy(APP-1042), income_verified(APP-1042)
-                    deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.028093: the engine's answer depends on this reason.
+                    deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.028093: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] C02 — Length of time credit has been established is too short  (score 0.697200)
                     facts: file_thin(APP-1042), history_under_24_months(APP-1042)
-                    deleting file_thin(APP-1042) moves exact inference by -0.019804 and the engine by -0.019804: the engine's answer depends on this reason.
+                    deleting file_thin(APP-1042) moves exact inference by -0.019804 and the engine by -0.019804: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] C03 — Delinquent past or present credit obligations  (score 0.632000)
                     facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
                     deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 and the engine by -0.005262: the engine's answer depends on this reason.
@@ -170,12 +170,12 @@ reasons: 5 found by exact inference, 5 used by the engine, 0 deleted, 0 not cert
                     deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 and the engine by -0.004166: the engine's answer depends on this reason.
   [           used] C05 — Insufficient number of credit references provided  (score 0.511200)
                     facts: application_complete(APP-1042), references_under_policy(APP-1042)
-                    deleting application_complete(APP-1042) moves exact inference by -0.008995 and the engine by -0.008995: the engine's answer depends on this reason.
+                    deleting application_complete(APP-1042) moves exact inference by -0.008995 and the engine by -0.008995: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
 
 ATTRIBUTION: The engine used every reason exact inference found, and its value matched the exact value within tolerance. No inference setting is implicated on this input.
 
 LIMITS OF THIS CERTIFICATE
-  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 The adverse action notice pipeline emits its Table 7 record:
 
@@ -210,10 +210,10 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     
       [           used] C01 — Income insufficient for amount of credit requested  (score 0.765600)
                         facts: dti_above_policy(APP-1042), income_verified(APP-1042)
-                        deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason.
+                        deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] C02 — Length of time credit has been established is too short  (score 0.697200)
                         facts: file_thin(APP-1042), history_under_24_months(APP-1042)
-                        deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] C03 — Delinquent past or present credit obligations  (score 0.632000)
                         facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
                         deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 but leaves the engine unchanged: the engine's answer does not depend on this reason.
@@ -222,7 +222,7 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
                         deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 but leaves the engine unchanged: the engine's answer does not depend on this reason.
       [        DELETED] C05 — Insufficient number of credit references provided  (score 0.511200)
                         facts: application_complete(APP-1042), references_under_policy(APP-1042)
-                        deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
     
     MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
       - C02 — Length of time credit has been established is too short: file_thin(APP-1042), history_under_24_months(APP-1042)
@@ -233,7 +233,7 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799.
     
     LIMITS OF THIS CERTIFICATE
-      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 LIMITS OF THIS RECORD
   This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.
@@ -283,19 +283,19 @@ reasons: 5 found by exact inference, 1 used by the engine, 4 deleted, 0 not cert
 
   [           used] H01 — Comorbidity burden above the fast-track ceiling  (score 0.731000)
                     facts: comorbidity_index_high(PT-0731), history_coded(PT-0731)
-                    deleting comorbidity_index_high(PT-0731) moves exact inference by -0.023306 and the engine by -0.066800: the engine's answer depends on this reason.
+                    deleting comorbidity_index_high(PT-0731) moves exact inference by -0.023306 and the engine by -0.066800: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [        DELETED] H02 — Renal function below the protocol floor  (score 0.664200)
                     facts: egfr_below_floor(PT-0731), labs_within_window(PT-0731)
-                    deleting egfr_below_floor(PT-0731) moves exact inference by -0.016964 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                    deleting egfr_below_floor(PT-0731) moves exact inference by -0.016964 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [        DELETED] H03 — Interacting medication on the active list  (score 0.600600)
                     facts: interacting_drug_active(PT-0731), medication_list_current(PT-0731)
-                    deleting interacting_drug_active(PT-0731) moves exact inference by -0.012897 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                    deleting interacting_drug_active(PT-0731) moves exact inference by -0.012897 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [        DELETED] H04 — Vital-sign instability in the observation window  (score 0.540200)
                     facts: monitoring_continuous(PT-0731), vitals_unstable(PT-0731)
-                    deleting monitoring_continuous(PT-0731) moves exact inference by -0.010076 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                    deleting monitoring_continuous(PT-0731) moves exact inference by -0.010076 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [        DELETED] H05 — Imaging finding outside the automated-review scope  (score 0.483000)
                     facts: imaging_finding_out_of_scope(PT-0731), imaging_reported(PT-0731)
-                    deleting imaging_finding_out_of_scope(PT-0731) moves exact inference by -0.008012 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                    deleting imaging_finding_out_of_scope(PT-0731) moves exact inference by -0.008012 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
 
 MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
   - H02 — Renal function below the protocol floor: egfr_below_floor(PT-0731), labs_within_window(PT-0731)
@@ -306,7 +306,7 @@ MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact i
 ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.260424.
 
 LIMITS OF THIS CERTIFICATE
-  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 Exact inference recovers the reasons the top-k setting discarded:
 
@@ -319,24 +319,24 @@ reasons: 5 found by exact inference, 5 used by the engine, 0 deleted, 0 not cert
 
   [           used] H01 — Comorbidity burden above the fast-track ceiling  (score 0.731000)
                     facts: comorbidity_index_high(PT-0731), history_coded(PT-0731)
-                    deleting comorbidity_index_high(PT-0731) moves exact inference by -0.023306 and the engine by -0.023306: the engine's answer depends on this reason.
+                    deleting comorbidity_index_high(PT-0731) moves exact inference by -0.023306 and the engine by -0.023306: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] H02 — Renal function below the protocol floor  (score 0.664200)
                     facts: egfr_below_floor(PT-0731), labs_within_window(PT-0731)
-                    deleting egfr_below_floor(PT-0731) moves exact inference by -0.016964 and the engine by -0.016964: the engine's answer depends on this reason.
+                    deleting egfr_below_floor(PT-0731) moves exact inference by -0.016964 and the engine by -0.016964: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] H03 — Interacting medication on the active list  (score 0.600600)
                     facts: interacting_drug_active(PT-0731), medication_list_current(PT-0731)
-                    deleting interacting_drug_active(PT-0731) moves exact inference by -0.012897 and the engine by -0.012897: the engine's answer depends on this reason.
+                    deleting interacting_drug_active(PT-0731) moves exact inference by -0.012897 and the engine by -0.012897: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] H04 — Vital-sign instability in the observation window  (score 0.540200)
                     facts: monitoring_continuous(PT-0731), vitals_unstable(PT-0731)
-                    deleting monitoring_continuous(PT-0731) moves exact inference by -0.010076 and the engine by -0.010076: the engine's answer depends on this reason.
+                    deleting monitoring_continuous(PT-0731) moves exact inference by -0.010076 and the engine by -0.010076: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] H05 — Imaging finding outside the automated-review scope  (score 0.483000)
                     facts: imaging_finding_out_of_scope(PT-0731), imaging_reported(PT-0731)
-                    deleting imaging_finding_out_of_scope(PT-0731) moves exact inference by -0.008012 and the engine by -0.008012: the engine's answer depends on this reason.
+                    deleting imaging_finding_out_of_scope(PT-0731) moves exact inference by -0.008012 and the engine by -0.008012: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
 
 ATTRIBUTION: The engine used every reason exact inference found, and its value matched the exact value within tolerance. No inference setting is implicated on this input.
 
 LIMITS OF THIS CERTIFICATE
-  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 With exact inference behind it the Art. 22 record can state the whole logic:
 
@@ -380,24 +380,24 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     
       [           used] H01 — Comorbidity burden above the fast-track ceiling  (score 0.731000)
                         facts: comorbidity_index_high(PT-0731), history_coded(PT-0731)
-                        deleting comorbidity_index_high(PT-0731) moves exact inference by -0.023306 and the engine by -0.023306: the engine's answer depends on this reason.
+                        deleting comorbidity_index_high(PT-0731) moves exact inference by -0.023306 and the engine by -0.023306: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [           used] H02 — Renal function below the protocol floor  (score 0.664200)
                         facts: egfr_below_floor(PT-0731), labs_within_window(PT-0731)
-                        deleting egfr_below_floor(PT-0731) moves exact inference by -0.016964 and the engine by -0.016964: the engine's answer depends on this reason.
+                        deleting egfr_below_floor(PT-0731) moves exact inference by -0.016964 and the engine by -0.016964: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [           used] H03 — Interacting medication on the active list  (score 0.600600)
                         facts: interacting_drug_active(PT-0731), medication_list_current(PT-0731)
-                        deleting interacting_drug_active(PT-0731) moves exact inference by -0.012897 and the engine by -0.012897: the engine's answer depends on this reason.
+                        deleting interacting_drug_active(PT-0731) moves exact inference by -0.012897 and the engine by -0.012897: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [           used] H04 — Vital-sign instability in the observation window  (score 0.540200)
                         facts: monitoring_continuous(PT-0731), vitals_unstable(PT-0731)
-                        deleting monitoring_continuous(PT-0731) moves exact inference by -0.010076 and the engine by -0.010076: the engine's answer depends on this reason.
+                        deleting monitoring_continuous(PT-0731) moves exact inference by -0.010076 and the engine by -0.010076: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [           used] H05 — Imaging finding outside the automated-review scope  (score 0.483000)
                         facts: imaging_finding_out_of_scope(PT-0731), imaging_reported(PT-0731)
-                        deleting imaging_finding_out_of_scope(PT-0731) moves exact inference by -0.008012 and the engine by -0.008012: the engine's answer depends on this reason.
+                        deleting imaging_finding_out_of_scope(PT-0731) moves exact inference by -0.008012 and the engine by -0.008012: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
     
     ATTRIBUTION: The engine used every reason exact inference found, and its value matched the exact value within tolerance. No inference setting is implicated on this input.
     
     LIMITS OF THIS CERTIFICATE
-      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 LIMITS OF THIS RECORD
   This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.
@@ -442,27 +442,32 @@ reasons: 5 found by exact inference, 4 used by the engine, 1 deleted, 0 not cert
 
   [           used] C01 — Income insufficient for amount of credit requested  (score 0.765600)
                     facts: dti_above_policy(APP-1042), income_verified(APP-1042)
-                    deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.019098: the engine's answer depends on this reason.
+                    deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.019098: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] C02 — Length of time credit has been established is too short  (score 0.697200)
                     facts: file_thin(APP-1042), history_under_24_months(APP-1042)
-                    deleting file_thin(APP-1042) moves exact inference by -0.019804 and the engine by -0.010809: the engine's answer depends on this reason.
+                    deleting file_thin(APP-1042) moves exact inference by -0.019804 and the engine by -0.010809: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] C03 — Delinquent past or present credit obligations  (score 0.632000)
                     facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
-                    deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 and the engine by +0.003733: the engine's answer depends on this reason.
+                    deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 and the engine by +0.003733: the engine's answer depends on this reason. The engine's answer rose when a fact was removed; this engine may not be monotone in its inputs. Deletion probing assumes it is, so a reason this engine withdrew under the base interpretation — a policy exception firing, say — is reported deleted here exactly as a dropped one is.
   [           used] C04 — Too many recent inquiries on credit bureau report  (score 0.600400)
                     facts: bureau_record_matched(APP-1042), inquiries_over_policy(APP-1042)
-                    deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 and the engine by +0.004829: the engine's answer depends on this reason.
+                    deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 and the engine by +0.004829: the engine's answer depends on this reason. The engine's answer rose when a fact was removed; this engine may not be monotone in its inputs. Deletion probing assumes it is, so a reason this engine withdrew under the base interpretation — a policy exception firing, say — is reported deleted here exactly as a dropped one is.
   [        DELETED] C05 — Insufficient number of credit references provided  (score 0.511200)
                     facts: application_complete(APP-1042), references_under_policy(APP-1042)
-                    deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                    deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
 
 MISSING REASONS: the engine's answer does not depend on 1 reason(s) that exact inference found:
   - C05 — Insufficient number of credit references provided: application_complete(APP-1042), references_under_policy(APP-1042)
 
+NON-MONOTONICITY: the engine's answer rose when a fact was removed; this engine may not be monotone in its inputs. Deletion probing assumes it is, so a reason this engine withdrew under the base interpretation — a policy exception firing, say — is reported deleted here exactly as a dropped one is.
+
+  - C03 — Delinquent past or present credit obligations: deleting delinquency_on_file(APP-1042) raised the engine's answer by +0.003733
+  - C04 — Too many recent inquiries on credit bureau report: deleting inquiries_over_policy(APP-1042) raised the engine's answer by +0.004829
+
 ATTRIBUTION: The deleted reasons are exactly the 1 lowest-scoring of the 5, and the engine kept the top 4. This is the signature of top-k proof truncation at k=4: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.008995.
 
 LIMITS OF THIS CERTIFICATE
-  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 REASON-DELETION CERTIFICATE [FAIL]
 query: adverse_action(APP-1042)
@@ -473,10 +478,10 @@ reasons: 5 found by exact inference, 5 used by the engine, 0 deleted, 0 not cert
 
   [           used] C01 — Income insufficient for amount of credit requested  (score 0.765600)
                     facts: dti_above_policy(APP-1042), income_verified(APP-1042)
-                    deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.027250: the engine's answer depends on this reason.
+                    deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.027250: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] C02 — Length of time credit has been established is too short  (score 0.697200)
                     facts: file_thin(APP-1042), history_under_24_months(APP-1042)
-                    deleting file_thin(APP-1042) moves exact inference by -0.019804 and the engine by -0.019210: the engine's answer depends on this reason.
+                    deleting file_thin(APP-1042) moves exact inference by -0.019804 and the engine by -0.019210: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
   [           used] C03 — Delinquent past or present credit obligations  (score 0.632000)
                     facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
                     deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 and the engine by -0.005104: the engine's answer depends on this reason.
@@ -485,12 +490,12 @@ reasons: 5 found by exact inference, 5 used by the engine, 0 deleted, 0 not cert
                     deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 and the engine by -0.004041: the engine's answer depends on this reason.
   [           used] C05 — Insufficient number of credit references provided  (score 0.511200)
                     facts: application_complete(APP-1042), references_under_policy(APP-1042)
-                    deleting application_complete(APP-1042) moves exact inference by -0.008995 and the engine by -0.008725: the engine's answer depends on this reason.
+                    deleting application_complete(APP-1042) moves exact inference by -0.008995 and the engine by -0.008725: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
 
 ATTRIBUTION: No reason was deleted, but the engine's value differs from exact inference by -0.029742. The responsible setting is the engine's aggregation over the reasons it kept, not proof truncation: every reason still moves the answer.
 
 LIMITS OF THIS CERTIFICATE
-  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+  This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 An instrument that passed a corrupted engine would be worthless, so both perturbations must fail, and by
 different routes: the silent drop is caught by the deletion probe, which names the reason that stopped
@@ -640,10 +645,10 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     
       [           used] C01 — Income insufficient for amount of credit requested  (score 0.765600)
                         facts: dti_above_policy(APP-1042), income_verified(APP-1042)
-                        deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason.
+                        deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] C02 — Length of time credit has been established is too short  (score 0.697200)
                         facts: file_thin(APP-1042), history_under_24_months(APP-1042)
-                        deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] C03 — Delinquent past or present credit obligations  (score 0.632000)
                         facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
                         deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 but leaves the engine unchanged: the engine's answer does not depend on this reason.
@@ -652,7 +657,7 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
                         deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 but leaves the engine unchanged: the engine's answer does not depend on this reason.
       [        DELETED] C05 — Insufficient number of credit references provided  (score 0.511200)
                         facts: application_complete(APP-1042), references_under_policy(APP-1042)
-                        deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
     
     MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
       - C02 — Length of time credit has been established is too short: file_thin(APP-1042), history_under_24_months(APP-1042)
@@ -663,7 +668,7 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799.
     
     LIMITS OF THIS CERTIFICATE
-      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 LIMITS OF THIS RECORD
   This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.
@@ -720,10 +725,10 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     
       [           used] C01 — Income insufficient for amount of credit requested  (score 0.765600)
                         facts: dti_above_policy(APP-1042), income_verified(APP-1042)
-                        deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason.
+                        deleting dti_above_policy(APP-1042) moves exact inference by -0.028093 and the engine by -0.068400: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] C02 — Length of time credit has been established is too short  (score 0.697200)
                         facts: file_thin(APP-1042), history_under_24_months(APP-1042)
-                        deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting file_thin(APP-1042) moves exact inference by -0.019804 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] C03 — Delinquent past or present credit obligations  (score 0.632000)
                         facts: bureau_record_matched(APP-1042), delinquency_on_file(APP-1042)
                         deleting delinquency_on_file(APP-1042) moves exact inference by -0.005262 but leaves the engine unchanged: the engine's answer does not depend on this reason.
@@ -732,7 +737,7 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
                         deleting inquiries_over_policy(APP-1042) moves exact inference by -0.004166 but leaves the engine unchanged: the engine's answer does not depend on this reason.
       [        DELETED] C05 — Insufficient number of credit references provided  (score 0.511200)
                         facts: application_complete(APP-1042), references_under_policy(APP-1042)
-                        deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting application_complete(APP-1042) moves exact inference by -0.008995 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
     
     MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
       - C02 — Length of time credit has been established is too short: file_thin(APP-1042), history_under_24_months(APP-1042)
@@ -743,7 +748,7 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799.
     
     LIMITS OF THIS CERTIFICATE
-      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 LIMITS OF THIS RECORD
   This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.
@@ -796,19 +801,19 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     
       [           used] H01 — Comorbidity burden above the fast-track ceiling  (score 0.731000)
                         facts: comorbidity_index_high(PT-0731), history_coded(PT-0731)
-                        deleting comorbidity_index_high(PT-0731) moves exact inference by -0.023306 and the engine by -0.066800: the engine's answer depends on this reason.
+                        deleting comorbidity_index_high(PT-0731) moves exact inference by -0.023306 and the engine by -0.066800: the engine's answer depends on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] H02 — Renal function below the protocol floor  (score 0.664200)
                         facts: egfr_below_floor(PT-0731), labs_within_window(PT-0731)
-                        deleting egfr_below_floor(PT-0731) moves exact inference by -0.016964 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting egfr_below_floor(PT-0731) moves exact inference by -0.016964 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] H03 — Interacting medication on the active list  (score 0.600600)
                         facts: interacting_drug_active(PT-0731), medication_list_current(PT-0731)
-                        deleting interacting_drug_active(PT-0731) moves exact inference by -0.012897 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting interacting_drug_active(PT-0731) moves exact inference by -0.012897 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] H04 — Vital-sign instability in the observation window  (score 0.540200)
                         facts: monitoring_continuous(PT-0731), vitals_unstable(PT-0731)
-                        deleting monitoring_continuous(PT-0731) moves exact inference by -0.010076 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting monitoring_continuous(PT-0731) moves exact inference by -0.010076 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] H05 — Imaging finding outside the automated-review scope  (score 0.483000)
                         facts: imaging_finding_out_of_scope(PT-0731), imaging_reported(PT-0731)
-                        deleting imaging_finding_out_of_scope(PT-0731) moves exact inference by -0.008012 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting imaging_finding_out_of_scope(PT-0731) moves exact inference by -0.008012 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
     
     MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
       - H02 — Renal function below the protocol floor: egfr_below_floor(PT-0731), labs_within_window(PT-0731)
@@ -819,7 +824,7 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.260424.
     
     LIMITS OF THIS CERTIFICATE
-      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 LIMITS OF THIS RECORD
   This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.
@@ -900,16 +905,16 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
                         deleting delinquency_on_file(APP-1042) moves exact inference by -0.008161 and the engine by -0.214500: the engine's answer depends on this reason.
       [        DELETED] C01 — Income insufficient for amount of credit requested  (score 0.765600)
                         facts: dti_above_policy(APP-1042), income_verified(APP-1042)
-                        deleting dti_above_policy(APP-1042) moves exact inference by -0.001402 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting dti_above_policy(APP-1042) moves exact inference by -0.001402 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] C04 — Too many recent inquiries on credit bureau report  (score 0.752400)
                         facts: bureau_record_matched(APP-1042), inquiries_over_policy(APP-1042)
                         deleting inquiries_over_policy(APP-1042) moves exact inference by -0.000261 but leaves the engine unchanged: the engine's answer does not depend on this reason.
       [        DELETED] C02 — Length of time credit has been established is too short  (score 0.697200)
                         facts: file_thin(APP-1042), history_under_24_months(APP-1042)
-                        deleting file_thin(APP-1042) moves exact inference by -0.000989 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting file_thin(APP-1042) moves exact inference by -0.000989 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
       [        DELETED] C05 — Insufficient number of credit references provided  (score 0.511200)
                         facts: application_complete(APP-1042), references_under_policy(APP-1042)
-                        deleting application_complete(APP-1042) moves exact inference by -0.000449 but leaves the engine unchanged: the engine's answer does not depend on this reason.
+                        deleting application_complete(APP-1042) moves exact inference by -0.000449 but leaves the engine unchanged: the engine's answer does not depend on this reason. All 2 private fact(s) of this reason were switched off, one at a time.
     
     MISSING REASONS: the engine's answer does not depend on 4 reason(s) that exact inference found:
       - C01 — Income insufficient for amount of credit requested: dti_above_policy(APP-1042), income_verified(APP-1042)
@@ -920,7 +925,7 @@ supporting material (NOT Table 7 evidence, and fills no gap above):
     ATTRIBUTION: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.019471.
     
     LIMITS OF THIS CERTIFICATE
-      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found.
+      This certificate compares one engine's answer against exact inference on one ground program and one base interpretation. It is not a compliance guarantee and is not legal advice. A PASS means no reason was shown to be deleted and the engine's value matched the exact value on this input; it does not certify the engine on any other input, and it does not establish that the reasons themselves are correct, only that the engine used all of the ones exact inference found. The probe is one-directional: it only switches facts off, never on, so `deleted` means the engine's answer did not depend on this reason *under this interpretation*. On a system whose reasons can be retracted by an added fact — a policy exception evaluated after the rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one is, and can drive a violated verdict against a system that stated its reasons correctly. Where a deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and it is the only fingerprint of the condition this instrument can leave.
 
 LIMITS OF THIS RECORD
   This record is not a compliance guarantee and is not legal advice. It reproduces the minimal evidence fields that one peer-reviewed review (Table 7 of the source named above) associates with the cited duty. Whether those fields discharge the duty, and whether the values supplied for them are accurate, are determinations this tool does not make and cannot make.

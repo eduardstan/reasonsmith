@@ -83,7 +83,7 @@ import ast
 from collections.abc import Mapping
 from typing import Any
 
-from reasonsmith.certificate import Certificate, certify
+from reasonsmith.certificate import NON_MONOTONE_REMARK, Certificate, certify
 from reasonsmith.conformance import measured
 from reasonsmith.report import (
     CERTIFICATES_KEY,
@@ -122,10 +122,10 @@ ARTIFACT_KEYS = ("program", "base", "query", "adapter", "exact_depth", "tol", "l
 STRATEGY = (
     "for each decision the system exposed an inference artefact for, its reasons are enumerated "
     "exactly by bounded proof enumeration over the ground program and scored by exact weighted "
-    "model counting; each reason holding a fact no other reason uses is then switched off alone "
-    "and the system's own engine re-run on the perturbed interpretation. A reason whose deletion "
-    "moves exact inference but leaves the engine unchanged is a reason the engine's answer does "
-    "not depend on, and is counted here"
+    "model counting; every fact of a reason that no other reason uses is then switched off alone "
+    "and the system's own engine re-run on the perturbed interpretation. A reason no such deletion "
+    "moves the engine on, where it moved exact inference, is a reason the engine's answer does "
+    "not depend on, and is counted here. The probe only ever switches a fact off, never on"
 )
 
 #: There is no seed: the enumeration and every probe are determined by the artefact. The budget
@@ -163,8 +163,9 @@ def _env(record: Mapping[str, Any], cert: Certificate) -> dict[str, Any]:
 
 
 def _probes(cert: Certificate) -> int:
-    """Inferences this certificate replayed: one baseline, plus one per reason it switched off."""
-    return 1 + sum(1 for v in cert.verdicts if v.probe_fact is not None)
+    """Inferences this certificate replayed: one baseline, plus one per fact it switched off and
+    re-ran the engine on. A fact whose deletion does not move exact inference costs no re-run."""
+    return 1 + sum(v.engine_probes for v in cert.verdicts)
 
 
 class CertificateEngine:
@@ -330,8 +331,8 @@ class CertificateEngine:
             "seed": SEED,
             "input_space": {
                 "decisions certified": len(certified),
-                "reasons switched off": sum(
-                    _probes(cert) - 1 for _, cert, _ in certified
+                "facts switched off": sum(
+                    len(v.probe_facts) for _, cert, _ in certified for v in cert.verdicts
                 ),
             },
         }
@@ -370,6 +371,17 @@ class CertificateEngine:
         # declined, it is a decision the enumeration never reached. Kept apart from `skipped`
         # because the not-evaluated branch below states it in its own words and still owes the
         # reader the decisions that exposed no artefact.
+        # Not a caveat about coverage but about the instrument: on a system whose reasons can be
+        # retracted, `deleted` reads a retraction as a drop. Said on the verdict rather than hidden
+        # in an inconclusive bucket, which would lose the only signal that detects the condition.
+        non_monotone = sum(len(cert.non_monotone) for _, cert, _ in certified)
+        if non_monotone:
+            details["reasons_whose_deletion_raised_the_engines_answer"] = non_monotone
+        drift = (
+            f" On {non_monotone} reason(s) {NON_MONOTONE_REMARK}"
+            if non_monotone
+            else ""
+        )
         unmeasured = (
             f" {unenumerated} decision(s) had no reason enumerated at all, so "
             f"{DELETED_REASON_COUNT} is unmeasured for them and this verdict covers them not at "
@@ -394,9 +406,8 @@ class CertificateEngine:
                     f"inference found {len(worst.verdicts)} reason(s) and the deletion probe "
                     f"showed the system's answer does not depend on {len(worst.deleted)} of them "
                     f"— {missing_reasons}. Attribution: {worst.attribution}"
-                    f"{caveat}{skipped}{unmeasured} Measured against the inference artefact the "
-                    "system "
-                    "exposed, not read from its decision log."
+                    f"{caveat}{skipped}{unmeasured}{drift} Measured against the inference "
+                    "artefact the system exposed, not read from its decision log."
                 ),
                 details=details,
             )
@@ -471,7 +482,7 @@ class CertificateEngine:
                 ": every reason exact bounded proof enumeration found is one the system's own "
                 "answer depends on, so no reason was shown deleted"
                 + (" on those." if untriggered else ".")
-                + f"{untouched}{caveat}{skipped} Holds on the decisions whose artefact was "
+                + f"{untouched}{caveat}{skipped}{drift} Holds on the decisions whose artefact was "
                 "exposed and within the probes the budget below names; nothing here extends the "
                 "claim to a decision the system did not open up."
             ),
