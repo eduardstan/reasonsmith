@@ -80,6 +80,7 @@ from reasonsmith.report import (
     not_evaluated_for_unreachable_trigger,
 )
 from reasonsmith.rulelang import (
+    BOOLEAN_CONNECTIVE_CALLS,
     NotAStatementError,
     UnsupportedConstructError,
     eval_expression,
@@ -243,7 +244,7 @@ def _validate_trace_kinds(node: ast.Expression, field_kinds: Mapping[str, str]) 
             boolean_positions.extend((value, operation) for value in current.values)
         elif isinstance(current, ast.Call):
             name = current.func.id if isinstance(current.func, ast.Name) else ""
-            if name in ("implies", "Implies"):
+            if name in BOOLEAN_CONNECTIVE_CALLS:
                 boolean_positions.extend((argument, name) for argument in current.args)
 
     for position, operation in boolean_positions:

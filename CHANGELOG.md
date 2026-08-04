@@ -10,6 +10,25 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **Equivalence became a connective the graded fragment can read, instead of a comparison the
+  author never wrote.** `preprocess_spec` rewrote `φ <=> ψ` into `(φ) == (ψ)` textually, before the
+  Python parse. Over the Booleans that is sound — equivalence *is* equality of truth values — but
+  over the residuated lattices of §9 it is not, and because the rewriter had already destroyed the
+  distinction by the time anything checked, a graded `<=>` was refused as a *threshold*, naming a
+  construct the author never typed. `implies` was spared only by being spelled as a call rather
+  than as an arrow: an accident of text substitution, not a decision. The rewriter now emits a
+  distinct `Iff(φ, ψ)` node on the same footing `Implies(φ, ψ)` already had. The two-valued
+  evaluator reads it as equality of truth values, so every existing spec means exactly what it
+  meant — held to the truth table in the interpreter and in the Z3 encoding rather than by eyeball.
+  The graded evaluator reads it over `Algebra.biresiduum`, `(φ → ψ) ⊗ (ψ → φ)`, derived from the
+  residuum each algebra already stores rather than added as a fourth independent operation; under
+  Łukasiewicz that is `1 − |x − y|`. A crisp `==` the author actually wrote is still a comparison
+  and is still refused under a graded atom, naming `==`. This is a prerequisite for the settled
+  formal semantics — one denotation parameterised by the algebra, with `𝔹` as the two-element
+  Boolean algebra rather than a separate system — which obliges every connective to have a reading
+  in the algebra, and equivalence had none because it was not a connective by the time anything
+  looked. **No shipped pack uses either spelling and no shipped verdict changed.**
+
 - **The evidence scale gained a second coordinate, and the strength lattice did not move.**
   `unattainable < observed < probed < proved` is a chain, and three shipped situations were not on
   that axis: a `counterfactual` duty is a property of a *pair* of executions and so has no trace

@@ -70,6 +70,8 @@ from typing import Sequence
 from reasonsmith.rulelang import (
     CONTAINS_CALL,
     COUNTERFACTUAL_CALL,
+    EQUIVALENCE_CALL,
+    IMPLICATION_CALLS,
     PRESENCE_CALL,
     TEMPORAL_OPERATORS,
     UnsupportedConstructError,
@@ -203,10 +205,14 @@ def _render(node: ast.AST, abstraction: Abstraction) -> str:
             left = _render(node.args[0], abstraction)
             right = _render(node.args[1], abstraction)
             return f"({left} {_BINARY_RENDERING[name]} {right})"
-        if name in ("implies", "Implies"):
+        if name in IMPLICATION_CALLS:
             left = _render(node.args[0], abstraction)
             right = _render(node.args[1], abstraction)
             return f"({left} -> {right})"
+        if name == EQUIVALENCE_CALL:
+            left = _render(node.args[0], abstraction)
+            right = _render(node.args[1], abstraction)
+            return f"(({left} -> {right}) & ({right} -> {left}))"
         if name == COUNTERFACTUAL_CALL:
             raise UnsupportedConstructError(
                 f"{COUNTERFACTUAL_CALL} is a property of a pair of executions and not of any "

@@ -57,6 +57,8 @@ from typing import Any, Callable
 
 from reasonsmith.rulelang import (
     DEGREE_CALL,
+    EQUIVALENCE_CALL,
+    IMPLICATION_CALLS,
     UnsupportedConstructError,
     degree_arguments,
     eval_expression,
@@ -92,6 +94,21 @@ class Algebra:
     disjunction: Callable[[float, float], float]
     negation: Callable[[float], float]
     residuum: Callable[[float, float], float]
+
+    def biresiduum(self, x: float, y: float) -> float:
+        """The degree to which two degrees are equivalent: `(x → y) ⊗ (y → x)`.
+
+        Derived and not stored, for the reason `negation` is derived from the residuum: a member of
+        this table stays internally consistent by construction rather than by a fourth independent
+        choice. Under Łukasiewicz it works out to `1 − |x − y|`, which is the standard reading,
+        pinned as such in `tests/test_equivalence_connective.py`.
+
+        This is what `<=>` means in the graded fragment, and it is emphatically not `x == y`. A
+        crisp comparison of two degrees is a threshold, which `docs/semantics.md` §9 refuses; an
+        author who writes `==` still receives that refusal, and an author who writes `<=>` now
+        receives this.
+        """
+        return self.conjunction(self.residuum(x, y), self.residuum(y, x))
 
 
 def _lukasiewicz_residuum(x: float, y: float) -> float:
@@ -266,7 +283,9 @@ def degree_of(
 
     A graded atom under arithmetic or a comparison is refused rather than coerced: `degree(x, "p") +
     1` asks for a number on a scale this package has not defined, and a comparison of two degrees is
-    a threshold — the one construct §9 refuses to let a pack state.
+    a threshold — the one construct §9 refuses to let a pack state. `<=>` is not that comparison: it
+    parses to `Iff(...)` and is read over `Algebra.biresiduum`, which is why the refusal now reaches
+    only the author who actually wrote `==`.
     """
     if isinstance(node, ast.Expression):
         return degree_of(node.body, env, algebra, grading)
@@ -290,18 +309,24 @@ def degree_of(
         if name == DEGREE_CALL:
             signal, predicate = degree_arguments(node)
             return grading.degree(signal, predicate)
-        if name in ("implies", "Implies") and len(node.args) == 2:
+        if name in IMPLICATION_CALLS and len(node.args) == 2:
             return algebra.residuum(
+                degree_of(node.args[0], env, algebra, grading),
+                degree_of(node.args[1], env, algebra, grading),
+            )
+        if name == EQUIVALENCE_CALL and len(node.args) == 2:
+            return algebra.biresiduum(
                 degree_of(node.args[0], env, algebra, grading),
                 degree_of(node.args[1], env, algebra, grading),
             )
 
     raise UnsupportedConstructError(
         f"{ast.unparse(node)!r} puts a graded atom somewhere this reading has no meaning for it. "
-        f"{DEGREE_CALL}() stands under the boolean connectives and under an implication, and "
-        "nowhere else: under arithmetic it asks for a number on an undefined scale, and under a "
-        "comparison it states a threshold, which is the pack author's number presented as the "
-        "regulation's"
+        f"{DEGREE_CALL}() stands under the boolean connectives, under an implication and under an "
+        "equivalence, and nowhere else: under arithmetic it asks for a number on an undefined "
+        "scale, and under a comparison it states a threshold, which is the pack author's number "
+        "presented as the regulation's. Note that `<=>` is an equivalence and reaches the "
+        "algebra's biresiduum, while `==` is a comparison and does not"
     )
 
 

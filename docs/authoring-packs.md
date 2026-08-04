@@ -100,7 +100,9 @@ including the free names a `logical` requirement's `spec` reads.
 Every `spec`, in every fragment, is a formula in the language of `src/reasonsmith/rulelang.py`:
 presence atoms (`present(signal)`), phrase atoms (`contains(signal, "literal")`), comparisons over
 signal values, boolean connectives and arrows, the temporal operators, and the rulelang calls
-`implies`, `abs`, `min`, `max`. Every name in it is
+`implies`, `abs`, `min`, `max`. The arrows are `->` / `=>` / ` implies ` for implication and `<=>` /
+`<->` for equivalence; both are connectives and neither is a comparison, so `<=>` is admitted in a
+graded `spec` where `==` between two degrees is not (below, and [`semantics.md`](semantics.md) §2). Every name in it is
 resolved against the decision record the system produces, so the names in `spec`, the names in
 `requires` and the names the system's `logic()` declares are one vocabulary, not three — and the
 loader refuses a `spec` reading an *unconditional* signal `requires` does not gate.
@@ -179,9 +181,12 @@ commits the pack to two further things:
   clothes (*a phrase in a `spec`*, below), and this design refuses it in the same terms.
 
 Two shapes are load errors, and both are the same refusal. A `degree()` atom under a **comparison or
-arithmetic** — `degree(r, "detailed") >= 0.8` — states a threshold, which is the pack author's number
-presented as the regulation's, and is exactly the hazard *a number in a `spec`* describes arriving
-on a lattice. A `degree()` atom under a **temporal operator** asks for a many-valued reading of
+arithmetic** — `degree(r, "detailed") >= 0.8`, and `degree(r, "detailed") == degree(q, "adequate")`
+with it — states a threshold, which is the pack author's number presented as the regulation's, and is
+exactly the hazard *a number in a `spec`* describes arriving on a lattice. Equivalence is not that
+comparison: `degree(r, "detailed") <=> degree(q, "adequate")` is a connective, read over the
+algebra's **biresiduum** `(φ → ψ) ⊗ (ψ → φ)` in the way an implication is read over its residuum, and
+is admitted. The difference is what the author wrote, and `==` still gets the refusal. A `degree()` atom under a **temporal operator** asks for a many-valued reading of
 `always` or `until`, and this repository implements no temporal semantics at any rung.
 
 **Nothing turns a degree into a verdict**, here or anywhere. A graded duty is reported *not

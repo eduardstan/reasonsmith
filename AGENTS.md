@@ -271,6 +271,20 @@ nothing turns a degree into a verdict, because that needs a threshold no statute
 `docs/semantics.md` §9 — which carries the presentation rule — before touching any of it, and
 `ROADMAP.md` objective 6 for what a first shipped duty would owe.
 
+The arrow rewriter is textual and runs **before** the parse, so what it emits decides what every
+later check can tell apart. `<=>` and `<->` emit `Iff(φ, ψ)`, a distinct node on the footing
+`Implies(φ, ψ)` has, and never `==`: over the Booleans the two are the same function, but over a
+residuated lattice `==` is a crisp comparison of two degrees — a threshold — so collapsing the
+connective made the graded fragment refuse an equivalence naming a construct the author never
+typed, while `implies` was spared only by being spelled as a call rather than as an arrow.
+`manyvalued.Algebra.biresiduum` is the graded reading, `(φ → ψ) ⊗ (ψ → φ)`, **derived** from the
+stored residuum for the reason `negation` is derived rather than added as a fourth operation. Three
+things must not be undone: the two-valued reading is equality of truth values and is pinned against
+the truth table in both the interpreter and the Z3 encoding, so no existing spec moved; an
+author-written `==` under a graded atom is still refused, naming `==`; and no shipped pack uses
+either spelling, so nothing generated moved. `tests/test_equivalence_connective.py` holds all of it
+and `docs/semantics.md` §2 and §9 are the contract.
+
 `requires` is a conjunctive gate, so a branch of an either/or clause must not be listed in it: the
 loader (`spec._check_spec`, via `rulelang.unconditional_signal_names`) exempts a signal read only
 inside a disjunction, because gating one branch reports a system that lawfully took the other

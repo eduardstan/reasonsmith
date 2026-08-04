@@ -77,6 +77,7 @@ import z3
 from reasonsmith.report import RequirementResult, not_evaluated_for_unreachable_trigger
 from reasonsmith.rulelang import (
     CONTAINS_CALL,
+    EQUIVALENCE_CALL,
     PRESENCE_CALL,
     UnsupportedConstructError,
     assignment_target,
@@ -661,6 +662,19 @@ def _ast_to_z3(node: ast.AST, scope: _Scope) -> Any:
             arg0 = _ast_to_z3(node.args[0], scope)
             arg1 = _ast_to_z3(node.args[1], scope)
             return z3.Implies(arg0, arg1)
+
+        if func_name == EQUIVALENCE_CALL:
+            if len(node.args) != 2:
+                raise UnsupportedConstructError(
+                    f"{EQUIVALENCE_CALL} expects 2 arguments, got {len(node.args)}"
+                )
+            arg0 = _ast_to_z3(node.args[0], scope)
+            arg1 = _ast_to_z3(node.args[1], scope)
+            # Both directions rather than `arg0 == arg1`, which is the same Boolean formula but
+            # would also accept two numeric operands and quietly become numeric equality — the
+            # crisp comparison `<=>` is no longer a spelling for. Written this way a magnitude
+            # under an equivalence fails on the sort here exactly as it fails under `Implies`.
+            return z3.And(z3.Implies(arg0, arg1), z3.Implies(arg1, arg0))
 
         if func_name == "abs":
             if len(node.args) != 1:

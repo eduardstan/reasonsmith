@@ -422,7 +422,9 @@ def test_nested_and_augmented_statements_are_modelled_or_refused_by_both_sides()
 
 def test_arrow_rewriting_respects_parentheses_and_precedence():
     """Operator rewriting must not silently produce a different property."""
-    assert "==" in preprocess_spec("approved <=> income >= 30000")
+    # `Iff(...)` and never `==`: see `test_equivalence_connective.py` for why the distinction is
+    # load-bearing, and for the pin that fails if the rewriter ever collapses it again.
+    assert preprocess_spec("approved <=> income >= 30000").lstrip().startswith("Iff(")
 
     equivalence = RulesAdapter(
         rules=["approved = income >= 30000"],

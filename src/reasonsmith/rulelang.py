@@ -154,8 +154,28 @@ BINARY_TEMPORAL_OPERATORS = frozenset({"until", "since"})
 #: Every temporal operator of the language.
 TEMPORAL_OPERATORS = UNARY_TEMPORAL_OPERATORS | BINARY_TEMPORAL_OPERATORS
 
+#: The call the arrow rewriter emits for `<=>` and `<->`, on the footing `Implies(...)` already has.
+#:
+#: It is a **distinct node** and deliberately not `==`. Over the Booleans equivalence *is* equality
+#: of truth values, and `eval_expression` reads it that way, so nothing two-valued moved. Over the
+#: residuated lattices of `manyvalued` it is not: `==` is a crisp comparison of two degrees, which
+#: is a threshold, and `docs/semantics.md` §9 refuses one. Collapsing the connective textually
+#: before the parse destroyed the distinction, so the refusal named a construct nobody wrote and
+#: equivalence was unavailable in the graded fragment for no design reason — the same accident that
+#: spared `implies`, which survived only by being spelled as a call rather than as an arrow.
+#: `manyvalued.degree_of` reads this over the algebra's biresiduum.
+EQUIVALENCE_CALL = "Iff"
+
+#: The two spellings of implication, which the rewriter folds `=>`, `->` and ` implies ` into.
+IMPLICATION_CALLS = frozenset({"implies", "Implies"})
+
+#: Every call whose operands stand in Boolean position and whose value is a truth value. Named once
+#: because three walkers ask the same question of it, and a connective added to one and forgotten in
+#: another would give its operands a role the property never gave them.
+BOOLEAN_CONNECTIVE_CALLS = IMPLICATION_CALLS | {EQUIVALENCE_CALL}
+
 #: The non-temporal function calls, with their arity.
-VALUE_CALLS = {"implies": 2, "Implies": 2, "abs": 1, "min": 2, "max": 2}
+VALUE_CALLS = {"implies": 2, "Implies": 2, EQUIVALENCE_CALL: 2, "abs": 1, "min": 2, "max": 2}
 
 #: The fragments of this language, narrowest first. `record` is a conjunction of presence atoms;
 #: `logical` is any other state property of one decision record; `temporal` is anything reaching
@@ -550,7 +570,13 @@ def _rewrite_groups(text: str) -> str:
 
 
 def _rewrite_arrows(text: str) -> str:
-    """Rewrite `<=>`/`<->` and `=>`/`->` into Python-parsable form, respecting parentheses."""
+    """Rewrite `<=>`/`<->` and `=>`/`->` into Python-parsable form, respecting parentheses.
+
+    Equivalence becomes `Iff(...)` and never `==`; see `EQUIVALENCE_CALL` for why a distinct node
+    rather than a comparison. Chained equivalence stays refused as ambiguous while implication
+    chains stay admitted right-associatively: `a -> b -> c` has a settled reading in every logic
+    this package touches and `a <=> b <=> c` does not, so the author is asked which one they wrote.
+    """
     index, token = _find_first_top_level(text, _EQUIVALENCE_TOKENS)
     if index >= 0:
         after = index + len(token)
@@ -559,7 +585,10 @@ def _rewrite_arrows(text: str) -> str:
                 raise UnsupportedConstructError(
                     f"Chained equivalence in {text!r} is ambiguous: parenthesise one side"
                 )
-        return f"(({_rewrite_sub(text[:index], text)}) == ({_rewrite_sub(text[after:], text)}))"
+        return (
+            f"{EQUIVALENCE_CALL}(({_rewrite_sub(text[:index], text)}), "
+            f"({_rewrite_sub(text[after:], text)}))"
+        )
 
     index, token = _find_first_top_level(text, _IMPLICATION_TOKENS)
     if index >= 0:
@@ -723,7 +752,7 @@ def expression_kind(node: ast.AST) -> str:
                 f"{name} expects {arity} argument(s), got {len(node.args)}"
             )
         kinds = [expression_kind(argument) for argument in node.args]
-        expected_kind = "boolean" if name in ("implies", "Implies") else "number"
+        expected_kind = "boolean" if name in BOOLEAN_CONNECTIVE_CALLS else "number"
         for argument, kind in zip(node.args, kinds, strict=True):
             _require_kind(kind, expected_kind, argument)
         return expected_kind
@@ -996,7 +1025,7 @@ def _bare_boolean_parts(node: ast.AST) -> tuple[tuple[str, ...], tuple[bool, ...
                 visit(comparator)
         elif isinstance(current, ast.Call):
             name = current.func.id if isinstance(current.func, ast.Name) else ""
-            if name in TEMPORAL_OPERATORS or name in ("implies", "Implies"):
+            if name in TEMPORAL_OPERATORS or name in BOOLEAN_CONNECTIVE_CALLS:
                 for argument in current.args:
                     visit(argument, True)
             elif name not in _SIGNAL_ARGUMENT_CALLS:
@@ -1295,6 +1324,14 @@ def eval_expression(node: ast.AST, env: dict[str, Any]) -> Any:
         if name in ("implies", "Implies"):
             _require_arity(name, args, 2)
             return _implies(args[0], args[1])
+        if name == EQUIVALENCE_CALL:
+            # Equality of truth values, which over the Booleans is what `<=>` always meant: the
+            # rewriter used to emit `==` and this is the same function of the same two operands.
+            # `bool()` on each side is what the old `==` did not do, and is why a number under an
+            # equivalence is refused a rung earlier by `expression_kind` rather than quietly
+            # compared here.
+            _require_arity(name, args, 2)
+            return bool(args[0]) == bool(args[1])
         if name == "abs":
             _require_arity(name, args, 1)
             return abs(args[0])

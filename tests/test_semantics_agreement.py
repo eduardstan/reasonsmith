@@ -139,6 +139,12 @@ SPECS = st.recursive(
         st.tuples(st.sampled_from(["->", "=>", " implies "]), children, children).map(
             lambda item: f"(({item[1]}){item[0]}({item[2]}))"
         ),
+        # Both spellings of equivalence, which `preprocess_spec` folds to `Iff(...)` and
+        # deliberately not to `==` — see `tests/test_equivalence_connective.py`. Here for the
+        # reason implication is: the interpreter and the encoder must not drift on it.
+        st.tuples(st.sampled_from(["<->", "<=>"]), children, children).map(
+            lambda item: f"(({item[1]}){item[0]}({item[2]}))"
+        ),
     ),
     max_leaves=5,
 )

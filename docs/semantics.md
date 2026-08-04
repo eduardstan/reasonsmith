@@ -347,15 +347,30 @@ never calls `eval`, `exec` or `compile`; the whitelist is the interpreter itself
 | Binary | `+`, `-`, `*`, `/`, `%` |
 | Boolean | `and`, `or` |
 | Comparison | `==`, `!=`, `<`, `<=`, `>`, `>=`, including chained |
-| Calls | `implies(a, b)` / `Implies(a, b)`, `abs(x)`, `min(a, b)`, `max(a, b)`, `present(signal)`, `contains(signal, "phrase")` — no keyword arguments |
+| Calls | `implies(a, b)` / `Implies(a, b)`, `Iff(a, b)`, `abs(x)`, `min(a, b)`, `max(a, b)`, `present(signal)`, `contains(signal, "phrase")` — no keyword arguments |
 | Temporal | `always`, `eventually`, `once`, `historically`, `next`, `prev`, `rise`, `fall`, each over one operand |
-| Arrows | `<=>` and `<->` rewrite to `==`; `=>`, `->` and ` implies ` rewrite to `Implies(...)` |
+| Arrows | `<=>` and `<->` rewrite to `Iff(...)`; `=>`, `->` and ` implies ` rewrite to `Implies(...)` |
 
 Arrow rewriting is textual and happens before parsing. It respects parentheses and string literals,
 so an arrow inside a quoted string is left alone (`test_arrow_rewriting_leaves_string_literals_alone`)
 and a parenthesised implication binds tighter than a surrounding `and`
 (`test_arrow_rewriting_respects_parentheses_and_precedence`). Chained equivalence is refused as
-ambiguous rather than associated silently. Everything not in the table raises
+ambiguous rather than associated silently, while an implication chain is admitted
+right-associatively, because `a -> b -> c` has a settled reading in every logic this package
+touches and `a <=> b <=> c` does not
+(`test_a_chained_equivalence_is_refused_as_ambiguous`,
+`test_an_implication_chain_stays_admitted_right_associatively`).
+
+Equivalence rewrites to a **call and never to `==`**. Over the Booleans the two are the same
+function — `eval_expression` reads `Iff` as equality of truth values and
+`test_the_interpreter_reads_equivalence_as_the_truth_table` holds it to the table, with
+`test_the_solver_reads_equivalence_as_the_truth_table` holding the Z3 encoding to the same — so no
+two-valued spec moved. Over a residuated lattice they are not: `==` is a crisp comparison of two
+degrees, which is a threshold §9 refuses, and collapsing the connective textually before the parse
+meant the graded fragment refused an equivalence naming a construct the author never wrote.
+`implies` was spared only by being spelled as a call rather than as an arrow, which was an accident
+of text substitution and not a decision. `test_the_rewriter_never_collapses_equivalence_to_a_comparison`
+fails if the rewriter ever collapses it again. Everything not in the table raises
 `UnsupportedConstructError`; nothing is skipped.
 
 **Statements** (`execute_statements`, used for `sut.logic()` rule blocks) accept assignment to a
@@ -2168,6 +2183,21 @@ having observed nothing is not evidence graded 1.0, and answering `1.0` there wo
 **A predicate nobody assessed is not a predicate assessed as false.** A grading that scores no
 degree for an atom the property reads leaves the duty *not evaluated*, never at `0.0`
 (`test_an_ungraded_atom_is_not_evaluated_and_never_a_degree_of_zero`).
+
+**The connectives above a graded atom are the algebra's, including equivalence.** Conjunction,
+disjunction and negation are the t-norm's, its dual and the one the residuum induces; an implication
+is the residuum; and `φ <=> ψ` is the **biresiduum** `(φ → ψ) ⊗ (ψ → φ)`, which under Łukasiewicz
+works out to `1 − |x − y|`
+(`test_a_graded_equivalence_is_the_algebra_s_biresiduum`,
+`test_lukasiewicz_equivalence_is_one_minus_the_distance`). It is derived from the residuum each
+`Algebra` already stores rather than added as a fourth independent operation, for the reason
+`negation` is derived: a member of that table stays internally consistent by construction. It is
+reached only because `preprocess_spec` emits `Iff(...)` for `<=>` and `<->` rather than collapsing
+them to `==` before the parse (§2, and
+`test_the_rewriter_never_collapses_equivalence_to_a_comparison`). A crisp `==` the author actually
+wrote is still a comparison of two degrees, is still a threshold, and is still refused, naming what
+was written (`test_a_graded_comparison_the_author_wrote_is_still_refused`) — the point of the
+distinction is that the author who wrote `<=>` no longer receives that refusal.
 
 Everything in a graded formula with no `degree()` atom under it is answered by the two-valued
 interpreter every other engine already uses, and mapped to `1.0`/`0.0`. That is not an optimisation:
