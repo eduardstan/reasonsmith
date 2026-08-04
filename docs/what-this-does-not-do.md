@@ -79,7 +79,7 @@ is a legal reading ([`ROADMAP.md`](../ROADMAP.md) §6).
 
 ## 3. A rung is not a grade
 
-`unattainable < observed < probed < proved` ranks **how a conclusion was reached**, never **what it
+`unattainable < observed < recounted < probed < proved` ranks **how a conclusion was reached**, never **what it
 was reached about**. [`docs/semantics.md`](semantics.md) §4, *The lattice*, states the consequence,
 and it is quoted rather than paraphrased here:
 

@@ -303,8 +303,11 @@ _BASIS_SENTENCES = {
     EvidenceBasis.ARTIFACT: (
         "artifact — this duty is measured against the inference artefact behind a decision rather "
         "than against what the system decided. No trace holds that artefact and the enumeration is "
-        "exact only on the one artefact it ran over, so probed is the only rung above unattainable "
-        "and nothing the system exposes raises it"
+        "exact only on the one artefact it ran over, so the rungs above unattainable are recounted "
+        "and probed, and neither observed nor proved is reachable however much the system exposes. "
+        "Which of the two a verdict reaches is a fact about the artefact and not about the search: "
+        "probed measures a reason set enumerated from a model encoding, recounted measures one the "
+        "system recounted about its own inference"
     ),
     EvidenceBasis.ASSESSMENT: (
         "assessment — this duty rests on how an open-textured predicate applies, which a named "
@@ -337,6 +340,7 @@ def basis_sentence(basis: EvidenceBasis) -> str | None:
 _CATEGORY_PILL_STYLE = {
     "proved": ("satisfied", "🏆"),
     "probed": ("satisfied", "🔍"),
+    "recounted": ("satisfied", "🗣"),
     "observed": ("satisfied", "👁"),
     "violated": ("violated", "✖"),
     "inconclusive": ("inconclusive", "?"),
@@ -355,6 +359,7 @@ _CATEGORY_PILL_STYLE = {
 _STRENGTH_ICONS = {
     Strength.UNATTAINABLE: "⊘",
     Strength.OBSERVED: "👁",
+    Strength.RECOUNTED: "🗣",
     Strength.PROBED: "🔍",
     Strength.PROVED: "🏆",
 }
@@ -890,9 +895,15 @@ def render_html(
 
             probe_budget = r.details.get(PROBE_BUDGET_KEY)
             if view.probe_budget and probe_budget:
+                # Named for the rung the result actually carries: the same search over a reason set
+                # the system recounted is not a probed verdict, and a heading saying so would put
+                # it on the rung above (`docs/semantics.md` §10, the presentation rule).
+                searched = (
+                    "RECOUNTED" if r.strength is Strength.RECOUNTED else "PROBED"
+                )
                 details_html += (
                     '<div class="callout-box callout-probe">'
-                    "<strong>PROBED — What Was Searched:</strong><br>"
+                    f"<strong>{searched} — What Was Searched:</strong><br>"
                     f"{html.escape(_budget_line(probe_budget))}"
                     '<div class="callout-note">A bounded search, not a proof: the property is '
                     "unchecked outside the inputs named here.</div>"
@@ -907,7 +918,11 @@ def render_html(
                 )
                 # A counterexample the solver derived and one a replay found are both concrete
                 # inputs, and neither may be worded as the other: `probed` did not prove anything.
-                kind = "Replayed" if r.strength == Strength.PROBED else "Formal"
+                kind = (
+                    "Replayed"
+                    if r.strength in (Strength.PROBED, Strength.RECOUNTED)
+                    else "Formal"
+                )
                 details_html += (
                     '<div class="callout-box callout-violated">'
                     f"<strong>VIOLATED — {kind} Counterexample Input:</strong><br>"

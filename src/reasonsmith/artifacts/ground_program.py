@@ -47,6 +47,12 @@ class GroundProgramArtifact:
     as a reason code.
     """
 
+    #: This family enumerates its reasons, so it reaches `Strength.PROBED`. Bounded by `exact_depth`
+    #: and exact within that bound, which is a different claim from a set the system recounted —
+    #: `artifacts.reason_trace` is the family on the rung below, and `artifacts.RECOUNTED_REASONS`
+    #: is what separates them.
+    reasons_are_exact = True
+
     def __init__(
         self,
         program: GroundProgram,

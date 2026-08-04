@@ -240,9 +240,17 @@ def test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach():
 
     The table is a claim about what could be reached; the ladder is what runs. The check is in both
     directions: no ladder offers a rung its duty's basis refuses (which would be refused at the
-    stamp, at run time, on a user's report), and no basis advertises a rung above `unattainable`
-    that no ladder for a duty on that basis ever offers (which would draw a step on the HTML track
-    that nothing can ever light).
+    stamp, at run time, on a user's report), and no basis advertises a rung above the strongest any
+    ladder for a duty on that basis offers (which would draw a step on the HTML track that nothing
+    can ever light).
+
+    The second direction is a *ceiling* check and not an equality, and the reason is
+    `Strength.RECOUNTED`: a ladder entry is chosen without executing the system, so the certificate
+    branch cannot know whether the artefact behind a decision enumerates its reasons or recounts
+    them, and it declares the strongest rung it might reach. That a lower rung on the row is
+    reachable is shown by running the engine instead —
+    `test_a_recounted_reason_set_reports_one_rung_below_an_enumerated_one` in
+    `tests/test_artifact_protocol.py` — which is better evidence than reading it off the ladder.
     """
     offered: dict[EvidenceBasis, set[Strength]] = {b: set() for b in EvidenceBasis}
     for req in _all_requirements():
@@ -261,7 +269,7 @@ def test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach():
         if basis is EvidenceBasis.ASSESSMENT:
             continue  # no shipped duty, and by design no ladder at all — see below.
         advertised = set(basis.rungs) - {Strength.UNATTAINABLE}
-        assert advertised == rungs, (
+        assert rungs <= advertised and max(advertised) == max(rungs), (
             f"the {basis} basis advertises {sorted(s.value for s in advertised)} but the shipped "
             f"ladders offer {sorted(s.value for s in rungs)}"
         )
@@ -345,10 +353,15 @@ def test_the_certificate_dutys_ceiling_is_named_as_the_dutys_and_not_the_systems
 
     `[PROBED]` with `proved` drawn greyed-out beside it is an instruction to expose more of the
     system, and for this duty that instruction is false: the measurement is against the inference
-    artefact, and no exposure raises it. The track now shows the two rungs this duty has.
+    artefact, and no exposure raises it. The track shows the rungs this duty has — three since
+    `recounted` landed, and still neither `observed` nor `proved`.
     """
     duty = load_pack("ecoa").get_requirement("ecoa_reg_b_1002_9_b_2_principal_reasons_complete")
-    assert evidence_basis(duty).rungs == (Strength.UNATTAINABLE, Strength.PROBED)
+    assert evidence_basis(duty).rungs == (
+        Strength.UNATTAINABLE,
+        Strength.RECOUNTED,
+        Strength.PROBED,
+    )
 
     html_out = check_conformance(_log_only_system(), load_pack("ecoa")).render_html()
     card = html_out.split(duty.id, 1)[1].split("</article>", 1)[0]

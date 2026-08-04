@@ -76,9 +76,10 @@ def _write_pack(tmp_path: Path, body: str) -> Path:
 
 
 def test_strength_lattice_ordering():
-    """Strength lattice forms a strict total order: unattainable < observed < probed < proved."""
+    """Strict total order: unattainable < observed < recounted < probed < proved."""
     assert Strength.UNATTAINABLE < Strength.OBSERVED
-    assert Strength.OBSERVED < Strength.PROBED
+    assert Strength.OBSERVED < Strength.RECOUNTED
+    assert Strength.RECOUNTED < Strength.PROBED
     assert Strength.PROBED < Strength.PROVED
 
     # Transitive checks
@@ -90,7 +91,13 @@ def test_strength_lattice_ordering():
     assert Strength.PROVED > Strength.OBSERVED
     assert not Strength.OBSERVED < Strength.OBSERVED
 
-    ladder = [Strength.UNATTAINABLE, Strength.OBSERVED, Strength.PROBED, Strength.PROVED]
+    ladder = [
+        Strength.UNATTAINABLE,
+        Strength.OBSERVED,
+        Strength.RECOUNTED,
+        Strength.PROBED,
+        Strength.PROVED,
+    ]
     assert sorted(reversed(ladder)) == ladder
 
     assert min_strength(ladder) == Strength.UNATTAINABLE

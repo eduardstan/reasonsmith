@@ -10,6 +10,8 @@ What this module is for:
   Strengths form a strict total order (the strength lattice):
     unattainable — The system cannot discharge the requirement as built (missing signals).
     observed     — The property holds over passive decision traces (monitors / record checks).
+    recounted    — The property holds under active perturbation of a reason set the *system*
+                   recounted, rather than one enumerated exactly from a model encoding.
     probed       — The property holds under active perturbation/replay.
     proved       — The property holds for all inputs via formal reasoning / solver proof.
 
@@ -28,9 +30,15 @@ What this module is for:
 
 What a reader must not break:
   - Do not alter the strict total order of the strength lattice
-    (`UNATTAINABLE < OBSERVED < PROBED < PROVED`).
+    (`UNATTAINABLE < OBSERVED < RECOUNTED < PROBED < PROVED`).
     Why this matters: Order guarantees that weaker passive evidence can never masquerade as
     active probing or formal proof.
+  - `RECOUNTED` sits *below* `PROBED` and never beside it. Both rungs run the same deletion probe;
+    they differ in where the reason set came from, and a set the system recounted is a claim
+    nothing here can check as hard as an enumeration from a model encoding.
+    Why this matters: this is the whole reason the member exists. `docs/semantics.md` §3 (*The
+    inference artefact*) gated the second artefact family on the lattice being able to say it, and
+    `report.RequirementResult._validate_reason_set` is where saying it became refusing it.
   - `EvidenceBasis` is a **classification and never a rank**: its members are deliberately not
     ordered, and comparing two of them raises rather than answering. The chain above ranks how far
     a claim about one kind of object was pushed; the basis says which kind of object, and the two
@@ -65,6 +73,7 @@ class Strength(Enum):
 
     UNATTAINABLE = "unattainable"
     OBSERVED = "observed"
+    RECOUNTED = "recounted"
     PROBED = "probed"
     PROVED = "proved"
 
@@ -73,8 +82,9 @@ class Strength(Enum):
         ranks = {
             "unattainable": 0,
             "observed": 1,
-            "probed": 2,
-            "proved": 3,
+            "recounted": 2,
+            "probed": 3,
+            "proved": 4,
         }
         return ranks[self.value]
 
@@ -127,9 +137,21 @@ class EvidenceBasis(Enum):
         Learning Models*, AAAI 2019, 1511–1519; see `docs/sufficient-reasons.md` §9 for the rest),
         and the model-precise rather than behaviour-sampled side of the distinction formal XAI
         draws (J. Marques-Silva, A. Ignatiev, *Delivering Trustworthy AI through Formal XAI*,
-        AAAI 2022, 12342–12350). The ladder is **one rung** for a reason in both directions: no
-        trace holds the artefact, and the enumeration is exact only on the one ground program and
-        base interpretation it was run over, so it is bounded evidence and never a proof.
+        AAAI 2022, 12342–12350). No trace holds the artefact, and the
+        enumeration is exact only on the one ground program and base interpretation it was run
+        over, so it is bounded evidence and never a proof: `observed` is off this row and `proved`
+        with it. The row has **two** rungs, and the lower one is `recounted` — a reason set the
+        system *recounted* rather than one enumerated from a model encoding, tested by the same
+        deletion probe. That is the faithfulness question of a self-reported rationale
+        (A. Jacovi, Y. Goldberg, *Towards Faithfully Interpretable NLP Systems: How Should We
+        Define and Evaluate Faithfulness?*, ACL 2020, 4198–4205), measured the way that literature
+        measures it, by erasure (J. DeYoung, S. Jain, N. F. Rajani, E. Lehman, C. Xiong, R. Socher,
+        B. C. Wallace, *ERASER: A Benchmark to Evaluate Rationalized NLP Models*, ACL 2020,
+        4443–4458), on evidence a self-report can fail to be (M. Turpin, J. Michael, E. Perez,
+        S. R. Bowman, *Language Models Don't Always Say What They Think: Unfaithful Explanations in
+        Chain-of-Thought Prompting*, NeurIPS 2023). Same object, less deeply — the claim is still
+        about the inference behind the decision — which is what makes it a rung here and not a
+        fifth basis.
       assessment — evidence about how an open-textured predicate applies, supplied by a named
         authority rather than measured from the system: a truth degree over a residuated lattice
         (P. Hájek, *Metamathematics of Fuzzy Logic*, Kluwer, 1998), or the naming of the
@@ -191,8 +213,10 @@ class EvidenceBasis(Enum):
 #: `unattainable` is in every row because it is not an engine's answer at all: the capability gate
 #: is a set difference over declared signal names, identical for every duty, and it runs before any
 #: basis is consulted. `observed` is absent from `relational` because a decision record holds one
-#: execution and a 2-safety property needs two; `probed`/`proved` are absent from `artifact` and
-#: `assessment` respectively for the reasons `EvidenceBasis` gives.
+#: execution and a 2-safety property needs two; `proved` is absent from `artifact` and every rung
+#: from `assessment` for the reasons `EvidenceBasis` gives. `recounted` is on the `artifact` row
+#: alone: it is the rung a reason set the system recounted reaches, and no other basis has a
+#: second-hand reading of its own evidence to rank.
 BASIS_RUNGS: dict[EvidenceBasis, tuple[Strength, ...]] = {
     EvidenceBasis.BEHAVIOURAL: (
         Strength.UNATTAINABLE,
@@ -201,7 +225,7 @@ BASIS_RUNGS: dict[EvidenceBasis, tuple[Strength, ...]] = {
         Strength.PROVED,
     ),
     EvidenceBasis.RELATIONAL: (Strength.UNATTAINABLE, Strength.PROBED, Strength.PROVED),
-    EvidenceBasis.ARTIFACT: (Strength.UNATTAINABLE, Strength.PROBED),
+    EvidenceBasis.ARTIFACT: (Strength.UNATTAINABLE, Strength.RECOUNTED, Strength.PROBED),
     EvidenceBasis.ASSESSMENT: (Strength.UNATTAINABLE,),
 }
 

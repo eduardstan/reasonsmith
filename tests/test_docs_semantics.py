@@ -81,7 +81,7 @@ def test_every_test_named_in_the_semantics_doc_exists():
 def test_semantics_doc_states_the_lattice_the_code_defines():
     """The document's ordering sentence is generated from `Strength`, not written from memory."""
     ladder = " < ".join(s.value for s in sorted(Strength))
-    assert ladder == "unattainable < observed < probed < proved"
+    assert ladder == "unattainable < observed < recounted < probed < proved"
     assert ladder in _document()
 
 
