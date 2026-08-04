@@ -225,10 +225,12 @@ duty by accident.
 **Depends on.** A legal reading, which is the captain's, and an assessment for the graded case. It
 deliberately does **not** depend on any further engine work: §9 states that neither fragment reaches
 an engine and that no rung of the lattice means *graded*, and a duty landing on either construct is
-reported *not evaluated* with its finding beside it. One thing it makes concrete rather than
-resolves: a graded reading has no place on the strength lattice, so **a graded verdict is one of
-several pressures on that scale's shape**, alongside the counterfactual fragment's two rungs and the
-certificate engine's single one. That structure gets designed once and was not designed here.
+reported *not evaluated* with its finding beside it. The pressure it put on the evidence scale — a
+graded reading having no place on the strength lattice, alongside the counterfactual fragment's two
+rungs and the certificate engine's single one — **has since been designed**, once, as the evidence
+*basis* dimension of `docs/semantics.md` §10 rather than as more links in the chain. A shipped
+graded duty inherits the `assessment` basis and is counted apart from a duty an engine failed to
+settle; nothing about it now waits on that design.
 
 ---
 

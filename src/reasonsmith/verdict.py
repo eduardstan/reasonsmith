@@ -1,10 +1,11 @@
-"""The evidence strength lattice and verdict vocabulary for reasonsmith.
+"""The evidence strength lattice, the evidence basis, and the verdict vocabulary for reasonsmith.
 
 What this module is for:
-  Defines the formal evidence strength lattice (`unattainable < observed < probed < proved`) and
-  the verdict vocabulary (`satisfied`, `violated`, `inconclusive`, `not_applicable`) for
-  compliance checking. Compliance claims carry both a verdict (whether a property holds) and a
-  strength (how deeply the system exposed itself for verification).
+  Defines the formal evidence strength lattice (`unattainable < observed < probed < proved`), the
+  evidence basis beside it (`EvidenceBasis`), and the verdict vocabulary (`satisfied`, `violated`,
+  `inconclusive`, `not_applicable`) for compliance checking. Compliance claims carry a verdict
+  (whether a property holds), a strength (how deeply the system exposed itself for verification)
+  and a basis (what kind of thing the evidence is about).
 
   Strengths form a strict total order (the strength lattice):
     unattainable — The system cannot discharge the requirement as built (missing signals).
@@ -30,6 +31,16 @@ What a reader must not break:
     (`UNATTAINABLE < OBSERVED < PROBED < PROVED`).
     Why this matters: Order guarantees that weaker passive evidence can never masquerade as
     active probing or formal proof.
+  - `EvidenceBasis` is a **classification and never a rank**: its members are deliberately not
+    ordered, and comparing two of them raises rather than answering. The chain above ranks how far
+    a claim about one kind of object was pushed; the basis says which kind of object, and the two
+    are different questions.
+    Why this matters: a reader handed `artifact` beside `probed` in an ordered list would read the
+    basis as a fifth rung. `docs/semantics.md` §10 is the contract.
+  - `BASIS_RUNGS` is the rungs each basis admits, and it is derived from what the engines can
+    actually reach rather than asserted. Widen a row only when an engine for that rung exists.
+    Why this matters: `RequirementResult` refuses a strength its basis does not admit, so a row
+    widened ahead of an engine turns a structural refusal into a comment.
   - `RequirementResult` refuses to construct a result claiming more than it has (including
     `strength=None` for "no engine here evaluated this", which is deliberately not a strength on
     the lattice).
@@ -84,6 +95,115 @@ class Strength(Enum):
             if member.value == val_lower:
                 return member
         raise ValueError(f"Unknown strength {value!r}; valid: {[m.value for m in cls]}")
+
+
+class EvidenceBasis(Enum):
+    """What kind of thing a duty's evidence is about — the second coordinate beside `Strength`.
+
+    The strength lattice ranks *how far* a claim was pushed. It cannot rank *what the claim was
+    about*, and three shipped duties are about something other than the system's own executions.
+    Each of the three is a known class of specification with its own literature, and each is why
+    that duty's ladder is the shape it is:
+
+      behavioural — a property of the system's executions, one at a time: a *trace property* in the
+        Alpern–Schneider sense (B. Alpern, F. B. Schneider, *Defining Liveness*, Information
+        Processing Letters 21(4):181–185, 1985). Every `record`, `logical` and `temporal` duty is
+        one, and all four rungs are reachable: a trace observes one execution, a replay searches
+        more of them, a solver quantifies over all the declared constraints admit.
+      relational — a property of a *pair* of executions: a **2-safety property** (T. Terauchi,
+        A. Aiken, *Secure Information Flow as a Safety Problem*, SAS 2005, LNCS 3672, 352–367) and
+        so a hyperproperty rather than a trace property (M. R. Clarkson, F. B. Schneider,
+        *Hyperproperties*, Journal of Computer Security 18(6):1157–1210, 2010). Self-composition is
+        the proof method (G. Barthe, P. R. D'Argenio, T. Rezk, *Secure Information Flow by
+        Self-Composition*, CSFW 2004, 100–114) and `counterfactually_invariant` is the instance
+        (M. J. Kusner, J. R. Loftus, C. Russell, R. Silva, *Counterfactual Fairness*, NeurIPS 2017,
+        4066–4076). **No trace rung exists**, and that is the literature's point rather than this
+        tool's shortfall: a hyperproperty is not a property of any single execution, so no length
+        of decision log holds a witness for one.
+      artifact — evidence about the *inference behind* a decision rather than about what the system
+        decided: the reasons the decision's own inference used, enumerated exactly from an
+        inference artefact and each switched off in turn. This is the abductive-explanation reading
+        (A. Ignatiev, N. Narodytska, J. Marques-Silva, *Abduction-Based Explanations for Machine
+        Learning Models*, AAAI 2019, 1511–1519; see `docs/sufficient-reasons.md` §9 for the rest),
+        and the model-precise rather than behaviour-sampled side of the distinction formal XAI
+        draws (J. Marques-Silva, A. Ignatiev, *Delivering Trustworthy AI through Formal XAI*,
+        AAAI 2022, 12342–12350). The ladder is **one rung** for a reason in both directions: no
+        trace holds the artefact, and the enumeration is exact only on the one ground program and
+        base interpretation it was run over, so it is bounded evidence and never a proof.
+      assessment — evidence about how an open-textured predicate applies, supplied by a named
+        authority rather than measured from the system: a truth degree over a residuated lattice
+        (P. Hájek, *Metamathematics of Fuzzy Logic*, Kluwer, 1998), or the naming of the
+        institution that would settle a predicate no computation does. **No rung at all**, because
+        the lattice ranks methods of interrogating a system and no system was interrogated. A
+        degree of truth is not a degree of belief and neither is a fraction of a proof
+        (D. Dubois, H. Prade, *Possibility Theory, Probability Theory and Multiple-Valued Logics:
+        A Clarification*, Annals of Mathematics and AI 32:35–66, 2001).
+
+    The members carry **no order**. `<` and its siblings raise rather than answering, so a basis
+    cannot be sorted into a ladder, compared against a strength, or rendered as a fifth rung.
+    """
+
+    BEHAVIOURAL = "behavioural"
+    RELATIONAL = "relational"
+    ARTIFACT = "artifact"
+    ASSESSMENT = "assessment"
+
+    @property
+    def rungs(self) -> tuple[Strength, ...]:
+        """The rungs of the strength lattice this basis admits, weakest first."""
+        return BASIS_RUNGS[self]
+
+    def admits(self, strength: Strength | str) -> bool:
+        """Whether a result on this basis may carry `strength`."""
+        return Strength.parse(strength) in self.rungs
+
+    def __str__(self) -> str:
+        return self.value
+
+    def _refuse_order(self, other: object) -> bool:
+        raise TypeError(
+            f"{type(self).__name__} members are not ordered: {self.value!r} and {other!r} name "
+            "different kinds of evidence, not different amounts of it. The strength lattice ranks "
+            "how far a claim was pushed; the basis says what the claim was about. See "
+            "docs/semantics.md §10."
+        )
+
+    __lt__ = _refuse_order
+    __le__ = _refuse_order
+    __gt__ = _refuse_order
+    __ge__ = _refuse_order
+
+    @classmethod
+    def parse(cls, value: str | EvidenceBasis) -> EvidenceBasis:
+        if isinstance(value, cls):
+            return value
+        val_lower = str(value).strip().lower()
+        for member in cls:
+            if member.value == val_lower:
+                return member
+        raise ValueError(f"Unknown evidence basis {value!r}; valid: {[m.value for m in cls]}")
+
+
+#: Which rungs each basis admits, weakest first. Every row is read off what an engine can actually
+#: reach, and `RequirementResult.__post_init__` refuses a result outside its row — so this table is
+#: the structural form of three sentences that were previously only prose.
+#:
+#: `unattainable` is in every row because it is not an engine's answer at all: the capability gate
+#: is a set difference over declared signal names, identical for every duty, and it runs before any
+#: basis is consulted. `observed` is absent from `relational` because a decision record holds one
+#: execution and a 2-safety property needs two; `probed`/`proved` are absent from `artifact` and
+#: `assessment` respectively for the reasons `EvidenceBasis` gives.
+BASIS_RUNGS: dict[EvidenceBasis, tuple[Strength, ...]] = {
+    EvidenceBasis.BEHAVIOURAL: (
+        Strength.UNATTAINABLE,
+        Strength.OBSERVED,
+        Strength.PROBED,
+        Strength.PROVED,
+    ),
+    EvidenceBasis.RELATIONAL: (Strength.UNATTAINABLE, Strength.PROBED, Strength.PROVED),
+    EvidenceBasis.ARTIFACT: (Strength.UNATTAINABLE, Strength.PROBED),
+    EvidenceBasis.ASSESSMENT: (Strength.UNATTAINABLE,),
+}
 
 
 class Verdict(Enum):

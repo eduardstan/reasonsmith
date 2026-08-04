@@ -94,6 +94,15 @@ So a report full of `proved` verdicts is not a better report than one full of `o
 It is a report about a system that exposed more, and the question of whether what it exposed is the
 system that runs in production is question 1 above.
 
+**And a basis is not a rung.** Two shipped duties are not about the system's executions at all —
+one is about a *pair* of them and one is about the inference artefact behind a decision — so
+neither can reach every rung whatever the system exposes. `relational` and `artifact` name what the
+evidence is about; they do not sit above or below `observed`, they are not ordered against each
+other, and comparing two of them raises rather than answering
+([`docs/semantics.md`](semantics.md) §10). A ceiling on one of those duties is a fact about the
+duty, and a report that showed it as an unfinished ladder was telling a reader to expose more of a
+system that could expose nothing further.
+
 ## 4. The strongest results need a system that exposes its inference, and most do not
 
 `probed` needs a system that can be re-run on an input it has not seen. `proved` needs one that

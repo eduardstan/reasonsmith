@@ -100,6 +100,30 @@ of formalisms an engine actually exists for — widen it when the engine lands, 
 (`PROBE_BUDGET_KEY` / `PROBE_BUDGET_FIELDS`), so the bound travels with the verdict into every
 rendering instead of being a rendering convention.
 
+The lattice is a chain and it has a **second coordinate beside it**, not more links: `strength` says
+how far a claim was pushed and `verdict.EvidenceBasis` says what the claim is *about*. Four members
+— `behavioural` (a trace property), `relational` (a 2-safety property), `artifact` (an abductive
+explanation over a model encoding), `assessment` (a truth degree over a residuated lattice) — each
+named after published work, cited in `docs/semantics.md` §10, which is the contract. It exists
+because three duty shapes were off the chain and every one of them was prose in a module docstring:
+the counterfactual fragment's missing trace rung, the certificate duty's ladder of one, and a graded
+duty that counted as one an engine failed to settle. Five things must not be undone. A basis is a
+**kind and never a rank**, so the members carry no order and `<` between two of them, or one and a
+`Strength`, raises rather than answering — this is the whole reason it is a dimension and not four
+more rungs. `BASIS_RUNGS` is the rungs each basis admits and `RequirementResult.__post_init__`
+**refuses** a result outside its row, which is three docstring sentences turned into one refusal;
+widen a row only when an engine for that rung exists, and
+`test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach` is the drift check against
+`_engine_ladder`. `report.evidence_basis` derives it from the **requirement alone** and
+`evaluate_requirement` stamps it once beside `domains`, so no pack field and no adapter can widen
+what a duty claims. `render.basis_sentence` is the one place any rendering words a basis — the
+discipline `render.degree_sentence` carries for a degree — and the HTML track draws only the rungs
+the basis admits, so a ceiling reads as the duty's rather than as an exposure the system withheld.
+And the lay projection is shown **no basis**, on the flag that already withholds the strength. The
+`on_an_assessment` count is split out of `not evaluated` for the same reason: those two look
+identical on a result and instruct a reader to do opposite things.
+`tests/test_evidence_basis.py` holds all of it, including the pin that no shipped verdict moved.
+
 Which engine a requirement reaches is decided by what the system exposes — for *every* fragment,
 not just `logical`, since the property-language unification. `rulelang.py` is the one property
 language: every `spec` is a formula in it (presence atoms `present(signal)`, the phrase atom

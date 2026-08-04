@@ -41,7 +41,7 @@ from reasonsmith.report import (
     TRUTH_DEGREE_KEY,
     ConformanceReport,
 )
-from reasonsmith.verdict import Strength, Verdict
+from reasonsmith.verdict import EvidenceBasis, Strength, Verdict
 
 
 @dataclass(frozen=True)
@@ -68,6 +68,9 @@ class AudienceProjection:
     #: The evidence strength: the text tier prefix and the HTML strength lattice. With this off
     #: the verdict badge is drawn from the verdict alone, so an unattainable result still reads
     #: as the `inconclusive` it is rather than gaining a strength word the reader is not shown.
+    #: The evidence *basis* rides on this same flag rather than gaining one of its own: it is the
+    #: other coordinate of the same claim, it is only ever shown to explain which rungs a duty
+    #: cannot reach, and an audience not shown the rungs cannot be shown a sentence about them.
     strength: bool = True
     #: Binding-vs-interpretive, the regulatory class limit and the decision domain limit.
     legal_metadata: bool = True
@@ -286,6 +289,48 @@ def degree_sentence(reading: Mapping[str, Any]) -> str:
     )
 
 
+#: What each evidence basis other than the behavioural one says about the rungs it cannot reach.
+#: The behavioural basis is deliberately absent: it reaches every rung, so naming it on every
+#: result would be a word every reader learns to skip, and the sentence a reader needs is the one
+#: that explains a *ceiling*. `basis_sentence` is the only reader of this table.
+_BASIS_SENTENCES = {
+    EvidenceBasis.RELATIONAL: (
+        "relational — this duty is a property of a pair of executions, and a decision record holds "
+        "one. No length of decision log observes it, so the rungs it can reach are probed and "
+        "proved; a system exposing only a log cannot discharge it, and that is a fact about the "
+        "kind of property and not about how much the system exposed"
+    ),
+    EvidenceBasis.ARTIFACT: (
+        "artifact — this duty is measured against the inference artefact behind a decision rather "
+        "than against what the system decided. No trace holds that artefact and the enumeration is "
+        "exact only on the one artefact it ran over, so probed is the only rung above unattainable "
+        "and nothing the system exposes raises it"
+    ),
+    EvidenceBasis.ASSESSMENT: (
+        "assessment — this duty rests on how an open-textured predicate applies, which a named "
+        "authority settles and no engine here does. No rung of the strength lattice ranks it, "
+        "because the lattice ranks ways of interrogating a system and no system was interrogated"
+    ),
+}
+
+
+def basis_sentence(basis: EvidenceBasis) -> str | None:
+    """The one wording of an evidence basis there is, in text and in HTML alike, or None.
+
+    `degree_sentence` is the precedent and the standard: one function, so no surface can word the
+    second coordinate of an evidence claim by another route and no two renderings can drift about
+    what it means. The rule this sentence exists to keep is `docs/semantics.md` §10's — **a basis is
+    a kind and never a rank** — and it keeps it by saying, in every place a basis is shown, which
+    rungs this duty cannot reach and that the reason is the duty's rather than the system's. A bare
+    word beside a rung word would be read as a fifth rung.
+
+    Returns None for the behavioural basis, which is every duty whose evidence is about the system's
+    own executions: it reaches every rung, there is no ceiling to explain, and a sentence on every
+    result would be the noise that makes the other three unreadable.
+    """
+    return _BASIS_SENTENCES.get(EvidenceBasis.parse(basis))
+
+
 #: How each category of `_CATEGORY_LABELS` is drawn in the HTML report: (style class, icon).
 #: Keyed by the same keys, so a category added there and forgotten here raises rather than
 #: silently rendering no pill.
@@ -296,6 +341,10 @@ _CATEGORY_PILL_STYLE = {
     "violated": ("violated", "✖"),
     "inconclusive": ("inconclusive", "?"),
     "not_evaluated": ("inconclusive", "−"),
+    # Drawn as an inconclusive pill and with no rung icon of its own, deliberately: this category
+    # is a *kind* of evidence and not a rank, and an icon from the lattice row above would put it
+    # in the ladder. See `basis_sentence`.
+    "on_an_assessment": ("inconclusive", "≈"),
     "unattainable": ("unattainable", "⊘"),
     "not_applicable": ("not-applicable", "⊝"),
 }
@@ -406,6 +455,12 @@ def render_text(report: ConformanceReport, audience: str | None = None) -> str:
             lines.append(
                 f"  {head}{r.requirement_id} ({r.source_clause}): {r.verdict.value}"
             )
+            # Printed only where the basis is not the behavioural one, and directly under the
+            # verdict line, because what it explains is the tier tag on that line: a `[PROBED]`
+            # ceiling this system cannot raise reads as one it failed to.
+            basis = basis_sentence(r.basis) if view.strength else None
+            if basis:
+                lines.append(f"    evidence basis: {basis}.")
             if view.signals:
                 lines.append(f"    requires: {', '.join(r.signals_required)}")
             if view.legal_metadata and r.scope:
@@ -668,10 +723,14 @@ def render_html(
                     '<span aria-hidden="true">?</span> INCONCLUSIVE</span>'
                 )
 
-            # Strength Lattice render
+            # Strength Lattice render. The track shows the rungs *this duty's basis admits* and no
+            # others: drawing all four for a duty that can only reach two showed a reader two steps
+            # the system was one exposure away from, when nothing it could expose would reach them.
+            # For the behavioural basis — every `record`, `logical` and `temporal` duty — the row is
+            # all four rungs and the track is the one that has always been drawn.
             cur_rank = r.strength.rank if r.strength is not None else None
             lattice_spans = []
-            for step in sorted(Strength, key=lambda s: s.rank):
+            for step in r.basis.rungs:
                 if r.strength is step:
                     active_cls = f"active-{step.value}"
                 elif (
@@ -693,6 +752,15 @@ def render_html(
                 + '<span class="lattice-arrow">&rarr;</span>'.join(lattice_spans)
                 + "</div>"
             )
+            # The sentence that keeps a shortened track from reading as an unfinished one, and the
+            # basis word from reading as a rung. `basis_sentence` is the only place either is
+            # worded, so this line and the text report's cannot drift.
+            basis_note = basis_sentence(r.basis)
+            if basis_note:
+                lattice_html += (
+                    f'<div class="lattice-basis">Evidence basis: '
+                    f"{html.escape(basis_note)}.</div>"
+                )
             # Each optional block carries the indentation the template used to spell inline, so
             # the full view is byte-for-byte the page that existed before projections did.
             lattice_block = (
@@ -1413,6 +1481,15 @@ def render_html(
       background: var(--neutral-soft); color: var(--ink-muted); border-color: var(--line-strong);
     }}
     .lattice-arrow {{ color: var(--line-strong); font-size: 0.72rem; }}
+    /* The basis sentence takes its own line under the track — `flex-basis: 100%` inside the
+       wrapping `.lattice-container` — so it reads as an account of the track and never as one
+       more step on it. Existing tokens only, so both schemes and the print block inherit it. */
+    .lattice-basis {{
+      flex-basis: 100%;
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--ink-faint);
+    }}
 
     .req-card-body {{ padding: var(--space-m); }}
     .signal-list {{ margin-bottom: var(--space-xs); font-size: var(--step--1); }}

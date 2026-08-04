@@ -53,7 +53,7 @@ from reasonsmith.sut import (
     _validate_capability_collection,
     read_time_domain,
 )
-from reasonsmith.verdict import Strength, Verdict
+from reasonsmith.verdict import EvidenceBasis, Strength, Verdict
 
 LIMITS = (
     "This report is not a compliance guarantee and is not legal advice. It assesses system "
@@ -194,6 +194,16 @@ class RequirementResult:
     about (e.g. 'consumer-credit'), empty meaning it is not domain-limited. All three are
     carried through from the requirement so a reader of a single result never has to go back to
     the pack to know what kind of duty it is.
+
+    `basis` is the fourth such fact and the second coordinate of the evidence claim: what kind of
+    thing this duty's evidence is *about*, as against `strength`, which says how far the claim was
+    pushed. It is derived from the requirement by `evidence_basis` and stamped once by
+    `evaluate_requirement`, never authored in a pack and never declared by a system; the default
+    here is the behavioural basis because that is what a direct construction is — evidence about
+    the system's own executions — and the stamp is what makes a non-behavioural duty carry the
+    truth. A result may not carry a strength its basis does not admit
+    (`verdict.BASIS_RUNGS`): a counterfactual duty cannot be reported `observed` and a certificate
+    duty cannot be reported `proved`, and those are refusals rather than conventions.
     """
 
     requirement_id: str
@@ -207,6 +217,7 @@ class RequirementResult:
     binding: bool = True
     scope: str = ""
     domains: tuple[str, ...] = ()
+    basis: EvidenceBasis = EvidenceBasis.BEHAVIOURAL
 
     def __post_init__(self) -> None:
         # Every invariant below compares against the enum members, so a raw string would
@@ -218,6 +229,7 @@ class RequirementResult:
         object.__setattr__(self, "binding", bool(self.binding))
         object.__setattr__(self, "scope", str(self.scope))
         object.__setattr__(self, "domains", normalize_domains(self.domains))
+        object.__setattr__(self, "basis", EvidenceBasis.parse(self.basis))
         for name in ("signals_required", "signals_missing"):
             object.__setattr__(self, name, self._signal_names(name))
 
@@ -258,6 +270,11 @@ class RequirementResult:
         # what a reader needs to read it.
         self._validate_open_texture()
         self._validate_truth_degree()
+
+        # The two coordinates have to agree. A rung this duty's basis does not admit is a claim
+        # that some engine reached it, and for each of the three non-behavioural bases there is no
+        # such engine and no such evidence — see `verdict.EvidenceBasis`.
+        self._validate_basis()
 
         unattainable = self.strength == Strength.UNATTAINABLE
         if unattainable and self.verdict != Verdict.INCONCLUSIVE:
@@ -438,6 +455,28 @@ class RequirementResult:
                 "handed both would read the number as a fraction of the rung"
             )
 
+    def _validate_basis(self) -> None:
+        """Refuse a result whose strength is a rung its evidence basis does not admit.
+
+        Three sentences that were prose in three separate module docstrings become one refusal
+        here. A `relational` duty is a property of a pair of executions, so no trace observes one;
+        an `artifact` duty is measured against the inference behind a decision, so no exposure of
+        the system proves one; an `assessment` duty rests on a predicate an authority applies, so
+        no rung of the lattice ranks one at all. Each of the three is a fact about the *kind* of
+        claim, which is why it is checked against the basis and not inside the engine that would
+        otherwise have to remember it.
+        """
+        if self.strength is None or self.basis.admits(self.strength):
+            return
+        admitted = ", ".join(s.value for s in self.basis.rungs)
+        raise ValueError(
+            f"{self.requirement_id}: a result on the {self.basis} basis cannot be reported "
+            f"{self.strength}; that basis admits {admitted} and no other rung. The strength "
+            "lattice ranks how far a claim was pushed and the basis says what the claim was "
+            "about, so a rung outside the basis is a claim that evidence of a kind nothing here "
+            "produces was produced — see docs/semantics.md §10."
+        )
+
     def _validate_plugin_claim(self) -> None:
         """Refuse a plug-in result claiming a strength above the ceiling the plug-in declared."""
         plugin = self.details.get(ENGINE_PLUGIN_KEY)
@@ -483,6 +522,7 @@ class RequirementResult:
             "binding": self.binding,
             "scope": self.scope,
             "domains": list(self.domains),
+            "basis": self.basis.value,
         }
 
 
@@ -702,6 +742,7 @@ _CATEGORY_LABELS = (
     ("violated", "violated"),
     ("inconclusive", "inconclusive"),
     ("not_evaluated", "not evaluated"),
+    ("on_an_assessment", "on an assessment"),
     ("unattainable", "unattainable"),
     ("not_applicable", "not applicable"),
 )
@@ -733,8 +774,25 @@ def _category_counts(
             and r.evaluated
             and r.strength != Strength.UNATTAINABLE
         ),
+        # `not_evaluated` is a gap in the audit — an empty trace, a solver timeout, an unmodelled
+        # construct — and it tells a reader to fix the evidence or the specification. A duty on the
+        # `assessment` basis reaching the same `strength=None` is not that: nothing fell short,
+        # because no rung of this lattice was ever going to rank a predicate an authority applies.
+        # Counting the two together made a measured truth degree and a solver timeout render as one
+        # number in the headline, which is the cost `docs/semantics.md` §9 named and §10 removes.
         "not_evaluated": sum(
-            1 for r in results if not r.evaluated and r.verdict != Verdict.NOT_APPLICABLE
+            1
+            for r in results
+            if not r.evaluated
+            and r.verdict != Verdict.NOT_APPLICABLE
+            and r.basis != EvidenceBasis.ASSESSMENT
+        ),
+        "on_an_assessment": sum(
+            1
+            for r in results
+            if not r.evaluated
+            and r.verdict != Verdict.NOT_APPLICABLE
+            and r.basis == EvidenceBasis.ASSESSMENT
         ),
         "unattainable": sum(1 for r in results if r.strength == Strength.UNATTAINABLE),
         "not_applicable": sum(1 for r in results if r.verdict == Verdict.NOT_APPLICABLE),
@@ -834,9 +892,12 @@ class ConformanceReport:
         Interpretive results are reported under the `interpretive_` keys, never dropped.
 
         Each half is an exact partition of its own total, so `binding_total` and
-        `interpretive_total` each reconcile against the eight categories below and sum to
+        `interpretive_total` each reconcile against the nine categories below and sum to
         `total`. `proved`/`probed`/`observed` count *satisfied* requirements at that strength,
         so a requirement is never counted as evidence for a property it does not have.
+        `on_an_assessment` is the one category that is not a rung and not a verdict: it counts
+        duties on the `assessment` evidence basis, which the strength lattice does not rank at all
+        (`verdict.EvidenceBasis`, `docs/semantics.md` §10).
         """
         for result in self.results:
             result._validate_probe_budget()
@@ -981,6 +1042,39 @@ class ConformanceReport:
     def to_json(self, indent: int | None = None) -> str:
         """JSON representation following house pattern."""
         return json.dumps(self.to_dict(), indent=indent, default=str)
+
+
+def evidence_basis(req: Requirement) -> EvidenceBasis:
+    """What kind of thing this duty's evidence is about, derived from the duty alone.
+
+    A function of the *requirement* and of nothing else — not of the system, not of which engine
+    happened to answer, and never of a field a pack author writes. That is what makes the basis a
+    fact a reader can rely on before a run: it says which rungs are reachable for this duty at all,
+    so a ceiling reads as the duty's rather than as something the system failed to expose.
+
+    The three tests below are the three branches of `_engine_ladder`, in `_engine_ladder`'s own
+    order, and they are the whole of the derivation:
+
+    - a duty gating on `engines.certificate.DELETED_REASON_COUNT` is measured against the inference
+      artefact behind a decision — the `artifact` basis, one rung;
+    - a `counterfactual` duty is a property of a pair of executions — the `relational` basis, no
+      trace rung;
+    - an `undetermined` or `graded` duty rests on a predicate an authority applies rather than on
+      anything measured from the system — the `assessment` basis, no rung at all.
+
+    Everything else is a property of the system's own executions, one at a time, and reaches every
+    rung the system's exposed surface allows. `test_the_basis_admits_exactly_the_rungs_the_ladder_
+    can_reach` is what keeps this function and that one from drifting apart.
+    """
+    from reasonsmith.engines.certificate import DELETED_REASON_COUNT
+
+    if DELETED_REASON_COUNT in req.requires:
+        return EvidenceBasis.ARTIFACT
+    if req.formalism == "counterfactual":
+        return EvidenceBasis.RELATIONAL
+    if req.formalism in ("undetermined", "graded"):
+        return EvidenceBasis.ASSESSMENT
+    return EvidenceBasis.BEHAVIOURAL
 
 
 def analyze_unattainable(req: Requirement, sut: SystemUnderTest) -> tuple[bool, tuple[str, ...]]:
@@ -1242,7 +1336,12 @@ def evaluate_requirement(
     # The duty's own domain limit is stamped once, here, rather than threaded through four
     # engines: an engine has nothing to say about which systems a duty reaches, and a rung that
     # forgot to carry it would render a domain-limited duty as one that reaches everything.
-    return replace(result, domains=req.domains)
+    #
+    # The evidence basis is stamped in the same place and for the same reason. It is a fact about
+    # the duty rather than about the run — which is why it is derived here from `req` alone and not
+    # asked of whichever engine answered — and `replace` re-runs `__post_init__`, so a result
+    # carrying a rung its basis does not admit is refused at the stamp rather than rendered.
+    return replace(result, domains=req.domains, basis=evidence_basis(req))
 
 
 def _evaluate_requirement(

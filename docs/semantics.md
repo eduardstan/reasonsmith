@@ -1430,6 +1430,11 @@ The weakest-link direction is what the code composes on: `min_strength` exists, 
 verdicts propagates the worst case, with an empty collection giving `inconclusive` rather than a
 vacuous `satisfied` (`test_verdict_combination`, `test_combining_no_verdicts_is_not_satisfied`).
 
+**And it is only one of the two coordinates.** A chain ranks how far a claim was pushed and cannot
+say what the claim was *about*; three shipped situations are about something other than the system's
+own executions, and §10 is the dimension that carries it. The lattice itself did not move — no
+member, no re-ranking — and a basis is deliberately not comparable to a rung.
+
 ### Four outcomes that must never collapse
 
 `not applicable`, `unattainable`, `not evaluated` and `violated` are four distinct report categories
@@ -1756,6 +1761,12 @@ Two consequences of that report text, followed by a separate package-level termi
 | A counterfactual property reaches no trace logic, and a shared abstraction makes an entailment between two duties mean something | `test_the_counterfactual_atom_reaches_no_trace_logic`, `test_the_same_subexpression_is_the_same_atom_across_a_pack`, `test_the_phrase_atom_carries_the_axiom_the_z3_encoding_carries` |
 | The temporal backend is an optional extra whose absence is a note, never a weaker answer | `test_the_analysis_says_so_when_the_extra_is_absent` |
 | A mutation score travels with its limit, a system without rules gets none, and a duty no mutant moves is named | `test_a_mutation_score_travels_with_its_limit_and_a_system_without_rules_gets_none`, `test_a_duty_no_mutant_moves_is_named_as_having_no_discriminating_power` |
+| An evidence basis is a kind and never a rank: two bases do not compare, and neither does a basis against a strength | `test_the_evidence_bases_are_not_ordered`, `test_a_basis_is_never_compared_against_a_strength`, `test_no_rendering_draws_a_basis_as_a_rung` |
+| A result cannot carry a rung its basis does not admit, and the basis is derived from the duty rather than declared | `test_a_result_cannot_carry_a_rung_its_basis_does_not_admit`, `test_the_basis_is_derived_from_the_duty_and_never_declared`, `test_every_basis_admits_unattainable_so_the_capability_gate_is_never_bypassed` |
+| The rungs a basis advertises are the rungs the engine ladder can reach, in both directions | `test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach`, `test_an_assessment_duty_reaches_no_engine_at_all` |
+| The three pressures are discharged: a graded duty is counted apart from an unsettled one, a counterfactual duty is never observed, and the certificate duty's ceiling is named as the duty's | `test_a_graded_duty_is_counted_apart_from_a_duty_no_engine_settled`, `test_a_counterfactual_duty_is_never_observed_however_long_the_trace`, `test_the_certificate_dutys_ceiling_is_named_as_the_dutys_and_not_the_systems` |
+| The basis changed no verdict, the behavioural basis renders as it always did, and the shipped census is pinned | `test_the_basis_changed_no_verdict_and_no_strength`, `test_the_behavioural_basis_says_nothing_and_the_other_three_name_their_ceiling`, `test_exactly_two_shipped_duties_are_not_on_the_behavioural_basis`, `test_the_json_envelope_carries_the_basis_on_every_result` |
+| No audience mistakes a kind for a rank, and the lay reader is shown no basis at all | `test_the_lay_audience_is_never_shown_an_evidence_basis` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |
 
 ---
@@ -2184,7 +2195,9 @@ measurement of the duty itself rather than of a rate the system declared. The ru
    `strength`, refused in the result model
    (`test_a_result_carrying_a_degree_cannot_carry_a_strength`), so nobody can read the number as a
    fraction of a proof. **The strength lattice did not move**: no member was added, and `graded` is
-   not a rung.
+   not a rung. What such a duty *does* carry is the `assessment` evidence basis of §10, which is a
+   kind and not a rank, and which is what stops a graded duty being counted as one an engine failed
+   to settle (`test_a_graded_duty_is_counted_apart_from_a_duty_no_engine_settled`).
 4. **A lay reader is shown the duty as unsettled, in words, and never the number**
    (`test_the_lay_audience_is_shown_the_duty_as_unsettled_and_never_the_number`). The
    affected-individual projection already suppresses an engine's account and already reports a
@@ -2238,3 +2251,124 @@ settle.
   its graded requirements and to no others, so shipping one graded duty leaves its presence checks
   as two-valued as they were
   (`test_a_pack_declaring_an_algebra_leaves_its_two_valued_duties_two_valued`).
+
+---
+
+## 10. The evidence basis: what the claim is about, beside how far it was pushed
+
+§4's lattice is a **chain**, and a chain ranks one thing along one axis. Three shipped situations
+are not on that axis at all, and each of them was, before this section, a sentence in a module
+docstring that no result, no count and no rendering carried:
+
+- a **counterfactual** duty is a property of a *pair* of executions, so `_engine_ladder` gives it
+  two rungs and no trace rung beneath them;
+- the **certificate** duty is measured against the inference artefact behind a decision, so its
+  ladder is exactly one rung;
+- a **graded** duty (§9) is `inconclusive` at `strength=None`, which made it indistinguishable in
+  the counts and in the headline from a duty an engine merely failed to settle.
+
+The answer is a second coordinate and **not** four more members of the lattice.
+`verdict.EvidenceBasis` says what a duty's evidence is *about*; `Strength` says how far a claim
+about it was pushed. The lattice did not move: no member was added, no member was re-ranked, and
+`test_semantics_doc_states_the_lattice_the_code_defines` still generates §4's sentence from
+`Strength` itself.
+
+### The four bases, and the literature each names
+
+| Basis | What the evidence is about | Rungs it admits | Named after |
+|---|---|---|---|
+| `behavioural` | the system's own executions, one at a time | `unattainable`, `observed`, `probed`, `proved` | a **trace property** — Alpern & Schneider, *Defining Liveness*, IPL 21(4), 1985 |
+| `relational` | a *pair* of executions | `unattainable`, `probed`, `proved` | a **2-safety property** — Terauchi & Aiken, SAS 2005; a hyperproperty rather than a trace property — Clarkson & Schneider, JCS 18(6), 2010; self-composition as the proof method — Barthe, D'Argenio & Rezk, CSFW 2004; the duty itself — Kusner, Loftus, Russell & Silva, *Counterfactual Fairness*, NeurIPS 2017 |
+| `artifact` | the inference *behind* a decision, not what was decided | `unattainable`, `probed` | the **abductive explanation** — Ignatiev, Narodytska & Marques-Silva, AAAI 2019 (`docs/sufficient-reasons.md` §9 for the rest); the model-precise rather than behaviour-sampled side of formal XAI — Marques-Silva & Ignatiev, AAAI 2022 |
+| `assessment` | how an open-textured predicate applies, per a named authority | `unattainable` alone | a **truth degree over a residuated lattice** — Hájek, *Metamathematics of Fuzzy Logic*, 1998; degree of truth is not degree of belief — Dubois & Prade, AMAI 32, 2001 |
+
+Every row's rung list is read off what an engine can actually reach, and the two are held together
+in both directions: no ladder may offer a rung its duty's basis refuses, and no basis may advertise
+a rung above `unattainable` that no shipped ladder offers
+(`test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach`). `unattainable` is in every row
+because it is not an engine's conclusion — the capability gate is a set difference over declared
+signal names, identical for every duty, and it runs before any basis is consulted
+(`test_every_basis_admits_unattainable_so_the_capability_gate_is_never_bypassed`). The `assessment`
+basis reaches no engine at all, which is §9's guarantee restated in the result model
+(`test_an_assessment_duty_reaches_no_engine_at_all`).
+
+### A basis is a kind and never a rank
+
+This is the whole reason the answer is a dimension rather than four more rungs, and it is
+structural rather than conventional:
+
+1. **The members carry no order.** `<`, `<=`, `>` and `>=` raise `TypeError` between two bases and
+   between a basis and a strength, so nothing can sort them into a ladder, and no basis has a
+   `rank` (`test_the_evidence_bases_are_not_ordered`, `test_a_basis_is_never_compared_against_a_strength`).
+2. **A result may not carry a rung its basis does not admit.** `RequirementResult.__post_init__`
+   refuses one, so a counterfactual duty cannot be reported `observed`, a certificate duty cannot
+   be reported `proved`, and an assessment duty cannot carry a rung at all
+   (`test_a_result_cannot_carry_a_rung_its_basis_does_not_admit`). Three sentences that lived in
+   three module docstrings are now one refusal.
+3. **The basis is derived from the duty and never declared.** It is a function of the requirement
+   alone — the certificate signal, then the fragment — so it is not a pack field, not a system's
+   self-description, and not a function of which engine happened to answer
+   (`test_the_basis_is_derived_from_the_duty_and_never_declared`). A declared basis would let a
+   pack author or an adapter widen what a duty may claim, which is the move refusal 2 exists to
+   stop.
+4. **No rendering draws a basis as a rung.** `render.basis_sentence` is the only place any
+   rendering words one — the discipline `render.degree_sentence` already carries for a degree — and
+   the basis word never appears inside a step of the drawn lattice
+   (`test_no_rendering_draws_a_basis_as_a_rung`).
+
+### What each reader is shown
+
+The rule is that the basis is only ever shown to explain a **ceiling**, so the behavioural basis —
+every `record`, `logical` and `temporal` duty, which is every shipped duty but two — renders exactly
+as it always did, with no sentence and the four-rung track that has always been drawn
+(`test_the_behavioural_basis_says_nothing_and_the_other_three_name_their_ceiling`). For the other
+three:
+
+- **Text report.** One line under the verdict line, naming the basis and the rungs this duty can
+  reach. It sits there because what it explains is the tier tag on the line above: `[PROBED]` with
+  `proved` greyed out beside it is an instruction to expose more of the system, and for a
+  certificate duty that instruction is false.
+- **HTML dossier.** The strength-lattice track draws the rungs *this duty's basis admits* and no
+  others, with the same sentence under it. Drawing all four for a duty that can reach two showed a
+  reader two steps the system looked one exposure away from, when nothing it could expose would
+  reach them (`test_the_certificate_dutys_ceiling_is_named_as_the_dutys_and_not_the_systems`).
+- **Counts and headline.** `on_an_assessment` is a category of its own, split out of
+  `not evaluated`. The two look identical on the result — `strength=None`, `inconclusive` — and
+  mean opposite things: `not evaluated` says something fell short and instructs a reader to fix the
+  evidence or the specification (§4), while a duty on the `assessment` basis had no rung to reach
+  and nothing fell short (`test_a_graded_duty_is_counted_apart_from_a_duty_no_engine_settled`).
+  It is deliberately **not** a rung and not a verdict, and it is drawn with no icon from the
+  lattice.
+- **The lay projection.** The affected individual is shown no basis at all, on the same flag that
+  already withholds the strength (`test_the_lay_audience_is_never_shown_an_evidence_basis`). This
+  is §9's presentation rule 4 applied to the other coordinate: a reader not shown the rungs cannot
+  be shown a sentence about which of them are out of reach, and a bare word like `artifact` beside
+  a verdict would be read as a grade of the answer whatever sentence surrounded it.
+- **JSON.** Every result carries `basis`. It is an added key rather than a removed or retyped one,
+  so `JSON_SCHEMA_VERSION` did not move, and the decision was made in
+  `tests/test_json_schema_version.py` rather than skipped.
+
+### What this does not do
+
+- **It changes no verdict and no strength.** Nothing here measures anything; it describes evidence
+  that was already measured. Every shipped duty against every shipped example system reports what
+  it reported before (`test_the_basis_changed_no_verdict_and_no_strength`), and the change is
+  visible in the generated documents as added sentences and shortened lattice tracks and in nothing
+  else.
+- **It does not rank a basis against a basis, or a duty against a duty.** §4 already says a
+  strength is not comparable across requirements as a quality measure. A basis is not comparable at
+  all: `artifact` is not more or less than `observed`, it is about something else, and a report
+  whose duties sit on three bases has no aggregate to compute over them.
+- **It adds no engine, no rung and no duty.** Two shipped duties are not on the behavioural basis
+  and there is no shipped graded one, which is the census
+  `test_exactly_two_shipped_duties_are_not_on_the_behavioural_basis` pins, on the shape
+  `test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy` already uses. A third arriving
+  is a decision rather than a side effect of a pack edit.
+- **It does not accommodate a basis nobody has.** Two more are foreseeable — evidence with a
+  statistical (ε, δ) claim, and a certificate over a non-proof artefact such as a reason trace —
+  and neither is designed for here. The first would be a fifth member of `EvidenceBasis` with its
+  own row in `BASIS_RUNGS`, its own sentence and its own literature; the second is a widening of
+  the `artifact` basis, which `docs/semantics.md` §3 (*The inference artefact*) already says cannot
+  happen until the strength lattice can express an extracted reason. Neither is a reason to build
+  anything today, and building for a pressure nobody has felt is what this repository spends its
+  refusals avoiding.

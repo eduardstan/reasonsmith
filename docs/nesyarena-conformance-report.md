@@ -250,6 +250,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
@@ -258,6 +259,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): not_applicable
+    evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.
     requires: artifact_logs_decision_record, applicant_prohibited_basis
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
@@ -358,6 +360,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
@@ -366,6 +369,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): not_applicable
+    evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.
     requires: artifact_logs_decision_record, applicant_prohibited_basis
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
@@ -465,6 +469,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
@@ -473,6 +478,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): not_applicable
+    evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.
     requires: artifact_logs_decision_record, applicant_prohibited_basis
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
@@ -571,6 +577,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
@@ -579,6 +586,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): not_applicable
+    evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.
     requires: artifact_logs_decision_record, applicant_prohibited_basis
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
@@ -678,6 +686,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): not_applicable
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
@@ -686,6 +695,7 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.
   [NOT APPLICABLE] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): not_applicable
+    evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.
     requires: artifact_logs_decision_record, applicant_prohibited_basis
     domain limit: consumer-credit
     summary: Not applicable: this duty is about consumer-credit decisions, but the system's decision domain is undeclared. reasonsmith never infers a system's decision domain, and the domain vocabulary is the pack author's rather than the regulation's — see docs/authoring-packs.md.

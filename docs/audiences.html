@@ -497,6 +497,15 @@
       background: var(--neutral-soft); color: var(--ink-muted); border-color: var(--line-strong);
     }
     .lattice-arrow { color: var(--line-strong); font-size: 0.72rem; }
+    /* The basis sentence takes its own line under the track — `flex-basis: 100%` inside the
+       wrapping `.lattice-container` — so it reads as an account of the track and never as one
+       more step on it. Existing tokens only, so both schemes and the print block inherit it. */
+    .lattice-basis {
+      flex-basis: 100%;
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--ink-faint);
+    }
 
     .req-card-body { padding: var(--space-m); }
     .signal-list { margin-bottom: var(--space-xs); font-size: var(--step--1); }
@@ -711,7 +720,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>auditor</span>
-            <span>41,959 characters</span>
+            <span>42,755 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: nothing. This is the full report.</p>
           <iframe title="The auditor rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -1213,6 +1222,15 @@
       background: var(--neutral-soft); color: var(--ink-muted); border-color: var(--line-strong);
     }
     .lattice-arrow { color: var(--line-strong); font-size: 0.72rem; }
+    /* The basis sentence takes its own line under the track — `flex-basis: 100%` inside the
+       wrapping `.lattice-container` — so it reads as an account of the track and never as one
+       more step on it. Existing tokens only, so both schemes and the print block inherit it. */
+    .lattice-basis {
+      flex-basis: 100%;
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--ink-faint);
+    }
 
     .req-card-body { padding: var(--space-m); }
     .signal-list { margin-bottom: var(--space-xs); font-size: var(--step--1); }
@@ -1517,7 +1535,7 @@
           &lt;/header&gt;
           &lt;div class=&quot;lattice-container&quot;&gt;
             &lt;span class=&quot;lattice-label&quot;&gt;Strength Lattice:&lt;/span&gt;
-            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;👁&lt;/span&gt; observed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;lattice-basis&quot;&gt;Evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;req-card-body&quot;&gt;
             &lt;div class=&quot;signal-list&quot;&gt;
@@ -1569,7 +1587,7 @@
           &lt;/header&gt;
           &lt;div class=&quot;lattice-container&quot;&gt;
             &lt;span class=&quot;lattice-label&quot;&gt;Strength Lattice:&lt;/span&gt;
-            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;👁&lt;/span&gt; observed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;lattice-basis&quot;&gt;Evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;req-card-body&quot;&gt;
             &lt;div class=&quot;signal-list&quot;&gt;
@@ -1635,7 +1653,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>developer</span>
-            <span>41,299 characters</span>
+            <span>42,095 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">legal_metadata</span></p>
           <iframe title="The developer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -2137,6 +2155,15 @@
       background: var(--neutral-soft); color: var(--ink-muted); border-color: var(--line-strong);
     }
     .lattice-arrow { color: var(--line-strong); font-size: 0.72rem; }
+    /* The basis sentence takes its own line under the track — `flex-basis: 100%` inside the
+       wrapping `.lattice-container` — so it reads as an account of the track and never as one
+       more step on it. Existing tokens only, so both schemes and the print block inherit it. */
+    .lattice-basis {
+      flex-basis: 100%;
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--ink-faint);
+    }
 
     .req-card-body { padding: var(--space-m); }
     .signal-list { margin-bottom: var(--space-xs); font-size: var(--step--1); }
@@ -2441,7 +2468,7 @@
           &lt;/header&gt;
           &lt;div class=&quot;lattice-container&quot;&gt;
             &lt;span class=&quot;lattice-label&quot;&gt;Strength Lattice:&lt;/span&gt;
-            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;👁&lt;/span&gt; observed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;lattice-basis&quot;&gt;Evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;req-card-body&quot;&gt;
             &lt;div class=&quot;signal-list&quot;&gt;
@@ -2493,7 +2520,7 @@
           &lt;/header&gt;
           &lt;div class=&quot;lattice-container&quot;&gt;
             &lt;span class=&quot;lattice-label&quot;&gt;Strength Lattice:&lt;/span&gt;
-            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;👁&lt;/span&gt; observed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;lattice-basis&quot;&gt;Evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;req-card-body&quot;&gt;
             &lt;div class=&quot;signal-list&quot;&gt;
@@ -2559,7 +2586,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>deployer</span>
-            <span>40,498 characters</span>
+            <span>41,294 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">witnesses</span></p>
           <iframe title="The deployer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -3061,6 +3088,15 @@
       background: var(--neutral-soft); color: var(--ink-muted); border-color: var(--line-strong);
     }
     .lattice-arrow { color: var(--line-strong); font-size: 0.72rem; }
+    /* The basis sentence takes its own line under the track — `flex-basis: 100%` inside the
+       wrapping `.lattice-container` — so it reads as an account of the track and never as one
+       more step on it. Existing tokens only, so both schemes and the print block inherit it. */
+    .lattice-basis {
+      flex-basis: 100%;
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--ink-faint);
+    }
 
     .req-card-body { padding: var(--space-m); }
     .signal-list { margin-bottom: var(--space-xs); font-size: var(--step--1); }
@@ -3359,7 +3395,7 @@
           &lt;/header&gt;
           &lt;div class=&quot;lattice-container&quot;&gt;
             &lt;span class=&quot;lattice-label&quot;&gt;Strength Lattice:&lt;/span&gt;
-            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;👁&lt;/span&gt; observed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;lattice-basis&quot;&gt;Evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;req-card-body&quot;&gt;
 
@@ -3407,7 +3443,7 @@
           &lt;/header&gt;
           &lt;div class=&quot;lattice-container&quot;&gt;
             &lt;span class=&quot;lattice-label&quot;&gt;Strength Lattice:&lt;/span&gt;
-            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;👁&lt;/span&gt; observed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;lattice-basis&quot;&gt;Evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;req-card-body&quot;&gt;
 
@@ -3471,7 +3507,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>regulator</span>
-            <span>39,501 characters</span>
+            <span>40,297 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">witnesses</span></p>
           <iframe title="The regulator rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -3973,6 +4009,15 @@
       background: var(--neutral-soft); color: var(--ink-muted); border-color: var(--line-strong);
     }
     .lattice-arrow { color: var(--line-strong); font-size: 0.72rem; }
+    /* The basis sentence takes its own line under the track — `flex-basis: 100%` inside the
+       wrapping `.lattice-container` — so it reads as an account of the track and never as one
+       more step on it. Existing tokens only, so both schemes and the print block inherit it. */
+    .lattice-basis {
+      flex-basis: 100%;
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--ink-faint);
+    }
 
     .req-card-body { padding: var(--space-m); }
     .signal-list { margin-bottom: var(--space-xs); font-size: var(--step--1); }
@@ -4271,7 +4316,7 @@
           &lt;/header&gt;
           &lt;div class=&quot;lattice-container&quot;&gt;
             &lt;span class=&quot;lattice-label&quot;&gt;Strength Lattice:&lt;/span&gt;
-            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;👁&lt;/span&gt; observed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;lattice-basis&quot;&gt;Evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;req-card-body&quot;&gt;
 
@@ -4319,7 +4364,7 @@
           &lt;/header&gt;
           &lt;div class=&quot;lattice-container&quot;&gt;
             &lt;span class=&quot;lattice-label&quot;&gt;Strength Lattice:&lt;/span&gt;
-            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;👁&lt;/span&gt; observed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;lattice-track&quot;&gt;&lt;span class=&quot;lattice-step active-unattainable&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;⊘&lt;/span&gt; unattainable&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🔍&lt;/span&gt; probed&lt;/span&gt;&lt;span class=&quot;lattice-arrow&quot;&gt;&amp;rarr;&lt;/span&gt;&lt;span class=&quot;lattice-step &quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;🏆&lt;/span&gt; proved&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;lattice-basis&quot;&gt;Evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;req-card-body&quot;&gt;
 
@@ -4383,7 +4428,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>affected-individual</span>
-            <span>29,836 characters</span>
+            <span>30,255 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">overview</span><span class="signal-tag">strength</span><span class="signal-tag">legal_metadata</span><span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">evidence_summary</span><span class="signal-tag">probe_budget</span><span class="signal-tag">witnesses</span></p><p class="text-muted">Drawn only for this reader: <span class="signal-tag">plain_account</span></p>
           <iframe title="The affected-individual rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -4885,6 +4930,15 @@
       background: var(--neutral-soft); color: var(--ink-muted); border-color: var(--line-strong);
     }
     .lattice-arrow { color: var(--line-strong); font-size: 0.72rem; }
+    /* The basis sentence takes its own line under the track — `flex-basis: 100%` inside the
+       wrapping `.lattice-container` — so it reads as an account of the track and never as one
+       more step on it. Existing tokens only, so both schemes and the print block inherit it. */
+    .lattice-basis {
+      flex-basis: 100%;
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--ink-faint);
+    }
 
     .req-card-body { padding: var(--space-m); }
     .signal-list { margin-bottom: var(--space-xs); font-size: var(--step--1); }
@@ -5340,7 +5394,7 @@
           </header>
           <div class="lattice-container">
             <span class="lattice-label">Strength Lattice:</span>
-            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span></div><div class="lattice-basis">Evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so probed is the only rung above unattainable and nothing the system exposes raises it.</div>
           </div>
           <div class="req-card-body">
             <div class="signal-list">
@@ -5392,7 +5446,7 @@
           </header>
           <div class="lattice-container">
             <span class="lattice-label">Strength Lattice:</span>
-            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">👁</span> observed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div>
+            <div class="lattice-track"><span class="lattice-step active-unattainable"><span aria-hidden="true">⊘</span> unattainable</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🔍</span> probed</span><span class="lattice-arrow">&rarr;</span><span class="lattice-step "><span aria-hidden="true">🏆</span> proved</span></div><div class="lattice-basis">Evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.</div>
           </div>
           <div class="req-card-body">
             <div class="signal-list">

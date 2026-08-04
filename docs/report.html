@@ -497,6 +497,15 @@
       background: var(--neutral-soft); color: var(--ink-muted); border-color: var(--line-strong);
     }
     .lattice-arrow { color: var(--line-strong); font-size: 0.72rem; }
+    /* The basis sentence takes its own line under the track — `flex-basis: 100%` inside the
+       wrapping `.lattice-container` — so it reads as an account of the track and never as one
+       more step on it. Existing tokens only, so both schemes and the print block inherit it. */
+    .lattice-basis {
+      flex-basis: 100%;
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--ink-faint);
+    }
 
     .req-card-body { padding: var(--space-m); }
     .signal-list { margin-bottom: var(--space-xs); font-size: var(--step--1); }

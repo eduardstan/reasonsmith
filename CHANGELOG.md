@@ -10,6 +10,32 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **The evidence scale gained a second coordinate, and the strength lattice did not move.**
+  `unattainable < observed < probed < proved` is a chain, and three shipped situations were not on
+  that axis: a `counterfactual` duty is a property of a *pair* of executions and so has no trace
+  rung, the certificate duty is measured against an inference artefact and so has a ladder of
+  exactly one, and a graded duty (§9) was `inconclusive` at `strength=None` and therefore
+  indistinguishable, in the counts and in the headline, from a duty an engine merely failed to
+  settle. `verdict.EvidenceBasis` is the dimension beside the chain: `behavioural`, `relational`,
+  `artifact`, `assessment` — a trace property, a 2-safety property, an abductive explanation over a
+  model encoding, and a truth degree over a residuated lattice, each named after published work
+  rather than after this repository (`docs/semantics.md` §10 carries the citations). Four things are
+  structural rather than conventional. **A basis is a kind and never a rank**: the members carry no
+  order and comparing two of them, or one against a `Strength`, raises rather than answering.
+  **A result cannot carry a rung its basis does not admit**, so a counterfactual duty cannot be
+  reported `observed` and a certificate duty cannot be reported `proved` — three sentences that
+  lived in three module docstrings became one refusal in `RequirementResult.__post_init__`.
+  **The basis is derived from the duty and never declared**: a function of the requirement alone,
+  so no pack field and no adapter can widen what a duty may claim. **No rendering draws a basis as
+  a rung**: `render.basis_sentence` is the only place any surface words one, on the discipline
+  `render.degree_sentence` already carries, and the affected-individual projection is shown no
+  basis at all. What moved in the output: the text report and HTML dossier gained one sentence per
+  non-behavioural duty naming the rungs it cannot reach and why, the dossier's strength-lattice
+  track now draws only those rungs rather than showing a system as one exposure away from a rung
+  nothing can reach, the counts gained `on_an_assessment` split out of `not evaluated`, and every
+  JSON result gained a `basis` key (an addition, so `JSON_SCHEMA_VERSION` did not move). **No
+  shipped verdict and no shipped strength changed.**
+
 - **Machinery for open-textured predicates — the words the law states without a sharp boundary —
   and no shipped duty that uses it.** Twenty-one of twenty-nine shipped requirements are presence
   checks, and the fourth column of `docs/refinement.md` says the same thing row after row:
