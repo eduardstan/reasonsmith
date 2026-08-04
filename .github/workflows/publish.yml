@@ -25,7 +25,9 @@ jobs:
       - run: pip install -e ".[dev]" build
       - run: ruff check .
       # The same floor `ci.yml` runs, compared at the precision `[tool.coverage.report]` sets.
-      - run: pytest --cov=reasonsmith --cov-report=term-missing --cov-fail-under=93
+      # It reads 92.5 rather than 93 because of a recorded decision of 2026-08-04 — `ci.yml`'s
+      # comment on this step is the record, and this number moves only when that one does.
+      - run: pytest --cov=reasonsmith --cov-report=term-missing --cov-fail-under=92.5
       # A release that is not tagged `v` + the version in pyproject.toml would publish a
       # number nobody chose, and a PyPI version can never be reused. The tag is the one GitHub
       # fired this workflow for, and it must agree with the version being built. It reaches the

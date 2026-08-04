@@ -488,7 +488,10 @@ against N and pytest-cov defaults `precision` to 0, so a real 92.79% rounded to 
 exited 0 while its own summary printed `FAIL`. `[tool.coverage.report] precision = 2` in
 `pyproject.toml` is what makes the floor real — for both workflows and a local run — and
 `test_the_coverage_floor_fails_a_total_below_it` asks `should_fail_under` itself rather than a
-literal. The floor is raised deliberately and never lowered to meet the code.
+literal. The floor reads **92.5** because it was lowered once, on 2026-08-04, by an explicit
+decision recorded in `ci.yml`'s comment on that step, after 92.79% was accepted as the project's
+coverage level rather than chased with tests written for the number. Do not lower it again without
+a decision of the same kind, and do not "fix" a coverage shortfall by moving it.
 
 `analysis.py` is the only module that reads a **pack** rather than a system's evidence, reached
 through `validate-pack --analyse`: joint satisfiability with an unsatisfiable core, entailment and

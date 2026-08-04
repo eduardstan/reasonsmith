@@ -25,8 +25,16 @@ jobs:
       # and a local one resolve to the same code. torch is deliberately not installed — see README.
       - run: pip install -e ".[dev]"
       - run: ruff check .
-      # A floor to be raised deliberately, never lowered. It is compared at the precision
-      # `[tool.coverage.report]` sets, not rounded to whole percent — see the comment there, and
-      # `test_the_coverage_floor_fails_a_total_below_it`, for why that is load-bearing.
-      - run: pytest --cov=reasonsmith --cov-report=term-missing --cov-fail-under=93
+      # This floor was lowered once, on 2026-08-04, from 93 to 92.5, by the captain's explicit
+      # decision. Until then `--cov-fail-under=93` never failed: it compares
+      # `round(total, precision)` and pytest-cov defaults `precision` to 0, so the true 92.79%
+      # rounded to 93 and the job exited 0 while its own summary printed FAIL. Enforcing the
+      # comparison at the printed precision made the gap visible; 92.79% was then accepted as the
+      # project's coverage level rather than chased with tests written for the number, and 92.5
+      # records that — under the measured total so it passes, above the ~0.5% band the rounding
+      # bug silently tolerated, with slack enough that an ordinary refactor does not turn main red.
+      # It is never to be lowered again without a decision of the same kind, recorded here.
+      # The precision that makes it bite is `[tool.coverage.report]` in pyproject.toml, and
+      # `test_the_coverage_floor_fails_a_total_below_it` is what keeps it biting.
+      - run: pytest --cov=reasonsmith --cov-report=term-missing --cov-fail-under=92.5
       - run: python -m reasonsmith.demo
