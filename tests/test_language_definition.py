@@ -18,11 +18,18 @@ What this module is for:
 
 What a reader must not break:
   - `MONITOR_DIVERGENCES` is an exclusion list, and an exclusion list that can grow silently is
-    worthless. `test_the_shapes_the_monitor_misrenders_are_the_four_named` asserts each row still
-    diverges, so a fix to `engines/observed.py` fails this file and says so, and
+    worthless. `test_the_four_named_shapes_are_still_what_the_document_records` asserts each row is
+    still what §4 says it is — three refused in the rendering and still divergent behind the
+    refusal, one the boundary convention — and
     `test_the_monitor_agrees_with_the_reference_reading` fails if a *new* shape diverges.
     Why this matters: these are four places where two implementations of one semantics answer
-    differently. Silently widening the list turns a finding into a habit.
+    differently. Silently widening the list turns a finding into a habit, and keeping a refusal
+    after its reason has gone costs a duty a rung for nothing.
+  - `RTAMT_BEHAVIOUR` is why the refusal list is three constructs and not more: rtamt raises for
+    nearly everything else this language admits and it does not support.
+    `test_rtamt_still_behaves_the_way_the_refusals_assume` measures that rather than trusting it.
+    Why this matters: the `%` defect existed because rtamt error-recovered instead of raising, and a
+    version bump could do the same for another construct with nothing to notice it.
   - The refusal table is keyed by the ids `docs/language.md` §1.7 uses. Renaming one there without
     renaming it here fails, which is the point.
 """
@@ -37,7 +44,14 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from reasonsmith.engines.observed import _monitor, to_stl
+from reasonsmith.engines.observed import (
+    MisreadShapeError,
+    ObservedEngine,
+    _monitor,
+    _refuse_shapes_the_monitor_misreads,
+    _render_stl,
+    to_stl,
+)
 from reasonsmith.rulelang import (
     CONTAINS_CALL,
     COUNTERFACTUAL_CALL,
@@ -53,7 +67,9 @@ from reasonsmith.rulelang import (
     preprocess_spec,
     signal_names,
 )
-from reasonsmith.spec import list_packs, load_pack
+from reasonsmith.spec import Requirement, list_packs, load_pack
+from reasonsmith.sut import BaseSUT
+from reasonsmith.verdict import Verdict
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = REPO_ROOT / "tests"
@@ -436,22 +452,25 @@ MONITOR_CORPUS = (
 
 MONITOR_VALUES = (-2.0, 0.0, 0.5, 1.0, 2.0, 3.0)
 
-#: The four shapes on which the `observed` implementation and the reference reading part company,
-#: with the witness `docs/language.md` §4 quotes for each. Rows 1-3 are found by this document; row
-#: 4 was already known, and the test it already lives at is named in §4 of that document.
+#: The four shapes `docs/language.md` §4 names, with the witness it quotes for each and what the
+#: `observed` implementation now does with it. Rows 1-3 are shapes rtamt reads under a different
+#: semantics from §2's, and are *refused in the rendering*, so a duty using one is reported not
+#: evaluated rather than answered; row 4 is the boundary convention, which is not a defect and was
+#: deliberately left alone.
 #:
 #: This is an *exclusion list for the conformance test above it*, and its cost is stated where it is
-#: paid: `test_the_shapes_the_monitor_misrenders_are_the_four_named` asserts every row still
-#: diverges, so neither a silent addition nor a landed fix can leave this list stale.
+#: paid: `test_the_four_named_shapes_are_still_what_the_document_records` asserts every row is still
+#: what §4 says it is, so neither a silent addition nor a silently reopened hole can leave it stale.
 MONITOR_DIVERGENCES = (
-    ("the remainder operator", "count_a % count_b > 1", {"count_a": -2.0, "count_b": 2.0}),
-    ("a chained comparison", "1 < count_a < 10", {"count_a": -2.0, "count_b": 0.0}),
+    ("the remainder operator", "count_a % count_b > 1", {"count_a": -2.0, "count_b": 2.0}, True),
+    ("a chained comparison", "1 < count_a < 10", {"count_a": -2.0, "count_b": 0.0}, True),
     (
         "equivalence",
         "(count_a >= 1) <-> (count_b >= 1)",
         {"count_a": -2.0, "count_b": 0.0},
+        True,
     ),
-    ("an exact tie", "count_a > 1", {"count_a": 1.0, "count_b": 0.0}),
+    ("an exact tie", "count_a > 1", {"count_a": 1.0, "count_b": 0.0}, False),
 )
 
 
@@ -461,11 +480,16 @@ def _monitor_robustness(spec: str, env: dict[str, float]) -> float:
     Two records because rtamt's offline evaluator reads its sampling period off the trace and
     raises on a one-sample dataset (`observed.MINIMUM_TRACE_LENGTH`). The values are constant, so
     the score is the formula's value at one record and nothing temporal is under test here.
+
+    It renders through `_render_stl` rather than `to_stl` deliberately: `to_stl` now refuses the
+    shapes rtamt reads differently, and what these tests need is to keep asking rtamt itself what
+    it does with them. A refusal nothing probes behind stops being evidence the moment the
+    dependency changes.
     """
     series: dict[str, list] = {"time": [0, 1]}
     for name, value in env.items():
         series[name] = [value, value]
-    scores = _monitor(to_stl(spec), "conformance", set(env), series)
+    scores = _monitor(_render_stl(spec)[0], "conformance", set(env), series)
     return min(value for _, value in scores)
 
 
@@ -498,49 +522,164 @@ def test_the_monitor_agrees_with_the_reference_reading():
     assert agreed[True] >= 20 and agreed[False] >= 20, agreed
 
 
-@pytest.mark.parametrize("label,spec,env", MONITOR_DIVERGENCES, ids=lambda item: str(item)[:24])
-def test_the_shapes_the_monitor_misrenders_are_the_four_named(
-    label: str, spec: str, env: dict[str, float]
+@pytest.mark.parametrize(
+    "label,spec,env,refused", MONITOR_DIVERGENCES, ids=lambda item: str(item)[:24]
+)
+def test_the_four_named_shapes_are_still_what_the_document_records(
+    label: str, spec: str, env: dict[str, float], refused: bool
 ) -> None:
-    """Each divergence, asserted to still be one.
+    """Each row of §4, asserted to still be what §4 says it is.
 
-    This is the test that fails when `engines/observed.py` is fixed, and that is what it is for: an
-    exclusion list nothing checks rots into a permanent exception. A failure here means the row
-    should leave `MONITOR_DIVERGENCES` and §4 of `docs/language.md` in the same change.
+    This test was written to fail when `engines/observed.py` was fixed, and it did: rows 1-3 are now
+    refused in the rendering rather than misrendered, and this is the updated reading of them. What
+    it still is for is unchanged — an exclusion list nothing checks rots into a permanent exception.
+    A refused row must still be *rtamt-divergent behind the refusal*, or the refusal has outlived
+    its reason and the row should leave `MONITOR_DIVERGENCES` and §4 in the same change.
     """
     robustness = _monitor_robustness(spec, env)
     assert _reference_reading(spec, env) != (robustness >= 0), (label, spec, env, robustness)
+    if refused:
+        with pytest.raises(MisreadShapeError):
+            to_stl(spec)
+    else:
+        assert to_stl(spec)  # the boundary convention is answered, not refused
 
 
 def test_the_divergences_are_the_ones_the_document_reports():
     """§4 quotes a witness per row; a divergence found here and not reported there is hidden."""
     document = _document()
     assert len(MONITOR_DIVERGENCES) == 4
-    for _, spec, _ in MONITOR_DIVERGENCES[:3]:
+    for _, spec, _, _ in MONITOR_DIVERGENCES[:3]:
         assert spec in document, spec
 
 
 def test_no_shipped_spec_uses_a_shape_the_monitor_misrenders():
-    """The four divergences are latent, and this is what keeps them so.
+    """The three refused shapes are latent, and this is what keeps them so.
 
-    A pack gaining a `%`, a chained comparison or an equivalence in a spec the trace rung can reach
-    turns a documented finding into a wrong verdict, so it fails here until the finding is closed.
+    Before the refusal landed, a pack gaining one of these turned a documented finding into a wrong
+    verdict. Now it costs the duty its trace rung instead — the honest outcome, and still not one to
+    take by accident. It asks the engine's own refusal rather than re-walking for `%`, a chained
+    comparison and an equivalence here, so the two cannot drift into disagreeing about what a
+    shipped pack may say.
     """
     for pack_id in list_packs():
         for req in load_pack(pack_id).requirements:
-            tree = parse_property(req.spec)
-            for node in ast.walk(tree):
-                assert not (
-                    isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod)
-                ), f"{req.id} uses the remainder operator"
-                assert not (
-                    isinstance(node, ast.Compare) and len(node.ops) > 1
-                ), f"{req.id} uses a chained comparison"
-                assert not (
-                    isinstance(node, ast.Call)
-                    and isinstance(node.func, ast.Name)
-                    and node.func.id == "Iff"
-                ), f"{req.id} uses an equivalence"
+            _refuse_shapes_the_monitor_misreads(parse_property(req.spec))
+
+
+def _misread_requirement(spec: str) -> Requirement:
+    """A minimal state duty whose only unusual feature is the shape under test."""
+    return Requirement(
+        id="misread_shape",
+        source_document="Internal Policy",
+        article_clause="Section 1.1",
+        verbatim_text="A clause, quoted.",
+        stakeholder="Compliance",
+        formalism="logical",
+        spec=spec,
+        rationale="Why this duty exists, in English.",
+        requires=("count_a", "count_b"),
+        binding=True,
+        scope="",
+        domains=(),
+        deontic_type="obligation",
+        defeasibility="strict",
+    )
+
+
+def _observed_on(spec: str):
+    req = _misread_requirement(spec)
+    records = [{"count_a": 2.0, "count_b": 2.0}, {"count_a": 2.0, "count_b": 2.0}]
+    return ObservedEngine.evaluate(req, BaseSUT(set(req.requires)), records)
+
+
+@pytest.mark.parametrize(
+    "spec,construct",
+    [
+        ("count_a % count_b > 1", "remainder"),
+        ("1 < count_a < 10", "chained comparison"),
+        ("(count_a >= 1) <-> (count_b >= 1)", "equivalence"),
+        ("(count_a >= 1) <=> (count_b >= 1)", "equivalence"),
+    ],
+)
+def test_a_duty_using_a_misread_shape_is_not_evaluated_and_names_the_construct(
+    spec: str, construct: str
+) -> None:
+    """The refusal reaches a verdict, not just `to_stl`, and says which construct earned it.
+
+    A trace this monitor could score is deliberately supplied: the point is that a formula rtamt
+    reads differently is never answered, however answerable the trace was.
+    """
+    result = _observed_on(spec)
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.evidence_summary.startswith("Not evaluated:")
+    assert construct in result.evidence_summary, result.evidence_summary
+
+
+def test_both_spellings_of_equivalence_reach_the_same_refusal():
+    """`<->` and `<=>` are one connective, and this rung used to treat them as two.
+
+    `<->` was in rtamt's grammar and was monitored — and misread; `<=>` was not, and was reported
+    not evaluated by rtamt raising. Same formula, two answers, decided by which arrow the author
+    happened to type. The refusal is asked of the parsed `Iff` node, which is where both arrive.
+    """
+    arrow = _observed_on("(count_a >= 1) <-> (count_b >= 1)")
+    long_arrow = _observed_on("(count_a >= 1) <=> (count_b >= 1)")
+    assert arrow.verdict == long_arrow.verdict == Verdict.INCONCLUSIVE
+    assert arrow.evidence_summary.replace("<->", "<=>") == long_arrow.evidence_summary
+
+
+#: What rtamt does with every construct the property language admits, measured rather than assumed.
+#: `raises` — `spec.parse()` rejects it, which is this engine's oldest protection; `agrees` — it is
+#: monitored and scores the reference reading; `misreads` — it is monitored and does not, which is
+#: what `_refuse_shapes_the_monitor_misreads` refuses. A row moving between those three is the event
+#: this table exists to catch: the `%` hole was invisible precisely because rtamt error-recovered
+#: instead of raising, and an rtamt version bump could open the same hole under another construct.
+RTAMT_BEHAVIOUR = (
+    ("the remainder operator", "count_a % count_b > 1", {"count_a": -2.0, "count_b": 2.0},
+     "misreads"),
+    ("a chained comparison", "1 < count_a < 10", {"count_a": -2.0}, "misreads"),
+    ("`<->`", "(count_a >= 1) <-> (count_b >= 1)", {"count_a": -2.0, "count_b": 0.0}, "misreads"),
+    ("`<=>`", "(count_a >= 1) <=> (count_b >= 1)", {"count_a": -2.0, "count_b": 0.0}, "raises"),
+    ("`!=`", "count_a != 1", {"count_a": -2.0}, "raises"),
+    ("`min`", "min(count_a, count_b) > 1", {"count_a": -2.0, "count_b": 0.0}, "raises"),
+    ("`max`", "max(count_a, count_b) > 1", {"count_a": -2.0, "count_b": 0.0}, "raises"),
+    ("`Implies(...)`", "Implies(count_a >= 1, count_b >= 1)", {"count_a": -2.0}, "raises"),
+    ("`abs`", "abs(count_a) > 1", {"count_a": -2.0}, "agrees"),
+    ("the arrow", "(count_a >= 1) -> (count_b >= 1)", {"count_a": -2.0, "count_b": 0.0}, "agrees"),
+    ("division", "count_a / 2 > 1", {"count_a": -2.0}, "agrees"),
+    ("negation", "not (count_a >= 1)", {"count_a": -2.0}, "agrees"),
+)
+
+
+@pytest.mark.parametrize(
+    "label,spec,env,expected", RTAMT_BEHAVIOUR, ids=lambda item: str(item)[:24]
+)
+def test_rtamt_still_behaves_the_way_the_refusals_assume(
+    label: str, spec: str, env: dict[str, float], expected: str
+) -> None:
+    """The standing probe behind `_refuse_shapes_the_monitor_misreads`.
+
+    The refusal list is three constructs long because rtamt *raises* for every other shape this
+    language admits and it does not support. That is a fact about a dependency, not a property of
+    this package, and it is the whole reason the list is not longer. So it is measured here rather
+    than trusted: a construct that stops raising and starts being silently monitored is exactly the
+    `%` defect reopening under another name, and it must fail the build rather than ship a verdict.
+
+    Do not delete this test because it looks redundant with the refusal it guards. The refusal is
+    correct today *because* this table reads the way it does.
+    """
+    env = dict(env)
+    env.setdefault("count_b", 0.0)
+    try:
+        robustness = _monitor_robustness(spec, env)
+    except Exception:
+        assert expected == "raises", f"{label} no longer raises: rtamt now reads {spec!r}"
+        return
+    assert expected != "raises", f"{label} no longer raises: rtamt now reads {spec!r}"
+    agrees = _reference_reading(spec, env) == (robustness > 0)
+    assert agrees == (expected == "agrees"), (label, spec, env, robustness)
 
 
 # ------------------------------------------------------------------------------------------------

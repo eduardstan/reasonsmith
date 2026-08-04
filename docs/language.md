@@ -666,7 +666,8 @@ does not reach every shape and says so rather than guessing
 
 `test_the_monitor_agrees_with_the_reference_reading` is the conformance test this document adds: a
 corpus of state formulas, evaluated by the reference interpreter and by the monitor, asserted equal.
-It carries four **named exclusions**, and §4 is what they are.
+It carries four **named exclusions**, and §4 is what they are — three of them now refused in the
+rendering rather than answered, the fourth a boundary convention.
 
 ### 3.4 flloat, at a propositional abstraction
 
@@ -694,50 +695,71 @@ same agreement obligation the other three carry.
 ## 4. Four shapes the monitor does not render soundly
 
 Writing §2 down found three places where the `observed` implementation and the denotation part
-company, beside one that was already known and documented. **All four are latent**: no shipped pack
-writes any of these shapes, and `test_no_shipped_spec_uses_a_shape_the_monitor_misrenders` is what
-keeps that true. Each is reported here rather than fixed, because which side moves is a decision
-about an engine's contract and not this document's to take.
+company, beside one that was already known and documented. **Rows 1–3 are now refused in the
+rendering**: `engines/observed._refuse_shapes_the_monitor_misreads` raises on each, so a duty using
+one is reported *not evaluated* naming the construct rather than answered off a formula rtamt read
+differently. All four remain latent besides — no shipped pack writes any of these shapes, and
+`test_no_shipped_spec_uses_a_shape_the_monitor_misrenders` is what keeps that true — so no verdict
+moved when the refusal landed.
 
 Each row is pinned twice: `test_the_monitor_agrees_with_the_reference_reading` excludes it by name,
-and `test_the_shapes_the_monitor_misrenders_are_the_four_named` asserts a concrete witness on which
-the two still disagree — so the exclusion list can neither grow silently nor rot after a fix.
+and `test_the_four_named_shapes_are_still_what_the_document_records` asserts a concrete witness on
+which rtamt and the reference reading still disagree *behind* the refusal — so the exclusion list
+can neither grow silently nor keep a refusal whose reason has gone.
 
 **1. The remainder operator, `%`.** rtamt's lexer has no `%`. ANTLR **error-recovers by dropping the
-token** and `spec.parse()` does not raise, so the monitor answers about a formula nobody wrote, with
+token** and `spec.parse()` does not raise, so the monitor answered about a formula nobody wrote, with
 a token-recognition line on stderr as the only trace. Witness: `count_a % count_b > 1` at
 `count_a = -2, count_b = 2`. The reference reading is `-2 % 2 = 0`, so the formula is false; the
-monitor scores robustness `+1.0` and reports **satisfied**. This is the exact failure mode
+monitor scores robustness `+1.0` and would report **satisfied**. This is the exact failure mode
 `rulelang`'s own module docstring names — a silently dropped construct makes an engine answer about
 logic the author did not write — arriving through a dependency's error recovery rather than through
-this package's whitelist.
+this package's whitelist. It is the row that mattered most, because it was the only one the engine's
+old protection (rtamt raising) could not see. **Refused.**
 
 **2. Chained comparison.** §2.6 reads `a ⋈ b ⋈ c` as the conjunction of its pairs, and so do the
 interpreter and Z3. rtamt parses it and **left-associates over robustness values**: it reads
 `1 < x < 10` as `(1 < x) < 10`, comparing a robustness margin against `10`.
 Witness: `1 < count_a < 10` at `count_a = -2`.
-The reference reading is false; the monitor scores `+13.0` and reports **satisfied**.
+The reference reading is false; the monitor scores `+13.0` and would report **satisfied**.
+**Refused.**
 
 **3. Equivalence.** rtamt has an `iff` whose robustness is `−|ρ(left) − ρ(right)|`, which is negative
 whenever the two sides' *margins* differ — including when both sides are false and the equivalence
 is therefore true. Witness: `(count_a >= 1) <-> (count_b >= 1)` at `count_a = -2, count_b = 0`. Both
-conjuncts are false, so §2.7 gives `1`; the monitor scores `−2.0` and reports **violated**. The two
-spellings of the one connective also behave differently at this rung: `<->` is monitored and gets
-this wrong answer, while `<=>` is not in rtamt's grammar at all and is reported *not evaluated*.
+conjuncts are false, so §2.7 gives `1`; the monitor scores `−2.0` and would report **violated**. The
+two spellings of the one connective also parted company at this rung: `<->` was monitored and got
+this wrong answer, while `<=>` is not in rtamt's grammar at all and was reported *not evaluated*.
+The refusal is asked of the parsed `Iff` node, which is where both arrive, so the two spellings now
+reach the same refusal in the same words
+(`test_both_spellings_of_equivalence_reach_the_same_refusal`). **Refused.**
 
-**4. The exact tie** — already known, already documented, listed for completeness. rtamt scores a
-comparison that holds with no margin as robustness `0`, and the engine breaches only on a negative
-score, so a strict comparison satisfied nowhere by the reference reading is reported satisfied at
-the boundary. `test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied` is where
-that already lives.
+**4. The exact tie** — already known, already documented, listed for completeness, and **not
+refused**. rtamt scores a comparison that holds with no margin as robustness `0`, and the engine
+breaches only on a negative score, so a strict comparison satisfied nowhere by the reference reading
+is reported satisfied at the boundary. Every shipped duty uses `<=`, and at a tie `<=` *is*
+satisfied, so this is a boundary convention rather than a defect.
+`test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied` is where that already
+lives.
 
-**What this document takes to be right.** §2 is the reading, and the four rows are defects of the
-`observed` implementation. The shape of a fix is the one this package already uses for `!=`,
-`min(...)` and `Implies(...)`: refuse the shape in the rendering, so the duty is reported *not
-evaluated* rather than answered off a formula rtamt read differently. Rows 1–3 would need
-`engines/observed.to_stl` to refuse a `%`, a chained comparison and an equivalence; row 4 is a
-question about the boundary convention and is a different kind of decision. None of that is done
-here.
+**Why the fix is a refusal and not a repair.** §2 is the reading, and three encodings — the
+interpreter, the Z3 encoding and the finite-trace rendering — implement it. One backend disagreeing
+is a defect in that backend, so the shape of the fix is the one this package already uses for `!=`,
+`min(...)`, `max(...)` and `Implies(...)`: refuse the shape in the rendering. What this costs is a
+trace rung, and it is stated rather than hidden — a duty writing one of these three has no
+`observed` verdict at all.
+
+The refusal list is three constructs long for a reason that belongs to a dependency and not to this
+package: rtamt **raises** for nearly every construct this language admits and it does not
+support — `!=`, `min`, `max`, `Implies(...)`, `<=>` — which is why `spec.parse()` raising sufficed
+for as long as it did. That is measured rather than assumed:
+`test_rtamt_still_behaves_the_way_the_refusals_assume` probes every admitted construct and asserts
+which of *raises*, *agrees* and *misreads* rtamt does with it. Its purpose is a version bump
+reopening the `%` hole under another construct, which would otherwise be as invisible as `%` was.
+
+What is **not** done, and is a separate decision: verifying that what rtamt parsed is what was
+rendered, rather than naming the shapes it misreads. That is the general form of this fix and would
+not need a list.
 
 ---
 
@@ -763,7 +785,10 @@ here.
 | A proof disagreeing with the reference interpreter on its own witness is not a proof | `test_encoding_disagreeing_with_the_interpreter_is_not_a_proof` |
 | `present()` and `contains()` mean the same thing to the solver as to the reference reading | `test_the_solvers_blank_string_is_pythons_blank_string`, `test_the_solvers_fold_is_the_interpreters_fold`, `test_the_solver_finds_no_phrase_in_a_string_the_record_does_not_carry` |
 | The monitor agrees with the reference reading on every shape it renders | `test_the_monitor_agrees_with_the_reference_reading` |
-| The four shapes it does not render soundly are still exactly those four | `test_the_shapes_the_monitor_misrenders_are_the_four_named` |
+| The four shapes it does not render soundly are still exactly those four, and still what §4 records | `test_the_four_named_shapes_are_still_what_the_document_records` |
+| A duty writing one of the three refused shapes is not evaluated, naming the construct | `test_a_duty_using_a_misread_shape_is_not_evaluated_and_names_the_construct` |
+| Both spellings of equivalence reach the same refusal | `test_both_spellings_of_equivalence_reach_the_same_refusal` |
+| rtamt still raises for every other construct the language admits, so the refusal list is still three long | `test_rtamt_still_behaves_the_way_the_refusals_assume` |
 | No shipped pack writes one of those shapes | `test_no_shipped_spec_uses_a_shape_the_monitor_misrenders` |
 | The LTLf backend and the monitor agree about every shipped temporal duty | `test_the_ltlf_backend_agrees_with_the_monitor` |
 | LTLf questions are asked over a non-empty trace, so `⨅ ∅` is never the answer | `test_an_always_duty_satisfiable_only_by_the_empty_trace_is_reported_unsatisfiable` |

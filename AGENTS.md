@@ -563,9 +563,21 @@ of admissible inputs, and an unaware system admits none). §4 reports **four sha
 rendering and the definition disagree** — `%` (ANTLR error-recovers by dropping the token and
 `spec.parse()` does not raise), a chained comparison (rtamt left-associates over robustness where
 the language conjoins), `<->` (rtamt's `iff` robustness is negative whenever the two margins
-differ), and the known exact tie. All four are latent, `MONITOR_DIVERGENCES` is the exclusion list,
-and it is pinned twice: every row must still diverge and no shipped spec may use one. Fixing one
-means deleting its row and its §4 paragraph in the same change.
+differ), and the known exact tie. The first three are **refused in the rendering** —
+`engines/observed._refuse_shapes_the_monitor_misreads`, asked of the parsed formula so that `<->`
+and `<=>` reach one refusal — so a duty writing one is *not evaluated* naming the construct rather
+than answered off a misread formula; the tie is a boundary convention and is deliberately untouched.
+All four stay latent, `MONITOR_DIVERGENCES` is the exclusion list, and it is pinned twice: every row
+must still diverge *behind* its refusal and no shipped spec may use one, so a refusal whose reason
+has gone loses a duty a rung for nothing. Three things must not be undone: the refusal list is three
+constructs long only because rtamt **raises** for every other construct this language admits and it
+does not support (`!=`, `min`, `max`, `Implies(...)`, `<=>`), which is why
+`test_rtamt_still_behaves_the_way_the_refusals_assume` probes each one and asserts which of
+*raises*/*agrees*/*misreads* rtamt does — delete it and the `%` hole can reopen under another
+construct as invisibly as it did the first time; the rendering stays **textual** (`req.spec` reaches
+rtamt as written, arrows included, because an AST round-trip would spell `->` as `Implies(...)`), so
+a refusal goes beside the existing ones and never into a rewritten pipeline; and no construct leaves
+the *language* to suit this backend.
 
 ## The web home and the install surface
 

@@ -19,6 +19,15 @@ What a reader must not break:
     `NOT EVALUATED` (`verdict=INCONCLUSIVE`, `strength=None`), NEVER `satisfied`.
     Why this matters: STL monitors require sufficient trace points to establish time bounds; an
     unsupported formula or insufficient trace length cannot prove a temporal property.
+  - A shape rtamt parses and reads under a different semantics from the one `docs/language.md` §2
+    defines is refused in the rendering (`_refuse_shapes_the_monitor_misreads`), so the duty is
+    reported `NOT EVALUATED` naming the construct, never answered.
+    Why this matters: rtamt raises for nearly everything it does not support — `!=`, `min`, `max`,
+    `Implies(...)`, `<=>` — so `spec.parse()` raising was this engine's whole protection, and three
+    shapes fall outside it. A `%` is the sharp one: ANTLR error-recovers by dropping the token and
+    `parse()` does not raise, so the monitor answers about a formula nobody wrote.
+    `test_rtamt_still_behaves_the_way_the_refusals_assume` fails if a version bump moves any
+    admitted construct between raising, agreeing and misreading.
   - Where the property is an implication whose antecedent scored below zero at every position,
     report `NOT EVALUATED`, never `satisfied`.
     Why this matters: an implication holds at every step its trigger does not fire, so such a
@@ -79,6 +88,7 @@ from reasonsmith.report import RequirementResult, not_evaluated_for_unreachable_
 from reasonsmith.rulelang import (
     BINARY_TEMPORAL_OPERATORS,
     CONTAINS_CALL,
+    EQUIVALENCE_CALL,
     FLAG_THRESHOLD,
     PRESENCE_CALL,
     UnsupportedConstructError,
@@ -228,12 +238,70 @@ def _render_binary_temporal(text: str) -> str:
     return text
 
 
+#: The shapes the language admits and rtamt reads differently, each named as the refusal names it.
+#: `docs/language.md` §4 quotes a witness and a robustness value for every one, and says why the
+#: definition is what moves nothing: three other encodings agree with it, so one backend disagreeing
+#: is a defect in that backend. The refusal below is what keeps a duty using one of these *not
+#: evaluated* rather than answered off a formula rtamt read differently.
+_MISREAD_SHAPES = {
+    "remainder": (
+        "the remainder operator `%`: rtamt's lexer has no `%` and ANTLR error-recovers by "
+        "dropping the token instead of raising, so the monitor would answer about a formula "
+        "nobody wrote"
+    ),
+    "chain": (
+        "a chained comparison: the language reads `a < b < c` as the conjunction of its pairs, "
+        "and rtamt left-associates it over robustness, comparing a margin against `c`"
+    ),
+    "equivalence": (
+        "an equivalence: rtamt's `iff` scores `-|p(left) - p(right)|`, which is negative "
+        "whenever the two margins differ, including where both sides are false and the "
+        "equivalence therefore holds"
+    ),
+}
+
+
+class MisreadShapeError(UnsupportedConstructError):
+    """A shape rtamt parses and reads differently from the way the property language defines it.
+
+    Its own class because the refusal it earns is worded differently from every other one here: the
+    others say rtamt cannot read the formula, and these three say rtamt reads it and reads it wrong.
+    """
+
+
+def _refuse_shapes_the_monitor_misreads(node: ast.AST) -> None:
+    """Raise for a formula rtamt parses and reads differently from the way §2 defines it.
+
+    rtamt *raises* for nearly every construct it does not support — `!=`, `min`, `max`,
+    `Implies(...)`, `<=>` — which is why `spec.parse()` raising was this engine's whole protection
+    against an unrenderable formula for as long as it was enough. These three are the shapes where
+    that protection does not hold: two rtamt parses and reads under a different semantics, and one
+    it silently drops. `test_rtamt_still_behaves_the_way_the_refusals_assume` is the standing probe
+    that fails if a version bump moves any admitted construct between those cases.
+    """
+    for child in ast.walk(node):
+        if isinstance(child, ast.BinOp) and isinstance(child.op, ast.Mod):
+            raise MisreadShapeError(_MISREAD_SHAPES["remainder"])
+        if isinstance(child, ast.Compare) and len(child.ops) > 1:
+            raise MisreadShapeError(_MISREAD_SHAPES["chain"])
+        # Both spellings of the connective reach here as `Iff`, so `<->` and `<=>` are refused
+        # alike; before this they parted company, the first monitored and misread and the second
+        # rejected by rtamt's grammar.
+        if (
+            isinstance(child, ast.Call)
+            and isinstance(child.func, ast.Name)
+            and child.func.id == EQUIVALENCE_CALL
+        ):
+            raise MisreadShapeError(_MISREAD_SHAPES["equivalence"])
+
+
 def to_stl(spec: str) -> str:
-    """Return a requirement property in rtamt syntax.
+    """Return a requirement property in rtamt syntax, or refuse a shape rtamt reads differently.
 
     The synthetic flags named in the returned text are populated by `ObservedEngine`; callers that
     only need the rendered formula can use this public view without depending on those mappings.
     """
+    _refuse_shapes_the_monitor_misreads(parse_property(spec))
     return _render_stl(spec)[0]
 
 
@@ -380,18 +448,27 @@ class ObservedEngine:
         try:
             property_node = parse_property(req.spec)
             validate_temporal_property(property_node)
+            _refuse_shapes_the_monitor_misreads(property_node)
             boolean_atoms = set(bare_boolean_names(property_node))
         except UnsupportedConstructError as exc:
+            wording = (
+                (
+                    f"Not evaluated: rtamt reads {_property_noun(req)} {req.spec!r} differently "
+                    f"from the way the property language defines it, because it uses {exc}"
+                )
+                if isinstance(exc, MisreadShapeError)
+                else (
+                    "Not evaluated: rtamt cannot express or parse "
+                    f"{_property_noun(req)} {req.spec!r}: {exc}"
+                )
+            )
             return RequirementResult(
                 requirement_id=req.id,
                 source_clause=clause,
                 verdict=Verdict.INCONCLUSIVE,
                 strength=None,
                 signals_required=tuple(req.requires),
-                evidence_summary=(
-                    "Not evaluated: rtamt cannot express or parse "
-                    f"{_property_noun(req)} {req.spec!r}: {exc}"
-                ),
+                evidence_summary=wording,
                 details={"error": str(exc)},
                 binding=req.binding,
                 scope=req.scope,
