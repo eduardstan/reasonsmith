@@ -70,6 +70,16 @@ addopts = "-q"
 # them, so leaving them in would measure the demonstration and report it as library coverage.
 omit = ["*/reasonsmith/examples/*"]
 
+[tool.coverage.report]
+# Load-bearing, not cosmetic. `--cov-fail-under=N` is decided by
+# `coverage.results.should_fail_under`, which compares `round(total, precision)` against N, and
+# pytest-cov defaults `precision` to 0. At 0 a real 92.79% rounds to 93 and the floor does not
+# fail — while pytest-cov's own end-of-run summary compares the unrounded total and prints
+# "FAIL Required test coverage of 93% not reached", so the log said FAIL and the job exited 0.
+# Two digits makes the comparison the one the printed figure states. Set here rather than as a
+# flag so both `.github/workflows/ci.yml` and `publish.yml` inherit it, along with a local run.
+precision = 2
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

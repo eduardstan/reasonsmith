@@ -427,3 +427,38 @@ def test_pyproject_changelog_and_package_version_agree():
         f"CITATION.cff version {citation_version} disagrees with pyproject.toml version "
         f"{pyproject_version}. Bump all four in the same change."
     )
+
+
+def test_the_coverage_floor_fails_a_total_below_it():
+    """A floor that never fails is worse than no floor, because a green job is read as the floor
+    holding. `--cov-fail-under=N` is decided by `coverage.results.should_fail_under`, which
+    compares `round(total, precision)` against N; pytest-cov defaults `precision` to 0, at which
+    92.79% rounds to 93 and a `--cov-fail-under=93` job exits 0 having printed "FAIL Required
+    test coverage of 93% not reached". This asks the real function whether a total a tenth below
+    each workflow's own floor fails, so the answer cannot drift from what the flag means."""
+    from coverage.results import should_fail_under
+
+    with (REPO_ROOT / "pyproject.toml").open("rb") as handle:
+        precision = tomllib.load(handle).get("tool", {}).get("coverage", {}).get("report", {}).get(
+            "precision"
+        )
+    assert precision is not None, (
+        "[tool.coverage.report] precision is unset in pyproject.toml, so pytest-cov compares the "
+        "coverage total rounded to whole percent and the --cov-fail-under floor silently tolerates "
+        "up to half a point below itself."
+    )
+
+    floors = set()
+    for workflow in sorted((REPO_ROOT / ".github" / "workflows").glob("*.yml")):
+        floors.update(
+            float(match) for match in re.findall(
+                r"--cov-fail-under=(\d+(?:\.\d+)?)", workflow.read_text(encoding="utf-8")
+            )
+        )
+    assert floors, ".github/workflows names no --cov-fail-under floor to check"
+
+    for floor in sorted(floors):
+        assert should_fail_under(floor - 0.1, floor, precision), (
+            f"a total of {floor - 0.1}% does not fail the --cov-fail-under={floor:g} floor at "
+            f"precision {precision} — the floor is decorative."
+        )

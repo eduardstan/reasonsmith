@@ -24,7 +24,7 @@ jobs:
       # PyPI in pyproject.toml, so this environment and a local one resolve to the same code.
       - run: pip install -e ".[dev]" build
       - run: ruff check .
-      # 93% is the suite's measured total today; a floor to be raised deliberately, never lowered.
+      # The same floor `ci.yml` runs, compared at the precision `[tool.coverage.report]` sets.
       - run: pytest --cov=reasonsmith --cov-report=term-missing --cov-fail-under=93
       # A release that is not tagged `v` + the version in pyproject.toml would publish a
       # number nobody chose, and a PyPI version can never be reused. The tag is the one GitHub

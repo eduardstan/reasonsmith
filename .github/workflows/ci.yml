@@ -25,6 +25,8 @@ jobs:
       # and a local one resolve to the same code. torch is deliberately not installed — see README.
       - run: pip install -e ".[dev]"
       - run: ruff check .
-      # 93% is the suite's measured total today; a floor to be raised deliberately, never lowered.
+      # A floor to be raised deliberately, never lowered. It is compared at the precision
+      # `[tool.coverage.report]` sets, not rounded to whole percent — see the comment there, and
+      # `test_the_coverage_floor_fails_a_total_below_it`, for why that is load-bearing.
       - run: pytest --cov=reasonsmith --cov-report=term-missing --cov-fail-under=93
       - run: python -m reasonsmith.demo
