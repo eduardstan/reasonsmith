@@ -20,7 +20,10 @@ What this module is for:
   (`pylogics` with `ltlf2dfa`, and Spot); both were rejected, and the PR that landed this records
   what each one needed. Neither is required for this fragment: `always` distributes over positions,
   so the formula the solver decides is a state property, and one of those this repository already
-  decides.
+  decides. One has since been installed — `src/reasonsmith/ltlf.py`, behind the optional `ltlf`
+  extra — and it changes nothing here: it decides a duty as a *formula* for `validate-pack
+  --analyse`, is never given a system, and occupies no rung. This engine's reduction is still the
+  only thing that puts a temporal duty at `proved`.
 
 What a reader must not break:
   - **Only `always(f)`, and only with `f` free of temporal operators.** Every other temporal shape

@@ -1750,6 +1750,11 @@ Two consequences of that report text, followed by a separate package-level termi
 | Vacuity coincides with the unreachable-trigger rule on the case that rule already handles, and the case is exercised | `test_vacuity_coincides_with_the_unreachable_trigger_rule`, `test_the_unreachable_trigger_case_is_actually_exercised` |
 | The general vacuity rule catches a vacuous pass the trigger rule does not, and reports none on the shipped packs' own formulas | `test_the_general_rule_catches_a_vacuous_pass_the_trigger_rule_does_not`, `test_no_shipped_pack_is_vacuous_on_its_own_formulas` |
 | A question the analysis cannot encode is skipped by name and never answered | `test_the_counterfactual_fragment_is_skipped_by_name_and_never_answered` |
+| The temporal fragment is decided as a finite-trace formula, so the shipped `until` duty is no longer skipped by every question the analysis asks | `test_the_until_duty_is_no_longer_skipped_by_every_question_the_analysis_asks`, `test_every_shipped_temporal_duty_is_satisfiable_by_some_non_empty_finite_trace` |
+| The finite-trace backend and rtamt cannot disagree about a shipped temporal duty | `test_the_ltlf_backend_agrees_with_the_monitor` |
+| The temporal reading is future-only, non-empty, and refuses a question over the procedure's ceiling rather than running it | `test_a_past_operator_is_skipped_by_name_rather_than_rendered`, `test_an_always_duty_satisfiable_only_by_the_empty_trace_is_reported_unsatisfiable`, `test_a_question_over_the_atom_budget_is_refused_by_name`, `test_a_pair_the_procedure_refuses_never_renders_as_a_pair_it_cleared` |
+| A counterfactual property reaches no trace logic, and a shared abstraction makes an entailment between two duties mean something | `test_the_counterfactual_atom_reaches_no_trace_logic`, `test_the_same_subexpression_is_the_same_atom_across_a_pack`, `test_the_phrase_atom_carries_the_axiom_the_z3_encoding_carries` |
+| The temporal backend is an optional extra whose absence is a note, never a weaker answer | `test_the_analysis_says_so_when_the_extra_is_absent` |
 | A mutation score travels with its limit, a system without rules gets none, and a duty no mutant moves is named | `test_a_mutation_score_travels_with_its_limit_and_a_system_without_rules_gets_none`, `test_a_duty_no_mutant_moves_is_named_as_having_no_discriminating_power` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |
 
@@ -1884,6 +1889,84 @@ human read the TOML, and which the tool now finds on its own
 (`test_the_eu_ai_act_logging_duties_are_reported_equivalent`). The abstraction is **sound for what
 it reports and incomplete for what it does not**: two properties it does not relate are not thereby
 distinguishable by any system.
+
+### The temporal fragment, decided as a finite-trace formula
+
+Everything above decides one decision *record*. A `temporal` spec is not a property of one record,
+so for a long time the analysis reduced the one shape that is — `always(f)` with `f` free of
+temporal operators, through `engines/temporal.state_property_under_always` — and reported every
+other shape skipped by name. `ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out` is a shipped
+binding duty written with `until`, and no question this section asks could say anything about it at
+all.
+
+`src/reasonsmith/ltlf.py` closes that by handing the formula to a published decision procedure for
+linear temporal logic over **finite** traces, which is the semantics a decision log has and the same
+one `engines/temporal.py` claims for its reduction. It is **a syntax mapping and an emptiness
+question**, on exactly the terms §2 sets for rtamt: `to_ltlf` renders a `spec` in the installed
+procedure's syntax, a formula is satisfiable exactly when the automaton that procedure builds has an
+accepting state, entailment is `left & !right` unsatisfiable, and equivalence is entailment both
+ways. No temporal semantics, automaton construction, tableau or monitor is implemented in this
+repository, and none may be
+(`test_each_operator_of_the_fragment_has_one_ltlf_spelling`).
+
+**The two backends must not be able to disagree, and that is the acceptance test.** rtamt scores
+robustness over real-valued signals; the finite-trace procedure accepts or rejects a word over
+abstracted atoms. They answer the same question about the same trace only while the two syntax
+mappings render the operators the same way — and a `until` rendered as a `release`, an `always` that
+lost a position or an implication turned round would be invisible in either backend alone. This is
+the defect `test_the_solvers_fold_is_the_interpreters_fold` guards for `contains()`, in the same
+shape: a generated corpus of traces per shipped temporal duty, both backends asked, and a failure at
+the first trace on which they part (`test_the_ltlf_backend_agrees_with_the_monitor`). Only the
+definite verdicts are compared — where rtamt reports NOT EVALUATED it made no claim — and the
+comparisons that did happen are counted, because a differential test that quietly compares nothing
+passes forever.
+
+**Four things this reading costs, stated rather than left to be discovered.**
+
+- **It is propositional, so every magnitude becomes an opaque atom.** `x <= 30` bears no relation to
+  `x <= 90` here. `reasonsmith.ltlf.LTLF_ABSTRACTION_LIMIT` travels on every answer that rests on
+  it, and the soundness story is the one `_PackScope` already tells: an entailment reported holds
+  under every interpretation of the atoms and therefore for every system, and two duties it does not
+  relate are not thereby distinguishable by any system. Satisfiability is reported only in the
+  **affirmative**, because a model found over abstracted atoms may assign them an arithmetic no
+  system could produce — so a negative would not be a claim about the pack. This is why the backend
+  sits *beside* rtamt rather than replacing it: rtamt keeps every magnitude, this keeps every
+  position, and neither subsumes the other.
+- **Only the future fragment.** The installed procedure decides LTLf, which has no past operators,
+  so a spec using `once`, `historically`, `prev`, `since`, `rise` or `fall` is skipped **by name**
+  into `PackAnalysis.skipped`. Rendering one into a future operator would be implementing its
+  semantics (`test_a_past_operator_is_skipped_by_name_rather_than_rendered`). No shipped duty uses
+  one.
+- **Every question is asked over a non-empty trace.** LTLf as the installed procedure implements it
+  admits the empty trace, on which `always(f)` holds whatever `f` says — so without this every
+  `always` duty in every pack would be reported satisfiable by a trace no monitor ever reads.
+  `ltlf.NON_EMPTY` is the LTLf formula for "there is a position", conjoined into every question. It
+  is a formula of the logic and not a construction over its automata
+  (`test_an_always_duty_satisfiable_only_by_the_empty_trace_is_reported_unsatisfiable`).
+- **There is a ceiling, and questions over it are refused by name rather than run.** The procedure
+  enumerates the powerset of the atoms as the automaton's alphabet, which on this tree costs about
+  9 s at five atoms and more than 90 s at six. There is no wall clock anywhere in this package — the
+  same limit `docs/authoring-engines.md` states for a plug-in — so `ltlf.ATOM_BUDGET` is checked
+  before the automaton is built (`test_a_question_over_the_atom_budget_is_refused_by_name`). Every
+  shipped temporal duty is three or four atoms and is decided; every *pair* of them is seven, so the
+  pack's temporal entailment questions are all reported **not decided either way**, which is a
+  different fact from "no temporal duty entails another" and never renders as it
+  (`test_a_pair_the_procedure_refuses_never_renders_as_a_pair_it_cleared`).
+
+**No three-valued verdict is computed here, and that is a decision.** The runtime-verification
+literature (Bauer, Leucker and Schallhart) distinguishes *satisfied on this finite prefix* from
+*satisfied on every extension of it*, and that distinction is real for this package: a decision log
+is a finite trace and §2 already says the trace is a sample. The installed procedure exposes an
+automaton and no monitor construction over it, so the distinction is **not available from the tool**
+and is not synthesised from one — a three-valued verdict this repository computed for itself would
+be the temporal semantics it has just spent this section not implementing. Nothing on the strength
+lattice (§4) moves for it either. A procedure that reports it is what would close this.
+
+**The backend is an optional extra and its absence is a note.** `pip install reasonsmith` stays a
+two-command demo; `pip install reasonsmith[ltlf]` adds the procedure. Nothing in `check`, in any
+engine or in any shipped example touches it. With it absent, `PackAnalysis.temporal` is `None`,
+`ltlf.UNAVAILABLE_NOTE` is printed, and no temporal question is answered from a weaker substitute
+wearing the same words (`test_the_analysis_says_so_when_the_extra_is_absent`).
 
 ### Vacuity, defined for this evidence model
 

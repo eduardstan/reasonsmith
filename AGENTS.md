@@ -540,6 +540,31 @@ so `MUTATION_LIMIT` travels on every analysis carrying one and **no number here 
 coverage claim**. Findings do not change `validate-pack`'s exit code. The measured figures live in
 RESULTS.md, *Pack Analysis Note*, never in a test.
 
+The `temporal` fragment is not a property of one record, so Z3 reached it only through the
+`always(state property)` reduction and every other shape — including the shipped `until` duty —
+was skipped by every question above. `ltlf.py` decides the whole fragment instead, and it is **a
+syntax mapping and an emptiness question and nothing else**, on the terms `engines/observed.to_stl`
+sets for rtamt: `flloat` compiles the formula to a DFA, satisfiable is "some accepting state",
+entailment is `left & !right` unsatisfiable, equivalence is both ways. **Never implement a temporal
+semantics, monitor, automaton construction or tableau here** — the previous attempt at this hand-
+wrote a monitor for operators rtamt had parsed all along. It is deliberately not under `engines/`:
+it returns no `RequirementResult`, occupies no rung, and the engine count `test_release_discipline`
+pins reads that directory. Six things must not be undone: it is an **optional extra**
+(`pip install reasonsmith[ltlf]`) and its absence is `UNAVAILABLE_NOTE` with `PackAnalysis.temporal`
+left `None`, never a weaker answer in the same words; the reading is propositional, so satisfiability
+is reported **only in the affirmative** and `LTLF_ABSTRACTION_LIMIT` rides on every answer — rtamt
+keeps every magnitude, this keeps every position, and neither replaces the other; every question
+conjoins `NON_EMPTY` (`F(true)`), because the logic admits the empty trace on which every `always`
+duty vacuously holds; a past operator (`once`, `historically`, `prev`, `since`, `rise`, `fall`) is
+LTLf-inexpressible and is skipped **by name**; `ATOM_BUDGET` is checked before the automaton is built
+because there is no wall clock anywhere in this package, and "no pair entails another" must never
+render for "no pair was decided"; and **no three-valued finite-trace verdict is computed** — the
+tool exposes no monitor construction, so the Bauer/Leucker/Schallhart distinction is reported
+unavailable rather than synthesised, and the strength lattice did not move. The acceptance test is
+`test_the_ltlf_backend_agrees_with_the_monitor`: the two backends may not disagree about any shipped
+temporal duty, in the shape `test_the_solvers_fold_is_the_interpreters_fold` gives `contains()`.
+`docs/semantics.md` §8 (*The temporal fragment, decided as a finite-trace formula*) is the contract.
+
 ## The front door
 
 Before editing the CLI, read the maintenance contracts in `src/reasonsmith/cli.py`'s module

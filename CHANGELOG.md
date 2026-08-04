@@ -10,6 +10,33 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **`validate-pack --analyse` has a decision procedure for temporal duties, beside rtamt rather
+  than instead of it.** The analysis decided a pack's questions with Z3 over one decision record,
+  so a `temporal` spec reached it only through the `always(state property)` reduction and every
+  other shape was skipped by name — including `ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out`,
+  a shipped binding duty written with `until` that no question the analysis asks could reach at all.
+  `src/reasonsmith/ltlf.py` now renders the whole fragment into linear temporal logic over finite
+  traces and puts satisfiability and entailment to an installed decision procedure. **It is a syntax
+  mapping and an emptiness question, on the same terms `engines/observed.to_stl` is one for rtamt:
+  no temporal semantics, automaton construction, tableau or monitor is implemented in this
+  repository.** The two backends cannot disagree, and that is the acceptance test —
+  `test_the_ltlf_backend_agrees_with_the_monitor` walks a generated corpus of traces per shipped
+  temporal duty and fails at the first one on which rtamt's robustness and the automaton's
+  acceptance part, in the shape `test_the_solvers_fold_is_the_interpreters_fold` already gives the
+  `contains()` atom. The backend is an **optional extra** (`pip install reasonsmith[ltlf]`): nothing
+  in `check`, in any engine or in any shipped example touches it, `pip install reasonsmith` stays a
+  two-command demo, and with it absent the analysis prints that it is absent rather than answering
+  from a weaker substitute. Four costs are stated in `docs/semantics.md` §8 rather than left to be
+  found: the reading is propositional so every magnitude is an opaque atom and satisfiability is
+  reported only in the affirmative; it is future-only, so a past operator is skipped by name; every
+  question is asked over a non-empty trace, because the logic admits the empty one on which every
+  `always` duty holds; and a question over the procedure's atom ceiling is refused by name rather
+  than run, which today is every *pair* of shipped temporal duties. **No three-valued finite-trace
+  verdict is computed**: the installed procedure exposes an automaton and no monitor construction
+  over it, so the Bauer/Leucker/Schallhart distinction is reported unavailable rather than
+  synthesised, and nothing on the strength lattice moved. No engine, no rung and no shipped verdict
+  changed.
+
 - **`until` and `since` in the property language, on a real duty and a recorded reversal.** Both
   are written as binary prefix calls — `until(left, right)`, `since(left, right)` — classified into
   the `temporal` fragment and rendered to rtamt's infix form by `engines/observed.to_stl`. **The

@@ -35,6 +35,16 @@ establishes it and it stays at `observed`. Closing *that* needs the reasoning th
 need — a bounded search over generated traces, or a finite-trace decision procedure — and no shipped
 duty uses the operator, so it waits for one, on the same terms as objective 2.
 
+A finite-trace decision procedure is now installable (`pip install reasonsmith[ltlf]`,
+`src/reasonsmith/ltlf.py`), which changes what this objective *depends on* and not what it is. That
+backend decides a duty as a **formula**, for `validate-pack --analyse`; it is never given a system,
+returns no `RequirementResult` and occupies no rung, so it establishes nothing about what any
+system's logic admits. The condition still stands unchanged: a duty using the operator first, and
+then a design answer for what would discharge it, on the same terms as objective 2.
+`docs/semantics.md` §8 states what the backend does answer, and the two limits it arrived with — a
+propositional reading of every magnitude, and no three-valued finite-trace verdict, because the
+procedure exposes no monitor construction and this repository will not synthesise one.
+
 ## 2. `until` and `since` in the temporal fragment — **met, and one half of it is a reversal**
 
 **What met it.** `ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out` — 12 CFR 1002.9(c)(2). A

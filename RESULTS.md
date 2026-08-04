@@ -455,3 +455,40 @@ pytest -q && ruff check .
 **681 passed**, 0 failed, 0 skipped; `ruff check .` reports no findings. The count includes the 14
 tests of `tests/test_pack_analysis.py`, and supersedes the `226 passed` of the note above as the
 current-suite figure.
+
+### Temporal duties, decided as finite-trace formulas (2026-08-04)
+
+```sh
+pip install "reasonsmith[ltlf]"
+reasonsmith validate-pack ecoa --analyse
+```
+
+```text
+  temporal: 3 temporal dut(ies) decided as finite-trace formulas, each satisfiable by some non-empty finite trace
+  temporal entailment: 3 of 3 pair(s) not decided either way — together they carry more propositional atoms than the installed decision procedure builds an automaton for in bounded time (reasonsmith.ltlf.ATOM_BUDGET)
+```
+
+The four shipped `temporal` requirements — three in `ecoa`, one in `gdpr` — are each decided
+satisfiable by some non-empty finite trace, `ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out`
+included. Before this it appeared in `--analyse` only as a reason string saying it had not been
+reduced, because the Z3 questions decide one decision record and `until` is not a property of one.
+
+The entailment line is the honest half of the same measurement, and it is a limit of the installed
+procedure and not of the pack. `flloat` enumerates the powerset of a formula's atoms as its
+automaton's alphabet: measured on this tree, a pack-shaped question costs about 2 s at four atoms,
+9 s at five and more than 90 s at six. Every shipped temporal duty is three or four atoms and is
+answered in under a second; every *pair* of them is seven, so all three ECOA pairs are reported
+**not decided either way** rather than cleared. `reasonsmith.ltlf.ATOM_BUDGET` is checked before the
+automaton is built, because there is no wall clock anywhere in this package. Read
+[`docs/semantics.md`](docs/semantics.md) §8 before quoting any of this: the reading is
+propositional, so satisfiability is reported only in the affirmative and an entailment it does not
+report is not a distinction any system can make.
+
+```sh
+pytest -q && ruff check .
+```
+
+**738 passed**, 0 failed, 0 skipped; `ruff check .` reports no findings, with the `ltlf` extra
+installed. The count includes the 29 tests of `tests/test_ltlf_backend.py` and supersedes the
+`681 passed` above as the current-suite figure. With the extra *absent* the analysis reports it and
+that module's tests skip, which is the arrangement `pip install reasonsmith` has to keep working.

@@ -38,7 +38,23 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.4", "hypothesis>=6.100"]
+# The finite-trace decision procedure `validate-pack --analyse` puts temporal duties to
+# (`src/reasonsmith/ltlf.py`). It is an **extra** and not a dependency because `pip install
+# reasonsmith` has to stay a two-command demo: nothing in `check`, in any engine or in any shipped
+# example touches it, and with it absent the analysis prints `ltlf.UNAVAILABLE_NOTE` rather than a
+# weaker answer wearing the same words. Pinned to the 0.3 series for the reason rtamt and z3 are
+# pinned — it decides what `--analyse` prints — and it is pure Python, so the extra installs from
+# PyPI with no native toolchain. See the module docstring for what was priced against it.
+ltlf = ["flloat>=0.3,<0.4"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+    "hypothesis>=6.100",
+    # CI runs the differential test that holds this backend to rtamt, so the extra is installed
+    # for development. `test_the_analysis_says_so_when_the_extra_is_absent` covers its absence.
+    "flloat>=0.3,<0.4",
+]
 
 [project.scripts]
 reasonsmith = "reasonsmith.cli:main"

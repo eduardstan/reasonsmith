@@ -30,9 +30,17 @@ What a reader must not break:
     pack nobody runs.
   - A question the encoding cannot reach is **skipped by name**, never answered. The
     `counterfactual` fragment is a property of a pair of executions and is not encoded here at
-    all; a temporal spec that is not `always(state property)` is not reduced.
+    all; a temporal spec that is not `always(state property)` is not reduced *by the Z3 encoding*.
     Why this matters: a silent omission reads as "nothing found", which is the overclaim this
     package exists to refuse. Every skip travels in `PackAnalysis.skipped`.
+  - The temporal fragment is decided **as a formula of a finite-trace logic**, by `ltlf.py`, and
+    that is a second decision procedure over a second abstraction rather than a widening of the
+    first. Z3 keeps every magnitude and decides one record; LTLf keeps every position and abstracts
+    every magnitude to an opaque atom. Neither subsumes the other, `LTLF_ABSTRACTION_LIMIT` says so
+    on the answers that rest on it, and the backend is an **optional extra** whose absence is a
+    note and never a weaker answer wearing the same words.
+    Why this matters: before it, `ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out` — a shipped
+    binding duty written with `until` — was skipped by every question this module asks.
   - The mutation score is **not a coverage claim**, and `MUTATION_LIMIT` says so on the analysis
     that carries one. It reaches only a system that exposes `logic()` as a rule block, which is
     not most audited systems, and it measures sensitivity to *these* mutants and to no others.
@@ -58,6 +66,15 @@ from reasonsmith.engines.proved import (
     encode_logic_domain,
 )
 from reasonsmith.engines.temporal import state_property_under_always
+from reasonsmith.ltlf import (
+    LTLF_ABSTRACTION_LIMIT,
+    UNAVAILABLE_NOTE,
+    Abstraction,
+    available,
+    entails,
+    satisfiable,
+    to_ltlf,
+)
 from reasonsmith.report import check_conformance
 from reasonsmith.rulelang import (
     CONTAINS_CALL,
@@ -74,6 +91,7 @@ __all__ = [
     "MutationScore",
     "PackAnalysis",
     "Relation",
+    "TemporalAnalysis",
     "VacuityFinding",
     "analyse_pack",
     "mutate_rules",
@@ -129,6 +147,27 @@ class MutationScore:
 
 
 @dataclass(frozen=True)
+class TemporalAnalysis:
+    """What the finite-trace decision procedure said about a pack's temporal duties.
+
+    `decided` names every temporal requirement it rendered and answered; `unsatisfiable` names the
+    ones no non-empty finite trace discharges, which is a defect in the pack and not in any system.
+    `relations` carries entailments between two temporal duties, on the same reading `Relation`
+    carries elsewhere and over the abstraction `LTLF_ABSTRACTION_LIMIT` states.
+    """
+
+    decided: tuple[str, ...] = ()
+    unsatisfiable: tuple[str, ...] = ()
+    relations: tuple[Relation, ...] = ()
+    #: How many pairs of temporal duties were put to the procedure, and how many it refused for
+    #: carrying more atoms than it builds an automaton for. Counted rather than inferred from
+    #: `relations`, because "no pair entails another" and "no pair was decided" are different facts
+    #: and the second must never render as the first.
+    pairs_decided: int = 0
+    pairs_refused: int = 0
+
+
+@dataclass(frozen=True)
 class PackAnalysis:
     """What the four questions answered, and every one skipped rather than answered."""
 
@@ -141,6 +180,9 @@ class PackAnalysis:
     mutation_domain: str = ""
     skipped: tuple[str, ...] = ()
     notes: tuple[str, ...] = field(default_factory=tuple)
+    #: `None` when the optional decision procedure is not installed, which is not the same fact as
+    #: "it was installed and found nothing" and must not render as it.
+    temporal: Optional[TemporalAnalysis] = None
 
 
 class _PackScope(_Scope):
@@ -192,7 +234,9 @@ def _state_property(req: Requirement) -> tuple[Optional[ast.Expression], str]:
         if reduced is None:
             return None, (
                 f"{req.id}: a temporal spec that is not `always(state property)` is not reduced "
-                "here, on the same terms as engines/temporal.py"
+                "to a state property for the Z3 questions above, on the same terms as "
+                "engines/temporal.py — the finite-trace procedure answers it instead, where it is "
+                "installed"
             )
         return parse_property(reduced), ""
     return parse_property(req.spec), ""
@@ -405,6 +449,74 @@ def _satisfiability_and_relations(
     return satisfiable, core, tuple(relations), skipped, notes
 
 
+def _temporal_analysis(pack: Pack) -> tuple[Optional[TemporalAnalysis], list[str], list[str]]:
+    """Decide the pack's temporal duties as finite-trace formulas, or say why one was not.
+
+    The whole fragment reaches this, not only the shapes the Z3 reduction misses: an entailment
+    between the `until` duty and an `always` one is a question about both, and asking it of only
+    half the fragment would answer it about a pack that is not this one. One `Abstraction` serves
+    the whole pack, so the same subexpression is the same atom in every formula.
+    """
+    if not available():
+        return None, [], [UNAVAILABLE_NOTE]
+
+    skipped: list[str] = []
+    abstraction = Abstraction()
+    rendered: list[tuple[str, str]] = []
+    for req in pack.requirements:
+        if req.formalism != "temporal":
+            continue
+        try:
+            rendered.append((req.id, to_ltlf(req.spec, abstraction)))
+        except UnsupportedConstructError as exc:
+            skipped.append(f"{req.id}: not decided as a finite-trace formula — {exc}")
+
+    if not rendered:
+        return TemporalAnalysis(), skipped, []
+
+    decided: list[str] = []
+    unsatisfiable: list[str] = []
+    for req_id, formula in rendered:
+        try:
+            holds = satisfiable([formula], abstraction)
+        except UnsupportedConstructError as exc:
+            skipped.append(f"{req_id}: satisfiability not decided — {exc}")
+            continue
+        decided.append(req_id)
+        if not holds:
+            unsatisfiable.append(req_id)
+
+    relations: list[Relation] = []
+    refused = 0
+    pairs_decided = 0
+    for index, (left, left_formula) in enumerate(rendered):
+        for right, right_formula in rendered[index + 1 :]:
+            try:
+                forward = entails(left_formula, right_formula, abstraction)
+                backward = entails(right_formula, left_formula, abstraction)
+            except UnsupportedConstructError:
+                refused += 1
+                continue
+            pairs_decided += 1
+            if forward and backward:
+                relations.append(Relation(left=left, right=right, equivalent=True))
+            elif forward:
+                relations.append(Relation(left=left, right=right, equivalent=False))
+            elif backward:
+                relations.append(Relation(left=right, right=left, equivalent=False))
+    return (
+        TemporalAnalysis(
+            decided=tuple(decided),
+            unsatisfiable=tuple(unsatisfiable),
+            relations=tuple(relations),
+            pairs_decided=pairs_decided,
+            pairs_refused=refused,
+        ),
+        skipped,
+        [],
+    )
+
+
 #: The comparison swaps one mutant applies, each to one occurrence.
 _COMPARISON_MUTATIONS = {
     ast.Lt: (ast.LtE, ast.Gt),
@@ -597,7 +709,12 @@ def analyse_pack(
     it coincides with `report.not_evaluated_for_unreachable_trigger`, and the mutation coverage
     runs.
     """
-    satisfiable, core, relations, skipped, notes = _satisfiability_and_relations(pack, timeout_ms)
+    jointly_satisfiable, core, relations, skipped, notes = _satisfiability_and_relations(
+        pack, timeout_ms
+    )
+    temporal, temporal_skipped, temporal_notes = _temporal_analysis(pack)
+    skipped.extend(temporal_skipped)
+    notes.extend(temporal_notes)
 
     vacuities: list[VacuityFinding] = []
     domain_label = "every assignment to the signals the properties read"
@@ -664,7 +781,8 @@ def analyse_pack(
 
     return PackAnalysis(
         pack_id=pack.id,
-        satisfiable=satisfiable,
+        satisfiable=jointly_satisfiable,
+        temporal=temporal,
         unsatisfiable_core=core,
         relations=relations,
         vacuities=tuple(vacuities),
@@ -707,6 +825,38 @@ def render_analysis(analysis: PackAnalysis) -> str:
                 )
     else:
         lines.append("  entailment: no requirement entails another")
+
+    if analysis.temporal is not None and analysis.temporal.decided:
+        temporal = analysis.temporal
+        if temporal.unsatisfiable:
+            lines.append(
+                f"  temporal: {len(temporal.decided)} temporal dut(ies) decided as finite-trace "
+                f"formulas, of which {len(temporal.unsatisfiable)} NOT satisfiable"
+            )
+            for req_id in temporal.unsatisfiable:
+                lines.append(
+                    f"    NOT satisfiable: {req_id} — no non-empty finite trace discharges it, so "
+                    "every system will be reported violated on it for a reason that is this pack's"
+                )
+        else:
+            lines.append(
+                f"  temporal: {len(temporal.decided)} temporal dut(ies) decided as finite-trace "
+                "formulas, each satisfiable by some non-empty finite trace"
+            )
+        for relation in temporal.relations:
+            verb = "<=>" if relation.equivalent else "=>"
+            lines.append(f"  temporal entailment: {relation.left} {verb} {relation.right}")
+        if not temporal.relations and temporal.pairs_decided:
+            lines.append("  temporal entailment: no temporal duty entails another")
+        if temporal.pairs_refused:
+            total = temporal.pairs_decided + temporal.pairs_refused
+            lines.append(
+                f"  temporal entailment: {temporal.pairs_refused} of {total} pair(s) not decided "
+                "either way — together they carry more propositional atoms than the installed "
+                "decision procedure builds an automaton for in bounded time "
+                "(reasonsmith.ltlf.ATOM_BUDGET)"
+            )
+        lines.append(f"  {LTLF_ABSTRACTION_LIMIT}")
 
     if analysis.vacuities:
         for finding in analysis.vacuities:
