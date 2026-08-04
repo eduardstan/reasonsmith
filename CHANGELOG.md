@@ -20,8 +20,30 @@ releases before it predate the file and are not reconstructed here.
   `sut.TimeDomain`, defaulting to `sut.ORDINAL_DOMAIN`, and `TimeDomain.ticks` is the only source
   of the `time` series. A metric or interval semantics is now a new domain and a new branch rather
   than a re-reading of every property; none is added here.
+- **An inference artefact is reasonsmith's own abstraction, and a ground program is one adapter.**
+  `reasonsmith.artifacts.InferenceArtifact` states what a reason-bearing artefact is, what it must
+  expose for the deletion probe to measure reasons from it, and — the load-bearing part — whether
+  its **inference is monotone in its facts**. `artifacts/ground_program.py` is one family
+  satisfying it, wrapping a nesyarena `GroundProgram`; nesyarena is unchanged, unvendored and
+  unre-pinned, and neither the protocol nor `certificate.py` imports it any more. The knowledge
+  graphs, reason traces, extracted rule sets and decision trees of the paper's taxonomy are now
+  adapters rather than special cases; none is implemented here, and a family whose reasons are
+  extracted rather than enumerated exactly still needs a decision about the strength lattice before
+  it needs an adapter (`docs/semantics.md` §3, *The inference artefact*).
 
 ### Changed
+- **A reason is no longer measured under a definition that does not apply to it.** The reason-
+  adequacy duty `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` reports *not evaluated*, naming
+  why, for an artefact that declares its inference non-monotone, declares nothing at all, or
+  declares itself monotone where the probe measured a deletion that raised the system's answer —
+  never `violated`, never `satisfied`, and never handed down to the presence check that shares the
+  clause. This replaces the disclosure below with a refusal: a creditor whose policy exceptions
+  lawfully retract reasons was reported violated for having stated its reasons correctly. It is
+  *not evaluated* rather than *unattainable* because the gap is in this tool, which has one
+  definition of a reason and it does not survive defeat. No verdict moves for a system that
+  declares itself monotone, and the shipped demonstration is unchanged; an adapter exposing
+  `artifact()` must now declare `monotone`, and one that does not is reported not evaluated rather
+  than measured.
 
 - `--json` envelope `schema_version` is **2**. It gains `time_domain`, the clock the trace a run
   read stated. The bump is for meaning, not for the key: under version 1 a temporal bound counted

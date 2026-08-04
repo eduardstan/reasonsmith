@@ -1,26 +1,35 @@
 """The reason-deletion certificate.
 
 What this module is for:
-  Compares an engine's output against exact inference ground truth (enumerated via `nesyarena` WMC).
-  Using deletion probes, it tests whether disabling isolated facts changes engine output,
-  attributing dropped reasons to proof truncation or inference settings.
+  Compares an engine's output against exact inference ground truth. Using deletion probes, it tests
+  whether disabling isolated facts changes engine output, attributing dropped reasons to proof
+  truncation or inference settings.
+
+  It reads its inputs through `artifacts.InferenceArtifact` and names no representation: what a
+  fact is, what enumerated the reasons and what switching one off means all belong to the artefact.
+  A nesyarena ground program is one such artefact (`artifacts/ground_program.py`) and `certify` is
+  that family's entry point; `certify_artifact` is the protocol's.
 
   Deletion probe mechanism:
-    A reason r with a private fact (one no other exact reason uses) is switched off by setting its
-    fact probability to zero. Exact inference loses r's exclusive contribution. If the engine's
-    answer does not move at all, the engine did not depend on r: r was deleted. Every private fact
-    of r is switched off, one at a time, and one that moves the engine settles r live.
+    A reason r with a private fact (one no other exact reason uses) is switched off by asking the
+    artefact for the same inference `without` that fact. Exact inference loses r's exclusive
+    contribution. If the engine's answer does not move at all, the engine did not depend on r: r
+    was deleted. Every private fact of r is switched off, one at a time, and one that moves the
+    engine settles r live.
 
 What a reader must not break:
-  - The probe only ever sets a probability *to zero*. It never raises one and it never adds a fact,
-    so `deleted` means "the engine's answer did not depend on this reason under this
-    interpretation" and nothing stronger.
+  - The probe only ever switches a fact *off*. It never raises one and it never adds a fact — the
+    protocol has a `without` and deliberately no `with` — so `deleted` means "the engine's answer
+    did not depend on this reason under this interpretation" and nothing stronger.
     Why this matters: on an engine whose reasons can be *retracted* by an added fact, a lawfully
-    retracted reason is indistinguishable from a dropped one under this definition — see `LIMITS`
-    and `docs/semantics.md` §3 (*certificate*). The one fingerprint such an engine leaves is a
-    deletion that moves its answer *up*, which is why the sign of `engine_drop` is kept rather than
-    taken in absolute value, and reported as `ReasonVerdict.non_monotone` /
-    `Certificate.non_monotone`.
+    retracted reason is indistinguishable from a dropped one under this definition. That is why an
+    artefact declares whether its inference is monotone, why a certificate over one that declares
+    it is not carries no verdict (`Certificate.verdict`, `deletion_semantics_refusal`), and why
+    `engines/certificate.py` refuses such an artefact before measuring it rather than after.
+    The one fingerprint such an engine leaves is a deletion that moves its answer *up*, which is
+    why the sign of `engine_drop` is kept rather than taken in absolute value, reported as
+    `ReasonVerdict.non_monotone` / `Certificate.non_monotone` — and, where the artefact declared
+    itself monotone, is the measurement that refutes the declaration.
   - Both independent checks must pass for a certificate to pass: the deletion probe
     (every reason live) and the value check against the exact oracle. Neither check
     subsumes the other.
@@ -44,10 +53,9 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import Any
 
-from nesyarena.ir import Atom, GroundProgram
-from nesyarena.oracle import wmc
-from nesyarena.suts import proof_score
+from reasonsmith.artifacts import InferenceArtifact, deletion_semantics_refusal
 
 LIMITS = (
     "This certificate compares one engine's answer against exact inference on one ground program "
@@ -60,7 +68,9 @@ LIMITS = (
     "whose reasons can be retracted by an added fact — a policy exception evaluated after the "
     "rules fire — a lawfully retracted reason is reported deleted here exactly as a dropped one "
     "is, and can drive a violated verdict against a system that stated its reasons correctly. "
-    "Where a "
+    "Which is why the artefact declares whether its inference is monotone, and a certificate over "
+    "one that declares it is not, declares nothing, or is contradicted by the probe carries no "
+    "verdict at all. Where a "
     "deletion moves the engine's answer up, that is reported as a possible non-monotonicity, and "
     "it is the only fingerprint of the condition this instrument can leave."
 )
@@ -85,12 +95,12 @@ class ReasonVerdict:
     label: str
     score: float
     status: str  # live | deleted | unseparable | inconclusive
-    probe_fact: Atom | None  # the fact whose probe settled this status
+    probe_fact: Any | None  # the fact whose probe settled this status
     exact_drop: float
     engine_drop: float
     detail: str
     #: Every private fact of this reason, each switched off alone. Empty for `unseparable`.
-    probe_facts: tuple[Atom, ...] = ()
+    probe_facts: tuple[Any, ...] = ()
     #: Engine re-runs this reason cost: one per probe that moved exact inference at all.
     engine_probes: int = 0
     #: A probe of this reason moved the engine's answer *up*. Not a fault of the reason — evidence
@@ -116,15 +126,22 @@ class ReasonVerdict:
 
 @dataclass(frozen=True)
 class Certificate:
-    query: Atom
+    query: Any
     adapter_name: str
     claimed_semantics: str
-    exact_depth: int
+    exact_depth: int | None
     exact_value: float
     engine_value: float
     tol: float
     verdicts: tuple[ReasonVerdict, ...]
     attribution: str
+    #: How the artefact obtained its reason set, in its own words. A reader cannot weigh a
+    #: certificate without it, and it is the one line of the rendering that names a representation.
+    exact_inference: str = ""
+    #: The artefact's monotonicity declaration, carried so a reader of one certificate can see the
+    #: premise its verdict rests on. None where the caller supplied no artefact at all — a direct
+    #: `certify(...)` measurement, which reaches no duty and therefore no verdict about a system.
+    monotone: bool | None = None
 
     def _by(self, status: str) -> list[ReasonVerdict]:
         return [v for v in self.verdicts if v.status == status]
@@ -151,7 +168,27 @@ class Certificate:
         return self.engine_value - self.exact_value
 
     @property
+    def deletion_semantics_refusal(self) -> str | None:
+        """Why this artefact's reasons cannot be read off a deletion probe, or None if they can.
+
+        Asked of the *declaration* and of the *measurement* together: a declaration the probe
+        contradicted is refused exactly as one that said no. An artefact that declared nothing at
+        all is refused too — except where nothing was declared because nothing was asked, which is
+        `monotone is None` on a direct `certify(...)` call and is not a state `artifact()` can
+        reach: `engines/certificate.py` refuses an undeclared artefact before it is measured. So a
+        certificate produced from a bare measurement still reports what it measured, and no verdict
+        about a system is ever read off one.
+        """
+        if self.monotone is None:
+            return None
+        return deletion_semantics_refusal(
+            self.monotone, refuted_by_measurement=bool(self.non_monotone)
+        )
+
+    @property
     def verdict(self) -> str:
+        if self.deletion_semantics_refusal:
+            return "INCONCLUSIVE"
         if self.deleted or abs(self.value_gap) > self.tol:
             return "FAIL"
         if not self.verdicts or self.uncertified:
@@ -166,8 +203,7 @@ class Certificate:
             f"REASON-DELETION CERTIFICATE [{self.verdict}]",
             f"query: {self.query!r}",
             f"engine: {self.adapter_name}   claims: {self.claimed_semantics}",
-            f"exact inference: bounded proof enumeration to depth {self.exact_depth} "
-            f"(nesyarena ground-program IR) + exact weighted model counting",
+            f"exact inference: {self.exact_inference}",
             f"exact value {self.exact_value:.6f}   engine value {self.engine_value:.6f}   "
             f"gap {self.value_gap:+.6f}   tolerance {self.tol:g}",
             f"reasons: {len(self.verdicts)} found by exact inference, {len(self.live)} used by the "
@@ -194,6 +230,9 @@ class Certificate:
                     f"{-v.engine_drop:+.6f}"
                     for v in sorted(self.non_monotone, key=lambda v: (-v.score, v.label))]
         out += ["", f"ATTRIBUTION: {self.attribution}"]
+        if self.deletion_semantics_refusal:
+            out += ["", "NO VERDICT IS READ OFF THIS MEASUREMENT: "
+                        f"{self.deletion_semantics_refusal}."]
         out += ["", "LIMITS OF THIS CERTIFICATE", f"  {LIMITS}"]
         return "\n".join(out)
 
@@ -203,6 +242,9 @@ class Certificate:
             "query": str(self.query),
             "adapter_name": self.adapter_name,
             "claimed_semantics": self.claimed_semantics,
+            "exact_inference": self.exact_inference,
+            "monotone": self.monotone,
+            "deletion_semantics_refusal": self.deletion_semantics_refusal,
             "exact_depth": self.exact_depth,
             "exact_value": self.exact_value,
             "engine_value": self.engine_value,
@@ -278,29 +320,48 @@ def _attribute(verdicts, value_gap: float, tol: float) -> str:
     )
 
 
-def certify(program: GroundProgram, base: dict, query: Atom, adapter, exact_depth: int,
-            tol: float = 1e-9, labels: dict | None = None) -> Certificate:
+def certify(program, base: dict, query, adapter, exact_depth: int,
+            tol: float = 1e-9, labels: dict | None = None,
+            monotone: bool | None = None) -> Certificate:
+    """Certify one nesyarena ground program: the artefact family this package ships an adapter for.
+
+    A thin front door onto `certify_artifact`, kept because these keyword names are the shape
+    `sut.artifact(decision)` documents and `engines.certificate.ARTIFACT_KEYS` names. `program`,
+    `base` and `query` are exactly what the adapter and the oracle both consume (that shared input
+    is the invariant nesyarena's adapter protocol exists to hold). `exact_depth` bounds proof
+    enumeration; `labels` maps a reason's EDB support set to a human name, such as a reason code,
+    and falls back to the facts themselves; `monotone` is the declaration
+    `artifacts.InferenceArtifact` requires, and defaults to *undeclared* rather than to True — a
+    direct call here is a measurement, and a verdict about a system is read off one only where the
+    duty's engine has already been told.
+    """
+    from reasonsmith.artifacts.ground_program import GroundProgramArtifact
+
+    return certify_artifact(
+        GroundProgramArtifact(program, base, query, adapter, exact_depth, labels, monotone), tol
+    )
+
+
+def certify_artifact(artifact: InferenceArtifact, tol: float = 1e-9) -> Certificate:
     """Compare the reasons an engine actually used against the exact set, and name what is missing.
 
-    `program`, `base` and `query` are exactly what the adapter and the oracle both consume (that
-    shared input is the invariant nesyarena's adapter protocol exists to hold). `exact_depth` bounds
-    proof enumeration; `labels` maps a reason's EDB support set to a human name, such as a reason
-    code, and falls back to the facts themselves.
+    The representation-neutral core: everything it knows about the inference it reads through
+    `artifacts.InferenceArtifact`, so a second family of artefact is an adapter and not a branch
+    here.
     """
-    labels = labels or {}
-    reasons = program.proof_supports(query, exact_depth)
-    exact_value = wmc(reasons, base)
-    engine_value = float(adapter.infer(program, base, [query])[query])
+    reasons = tuple(artifact.reasons())
+    exact_value = artifact.exact_value()
+    engine_value = artifact.engine_value()
 
-    seen: dict[Atom, int] = {}
+    seen: dict[Any, int] = {}
     for r in reasons:
         for f in r:
             seen[f] = seen.get(f, 0) + 1
 
     verdicts = []
     for r in reasons:
-        label = labels.get(r, "{" + ", ".join(sorted(repr(a) for a in r)) + "}")
-        score = proof_score(r, base)
+        label = artifact.label(r)
+        score = artifact.score(r)
         private = tuple(sorted((f for f in r if seen[f] == 1), key=repr))
         if not private:
             verdicts.append(ReasonVerdict(
@@ -311,18 +372,15 @@ def certify(program: GroundProgram, base: dict, query: Atom, adapter, exact_dept
         # Every private fact, one at a time. Probing one of them and calling the reason answered
         # made coverage a function of the facts' names: two systems alike but for a field name got
         # different probes.
-        signal: list[tuple[Atom, float, float]] = []
-        silent: list[tuple[Atom, float]] = []
+        signal: list[tuple[Any, float, float]] = []
+        silent: list[tuple[Any, float]] = []
         for probe in private:
-            probed = dict(base)
-            probed[probe] = 0.0
-            exact_drop = exact_value - wmc(reasons, probed)
+            probed = artifact.without(probe)
+            exact_drop = exact_value - probed.exact_value()
             if exact_drop <= tol:
                 silent.append((probe, exact_drop))
                 continue
-            signal.append(
-                (probe, exact_drop,
-                 engine_value - float(adapter.infer(program, probed, [query])[query])))
+            signal.append((probe, exact_drop, engine_value - probed.engine_value()))
         coverage = (
             f" All {len(private)} private fact(s) of this reason were switched off, one at a time."
             if len(private) > 1
@@ -357,5 +415,7 @@ def certify(program: GroundProgram, base: dict, query: Atom, adapter, exact_dept
 
     verdicts = tuple(verdicts)
     return Certificate(
-        query, adapter.name, adapter.claimed_semantics, exact_depth, exact_value, engine_value,
-        tol, verdicts, _attribute(verdicts, engine_value - exact_value, tol))
+        artifact.query, artifact.engine_name, artifact.claimed_semantics, artifact.exact_depth,
+        exact_value, engine_value, tol, verdicts,
+        _attribute(verdicts, engine_value - exact_value, tol),
+        artifact.exact_inference, artifact.monotone)

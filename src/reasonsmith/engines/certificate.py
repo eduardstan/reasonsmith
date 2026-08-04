@@ -28,6 +28,23 @@ What a reader must not break:
     Why this matters: substituting the presence property for the adequacy property is exactly the
     defect this engine exists to remove. A duty about whether the stated reasons are *all* the
     reasons cannot be discharged by observing that some reason was stated.
+  - An artefact the deletion definition of a reason does not apply to is refused **before** it is
+    measured, and the refusal is NOT EVALUATED: never violated, never satisfied, and never handed
+    down to a weaker duty. Three states reach it — an artefact declaring its inference
+    non-monotone, one declaring nothing, and one declaring itself monotone that the probe then
+    contradicted — and `artifacts.deletion_semantics_refusal` words all three once.
+    Why this matters: the probe is one-directional, so on a non-monotone inference a lawfully
+    retracted reason is indistinguishable from a dropped one and this engine reports a compliant
+    creditor violated. Measuring anyway and disclosing the limit was the previous answer; the
+    declaration is what lets the refusal be structural. It is *not evaluated* rather than
+    *unattainable* because the gap is in this tool and not in the system: a creditor whose policy
+    exceptions retract reasons is behaving as designed, and "change the system" is the wrong
+    instruction to hand it (`docs/semantics.md` §4, the four outcomes).
+  - One refused artefact refuses the **run**, not just its own decision.
+    Why this matters: a verdict assembled from the decisions that happened to be monotone is a
+    verdict over a subset, and the rule below — a satisfaction needs complete evidence — already
+    refuses those. Reporting `violated` off the remainder would also leave the reader unable to see
+    that the trace held a decision this instrument cannot read at all.
   - The strength is PROBED and never PROVED. The certificate's reach is the decisions the system
     supplied and the deletion probes those decisions admitted, and `RequirementResult` refuses to
     construct the result without the budget that names both.
@@ -83,7 +100,12 @@ import ast
 from collections.abc import Mapping
 from typing import Any
 
-from reasonsmith.certificate import NON_MONOTONE_REMARK, Certificate, certify
+from reasonsmith.artifacts import (
+    MONOTONE_KEY,
+    InferenceArtifact,
+    deletion_semantics_refusal,
+)
+from reasonsmith.certificate import Certificate, certify, certify_artifact
 from reasonsmith.conformance import measured
 from reasonsmith.report import (
     CERTIFICATES_KEY,
@@ -110,13 +132,17 @@ __all__ = ["ARTIFACT_METHOD", "DELETED_REASON_COUNT", "SEED", "STRATEGY", "Certi
 DELETED_REASON_COUNT = "artifact_logs_deleted_reason_count"
 
 #: The optional SUT method, exactly parallel to the optional `decide(case)`: given one decision
-#: record, return the keyword arguments of `certificate.certify` for the inference that decision
-#: came from, or None for a decision this system cannot open up. See `sut.SystemUnderTest`.
+#: record, return the inference artefact that decision came from, or None for a decision this
+#: system cannot open up. See `sut.SystemUnderTest` and `artifacts.InferenceArtifact`.
 ARTIFACT_METHOD = "artifact"
 
-#: The keyword arguments `artifact()` may return, named in the refusal so an adapter author is
-#: told the shape rather than shown a TypeError from four frames down.
-ARTIFACT_KEYS = ("program", "base", "query", "adapter", "exact_depth", "tol", "labels")
+#: The keyword arguments `artifact()` may return for the one artefact family this package ships an
+#: adapter for — a nesyarena ground program — named in the refusal so an adapter author is told the
+#: shape rather than shown a TypeError from four frames down. A system of any other family returns
+#: an `artifacts.InferenceArtifact` instead, which is the whole of what a second family costs.
+ARTIFACT_KEYS = (
+    "program", "base", "query", "adapter", "exact_depth", "monotone", "tol", "labels",
+)
 
 #: What the search does, named on every result it produces.
 STRATEGY = (
@@ -154,6 +180,43 @@ def _result(
         details=dict(details or {}),
         binding=req.binding,
         scope=req.scope,
+    )
+
+
+def _refused(
+    req: Requirement,
+    index: int,
+    refusal: str,
+    declared: bool | None,
+    non_monotone: int = 0,
+) -> RequirementResult:
+    """Not evaluated, because the deletion definition of a reason does not apply to this artefact.
+
+    The whole run and not the decision: see the module docstring. The refusal names the decision it
+    was reached on so an adapter author can find the artefact, and carries the declaration and the
+    refuting count in `details` so a reader can tell a system that said no from one whose own
+    measurement said no for it.
+    """
+    return _result(
+        req,
+        Verdict.INCONCLUSIVE,
+        None,
+        (
+            f"Not evaluated: on decision #{index}, {refusal}. Nothing is claimed either way about "
+            "this decision or about any other in the trace, because a reason set measured under a "
+            "definition that does not hold of the inference is not evidence about the notice."
+        ),
+        details={
+            "engine": "certificate",
+            "reason": "deletion_semantics_do_not_apply",
+            "decision_index": index,
+            "declared_monotone": declared,
+            **(
+                {"reasons_whose_deletion_raised_the_engines_answer": non_monotone}
+                if non_monotone
+                else {}
+            ),
+        },
     )
 
 
@@ -249,20 +312,35 @@ class CertificateEngine:
             if supplied is None:
                 uncertifiable += 1
                 continue
-            if not isinstance(supplied, Mapping):
+            if not isinstance(supplied, (Mapping, InferenceArtifact)):
                 return _result(
                     req,
                     Verdict.INCONCLUSIVE,
                     None,
                     (
                         f"Not evaluated: {type(sut).__name__}.{ARTIFACT_METHOD}() returned "
-                        f"{type(supplied).__name__} for decision #{index}; it must return the "
-                        f"keyword arguments of certificate.certify ({', '.join(ARTIFACT_KEYS)}) "
-                        "or None for a decision it cannot open up."
+                        f"{type(supplied).__name__} for decision #{index}; it must return an "
+                        f"artifacts.InferenceArtifact, or the keyword arguments of "
+                        f"certificate.certify ({', '.join(ARTIFACT_KEYS)}) for a nesyarena ground "
+                        "program, or None for a decision it cannot open up."
                     ),
                 )
+            # Asked of the declaration before anything is measured: an artefact this definition of
+            # a reason does not apply to must not be probed and then explained away.
+            declared = (
+                supplied.get(MONOTONE_KEY)
+                if isinstance(supplied, Mapping)
+                else supplied.monotone
+            )
+            refusal = deletion_semantics_refusal(declared)
+            if refusal:
+                return _refused(req, index, refusal, declared)
             try:
-                cert = certify(**supplied)
+                cert = (
+                    certify(**supplied)
+                    if isinstance(supplied, Mapping)
+                    else certify_artifact(supplied)
+                )
             except Exception as exc:  # noqa: BLE001 — reported, never swallowed
                 return _result(
                     req,
@@ -274,6 +352,13 @@ class CertificateEngine:
                         f"arguments of certificate.certify ({', '.join(ARTIFACT_KEYS)})."
                     ),
                 )
+            # And asked again of the measurement: the declaration is a claim the system makes about
+            # itself, and a deletion that moved its answer *up* is the one thing that refutes it.
+            refusal = deletion_semantics_refusal(
+                declared, refuted_by_measurement=bool(cert.non_monotone)
+            )
+            if refusal:
+                return _refused(req, index, refusal, declared, len(cert.non_monotone))
             try:
                 env = _env(record, cert)
                 held = bool(eval_expression(node, env))
@@ -371,17 +456,11 @@ class CertificateEngine:
         # declined, it is a decision the enumeration never reached. Kept apart from `skipped`
         # because the not-evaluated branch below states it in its own words and still owes the
         # reader the decisions that exposed no artefact.
-        # Not a caveat about coverage but about the instrument: on a system whose reasons can be
-        # retracted, `deleted` reads a retraction as a drop. Said on the verdict rather than hidden
-        # in an inconclusive bucket, which would lose the only signal that detects the condition.
-        non_monotone = sum(len(cert.non_monotone) for _, cert, _ in certified)
-        if non_monotone:
-            details["reasons_whose_deletion_raised_the_engines_answer"] = non_monotone
-        drift = (
-            f" On {non_monotone} reason(s) {NON_MONOTONE_REMARK}"
-            if non_monotone
-            else ""
-        )
+        # The non-monotonicity fingerprint is not remarked on down here any more: an artefact whose
+        # probe found one had already declared itself monotone, and `_refused` returned above. The
+        # flag is not gone, it moved from a caveat on a verdict to the measurement that withdraws
+        # one — `certificate.ReasonVerdict.non_monotone` and `Certificate.non_monotone` are where
+        # it is still kept, and `deletion_semantics_refusal` is what reads it.
         unmeasured = (
             f" {unenumerated} decision(s) had no reason enumerated at all, so "
             f"{DELETED_REASON_COUNT} is unmeasured for them and this verdict covers them not at "
@@ -406,7 +485,7 @@ class CertificateEngine:
                     f"inference found {len(worst.verdicts)} reason(s) and the deletion probe "
                     f"showed the system's answer does not depend on {len(worst.deleted)} of them "
                     f"— {missing_reasons}. Attribution: {worst.attribution}"
-                    f"{caveat}{skipped}{unmeasured}{drift} Measured against the inference "
+                    f"{caveat}{skipped}{unmeasured} Measured against the inference "
                     "artefact the system exposed, not read from its decision log."
                 ),
                 details=details,
@@ -482,7 +561,7 @@ class CertificateEngine:
                 ": every reason exact bounded proof enumeration found is one the system's own "
                 "answer depends on, so no reason was shown deleted"
                 + (" on those." if untriggered else ".")
-                + f"{untouched}{caveat}{skipped}{drift} Holds on the decisions whose artefact was "
+                + f"{untouched}{caveat}{skipped} Holds on the decisions whose artefact was "
                 "exposed and within the probes the budget below names; nothing here extends the "
                 "claim to a decision the system did not open up."
             ),

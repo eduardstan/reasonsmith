@@ -384,6 +384,7 @@ class _CertifiedCredit:
             "query": APP_1042.query,
             "adapter": ReferenceAdapter(ExactWMC()),
             "exact_depth": 1,
+            "monotone": True,
             "labels": APP_1042.labels,
         }
 

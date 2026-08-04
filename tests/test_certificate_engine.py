@@ -92,11 +92,14 @@ class _CreditSystem:
         return self._oracle(decision)
 
 
-def _artifact_of(adapter):
+def _artifact_of(adapter, monotone: bool | None = True):
     """The artefact behind `APP-1042`, at the depth the record itself asks for.
 
     A record carrying `shallow` gets `exact_depth=0`, which enumerates no reason at all — the one
-    number the reproduction of the false-satisfied defect moves.
+    number the reproduction of the false-satisfied defect moves. `monotone` is declared True by
+    default because every adapter these tests hand it — exact WMC, top-k truncation — discards
+    proofs and never withdraws a reason, and an artefact that declares nothing is refused
+    (`tests/test_artifact_protocol.py`).
     """
     def supply(decision: dict[str, Any]):
         if decision.get("decision_id") != APP_1042.case_id:
@@ -107,6 +110,7 @@ def _artifact_of(adapter):
             "query": APP_1042.query,
             "adapter": adapter,
             "exact_depth": 0 if decision.get("shallow") else 1,
+            "monotone": monotone,
             "labels": APP_1042.labels,
         }
 
@@ -361,7 +365,10 @@ def test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated():
     assert result.strength is None
     assert "certificate.certify" in result.evidence_summary
 
-    result = evaluate_requirement(_duty(), _CreditSystem(oracle=lambda _d: {"program": None}))
+    # Declared, so the refusal this asserts on is the one about the *shape*: the declaration gate
+    # runs before anything is measured, and an artefact that declares nothing is refused there.
+    result = evaluate_requirement(
+        _duty(), _CreditSystem(oracle=lambda _d: {"program": None, "monotone": True}))
     assert result.strength is None
     assert "raised" in result.evidence_summary
 

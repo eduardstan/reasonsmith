@@ -7,15 +7,29 @@ What this module is for:
   rule engines, and log traces.
 
 What a reader must not break:
-  - `artifact(decision)` is the second optional hook, and it returns the *inputs* to
-    `certificate.certify` — `program`, `base`, `query`, `adapter`, `exact_depth`, and optionally
-    `tol` and `labels` — never a verdict. A decision this system cannot open up returns None.
+  - `artifact(decision)` is the second optional hook, and it returns an
+    `artifacts.InferenceArtifact` — or, for the one family this package ships an adapter for, the
+    *inputs* to `certificate.certify`: `program`, `base`, `query`, `adapter`, `exact_depth`,
+    `monotone`, and optionally `tol` and `labels` — never a verdict. A decision this system cannot
+    open up returns None.
     Why this matters: an adapter that returned its own certificate, or a `reasons_are_complete`
     flag, would be a system grading its own homework, and `docs/semantics.md` §3 refuses exactly
     that. reasonsmith runs the enumeration and the deletion probes itself, over the artefact, so
     the number in the verdict is measured rather than declared. It stays outside the protocol for
     the reason `decide` does: a system that cannot expose its inference artefact is a lawful
     system, reported unattainable on a reason-adequacy duty rather than broken.
+  - The artefact declares whether its inference is **monotone in its facts**, and that declaration
+    is required: an artefact declaring nothing, declaring `False`, or declaring `True` where the
+    probe measured a deletion that raised the system's answer is reported *not evaluated* rather
+    than measured (`artifacts.deletion_semantics_refusal`, `docs/semantics.md` §3, *The inference
+    artefact*).
+    Why this matters: the deletion probe defines a reason as one the answer would not have been
+    reached without, and measures it by switching facts off. On an inference a fact can *retract* a
+    reason from, a lawfully withdrawn reason is indistinguishable from a dropped one, and this is
+    the one place a self-declaration is the difference between a false accusation and a refusal.
+    It is not read as a promise: it can be refuted by the measurement and never confirmed by it,
+    and the standing answer for every other self-declaration here (`docs/semantics.md` §3, *The
+    assumption all seven share*) governs it otherwise.
   - BaseSUT requires explicit capability declarations; an adapter that instead derives them from a
     trace must say so by setting the plain instance attribute `capability_basis = "trace"`. It is
     not part of the protocol above: `report._unattainable_result` reads it with
@@ -243,6 +257,8 @@ class SystemUnderTest(Protocol):
     outside this protocol because both are optional: ``decide`` is used for active probing only
     when no exposed ``logic()`` is available, and ``artifact`` only by a reason-adequacy duty,
     which reports a system exposing none unattainable rather than judging it on something weaker.
+    What ``artifact`` returns is `artifacts.InferenceArtifact`, whose own contract is the one this
+    module's docstring states.
     """
 
     def capabilities(self) -> set[str]:

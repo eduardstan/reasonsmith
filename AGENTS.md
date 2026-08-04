@@ -41,16 +41,33 @@ Release Note", records how that was verified; the repo publishes no tag).
 
 The reason-deletion probe is **one-directional** — it switches a fact off, never on — so `deleted`
 means *the answer did not depend on this reason under this interpretation*, and on an engine that is
-not monotone in its inputs a lawfully retracted reason is reported deleted exactly as a dropped one
-is, driving `violated` against a compliant system. The limit is disclosed, not repaired
-(`certificate.LIMITS`, `docs/semantics.md` §3, the `docs/refinement.md` row). Three things must not
-be undone: the sign of `engine_drop` is kept, so a deletion that raises the engine's answer is
-flagged `non_monotone` on the verdict, the certificate and the engine's summary — that flag is the
-only fingerprint the condition leaves; a defeated reason is still counted `deleted` and must never
-be moved into the `unseparable`/inconclusive bucket, which would lose the flag; and **every**
-private fact of a reason is switched off, not the first in `repr` order, because coverage decided by
-a field's name gave two otherwise identical systems different probes. The budget therefore counts
-facts switched off, not reasons.
+not monotone in its inputs a lawfully retracted reason is indistinguishable from a dropped one. That
+premise is now **declared rather than assumed**. `artifacts/` is reasonsmith's own abstraction of an
+inference artefact — what a reason-bearing artefact is, what it must expose for the probe to measure
+reasons from it, and whether its inference is monotone — and `artifacts/ground_program.py` is one
+adapter over a nesyarena `GroundProgram`, which is why neither `artifacts/__init__.py` nor
+`certificate.py` imports nesyarena any more. A second family (knowledge graph, reason trace,
+extracted rule set, decision tree) is an adapter and not a branch in the core; none is implemented,
+and one whose reasons are *extracted* rather than enumerated exactly cannot take this rung until the
+strength lattice can say so — that is a captain decision, stated in `docs/semantics.md` §3 rather
+than slipped in. `engines/certificate.py` asks the declaration before it certifies and again of the
+measurement afterwards, and reports **not evaluated** — never violated, never satisfied, never
+downgraded to the presence check sharing the clause — for an artefact declaring non-monotone,
+declaring nothing, or declaring monotone where a deletion raised the system's answer. One refused
+artefact refuses the run. It is *not evaluated* and deliberately not *unattainable*: the gap is in
+this tool, and telling a creditor to stop having lawful policy exceptions is the wrong instruction.
+Four things must not be undone: the declaration is **required**, not defaulted to True, for the
+reason `engines/counterfactual.py` refuses undeclared `computes` — a defeasible artefact and a
+monotone one produce the same probe and the same count; the sign of `engine_drop` is kept, so a
+deletion that raises the engine's answer is flagged `non_monotone` on the verdict and the
+certificate, and that flag is now what *refutes* a false declaration rather than decorating a
+verdict — it can refute and never confirm, since a defeater holding no fact of any enumerated reason
+is never switched off at all; a defeated reason is still counted `deleted` wherever a certificate is
+produced and must never be moved into the `unseparable`/inconclusive bucket, which would lose the
+flag; and **every** private fact of a reason is switched off, not the first in `repr` order, because
+coverage decided by a field's name gave two otherwise identical systems different probes. The budget
+therefore counts facts switched off, not reasons. `tests/test_artifact_protocol.py` holds all of it
+and `docs/semantics.md` §3 (*The inference artefact*) is the contract.
 
 In v0.2 the first rule becomes structural. A verdict carries the strength of the evidence behind it
 (`verdict.py`), and `RequirementResult.__post_init__` refuses to construct a result that claims more

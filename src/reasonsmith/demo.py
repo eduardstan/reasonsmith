@@ -1165,6 +1165,12 @@ class TruncatingCreditSystem:
                     "query": case.query,
                     "adapter": DEPLOYED_ENGINE,
                     "exact_depth": 1,
+                    # Top-k proof truncation discards proofs; it never withdraws a reason on the
+                    # strength of a fact arriving, so adding a fact cannot lower this engine's
+                    # answer. Declared rather than inferred: `artifacts.InferenceArtifact`
+                    # refuses an artefact that says nothing, because a defeasible engine and this
+                    # one produce the same probe and the same count.
+                    "monotone": True,
                     "labels": case.labels,
                 }
         return None

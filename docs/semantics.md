@@ -57,9 +57,12 @@ be unreachable.
 **System under test** — `sut.py`, `SystemUnderTest`. A protocol with three methods —
 `capabilities()`, `decisions()`, `logic()` — and two optional methods deliberately outside it,
 because neither capability is one a system must have: `decide(case)` for replay, and
-`artifact(decision)` returning the *inputs* to `certificate.certify` for the inference a decision
-came from — never a verdict, which would be the system grading its own homework (§3,
-*certificate*). Four plain instance attributes outside that
+`artifact(decision)` returning the inference a decision came from as an
+`artifacts.InferenceArtifact` — or as the keyword arguments of `certificate.certify` for the one
+family this package ships an adapter for — never a verdict, which would be the system grading its
+own homework (§3, *certificate*). That artefact declares whether its inference is monotone, and an
+artefact that declares nothing, declares no, or is contradicted by the probe is not measured at all
+(§3, *The inference artefact*). Four plain instance attributes outside that
 protocol are also semantic inputs. `evaluate_requirement` and `check_conformance` in `report.py`
 select `system_scope`, falling back to `declared_scope`, to decide applicability
 (`test_declared_scope_attribute_is_the_applicability_fallback`,
@@ -670,21 +673,14 @@ a fact. So `deleted` means *the engine's answer did not depend on this reason un
 interpretation*, and on an engine that is not monotone in its inputs — a policy exception evaluated
 after the underwriting rules fire, the ordinary shape of one — a reason the engine lawfully
 *withdrew* is reported deleted exactly as a reason it dropped by defect is. That is a false
-accusation against a system whose notice stated its reasons correctly, and this rung can drive a
-`violated` verdict on it. The limit is written on the instrument (`certificate.LIMITS`,
-`test_the_certificate_limits_state_the_probe_is_one_directional`) rather than repaired, because
-repairing it needs an inference artefact that can say whether its inference is monotone, and
-nothing here can ask. Two things follow, and both are deliberate. **The retracted reason is still
-counted deleted** — it was probed cleanly and the measurement is right about the question it asked;
-the question is what is wrong, and moving it into an inconclusive bucket would lose the signal
-below. **The one fingerprint such an engine leaves is kept:** a deletion that moves the engine's
-answer *up*. The sign of `engine_drop` is not taken in absolute value, a reason it happens on is
-reported `non_monotone` on the verdict, on the certificate and in the result's own summary and
-`details`, and the reader is told in as many words that every deleted reason beside it may be a
-retraction (`test_a_retracted_reason_is_reported_deleted_and_the_engine_is_flagged_non_monotone`).
-It is a remark and not a verdict: the flag is evidence about the *engine*, and its absence is not
-evidence that the engine is monotone, since a retraction whose fact no reason of the enumeration
-holds is never switched off at all.
+accusation against a system whose notice stated its reasons correctly, and this rung once drove a
+`violated` verdict on it. **So the artefact declares whether its inference is monotone, and where
+the definition does not apply the reasons are not measured at all.** That is the contract of the
+next section, and it is what turned a disclosed limit into a refusal. **The retracted reason is
+still counted deleted** wherever a certificate is produced at all — it was probed cleanly and the
+measurement is right about the question it asked; the question is what is wrong, and moving it into
+an inconclusive bucket would lose the signal that catches a false declaration
+(`test_a_retracted_reason_is_reported_deleted_and_the_engine_is_flagged_non_monotone`).
 
 *The reach of the probe, exactly.* **Every** fact of a reason that no other reason uses is switched
 off, one at a time, and one whose deletion moves the engine settles the reason live. The budget
@@ -724,13 +720,79 @@ differs.
 
 Reported not evaluated, never satisfied: an empty trace, and a trace no decision of which the
 system could open up (`test_a_trace_with_no_artifact_is_not_evaluated_never_satisfied`); an
-`artifact()` that raises, returns something that is not a mapping, or returns arguments `certify`
+`artifact()` that raises, returns something that is neither an `artifacts.InferenceArtifact` nor a
+mapping, or returns arguments `certify`
 refuses (`test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`); a property
 that never reads the one signal this engine measures
 (`test_the_engine_refuses_a_property_it_cannot_ground`); and a property this engine cannot decide
 on a certified decision — a construct it does not interpret, or a second signal the record does not
 carry — where the measurement was made and the verdict is still withheld
 (`test_a_property_that_cannot_be_decided_on_a_record_is_not_evaluated`).
+
+### The inference artefact, and the one premise it declares — `artifacts/`
+
+`artifacts.InferenceArtifact` is this package's own answer to *what a reason can be measured from*:
+what a reason-bearing artefact is, what it must expose for the deletion probe to measure reasons
+from it, and whether its inference is **monotone in its facts**. A nesyarena ground program is one
+family satisfying it (`artifacts/ground_program.py`), and it is the only one shipped; neither
+`artifacts/__init__.py` nor `certificate.py` imports a representation, which is what makes a second
+family — a knowledge graph, a reason trace, an extracted rule set, a decision tree — an adapter
+rather than a second branch in the core
+(`test_the_ground_program_family_is_one_adapter_and_the_protocol_names_no_representation`,
+`test_the_protocol_is_satisfiable_without_a_ground_program`). None of those is implemented here.
+
+**Three states, and only the first is measured.** `engines/certificate.py` asks the declaration
+before it certifies anything, and asks it again of the measurement afterwards; every refusal is
+*not evaluated*, naming the reason, and none is ever `violated`, `satisfied`, or handed down to the
+presence check that shares the clause.
+
+| The artefact says | What happens |
+|---|---|
+| `monotone = True`, and no probe contradicts it | Measured, exactly as before (`test_a_declared_monotone_system_reaches_the_verdict_it_always_did`) |
+| `monotone = False` | Not evaluated, naming defeat: a reason this system withdrew is not a reason its notice owed (`test_an_artefact_declaring_non_monotone_inference_is_not_evaluated_and_names_why`) |
+| nothing at all | Not evaluated, naming the missing declaration (`test_an_artefact_that_declares_nothing_is_not_evaluated_rather_than_assumed_monotone`) |
+| `monotone = True`, and a deletion moved the engine's answer *up* | Not evaluated, naming the measurement that refuted it (`test_a_declaration_the_probe_contradicts_is_refused_rather_than_trusted`) |
+
+**What the declaration is worth, and what it is not.** It is a claim the system makes about itself,
+of exactly the kind `capabilities()` and `logic()` already are, and *The assumption all seven share*
+below is the standing answer for all of them: reasonsmith checks what a system says against what a
+specification asks, and does not check whether the system was honest. One direction of check is new.
+The declaration can be **refuted** by the measurement and never confirmed by it — a deletion that
+moves the answer up is a fingerprint only a non-monotone inference leaves, so `monotone = True`
+beside one is a declaration the run itself contradicts. Its *absence* proves nothing: a defeater
+holding no fact of any enumerated reason is never switched off at all, which is the ordinary shape
+of a policy exception, and both halves of that are measured
+(`test_the_absence_of_the_fingerprint_is_not_evidence_of_monotonicity`). That is why the flag is
+kept and why it is not enough on its own — the precedent is `counterfactual` below, which consults
+`computes` and then cross-checks the encoding for the route the declaration cannot see.
+
+**Undeclared is refused rather than read as monotone**, for the same reason that engine reports a
+system declaring no directions *not evaluated*: a defeasible artefact and a monotone one produce the
+same probe and the same count, so answering either would be answering both. Reading silence as
+monotone would leave the declaration worth nothing for every system built before it existed, which
+is every system this finding is about.
+
+**Refusing is *not evaluated* and deliberately not *unattainable*.** §4's table is what decides it:
+`unattainable` instructs a reader to change the system, and a creditor whose policy exceptions
+retract reasons is behaving as designed and lawfully. The gap is in this tool — it has one
+definition of a reason and that definition assumes monotonicity — so the honest category is the one
+that says *fix the evidence or the specification*. A representation that can express defeat, and a
+definition of a reason that survives it, is the work this refusal is standing in front of and is not
+in this tree.
+
+**One refused artefact refuses the run.** A verdict assembled from the decisions that happened to be
+monotone is a verdict over a subset, which the completeness rule above already refuses for
+`satisfied`; reporting `violated` off the remainder would also hide from the reader that the trace
+held a decision this instrument cannot read
+(`test_the_refusal_survives_a_whole_conformance_run_and_reaches_no_weaker_duty`).
+
+**A family whose reasons are extracted rather than enumerated exactly does not belong on this rung,
+and this protocol does not yet say so in code.** An LLM reason trace is not a proof object: a
+certificate over one claims strictly less than a certificate over a ground program and must not
+report at the same strength. The lattice cannot express that difference — `probed` records *how* a
+conclusion was reached and not *what it was reached about* (§4) — so admitting such a family needs a
+decision about the lattice before it needs an adapter. Stated here rather than guarded, because
+nothing in this tree can check a family's claim that its enumeration is exact.
 
 ### `proved` — `engines/proved.py`
 
@@ -1580,6 +1642,9 @@ Two consequences of that report text, followed by a separate package-level termi
 | No artefact, a broken artefact, or a property the engine cannot ground ⇒ not evaluated | `test_a_trace_with_no_artifact_is_not_evaluated_never_satisfied`, `test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`, `test_the_engine_refuses_a_property_it_cannot_ground` |
 | A reason-deletion certificate detects a dropped reason and excludes compliance certification beyond its measured input | `test_a_perturbed_engine_that_drops_a_reason_fails`, `test_certificate_limits_exclude_compliance_certification`, `test_certificate_carries_its_limits` |
 | The deletion probe is one-directional, says so on the instrument, and flags the engine where a deletion moved its answer up rather than counting a retraction silently | `test_the_certificate_limits_state_the_probe_is_one_directional`, `test_a_retracted_reason_is_reported_deleted_and_the_engine_is_flagged_non_monotone` |
+| The inference artefact is reasonsmith's own abstraction, and a ground program is one adapter satisfying it | `test_the_ground_program_family_is_one_adapter_and_the_protocol_names_no_representation`, `test_the_protocol_is_satisfiable_without_a_ground_program`, `test_switching_a_fact_off_does_not_re_enumerate_the_reasons` |
+| An artefact the deletion definition of a reason does not apply to is not evaluated — declared non-monotone, declaring nothing, or contradicted by the probe — and never violated or satisfied | `test_an_artefact_declaring_non_monotone_inference_is_not_evaluated_and_names_why`, `test_an_artefact_that_declares_nothing_is_not_evaluated_rather_than_assumed_monotone`, `test_a_declaration_the_probe_contradicts_is_refused_rather_than_trusted`, `test_the_refusal_survives_a_whole_conformance_run_and_reaches_no_weaker_duty`, `test_a_certificate_over_a_non_monotone_artefact_carries_no_verdict` |
+| The declaration can be refuted by the measurement and never confirmed by it, and a monotone system's verdict is unchanged | `test_the_absence_of_the_fingerprint_is_not_evidence_of_monotonicity`, `test_a_declared_monotone_system_reaches_the_verdict_it_always_did`, `test_a_declared_monotone_certificate_still_reports_pass_or_fail` |
 | Every private fact of a reason is switched off, so coverage does not depend on what a system's fields are called | `test_every_private_fact_of_a_reason_is_switched_off` |
 | A report carries no narrative it did not measure | `test_report_for_an_arbitrary_system_carries_no_narrative_it_did_not_measure` |
 | One run renders as five audience artefacts, and no two audiences disagree about a verdict | `test_the_five_audiences_all_render`, `test_no_audience_sees_a_different_verdict_from_another` |
