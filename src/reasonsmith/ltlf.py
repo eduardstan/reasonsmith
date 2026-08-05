@@ -125,9 +125,10 @@ NON_EMPTY = "F(true)"
 #: pack-shaped question measured on this tree costs about 2 s at four atoms, 9 s at five and more
 #: than 90 s at six. There is no wall clock anywhere in this package — the same limit
 #: `docs/authoring-engines.md` states for a plug-in — so the count is checked before the automaton
-#: is built rather than after the run has hung. Every shipped temporal duty is three or four atoms;
-#: every *pair* of them is seven, which is why the pack's entailment questions are reported refused
-#: rather than answered. (`test_a_question_over_the_atom_budget_is_refused_by_name`)
+#: is built rather than after the run has hung. Every shipped temporal duty carries at most
+#: four atoms, and one is a single comparison; every *pair* of them is seven, which is why the
+#: pack's entailment questions are reported refused rather than answered.
+#: (`test_a_question_over_the_atom_budget_is_refused_by_name`)
 ATOM_BUDGET = 5
 
 #: The rulelang operators `flloat` has, and their LTLf spelling.

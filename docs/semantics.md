@@ -126,11 +126,13 @@ which the trace-rung implementation and the definition disagree (`docs/language.
 section says what the language *is* for a reader of a verdict; go there for what a formula *means*.
 
 There is **one** property language, in `rulelang.py`, and `formalism` names which fragment of it a
-requirement's `spec` belongs to. The four fragments are decided by the shape of the formula, not by
-the word a pack author typed: `classify_fragment` returns `counterfactual` when the formula is the
-one relational atom, `temporal` when it uses a temporal operator, `record` when it is a conjunction
-of `present(signal)` atoms and nothing else, and `logical` for every other well-formed property of a
-single decision record. `counterfactual` is asked first and is exclusive — the atom is the whole of
+requirement's `spec` belongs to. The six fragments are decided by the shape of the formula, not by
+the word a pack author typed, and the order is `docs/language.md` §1.6's (the definition, not an
+optimisation): `classify_fragment` returns `counterfactual` when the formula is the one relational
+atom, `undetermined` when an `undetermined()` atom occurs, `graded` when a `degree()` atom occurs,
+`temporal` when it uses a temporal operator, `record` when it is a conjunction of `present(signal)`
+atoms and nothing else, and `logical` for every other well-formed property of a single decision
+record. `counterfactual` is asked first and is exclusive — the atom is the whole of
 a spec or no part of one — because that fragment is the one thing on this page that no engine
 reading a decision log may be handed, and classifying it into `logical` would hand it to one
 (§3, *counterfactual*). The loader demands
@@ -1502,8 +1504,9 @@ verdicts propagates the worst case, with an empty collection giving `inconclusiv
 vacuous `satisfied` (`test_verdict_combination`, `test_combining_no_verdicts_is_not_satisfied`).
 
 **And it is only one of the two coordinates.** A chain ranks how far a claim was pushed and cannot
-say what the claim was *about*; three shipped situations are about something other than the system's
-own executions, and §10 is the dimension that carries it. The lattice itself did not move — no
+say what the claim was *about*; two shipped situations are about something other than the system's
+own executions (a graded duty would be a third, and none ships), and §10 is the dimension that
+carries it. The lattice itself did not move — no
 member, no re-ranking — and a basis is deliberately not comparable to a rung.
 
 ### Four outcomes that must never collapse
@@ -2033,7 +2036,8 @@ passes forever.
   9 s at five atoms and more than 90 s at six. There is no wall clock anywhere in this package — the
   same limit `docs/authoring-engines.md` states for a plug-in — so `ltlf.ATOM_BUDGET` is checked
   before the automaton is built (`test_a_question_over_the_atom_budget_is_refused_by_name`). Every
-  shipped temporal duty is three or four atoms and is decided; every *pair* of them is seven, so the
+  shipped temporal duty carries at most four atoms and is decided (the smallest is a single
+  comparison); every *pair* of them is seven, so the
   pack's temporal entailment questions are all reported **not decided either way**, which is a
   different fact from "no temporal duty entails another" and never renders as it
   (`test_a_pair_the_procedure_refuses_never_renders_as_a_pair_it_cleared`).
@@ -2345,20 +2349,24 @@ settle.
 
 ## 10. The evidence basis: what the claim is about, beside how far it was pushed
 
-§4's lattice is a **chain**, and a chain ranks one thing along one axis. Three shipped situations
+§4's lattice is a **chain**, and a chain ranks one thing along one axis. Two shipped situations
 are not on that axis at all, and each of them was, before this section, a sentence in a module
 docstring that no result, no count and no rendering carried:
 
 - a **counterfactual** duty is a property of a *pair* of executions, so `_engine_ladder` gives it
   two rungs and no trace rung beneath them;
 - the **certificate** duty is measured against the inference artefact behind a decision, so its
-  ladder reaches neither the trace rung beneath it nor the proof rung above it;
-- a **graded** duty (§9) is `inconclusive` at `strength=None`, which made it indistinguishable in
-  the counts and in the headline from a duty an engine merely failed to settle.
+  ladder reaches neither the trace rung beneath it nor the proof rung above it.
+
+A **graded** duty (§9) would be a third, and none ships: at `inconclusive` and `strength=None` it
+is indistinguishable in the counts and in the headline from a duty an engine merely failed to
+settle, which is why the `assessment` basis that would carry it exists even though no shipped duty
+uses one.
 
 The answer is a second coordinate and **not** four more members of the lattice.
 `verdict.EvidenceBasis` says what a duty's evidence is *about*; `Strength` says how far a claim
-about it was pushed. The lattice did not move for any of the three: no member was added for them,
+about it was pushed. The lattice did not move for the two shipped ones — no member was added for
+them,
 no member was re-ranked, and `test_semantics_doc_states_the_lattice_the_code_defines` generates §4's
 sentence from `Strength` itself. It has moved **once** since, and the distinction this section draws
 is what decided that it should: `recounted` is evidence about the *same* object as `artifact` —

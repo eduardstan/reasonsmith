@@ -18,8 +18,8 @@ What this module is for:
     was current.
   - The counts the README and ROADMAP state for what this tree ships — the README's pack and
     engine counts, ROADMAP's "Current state, for scale" line, and the same claims where the
-    prose restates them spelled out ("Five packs", "Seven engines", "twenty-eight shipped
-    requirements", `docs/what-this-does-not-do.md`'s "Five packs ship, with 28 requirements
+    prose restates them spelled out ("Five packs", "Seven engines", "twenty-nine shipped
+    requirements", `docs/what-this-does-not-do.md`'s "Five packs ship, with 29 requirements
     between them") — are held to what the package actually ships. A count in prose rots
     silently: the README once claimed "four packs" and "four engines" while five and seven
     shipped, and ROADMAP's scale line went stale twice in one day before anyone noticed. The
@@ -54,6 +54,7 @@ import tomllib
 from pathlib import Path
 from typing import NamedTuple
 
+from reasonsmith import rulelang
 from reasonsmith.plugins import BUILTIN_ENGINE_NAMES
 from reasonsmith.spec import list_packs, load_pack
 
@@ -186,6 +187,37 @@ _SHIPPED_INVENTORY = re.compile(
     re.IGNORECASE,
 )
 
+#: A shipped-set requirement total as `docs/refinement.md` and `docs/semantics.md` write it:
+#: "the 29 shipped requirements", "over all twenty-nine shipped requirements", and — in
+#: refinement.md, whose count prose counts the set as duties — "the twenty-nine shipped duties".
+#: The number is captured whatever it is and compared to the derived total, so a drift like the
+#: "twenty-eight shipped duties" both documents once wrote is caught as the sentence writes it.
+#: `\s+` spans a line wrap, because refinement.md breaks "29 shipped" from "requirements".
+_SHIPPED_TOTAL = re.compile(
+    rf"\b(?:all\s+)?(?P<number>{_CARDINAL_ALT}|\d+)\s+shipped\s+(?:requirements|duties)\b",
+    re.IGNORECASE,
+)
+#: `docs/semantics.md` also says "Two shipped duties are not on the behavioural basis" — a
+#: specific census, not the shipped set — so semantics.md's requirement total is matched on the
+#: "requirements" spelling only.
+_SHIPPED_REQUIREMENTS = re.compile(
+    rf"\b(?:all\s+)?(?P<number>{_CARDINAL_ALT}|\d+)\s+shipped\s+requirements\b",
+    re.IGNORECASE,
+)
+#: The two sentence halves in `docs/refinement.md` that state how many shipped duties carry a
+#: decision domain: "(`domains`, used by eight)" and "eight duties in all". Neither is a plain
+#: "N domains" phrase, so each shape is matched where the document writes it.
+_USED_BY_PAREN = re.compile(
+    rf"used by (?P<number>{_CARDINAL_ALT}|\d+)\)", re.IGNORECASE
+)
+_DUTIES_IN_ALL = re.compile(
+    rf"(?P<number>{_CARDINAL_ALT}|\d+) duties in all", re.IGNORECASE
+)
+#: A fragment-vocabulary size claim: "The six fragments are decided…" in `docs/semantics.md` §2.
+_FRAGMENT_COUNT = re.compile(
+    rf"\b(?P<number>{_CARDINAL_ALT}|\d+) fragments\b", re.IGNORECASE
+)
+
 
 class _Claim(NamedTuple):
     line: int
@@ -244,6 +276,19 @@ def _shipped_counts() -> dict[str, tuple[int, str]]:
     }
 
 
+def _shipped_census() -> dict[str, int]:
+    """The shipped-set totals `docs/refinement.md` and `docs/semantics.md` state in prose,
+    re-derived at test time and never restated here: the requirement total (from the packs),
+    the total of requirements carrying a decision domain (from the packs), and the size of the
+    fragment vocabulary (from `rulelang.FRAGMENTS`)."""
+    reqs = [r for p in _shipped_pack_names() for r in load_pack(p).requirements]
+    return {
+        "requirements": len(reqs),
+        "domains": sum(1 for r in reqs if r.domains),
+        "fragments": len(rulelang.FRAGMENTS),
+    }
+
+
 def _count_offenders(
     path: Path,
     expected: dict[str, tuple[int, str]],
@@ -279,6 +324,37 @@ def _count_offenders(
                 f"{path.relative_to(REPO_ROOT)}:{claim.line} claims {claim.as_written!r} — that "
                 f"is {claim.number} {claim.noun}, but the tree ships {count}: {names}"
             )
+    return offenders
+
+
+def _doc_total_offenders(
+    path: Path, totals: dict[str, list[re.Pattern]], expected: dict[str, int]
+) -> list[str]:
+    """One message per prose claim in `path` that states a shipped-set total and disagrees with
+    the derived count, plus one if a total this guard knows is never stated at all. Each total is
+    matched by the phrase shapes the document actually writes (the numbers as written, digits or
+    words), so a claim is held to the tree the way the sentence prints it."""
+    text = path.read_text(encoding="utf-8")
+    offenders: list[str] = []
+    for label, patterns in totals.items():
+        matches = [
+            (text.count("\n", 0, m.start()) + 1, _claim_number(m.group("number")), m.group(0))
+            for pattern in patterns
+            for m in pattern.finditer(text)
+        ]
+        if not matches:
+            offenders.append(
+                f"{path.relative_to(REPO_ROOT)} states no {label} count for the shipped tree — "
+                f"restore the sentence stating {expected[label]} {label}: the counts are derived "
+                "from the packs and rulelang.FRAGMENTS at test time, never restated."
+            )
+            continue
+        for line, number, as_written in matches:
+            if number != expected[label]:
+                offenders.append(
+                    f"{path.relative_to(REPO_ROOT)}:{line} claims {as_written!r} — that is "
+                    f"{number} {label}, but the tree ships {expected[label]}"
+                )
     return offenders
 
 
@@ -336,7 +412,7 @@ def test_roadmap_scale_line_matches_the_shipped_tree():
 
 
 def test_readme_shipped_requirement_count_matches_the_packs():
-    """README's one shipped-requirement claim — "twenty-eight shipped requirements" — is held to
+    """README's one shipped-requirement claim — "twenty-nine shipped requirements" — is held to
     the total across the packs. The rest of README's requirement counts ("5 requirements",
     "6 requirements") are per-run transcript numbers, not claims about the shipped tree, and are
     deliberately not pinned here."""
@@ -351,7 +427,7 @@ def test_readme_shipped_requirement_count_matches_the_packs():
 
 
 def test_what_this_does_not_do_inventory_matches_the_shipped_packs():
-    """`docs/what-this-does-not-do.md`'s inventory sentence — "Five packs ship, with 28
+    """`docs/what-this-does-not-do.md`'s inventory sentence — "Five packs ship, with 29
     requirements between them" — restates the same shipped counts as the README and ROADMAP and
     is held to the same derived numbers. The document's other "N packs" mentions ("three packs")
     describe the nesyarena runs, which genuinely use three packs, so only the inventory sentence
@@ -379,6 +455,45 @@ def test_what_this_does_not_do_inventory_matches_the_shipped_packs():
     assert not offenders, (
         "docs/what-this-does-not-do.md states a count that disagrees with what ships — the "
         "inventory is derived from the packs at test time, never restated:\n"
+        + "\n".join(offenders)
+    )
+
+
+def test_refinement_doc_shipped_totals_match_the_tree():
+    """`docs/refinement.md` states the size of the shipped set in prose before and after its
+    census tables — "the 29 shipped requirements", "twenty-one of the twenty-nine shipped
+    duties", "used by eight" decision domains, "eight duties in all" — and those early
+    sentences went stale when a duty landed while the tables were re-counted. The requirement
+    total and the domain total are held to the packs at test time, and the phrase is matched as
+    it is written. The census tables are already held by their own test; this is the prose that
+    rotted and the suite that never noticed."""
+    expected = _shipped_census()
+    totals = {
+        "requirements": [_SHIPPED_TOTAL],
+        "domains": [_USED_BY_PAREN, _DUTIES_IN_ALL],
+    }
+    offenders = _doc_total_offenders(REPO_ROOT / "docs" / "refinement.md", totals, expected)
+    assert not offenders, (
+        "docs/refinement.md states a shipped-set total that disagrees with what ships — the "
+        "counts are derived from the packs and rulelang.FRAGMENTS at test time, never restated:\n"
+        + "\n".join(offenders)
+    )
+
+
+def test_semantics_doc_shipped_totals_match_the_tree():
+    """`docs/semantics.md` states the shipped-set totals — "twenty-nine shipped requirements"
+    in §9's census, "The six fragments are decided" in §2 — that drifted out of agreement with
+    the tree and with each other when the fragment vocabulary and the duty set grew. Both are
+    held to the packs and to `rulelang.FRAGMENTS` at test time."""
+    expected = _shipped_census()
+    totals = {
+        "requirements": [_SHIPPED_REQUIREMENTS],
+        "fragments": [_FRAGMENT_COUNT],
+    }
+    offenders = _doc_total_offenders(REPO_ROOT / "docs" / "semantics.md", totals, expected)
+    assert not offenders, (
+        "docs/semantics.md states a shipped-set total that disagrees with what ships — the "
+        "counts are derived from the packs and rulelang.FRAGMENTS at test time, never restated:\n"
         + "\n".join(offenders)
     )
 

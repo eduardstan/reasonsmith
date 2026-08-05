@@ -106,7 +106,9 @@ In v0.2 the first rule becomes structural. A verdict carries the strength of the
 than it has — including `strength=None` for "no engine here evaluated this", which is deliberately
 not a strength on the lattice. Three consequences worth knowing before editing `report.py`: combining
 zero verdicts is `inconclusive`, never vacuously `satisfied`; `SUPPORTED_FORMALISMS` is the list
-of formalisms an engine actually exists for — widen it when the engine lands, not before; and a
+of formalisms this build can actually evaluate — every member either has an engine or is
+deliberately refused without one (`undetermined` and `graded`), so widening it means adding an
+engine or an explicit no-engine dispatch, never a name this build cannot act on; and a
 `probed` result cannot be constructed without the search budget that produced it
 (`PROBE_BUDGET_KEY` / `PROBE_BUDGET_FIELDS`), so the bound travels with the verdict into every
 rendering instead of being a rendering convention.

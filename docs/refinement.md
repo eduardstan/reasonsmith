@@ -3,7 +3,7 @@
 Every requirement in this repository was written by someone reading a clause of law and deciding
 what formula stands for it. That step — refinement — is where the legal meaning is either preserved
 or quietly lost, and it is the step no pack file records. `docs/authoring-packs.md` documents the
-*fields* of a requirement. This document is the record of the *judgement*: for each of the 28 shipped
+*fields* of a requirement. This document is the record of the *judgement*: for each of the 29 shipped
 requirements, the clause, the duty it states, the property it became, and — the column that matters —
 what the refinement deliberately did not capture.
 
@@ -27,7 +27,7 @@ duty is different for every requirement, and column four is where it is written 
 
 Four kinds of gap recur, and naming them once keeps the table short:
 
-- **Presence is not adequacy.** Twenty-one of the twenty-eight shipped duties are `record` duties: a
+- **Presence is not adequacy.** Twenty-one of the twenty-nine shipped duties are `record` duties: a
   conjunction of `present(signal)` atoms, and a twenty-second is the same presence check quantified
   over the trace. A reason field containing `"n/a"` is present
   (`docs/semantics.md` §3, *record*). Every clause whose content is an adjective — *meaningful*,
@@ -84,8 +84,8 @@ Four kinds of gap recur, and naming them once keeps the table short:
 - **The property's reach is not the clause's scope.** Most clauses below are triggered — by adverse
   action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
   evaluated over every record in a trace is checked outside that trigger too. Two axes of a
-  clause's scope are modelled — the regulatory class (`scope`, used by fourteen of the twenty-eight
-  duties) and the decision domain (`domains`, used by seven) — and both are gates about the *system*. A
+  clause's scope are modelled — the regulatory class (`scope`, used by fourteen of the twenty-nine
+  duties) and the decision domain (`domains`, used by eight) — and both are gates about the *system*. A
   trigger *inside* a decision is not a gate at all: the two 12 CFR 1002.9(b)(2) duties carry their
   own in the property, at the price of being reported *not evaluated* where it never fires.
 
@@ -97,7 +97,7 @@ Act's own five-member vocabulary; fourteen duties use it — six `high-risk` (th
 `general-purpose` duties of `packs/gpai.toml`, which are the first requirements in this repository
 to use that class at all. `domains` is
 the *kind of decision* the duty is about — the ECOA rows and the Table 7 ECOA and FDA rows use it,
-seven duties in all — and it is
+eight duties in all — and it is
 matched by intersection against what the system declares. A system that declares neither is reported
 `not_applicable` on every duty that limits either, never `satisfied`, and reasonsmith infers neither
 (`docs/semantics.md` §4).
@@ -110,7 +110,7 @@ on a *different* requirement, arriving for the wrong reason. Those four ECOA dut
 not applicable against all five of that run's systems.
 
 **What the gate still does not do, and every row in the ECOA and GDPR tables below inherits it.**
-It is stated once, here, rather than twenty-eight times:
+It is stated once, here, rather than twenty-nine times:
 
 - **The vocabulary is this repository's, not any regulation's.** `DECISION_DOMAINS` is a coarse,
   openly-authored list, and it is wrong somewhere: no statute defines a list of decision domains,

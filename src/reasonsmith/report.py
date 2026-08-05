@@ -1441,7 +1441,9 @@ def _evaluate_requirement(
     if not candidates:
         raise NotImplementedError(
             f"{req.formalism!r} is listed in SUPPORTED_FORMALISMS but no engine here evaluates "
-            "it. Widen SUPPORTED_FORMALISMS when the engine lands, not before."
+            "it. Every listed formalism is either answered by an engine or refused without one "
+            "(`undetermined` and `graded`); this one is neither, so the ladder has a gap and this "
+            "is a build error rather than a widening decision."
         )
 
     # Take the strongest evidence there is a basis for, not the first engine tried. An engine
