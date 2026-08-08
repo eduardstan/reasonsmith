@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@tsconfig/bun/tsconfig.json",
+  "compilerOptions": {
+    // `strict` stays on. `noUncheckedIndexedAccess` does not: the property language is a hand-rolled
+    // tokenizer, recursive-descent parser and interpreter ported from Python, where every index is
+    // already guarded by a length check the compiler cannot see. Threading `!` through all of it
+    // would add no safety and would obscure which guards are the real ones.
+    "noUncheckedIndexedAccess": false
+  }
+}

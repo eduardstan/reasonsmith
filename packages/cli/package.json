@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@reasonsmith/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Reasonsmith CLI launcher — a thin wrapper that starts the OpenTUI renderer. The Python reasonsmith CLI carries the authoritative command surface.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test ./src/",
+    "run": "bun ./src/index.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@tsconfig/bun": "catalog:",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  },
+  "bin": {
+    "reasonsmith": "./bin/reasonsmith"
+  }
+}

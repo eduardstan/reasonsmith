@@ -11,3 +11,8 @@ uv.lock
 pip-*/
 pytest-of-*/
 .hypothesis/
+
+# TS / bun monorepo (reasonsmith-ts recreation)
+node_modules/
+.turbo/
+*.tsbuildinfo

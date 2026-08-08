@@ -1,0 +1,42 @@
+name: typescript
+
+on:
+  push:
+    paths:
+      - "packages/**"
+      - "package.json"
+      - "tsconfig.json"
+      - "bun.lock"
+      - "bun.lockb"
+      - "turbo.json"
+      - ".github/workflows/typescript.yml"
+  pull_request:
+    paths:
+      - "packages/**"
+      - "package.json"
+      - "tsconfig.json"
+      - "bun.lock"
+      - "bun.lockb"
+      - "turbo.json"
+      - ".github/workflows/typescript.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  bun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - run: bun install --frozen-lockfile
+      # The TypeScript side of this PR is the renderer and the recording harness. The conformance
+      # engine, the packs, the systems, the engines all live in `src/reasonsmith/`, which is the
+      # Python package — verified by `.github/workflows/ci.yml`. Running `bun run typecheck` and
+      # `bun run test` here is the part of PR 129's review comment ("the six green checks never ran
+      # any of this code") that this workflow addresses: every change to `packages/**` is now
+      # typechecked and tested in CI, on every push.
+      - run: bun run typecheck
+      - run: bun run test
