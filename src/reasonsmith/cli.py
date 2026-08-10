@@ -109,6 +109,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import json
 import os
 import shlex
 import sys
@@ -437,6 +438,14 @@ def main(args: list[str] | None = None) -> int:
         ),
     )
 
+    metrics_parser = subparsers.add_parser(
+        "published-counts",
+        help="Emit machine-readable counts and provenance for the site build",
+    )
+    metrics_parser.add_argument(
+        "--output", "-o", default="-", help="Write JSON to FILE (default: stdout)",
+    )
+
     explain_parser = subparsers.add_parser(
         "explain",
         help="Print how one requirement's clause of law became its formula",
@@ -468,6 +477,21 @@ def main(args: list[str] | None = None) -> int:
     )
 
     parsed = parser.parse_args(args)
+
+    if parsed.command == "published-counts":
+        from reasonsmith.published_counts import published_counts
+
+        payload = json.dumps(published_counts(), indent=2) + "\n"
+        if parsed.output == "-":
+            print(payload, end="")
+        else:
+            try:
+                with open(parsed.output, "w", encoding="utf-8") as handle:
+                    handle.write(payload)
+            except OSError as exc:
+                print(f"Error writing published counts {parsed.output!r}: {exc}", file=sys.stderr)
+                return 1
+        return 0
 
     if parsed.command == "explain":
         from reasonsmith.explain import find_requirement, refinement_notes, render_explanation
