@@ -125,6 +125,24 @@ def test_challenge_scope_rejects_missing_or_wrong_typed_signal():
         harness._ChallengeScope({"flag": "bool"}, {"flag": 1}).read("flag")
 
 
+def test_challenge_scope_reads_declared_scalar_types():
+    scope = harness._ChallengeScope(
+        {"count": "int", "text": "str", "amount": "real"},
+        {"count": 2, "text": "notice", "amount": 1.5},
+    )
+    assert str(scope.read("count")) == "2"
+    assert str(scope.read("text")) == '"notice"'
+    assert str(scope.read("amount")) == "3/2"
+    with pytest.raises(ValueError, match="must be an integer"):
+        harness._ChallengeScope({"count": "int"}, {"count": 1.5}).read("count")
+    with pytest.raises(ValueError, match="must be text"):
+        harness._ChallengeScope({"text": "str"}, {"text": 1}).read("text")
+    with pytest.raises(ValueError, match="must be numeric"):
+        harness._ChallengeScope({"amount": "real"}, {"amount": "bad"}).read("amount")
+
+
+
+
 def test_wrong_specific_reasons_candidate_is_caught_by_near_misses():
     req = _requirements()["ecoa_reg_b_1002_9_b_2_specific_reasons"]
     candidate = "present(artifact_logs_reason_explanation)"
