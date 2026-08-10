@@ -24,9 +24,11 @@ This is the evidence artifact for `reasonsmith`'s own claims: an environment was
 
 ### Autoformalisation proposer smoke measurement (2026-08-10)
 
-This is a **smoke measurement, not an agreement-rate claim about autoformalisation**.  PR 150
-expanded the installed gold manifest to **24 challenge sets** covering all 21 record and all 3
-logical requirements; the earlier three-duty run was only a demonstration.  The exact command was:
+This is a **historical smoke measurement, not an agreement-rate claim about autoformalisation**.
+It was run before the challenge schema v2 expansion. PR 150 expanded the installed gold manifest to
+**24 challenge sets** covering all 21 record and all 3 logical requirements; the current tree carries
+29 sets, adding four temporal traces and one counterfactual pair corpus. The earlier three-duty run
+was only a demonstration. The exact command was:
 
 ```sh
 uv run python -m reasonsmith.proposer --model qwen3:0.6b --attempts 1
@@ -40,7 +42,7 @@ path execute end to end over the complete corpus.  It does **not** establish tha
 agrees at 0/24, and no capable model was measured here.
 
 A meaningful measurement needs a capable, explicitly approved model/provider, the same complete
-24-duty sample, a predeclared attempt budget, and its provider/model name and cost recorded beside
+29-duty sample, a predeclared attempt budget, and its provider/model name and cost recorded beside
 the result.  The proposer is configurable without source edits through `--model` and
 `REASONSMITH_PROPOSER_URL` (or a caller-supplied model callable); this smoke run deliberately used
 no captain credentials.  Any future capable-model result must be reported separately rather than

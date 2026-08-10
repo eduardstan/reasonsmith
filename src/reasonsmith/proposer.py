@@ -197,9 +197,32 @@ def _requirements() -> dict[str, Requirement]:
 
 def _challenge_prompt(requirement: Requirement) -> str:
     challenge = load_challenge_sets()[requirement.id]
-    signals = sorted({name for case in challenge.cases for name in case.signals})
+
+    def payload(case):
+        if case.shape == "trace":
+            return list(case.trace or ())
+        if case.shape == "pair":
+            return [{"left": left, "right": right} for left, right in (case.pairs or ())]
+        return case.signals
+
+    payloads = {case.id: payload(case) for case in challenge.cases}
+    signals = sorted(
+        {
+            name
+            for value in payloads.values()
+            for record in (value if isinstance(value, list) else [value])
+            for execution in (
+                record.values()
+                if isinstance(record, dict) and {"left", "right"} <= set(record)
+                else [record]
+            )
+            for name in (execution.keys() if isinstance(execution, dict) else ())
+        }
+    )
     cases = "\n".join(
-        f"- {case.id}: {case.description}; signals={json.dumps(case.signals, sort_keys=True)}"
+        f"- {case.id}: {case.description}; "
+        f"{('pairs' if case.shape == 'pair' else case.shape)}="
+        f"{json.dumps(payloads[case.id], sort_keys=True)}"
         for case in challenge.cases
     )
     return f"""You propose a formal property for a human reviewer. Return ONLY one formula
@@ -209,7 +232,7 @@ Do not return a verdict. Requirement id: {requirement.id}
 The required fragment is {requirement.formalism!r}.
 Clause: {requirement.verbatim_text}
 Rationale: {requirement.rationale}
-Available signal names: {', '.join(signals)}
+Available signal names: {", ".join(signals)}
 Gold challenge records (their labels are withheld from you):
 {cases}
 """
@@ -218,10 +241,13 @@ Gold challenge records (their labels are withheld from you):
 def _repair_prompt(
     requirement: Requirement, previous: str, verification: CandidateVerification
 ) -> str:
-    failures = "\n".join(
-        f"- {case.case_id}: expected {case.expected}, got {case.actual}; {case.error}"
-        for case in verification.challenges.failures
-    ) or "- no challenge evidence"
+    failures = (
+        "\n".join(
+            f"- {case.case_id}: expected {case.expected}, got {case.actual}; {case.error}"
+            for case in verification.challenges.failures
+        )
+        or "- no challenge evidence"
+    )
     return f"""Repair your previous proposed formula for the same requirement. Return ONLY one
 complete
 formula accepted by reasonsmith.rulelang.parse_property; do not explain it and do not rewrite it
@@ -353,14 +379,20 @@ def main(argv: list[str] | None = None) -> int:
     if args.command:
         os.environ[PROPOSER_COMMAND_ENV] = args.command
     measurement = measure_agreement(model_name=args.model, max_attempts=args.attempts)
-    print(json.dumps({
-        "model": measurement.model,
-        "attempt_budget": measurement.attempt_budget,
-        "sample_size": measurement.sample_size,
-        "agreements": measurement.agreements,
-        "agreement_rate": measurement.rate,
-        "rows": [row.__dict__ for row in measurement.rows],
-    }, indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "model": measurement.model,
+                "attempt_budget": measurement.attempt_budget,
+                "sample_size": measurement.sample_size,
+                "agreements": measurement.agreements,
+                "agreement_rate": measurement.rate,
+                "rows": [row.__dict__ for row in measurement.rows],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0 if measurement.sample_size and measurement.agreements == measurement.sample_size else 1
 
 
@@ -371,8 +403,13 @@ __all__ = [
     "DEFAULT_ATTEMPTS",
     "ModelUnavailable",
     "OllamaModel",
-    "PROPOSER_EXTRA", "Proposal", "ProposalAttempt", "UNAVAILABLE_NOTE", "measure_agreement",
-    "model_from_environment", "propose",
+    "PROPOSER_EXTRA",
+    "Proposal",
+    "ProposalAttempt",
+    "UNAVAILABLE_NOTE",
+    "measure_agreement",
+    "model_from_environment",
+    "propose",
 ]
 
 if __name__ == "__main__":

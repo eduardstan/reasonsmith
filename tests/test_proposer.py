@@ -70,8 +70,8 @@ def test_measurement_uses_all_gold_sets_and_reports_machine_agreement():
         raise AssertionError("unknown requirement prompt")
 
     measurement = measure_agreement(model=model, model_name="test-model", max_attempts=1)
-    assert measurement.sample_size == 24
-    assert measurement.agreements == 24
+    assert measurement.sample_size == 29
+    assert measurement.agreements == 29
     assert measurement.rate == 1.0
     assert measurement.model == "test-model"
 
@@ -240,3 +240,13 @@ def test_command_model_supports_provider_neutral_measurement(monkeypatch):
         client("candidate")
     with pytest.raises(ValueError, match="non-empty"):
         proposer.CommandModel(" ")
+
+
+def test_prompt_presents_trace_and_pair_evidence_without_labels():
+    temporal = proposer._challenge_prompt(_requirements()["ecoa_reg_b_1002_9_a_1_timing_of_notice"])
+    counterfactual = proposer._challenge_prompt(
+        _requirements()["ecoa_reg_b_1002_4_a_no_disparate_treatment"]
+    )
+    assert "trace=" in temporal and "artifact_logs_notification_latency_days" in temporal
+    assert "pairs=" in counterfactual and "applicant_prohibited_basis" in counterfactual
+    assert "expected" not in temporal and "expected" not in counterfactual

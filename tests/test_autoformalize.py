@@ -217,3 +217,133 @@ def test_harness_and_proposer_have_no_conformance_surface():
         assert "evaluate_requirement" not in bound_names
         assert "reasonsmith.conformance" not in bound_modules
         assert not any(name.startswith("reasonsmith.engines") for name in bound_modules)
+
+TEMPORAL_CHALLENGE_REQUIREMENTS = frozenset(
+    {
+        "gdpr_recital71_error_risk_minimised",
+        "ecoa_reg_b_1002_9_a_1_timing_of_notice",
+        "ecoa_reg_b_1002_9_a_2_written_statement",
+        "ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out",
+    }
+)
+
+
+def test_new_challenge_shapes_are_explicit_and_baselines_pass():
+    requirements = _requirements()
+    sets = harness.load_challenge_sets()
+    for requirement_id in TEMPORAL_CHALLENGE_REQUIREMENTS:
+        assert sets[requirement_id].formalism == "temporal"
+        assert all(case.shape == "trace" and case.trace for case in sets[requirement_id].cases)
+        assert harness.check_challenges(
+            requirements[requirement_id], requirements[requirement_id].spec
+        ).passed
+    counterfactual = sets["ecoa_reg_b_1002_4_a_no_disparate_treatment"]
+    assert counterfactual.formalism == "counterfactual"
+    assert all(case.shape == "pair" and case.pairs for case in counterfactual.cases)
+    req = requirements[counterfactual.requirement_id]
+    assert harness.check_challenges(req, req.spec).passed
+
+
+@pytest.mark.parametrize(
+    ("requirement_id", "candidate", "case_id"),
+    [
+        (
+            "gdpr_recital71_error_risk_minimised",
+            "always(scope_statements_declared_deviation < artifact_logs_decision_margin)",
+            "equal-is-not-breach",
+        ),
+        (
+            "ecoa_reg_b_1002_9_a_1_timing_of_notice",
+            (
+                "always(present(artifact_logs_decision_record) -> "
+                "((artifact_logs_notification_latency_days < 30) or "
+                "((artifact_logs_counteroffer_not_accepted >= 0.5) and "
+                "(artifact_logs_notification_latency_days < 90))))"
+            ),
+            "thirty-day-boundary",
+        ),
+        (
+            "ecoa_reg_b_1002_9_a_2_written_statement",
+            (
+                "always(present(artifact_logs_decision_record) and "
+                "present(provenance_model_version) and "
+                "present(artifact_logs_reason_explanation))"
+            ),
+            "right-to-reasons-branch",
+        ),
+        (
+            "ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out",
+            (
+                "always(present(artifact_logs_incompleteness_notice_sent) -> "
+                "(present(artifact_logs_action_taken_notification) or "
+                "present(artifact_logs_response_period_lapsed)))"
+            ),
+            "notice-then-action",
+        ),
+    ],
+)
+def test_temporal_gold_cases_discriminate_plausible_wrong_candidates(
+    requirement_id, candidate, case_id
+):
+    req = _requirements()[requirement_id]
+    check = harness.check_challenges(req, candidate)
+    assert not check.passed
+    assert any(case.case_id == case_id for case in check.failures)
+
+
+def test_counterfactual_pairs_require_the_named_intervention_and_outcome():
+    req = _requirements()["ecoa_reg_b_1002_4_a_no_disparate_treatment"]
+    wrong_protected = harness.check_challenges(
+        req,
+        (
+            "counterfactually_invariant("
+            "artifact_logs_decision_record, artifact_logs_notification_latency_days)"
+        ),
+    )
+    wrong_outcome = harness.check_challenges(
+        req,
+        (
+            "counterfactually_invariant("
+            "artifact_logs_notification_latency_days, applicant_prohibited_basis)"
+        ),
+    )
+    assert not wrong_protected.passed and not wrong_outcome.passed
+    assert any(case.case_id == "same-decision-across-basis" for case in wrong_protected.failures)
+    assert any(case.case_id == "decision-changes-across-basis" for case in wrong_outcome.failures)
+
+
+def test_loader_rejects_empty_trace_and_malformed_pairs(tmp_path: Path):
+    trace = tmp_path / "trace.toml"
+    trace.write_text("""formalism = \"temporal\"
+requirement = \"gdpr_recital71_error_risk_minimised\"
+rationale = \"why\"
+[[case]]
+id = \"empty\"
+kind = \"satisfied\"
+expected = \"satisfied\"
+description = \"d\"
+trace = []
+""")
+    with pytest.raises(ValueError, match="non-empty"):
+        harness._load_file(trace)
+    pair = tmp_path / "pair.toml"
+    pair.write_text("""formalism = \"counterfactual\"
+requirement = \"ecoa_reg_b_1002_4_a_no_disparate_treatment\"
+rationale = \"why\"
+[[case]]
+id = \"bad\"
+kind = \"satisfied\"
+expected = \"satisfied\"
+description = \"d\"
+pairs = [{}]
+""")
+    with pytest.raises(ValueError, match="left and right"):
+        harness._load_file(pair)
+
+
+def test_challenge_case_pair_compatibility_view():
+    case = harness.ChallengeCase(
+        "pair", "satisfied", "satisfied", "description", {},
+        pairs=(({"x": 0}, {"x": 1}),),
+    )
+    assert case.pair == ({"x": 0}, {"x": 1})

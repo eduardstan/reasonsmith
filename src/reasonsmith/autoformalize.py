@@ -26,27 +26,53 @@ from reasonsmith.rulelang import (
     bare_boolean_names,
     classify_fragment,
     contains_literal,
+    counterfactual_atom,
+    eval_temporal_trace,
+    has_temporal_operator,
     is_present,
+    kleene_and,
     measured_magnitude_names,
     parse_property,
+    validate_temporal_property,
 )
 from reasonsmith.spec import Requirement, list_packs, load_pack
 
 CHALLENGES_DIR = Path(__file__).parent / "challenges"
 EXPECTED_LABELS = frozenset({"satisfied", "violated"})
 ROUND_TRIP_STATUSES = frozenset({"equivalent", "stronger", "weaker", "incomparable", "refused"})
-CHALLENGE_SCHEMA_VERSION = 1
+CHALLENGE_SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
 class ChallengeCase:
-    """One concrete, lawyer-readable record and its expected formula classification."""
+    """One lawyer-readable input for a candidate property.
+
+    Record and logical duties use ``signals``.  Temporal duties use ``trace``: an ordered,
+    finite sequence of records.  Counterfactual duties use ``pair``: the two executions
+    (left and right) whose outcomes are compared.  Keeping these shapes explicit prevents a
+    flat record from quietly standing in for evidence the property cannot consume.
+    """
 
     id: str
     kind: Literal["satisfied", "violated", "near-miss"]
     expected: Literal["satisfied", "violated"]
     description: str
     signals: dict[str, Any]
+    trace: tuple[dict[str, Any], ...] | None = None
+    pairs: tuple[tuple[dict[str, Any], dict[str, Any]], ...] | None = None
+
+    @property
+    def pair(self) -> tuple[dict[str, Any], dict[str, Any]] | None:
+        """Compatibility view of the first paired execution, when there is one."""
+        return self.pairs[0] if self.pairs else None
+
+    @property
+    def shape(self) -> Literal["signals", "trace", "pair"]:
+        if self.trace is not None:
+            return "trace"
+        if self.pairs is not None:
+            return "pair"
+        return "signals"
 
 
 @dataclass(frozen=True)
@@ -57,6 +83,7 @@ class ChallengeSet:
     rationale: str
     cases: tuple[ChallengeCase, ...]
     path: Path
+    formalism: str | None = None
 
 
 @dataclass(frozen=True)
@@ -127,9 +154,6 @@ class SignOff:
     def signed(self) -> bool:
         return self.status == "signed-off"
 
-
-
-
 @dataclass(frozen=True)
 class CandidateVerification:
     """The three gate records for one candidate; no conformance result is represented."""
@@ -199,12 +223,15 @@ def _requirement_index() -> dict[str, Requirement]:
 def _load_file(path: Path) -> ChallengeSet:
     with path.open("rb") as stream:
         raw = tomllib.load(stream)
-    allowed = {"requirement", "rationale", "case"}
+    allowed = {"requirement", "rationale", "formalism", "case"}
     extra = set(raw) - allowed
     if extra:
         raise ValueError(f"{path}: unknown top-level field(s): {', '.join(sorted(extra))}")
     req_id = raw.get("requirement")
     rationale = raw.get("rationale")
+    formalism = raw.get("formalism")
+    if formalism is not None and (not isinstance(formalism, str) or not formalism):
+        raise ValueError(f"{path}: formalism must be a non-empty string when provided")
     if not isinstance(req_id, str) or not req_id:
         raise ValueError(f"{path}: requirement must be a non-empty string")
     if not isinstance(rationale, str) or not rationale.strip():
@@ -217,10 +244,14 @@ def _load_file(path: Path) -> ChallengeSet:
     for index, item in enumerate(raw_cases):
         if not isinstance(item, dict):
             raise ValueError(f"{path}: case {index + 1} is not a table")
-        required = {"id", "kind", "expected", "description", "signals"}
+        required = {"id", "kind", "expected", "description"}
+        shapes = {"signals", "trace", "pairs", "pair"}
         missing = required - set(item)
-        extra_case = set(item) - required
-        if missing or extra_case:
+        present_shapes = shapes & set(item)
+        extra_case = set(item) - required - shapes
+        if missing or extra_case or len(present_shapes) != 1:
+            if not present_shapes:
+                missing = missing | {"signals, trace, pairs, or pair"}
             raise ValueError(
                 f"{path}: case {index + 1} fields mismatch; missing {sorted(missing)}, "
                 f"unknown {sorted(extra_case)}"
@@ -229,7 +260,7 @@ def _load_file(path: Path) -> ChallengeSet:
         kind = item["kind"]
         expected = item["expected"]
         description = item["description"]
-        signals = item["signals"]
+        shape = next(iter(present_shapes))
         if not isinstance(case_id, str) or not case_id or case_id in ids:
             raise ValueError(f"{path}: case ids must be unique non-empty strings")
         if kind not in {"satisfied", "violated", "near-miss"}:
@@ -238,16 +269,52 @@ def _load_file(path: Path) -> ChallengeSet:
             raise ValueError(f"{path}: {case_id}: expected must be satisfied or violated")
         if not isinstance(description, str) or not description.strip():
             raise ValueError(f"{path}: {case_id}: description is required for legal readability")
-        if not isinstance(signals, dict):
-            raise ValueError(f"{path}: {case_id}: signals must be a table")
+
+        signals: dict[str, Any] = {}
+        trace: tuple[dict[str, Any], ...] | None = None
+        pairs: tuple[tuple[dict[str, Any], dict[str, Any]], ...] | None = None
+        if shape == "signals":
+            raw_signals = item["signals"]
+            if not isinstance(raw_signals, dict):
+                raise ValueError(f"{path}: {case_id}: signals must be a table")
+            signals = dict(raw_signals)
+        elif shape == "trace":
+            raw_trace = item["trace"]
+            if (
+                not isinstance(raw_trace, list)
+                or not raw_trace
+                or not all(isinstance(record, dict) for record in raw_trace)
+            ):
+                raise ValueError(
+                    f"{path}: {case_id}: trace must be a non-empty list of record tables"
+                )
+            trace = tuple(dict(record) for record in raw_trace)
+        else:
+            raw_pairs = item["pairs"] if shape == "pairs" else [item["pair"]]
+            if not isinstance(raw_pairs, list) or not raw_pairs:
+                raise ValueError(f"{path}: {case_id}: pairs must be a non-empty list")
+            parsed_pairs: list[tuple[dict[str, Any], dict[str, Any]]] = []
+            for pair_index, raw_pair in enumerate(raw_pairs):
+                if (
+                    not isinstance(raw_pair, dict)
+                    or set(raw_pair) != {"left", "right"}
+                    or not isinstance(raw_pair["left"], dict)
+                    or not isinstance(raw_pair["right"], dict)
+                ):
+                    raise ValueError(
+                        f"{path}: {case_id}: pair {pair_index + 1} must contain "
+                        "left and right record tables"
+                    )
+                parsed_pairs.append((dict(raw_pair["left"]), dict(raw_pair["right"])))
+            pairs = tuple(parsed_pairs)
         ids.add(case_id)
-        cases.append(ChallengeCase(case_id, kind, expected, description, dict(signals)))
+        cases.append(ChallengeCase(case_id, kind, expected, description, signals, trace, pairs))
     kinds = {case.kind for case in cases}
     if not {"satisfied", "violated"} <= kinds:
         raise ValueError(f"{path}: include both satisfied and violated challenge cases")
     if "near-miss" not in kinds:
         raise ValueError(f"{path}: include at least one near-miss case")
-    return ChallengeSet(req_id, rationale, tuple(cases), path)
+    return ChallengeSet(req_id, rationale, tuple(cases), path, formalism)
 
 
 def load_challenge_sets(directory: Path | None = None) -> dict[str, ChallengeSet]:
@@ -281,6 +348,24 @@ def load_challenge_sets(directory: Path | None = None) -> dict[str, ChallengeSet
         challenge = _load_file(path)
         if challenge.requirement_id not in requirements:
             raise ValueError(f"{path}: no shipped requirement claims {challenge.requirement_id!r}")
+        formalism = requirements[challenge.requirement_id].formalism
+        if challenge.formalism != formalism:
+            raise ValueError(
+                f"{path}: formalism {challenge.formalism!r} does not match shipped "
+                f"requirement formalism {formalism!r}"
+            )
+        expected_shape = {
+            "temporal": "trace",
+            "counterfactual": "pair",
+            "record": "signals",
+            "logical": "signals",
+        }[formalism]
+        wrong_shape = [case.id for case in challenge.cases if case.shape != expected_shape]
+        if wrong_shape:
+            raise ValueError(
+                f"{path}: {formalism} requirements require {expected_shape} cases; "
+                f"wrong shape in {', '.join(wrong_shape)}"
+            )
         if challenge.requirement_id in sets:
             raise ValueError(f"multiple challenge sets claim {challenge.requirement_id!r}")
         if manifest_ids is not None and challenge.requirement_id not in manifest_ids:
@@ -343,7 +428,48 @@ def _direction(
 
 
 def _challenge_result(candidate: str, case: ChallengeCase) -> str:
+    """Classify one case without importing an engine or constructing a verdict."""
     node = _node(candidate)
+    if case.shape == "trace":
+        validate_temporal_property(node)
+        values = eval_temporal_trace(node, list(case.trace or ()))
+        value = values[0] if has_temporal_operator(node) else kleene_and(values)
+        if value is True:
+            return "satisfied"
+        if value is False:
+            return "violated"
+        raise ValueError("candidate is unknown on this trace")
+    if case.shape == "pair":
+        atom = counterfactual_atom(node)
+        if atom is None:
+            raise ValueError("candidate is not a counterfactual invariance atom")
+        outcome, protected = atom
+        pairs = case.pairs or ()
+        results: list[str] = []
+        for left, right in pairs:
+            if protected not in left or protected not in right:
+                raise ValueError(
+                    f"paired execution does not provide protected signal {protected!r} "
+                    "in both halves"
+                )
+            if left[protected] == right[protected]:
+                raise ValueError(f"paired execution does not vary protected signal {protected!r}")
+            other_keys = (set(left) | set(right)) - {outcome, protected}
+            if any(left.get(name) != right.get(name) for name in other_keys):
+                raise ValueError(
+                    "paired execution changes an input other than the protected signal"
+                )
+            if outcome not in left or outcome not in right:
+                raise ValueError(
+                    f"paired execution does not provide outcome signal {outcome!r} in both halves"
+                )
+            results.append("satisfied" if left[outcome] == right[outcome] else "violated")
+        if not results:
+            raise ValueError("counterfactual case has no paired executions")
+        if len(set(results)) != 1:
+            raise ValueError("counterfactual case pairs do not have one expected classification")
+        return results[0]
+
     var_types: dict[str, str] = {name: "bool" for name in bare_boolean_names(node)}
     var_types.update({name: "real" for name in measured_magnitude_names(node)})
     scope = _ChallengeScope(var_types, case.signals)
@@ -408,7 +534,26 @@ def round_trip_check(
                 f"candidate fragment {actual_fragment!r} does not match requirement "
                 f"fragment {req.formalism!r}"
             )
+        if req.formalism == "counterfactual":
+            baseline_atom = counterfactual_atom(_node(baseline))
+            candidate_atom = counterfactual_atom(candidate_node)
+            if baseline_atom is None or candidate_atom is None:
+                raise ValueError("counterfactual requirement is not a single invariance atom")
+            if baseline_atom == candidate_atom:
+                return RoundTripCheck(req.id, baseline, candidate, "equivalent")
+            return RoundTripCheck(
+                req.id,
+                baseline,
+                candidate,
+                "incomparable",
+                reason="counterfactual atoms name different outcome/protected signals",
+            )
         if req.formalism == "temporal":
+            # The shipped formula is accepted as its own baseline without requiring optional
+            # BLACK. Comparing a different temporal candidate still honestly refuses when the
+            # optional finite-trace decision procedure is unavailable.
+            if candidate == baseline:
+                return RoundTripCheck(req.id, baseline, candidate, "equivalent")
             from reasonsmith.ltlf import Abstraction, available, entails, to_ltlf
 
             if not available():

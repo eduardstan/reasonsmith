@@ -1,5 +1,5 @@
-schema_version = 1
-# Gold coverage includes every record or logical requirement; temporal and counterfactual fragments need their dedicated engines.
+schema_version = 2
+# Gold coverage includes every shipped requirement; temporal traces and counterfactual pairs use the dedicated model-free checker.
 requirements = [
   "eu_ai_act_art12_1_automatic_logging",
   "ecoa_reg_b_1002_9_b_2_specific_reasons",
@@ -25,4 +25,9 @@ requirements = [
   "eu_ai_act_art55_1_c_serious_incident_reporting",
   "eu_ai_act_art55_1_d_cybersecurity_protection",
   "ecoa_reg_b_1002_9_b_2_principal_reasons_complete",
+  "gdpr_recital71_error_risk_minimised",
+  "ecoa_reg_b_1002_9_a_1_timing_of_notice",
+  "ecoa_reg_b_1002_9_a_2_written_statement",
+  "ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out",
+  "ecoa_reg_b_1002_4_a_no_disparate_treatment",
 ]

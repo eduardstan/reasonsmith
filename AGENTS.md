@@ -766,6 +766,13 @@ document in the same commit; the README's four-audience section ("Who could use 
 missing first") cites the same gaps and goes stale with it. `CONTRIBUTING.md` defers its roadmap
 table here rather than keeping a second list.
 
+## Autoformalisation corpus
+
+`src/reasonsmith/challenges/manifest.toml` is schema version 2 and covers every shipped requirement.
+Record/logical cases carry `signals`, temporal cases carry finite `trace` records, and the
+counterfactual case carries `pairs` of left/right executions; `autoformalize.check_challenges` is the
+model-free checker and `proposer._challenge_prompt` presents each shape. Update the manifest,\`docs/autoformalization.md`, and the measured corpus note in `RESULTS.md` when coverage changes.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.

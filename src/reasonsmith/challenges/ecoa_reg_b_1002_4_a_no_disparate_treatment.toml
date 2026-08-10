@@ -1,0 +1,48 @@
+formalism = "counterfactual"
+requirement = "ecoa_reg_b_1002_4_a_no_disparate_treatment"
+rationale = "Each case is a pair of executions with every recorded input held fixed except the prohibited basis. Equal outcomes pass, a changed decision is caught, and the near-miss keeps the named decision equal at the category boundary."
+
+[[case]]
+id = "same-decision-across-basis"
+kind = "satisfied"
+expected = "satisfied"
+description = "Changing the applicant's prohibited basis from one category to another leaves the adverse-action decision unchanged."
+[[case.pairs]]
+[case.pairs.left]
+artifact_logs_decision_record = "approved"
+applicant_prohibited_basis = 0
+artifact_logs_notification_latency_days = 30
+[case.pairs.right]
+artifact_logs_decision_record = "approved"
+applicant_prohibited_basis = 1
+artifact_logs_notification_latency_days = 30
+
+[[case]]
+id = "decision-changes-across-basis"
+kind = "violated"
+expected = "violated"
+description = "The same application receives opposite decisions when only the prohibited basis changes."
+[[case.pairs]]
+[case.pairs.left]
+artifact_logs_decision_record = "approved"
+applicant_prohibited_basis = 0
+artifact_logs_notification_latency_days = 30
+[case.pairs.right]
+artifact_logs_decision_record = "adverse"
+applicant_prohibited_basis = 1
+artifact_logs_notification_latency_days = 30
+
+[[case]]
+id = "other-field-is-not-the-outcome"
+kind = "near-miss"
+expected = "satisfied"
+description = "At the exact category boundary, the named adverse-action decision remains unchanged when the prohibited basis changes."
+[[case.pairs]]
+[case.pairs.left]
+artifact_logs_decision_record = "approved"
+applicant_prohibited_basis = 0
+artifact_logs_notification_latency_days = 30
+[case.pairs.right]
+artifact_logs_decision_record = "approved"
+applicant_prohibited_basis = 1
+artifact_logs_notification_latency_days = 30

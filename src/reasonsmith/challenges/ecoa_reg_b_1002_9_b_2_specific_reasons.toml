@@ -1,3 +1,4 @@
+formalism = "logical"
 requirement = "ecoa_reg_b_1002_9_b_2_specific_reasons"
 rationale = "The cases use the clause's own three named insufficiencies, while preserving the distinction between a present but open-textured reason and no reason at all."
 

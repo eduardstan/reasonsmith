@@ -1,3 +1,4 @@
+formalism = "logical"
 requirement = "gdpr_art22_1_no_prohibited_decision_for_any_input"
 rationale = "These cases exercise the implication trigger, each lawful basis branch, and the human-intervention condition that applies to contract and consent but not to a statutory basis."
 

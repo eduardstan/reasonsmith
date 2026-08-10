@@ -1,0 +1,34 @@
+formalism = "temporal"
+requirement = "ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out"
+rationale = "A trace shows an incompleteness notice persisting until action or lapse, while a second trace leaves it unresolved; the near-miss makes the temporal end explicit only after an intervening decision."
+
+[[case]]
+id = "notice-then-action"
+kind = "satisfied"
+expected = "satisfied"
+description = "The creditor's notice remains in force until the applicant responds and the creditor takes action and notifies."
+trace = [
+  { artifact_logs_incompleteness_notice_sent = "notice" },
+  { artifact_logs_action_taken_notification = "action" },
+]
+
+[[case]]
+id = "notice-never-resolved"
+kind = "violated"
+expected = "violated"
+description = "The trace records the notice but never records action or the designated period lapsing."
+trace = [
+  { artifact_logs_incompleteness_notice_sent = "notice" },
+  { artifact_logs_incompleteness_notice_sent = "still waiting" },
+]
+
+[[case]]
+id = "notice-then-lapse"
+kind = "near-miss"
+expected = "satisfied"
+description = "The notice persists through an intervening step and ends only when the designated period is recorded as lapsed."
+trace = [
+  { artifact_logs_incompleteness_notice_sent = "notice" },
+  { artifact_logs_incompleteness_notice_sent = "still waiting" },
+  { artifact_logs_response_period_lapsed = "lapsed" },
+]

@@ -1,3 +1,4 @@
+formalism = "record"
 requirement = "eu_ai_act_art55_1_d_cybersecurity_protection"
 rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
 

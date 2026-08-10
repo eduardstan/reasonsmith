@@ -1,3 +1,4 @@
+formalism = "logical"
 requirement = "ecoa_reg_b_1002_9_b_2_principal_reasons_complete"
 rationale = "These cases distinguish a notice with no stated reason, a complete reason set, and a notice whose measured deletion count shows that a principal reason was omitted. The near-miss is the boundary count of zero: completeness is non-strict."
 

@@ -23,18 +23,21 @@ The result is not a conformance verdict and does not construct a report result.
 
 ## Gold cases
 
-The initial corpus is deliberately small and lives in the installed package at
+The corpus lives in the installed package at
 `src/reasonsmith/challenges/`. `manifest.toml` is the selection record: every listed requirement
-must have exactly one TOML set, while every set must name a shipped requirement. Each case carries a
-plain-language description, a `kind` (`satisfied`, `violated` or `near-miss`), an expected formula
-classification and a concrete `signals` table. The descriptions are for a lawyer reviewing the
-boundary; the parser is not the authority for the legal clause, which remains the referenced pack
-and its refinement row.
+must have exactly one TOML set, while every set must name a shipped requirement. Schema version 2
+records the requirement's formalism and gives each case exactly one evidence shape: a `signals` table
+for record/logical duties, an ordered finite `trace` for temporal duties, or a list of paired
+`left`/`right` executions for the counterfactual duty. Each case carries a plain-language
+description, a `kind` (`satisfied`, `violated` or `near-miss`), an expected formula classification
+and concrete evidence. The descriptions are for a lawyer reviewing the boundary; the parser is not
+the authority for the legal clause, which remains the referenced pack and its refinement row.
 
-The starting subset is three duties with sharp, testable boundaries: a record conjunction, the ECOA
-clause's named forbidden phrases, and a GDPR implication with explicit lawful-basis branches. Open-
-textured, certificate, counterfactual and general temporal duties are not approximated merely to
-increase coverage. Adding a set does not add a requirement or replace the refinement row.
+The corpus covers all 29 shipped requirements: record and logical cases, four temporal finite traces,
+and the one counterfactual paired-execution duty. Open-textured and certificate duties are not
+approximated merely to increase coverage. Temporal round-trip equivalence still refuses without the
+optional BLACK procedure, while the gold checker uses the shared finite-trace interpreter and does
+not import an engine. Adding a set does not add a requirement or replace the refinement row.
 
 The module has no model import and no path to a conformance engine or verdict. It is therefore
 exercisable entirely with hand-written formulas, which is the intended review surface before a

@@ -1,0 +1,43 @@
+formalism = "temporal"
+requirement = "ecoa_reg_b_1002_9_a_2_written_statement"
+rationale = "The trace contains each lawful either/or branch and a record missing the common model-version field, so the disjunction is tested without turning it into a conjunction."
+
+[[case]]
+id = "specific-reasons-branch"
+kind = "satisfied"
+expected = "satisfied"
+description = "The notice carries the decision record, model provenance, and a statement of reasons."
+trace = [
+  { artifact_logs_decision_record = "adverse", provenance_model_version = "model-7", artifact_logs_reason_explanation = "Income below repayment threshold." },
+  { artifact_logs_decision_record = "adverse", provenance_model_version = "model-7", artifact_logs_reason_explanation = "Debt-to-income ratio." },
+]
+
+[[case]]
+id = "right-to-reasons-branch"
+kind = "satisfied"
+expected = "satisfied"
+description = "The notice uses the alternative branch: it discloses the applicant's right to request specific reasons."
+trace = [
+  { artifact_logs_decision_record = "adverse", provenance_model_version = "model-7", artifact_logs_right_to_reasons_disclosure = "request within 60 days" },
+  { artifact_logs_decision_record = "adverse", provenance_model_version = "model-7", artifact_logs_right_to_reasons_disclosure = "request within 60 days" },
+]
+
+[[case]]
+id = "neither-branch"
+kind = "violated"
+expected = "violated"
+description = "The common fields are present but neither content branch appears in the notice."
+trace = [
+  { artifact_logs_decision_record = "adverse", provenance_model_version = "model-7" },
+  { artifact_logs_decision_record = "adverse", provenance_model_version = "model-7" },
+]
+
+[[case]]
+id = "missing-model-version"
+kind = "near-miss"
+expected = "violated"
+description = "A lawful reasons branch is still insufficient when the common model provenance field is absent."
+trace = [
+  { artifact_logs_decision_record = "adverse", artifact_logs_reason_explanation = "Income below repayment threshold." },
+  { artifact_logs_decision_record = "adverse", artifact_logs_reason_explanation = "Income below repayment threshold." },
+]

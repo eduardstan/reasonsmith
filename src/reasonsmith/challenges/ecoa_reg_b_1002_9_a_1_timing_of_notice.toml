@@ -1,0 +1,33 @@
+formalism = "temporal"
+requirement = "ecoa_reg_b_1002_9_a_1_timing_of_notice"
+rationale = "The finite traces exercise both deadlines in the clause: the ordinary 30-day route and the 90-day counteroffer branch, with exact boundaries kept as lawyer-readable near-misses."
+
+[[case]]
+id = "ordinary-and-counteroffer-deadlines"
+kind = "satisfied"
+expected = "satisfied"
+description = "One ordinary application is notified on day 30 and one unaccepted counteroffer on day 90."
+trace = [
+  { artifact_logs_decision_record = "ordinary", artifact_logs_notification_latency_days = 30, artifact_logs_counteroffer_not_accepted = false },
+  { artifact_logs_decision_record = "counteroffer", artifact_logs_notification_latency_days = 90, artifact_logs_counteroffer_not_accepted = true },
+]
+
+[[case]]
+id = "ordinary-notice-too-late"
+kind = "violated"
+expected = "violated"
+description = "An ordinary application is notified on day 31, beyond the paragraph's 30-day deadline."
+trace = [
+  { artifact_logs_decision_record = "ordinary", artifact_logs_notification_latency_days = 31, artifact_logs_counteroffer_not_accepted = false },
+  { artifact_logs_decision_record = "ordinary", artifact_logs_notification_latency_days = 30, artifact_logs_counteroffer_not_accepted = false },
+]
+
+[[case]]
+id = "thirty-day-boundary"
+kind = "near-miss"
+expected = "satisfied"
+description = "Exactly 30 days is permitted; a strict less-than candidate would falsely reject this boundary."
+trace = [
+  { artifact_logs_decision_record = "ordinary", artifact_logs_notification_latency_days = 30, artifact_logs_counteroffer_not_accepted = false },
+  { artifact_logs_decision_record = "ordinary", artifact_logs_notification_latency_days = 0, artifact_logs_counteroffer_not_accepted = false },
+]
