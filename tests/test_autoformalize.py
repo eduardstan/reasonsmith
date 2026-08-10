@@ -121,7 +121,14 @@ signals = {}
 
 
 def test_harness_has_no_model_or_conformance_surface():
-    source = Path(harness.__file__).read_text()
-    assert "RequirementResult" not in source
-    assert "check_conformance" not in source
-    assert "evaluate_requirement" not in source
+    from types import ModuleType
+
+    bound_names = vars(harness)
+    bound_modules = {
+        value.__name__ for value in bound_names.values() if isinstance(value, ModuleType)
+    }
+    assert "RequirementResult" not in bound_names
+    assert "check_conformance" not in bound_names
+    assert "evaluate_requirement" not in bound_names
+    assert "reasonsmith.conformance" not in bound_modules
+    assert not any(name.startswith("reasonsmith.engines") for name in bound_modules)

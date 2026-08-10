@@ -3,7 +3,7 @@
 The proposer is intentionally absent.  This module only parses a candidate, compares it with the
 requirement's shipped property using the solver helpers in :mod:`reasonsmith.analysis`, and runs it
 against the requirement's lawyer-readable gold challenge cases.  It never evaluates a system,
-constructs a conformance result object, calls an engine, or produces a verdict.
+constructs a ``RequirementResult``, calls an engine, or produces a conformance verdict.
 
 A candidate is ready for a human only when both ``round_trip_check`` and ``check_challenges`` pass.
 Human approval is a separate record in ``docs/refinement.md``; ``signoff`` reports that record but
