@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 import reasonsmith.autoformalize as harness
+import reasonsmith.proposer as proposer
 from reasonsmith.spec import list_packs, load_pack
 
 
@@ -173,15 +174,16 @@ signals = {}
         harness._load_file(path)
 
 
-def test_harness_has_no_model_or_conformance_surface():
+def test_harness_and_proposer_have_no_conformance_surface():
     from types import ModuleType
 
-    bound_names = vars(harness)
-    bound_modules = {
-        value.__name__ for value in bound_names.values() if isinstance(value, ModuleType)
-    }
-    assert "RequirementResult" not in bound_names
-    assert "check_conformance" not in bound_names
-    assert "evaluate_requirement" not in bound_names
-    assert "reasonsmith.conformance" not in bound_modules
-    assert not any(name.startswith("reasonsmith.engines") for name in bound_modules)
+    for module in (harness, proposer):
+        bound_names = vars(module)
+        bound_modules = {
+            value.__name__ for value in bound_names.values() if isinstance(value, ModuleType)
+        }
+        assert "RequirementResult" not in bound_names
+        assert "check_conformance" not in bound_names
+        assert "evaluate_requirement" not in bound_names
+        assert "reasonsmith.conformance" not in bound_modules
+        assert not any(name.startswith("reasonsmith.engines") for name in bound_modules)

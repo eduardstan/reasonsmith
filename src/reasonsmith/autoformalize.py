@@ -1,6 +1,7 @@
-"""Model-free verification gates for hand-written autoformalisation candidates.
+"""Model-free verification gates for autoformalisation candidates.
 
-The proposer is intentionally absent.  This module only parses a candidate, compares it with the
+The model-facing proposer lives in :mod:`reasonsmith.proposer`; this module only parses a candidate,
+compares it with the
 requirement's shipped property using the solver helpers in :mod:`reasonsmith.analysis`, and runs it
 against the requirement's lawyer-readable gold challenge cases.  It never evaluates a system,
 constructs a ``RequirementResult``, calls an engine, or produces a conformance verdict.

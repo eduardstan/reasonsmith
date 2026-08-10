@@ -1,15 +1,21 @@
 # Autoformalisation verification harness
 
-The model-facing proposer is intentionally not part of reasonsmith. The boundary is:
+The model-facing proposer is optional (`reasonsmith.proposer`, via the empty `proposer` extra); it
+uses a configured Ollama model and is absent by default. The boundary is:
 
 1. a candidate is parsed by `rulelang.py` and must have the requirement's exact fragment;
 2. `reasonsmith.autoformalize.round_trip_check` compares its denotation with the shipped property
    using the solver helpers already used by `analysis.py`;
 3. `reasonsmith.autoformalize.check_challenges` evaluates it on the requirement's gold cases; and
-4. a human records `Human sign-off: signed-off` in that requirement's row in
+4. `reasonsmith.proposer` may retry a failed candidate within its fixed attempt budget, handing
+   back only the round-trip witness and failing gold cases; it never rewrites a formula; and
+5. a human records `Human sign-off: signed-off` in that requirement's row in
    [`refinement.md`](refinement.md).
 
-Only semantic equivalence clears the round-trip gate. A strictly stronger, strictly weaker or
+Only semantic equivalence clears the round-trip gate. A model response that is not one complete
+formula accepted by the repository parser is a refusal, not an extraction or guess. The proposer
+measurement command is `python -m reasonsmith.proposer --model MODEL --attempts 3`; its result is
+reported in [`RESULTS.md`](../RESULTS.md). A strictly stronger, strictly weaker or
 incomparable formula is returned as a repair finding with a solver witness; this harness never
 rewrites it. Unsupported fragments and unavailable optional procedures are refusals, not guesses.
 The result is not a conformance verdict and does not construct a report result.

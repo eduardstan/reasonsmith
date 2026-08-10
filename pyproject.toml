@@ -43,6 +43,8 @@ dependencies = [
 # behind a strict boundary. The user installs BLACK via their OS package manager or from
 # https://www.black-sat.org.
 ltlf = []
+# Model-facing autoformalisation proposer. The transport is the separately installed Ollama service.
+proposer = []
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
