@@ -16,6 +16,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
+import subprocess
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -33,6 +35,7 @@ from reasonsmith.spec import Requirement, list_packs, load_pack
 PROPOSER_EXTRA = "proposer"
 PROPOSER_MODEL_ENV = "REASONSMITH_PROPOSER_MODEL"
 PROPOSER_URL_ENV = "REASONSMITH_PROPOSER_URL"
+PROPOSER_COMMAND_ENV = "REASONSMITH_PROPOSER_COMMAND"
 DEFAULT_URL = "http://127.0.0.1:11434/api/generate"
 DEFAULT_ATTEMPTS = 3
 UNAVAILABLE_NOTE = (
@@ -112,6 +115,33 @@ class AgreementMeasurement:
         return self.agreements / self.sample_size if self.sample_size else 0.0
 
 
+class CommandModel:
+    """Callable provider adapter for any configured command reading a prompt on stdin."""
+
+    def __init__(self, command: str, *, timeout: float = 120.0):
+        self.command = command.strip()
+        if not self.command:
+            raise ValueError("provider command must be non-empty")
+        self.timeout = timeout
+
+    def __call__(self, prompt: str) -> str:
+        try:
+            result = subprocess.run(
+                shlex.split(self.command),
+                input=prompt,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise ModelUnavailable(str(exc)) from exc
+        if result.returncode:
+            message = result.stderr.strip() or f"provider exited with {result.returncode}"
+            raise ModelUnavailable(message)
+        return result.stdout
+
+
 class OllamaModel:
     """Callable Ollama ``/api/generate`` transport; model selection is caller configuration."""
 
@@ -145,7 +175,10 @@ class ModelUnavailable(RuntimeError):
 
 def model_from_environment(*, timeout: float = 120.0) -> tuple[Model | None, str, str]:
     """Build the configured model transport without selecting a model in source code."""
+    command = os.getenv(PROPOSER_COMMAND_ENV, "").strip()
     model = os.getenv(PROPOSER_MODEL_ENV, "").strip()
+    if command:
+        return CommandModel(command, timeout=timeout), model or command, ""
     if not model:
         return None, "", UNAVAILABLE_NOTE
     url = os.getenv(PROPOSER_URL_ENV, DEFAULT_URL)
@@ -234,12 +267,17 @@ def propose(
     req = _requirements()[requirement] if isinstance(requirement, str) else requirement
     selected_name = model_name or os.getenv(PROPOSER_MODEL_ENV, "").strip()
     if model is None:
-        if not selected_name:
+        command = os.getenv(PROPOSER_COMMAND_ENV, "").strip()
+        if command:
+            model = CommandModel(command)
+            selected_name = selected_name or command
+        elif not selected_name:
             return Proposal(req.id, (), max_attempts, "unavailable", UNAVAILABLE_NOTE)
-        model = OllamaModel(
-            selected_name,
-            url=os.getenv(PROPOSER_URL_ENV, DEFAULT_URL),
-        )
+        else:
+            model = OllamaModel(
+                selected_name,
+                url=os.getenv(PROPOSER_URL_ENV, DEFAULT_URL),
+            )
     elif not selected_name:
         selected_name = getattr(model, "model", "callable-model")
 
@@ -301,12 +339,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--model", default=None, help=f"Ollama model (or {PROPOSER_MODEL_ENV})")
     parser.add_argument("--url", default=None, help=f"Ollama endpoint (or {PROPOSER_URL_ENV})")
+    parser.add_argument(
+        "--command",
+        default=None,
+        help=f"provider command reading prompt on stdin (or {PROPOSER_COMMAND_ENV})",
+    )
     parser.add_argument("--attempts", type=int, default=DEFAULT_ATTEMPTS)
     args = parser.parse_args(argv)
     if args.model:
         os.environ[PROPOSER_MODEL_ENV] = args.model
     if args.url:
         os.environ[PROPOSER_URL_ENV] = args.url
+    if args.command:
+        os.environ[PROPOSER_COMMAND_ENV] = args.command
     measurement = measure_agreement(model_name=args.model, max_attempts=args.attempts)
     print(json.dumps({
         "model": measurement.model,
@@ -320,7 +365,12 @@ def main(argv: list[str] | None = None) -> int:
 
 
 __all__ = [
-    "AgreementMeasurement", "AgreementRow", "DEFAULT_ATTEMPTS", "ModelUnavailable", "OllamaModel",
+    "AgreementMeasurement",
+    "AgreementRow",
+    "CommandModel",
+    "DEFAULT_ATTEMPTS",
+    "ModelUnavailable",
+    "OllamaModel",
     "PROPOSER_EXTRA", "Proposal", "ProposalAttempt", "UNAVAILABLE_NOTE", "measure_agreement",
     "model_from_environment", "propose",
 ]

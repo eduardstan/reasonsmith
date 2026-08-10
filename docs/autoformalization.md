@@ -14,7 +14,8 @@ uses a configured Ollama model and is absent by default. The boundary is:
 
 Only semantic equivalence clears the round-trip gate. A model response that is not one complete
 formula accepted by the repository parser is a refusal, not an extraction or guess. The proposer
-measurement command is `python -m reasonsmith.proposer --model MODEL --attempts 3`; its result is
+measurement command is `python -m reasonsmith.proposer --model MODEL --attempts 3` (or
+`--command COMMAND` for any provider adapter that reads a prompt on stdin); its result is
 reported in [`RESULTS.md`](../RESULTS.md). A strictly stronger, strictly weaker or
 incomparable formula is returned as a repair finding with a solver witness; this harness never
 rewrites it. Unsupported fragments and unavailable optional procedures are refusals, not guesses.

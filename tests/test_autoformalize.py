@@ -59,6 +59,11 @@ def test_round_trip_reports_stronger_weaker_and_incomparable_without_rewriting()
     assert incomparable.status == "incomparable" and incomparable.witness
     assert not stronger.passed and not weaker.passed and not incomparable.passed
     assert stronger.candidate == stronger_candidate
+    assert "stricter" in stronger.repair_message
+    assert "weaker" in weaker.repair_message
+    assert "both directions" in incomparable.repair_message
+    assert "equivalent" in harness.round_trip_check(req, req.spec).repair_message
+    assert "cannot be compared" in harness.round_trip_check(req, "present(bad").repair_message
 
 
 RECORD_CHALLENGE_REQUIREMENTS = frozenset({
@@ -111,6 +116,13 @@ def test_principal_reasons_set_catches_omitting_the_deletion_bound():
     assert {case.case_id for case in check.failures} >= {
         "complete-reasons", "deleted-principal-reason"
     }
+
+
+def test_challenge_scope_rejects_missing_or_wrong_typed_signal():
+    with pytest.raises(ValueError, match="does not provide"):
+        harness._ChallengeScope({}, {}).read("missing")
+    with pytest.raises(ValueError, match="must be true or false"):
+        harness._ChallengeScope({"flag": "bool"}, {"flag": 1}).read("flag")
 
 
 def test_wrong_specific_reasons_candidate_is_caught_by_near_misses():
