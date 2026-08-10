@@ -208,25 +208,35 @@ def test_module_entrypoint_is_executable(monkeypatch, capsys):
     assert "sample_size" in capsys.readouterr().out
 
 
-def test_command_model_supports_provider_neutral_measurement():
-    client = proposer.CommandModel(
-        f"{sys.executable} -c \"import sys; print(sys.stdin.read())\"", timeout=5
+def test_command_model_supports_provider_neutral_measurement(monkeypatch):
+    class Completed:
+        def __init__(self, returncode=0, stdout="candidate\n", stderr=""):
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    monkeypatch.setattr(
+        proposer.subprocess,
+        "run",
+        lambda args, **kwargs: Completed(),
     )
+    client = proposer.CommandModel("provider --model x", timeout=5)
     assert client("candidate") == "candidate\n"
-    failing = proposer.CommandModel(
-        f"{sys.executable} -c \"import sys; print('no', file=sys.stderr); raise SystemExit(2)\"",
-        timeout=5,
+    monkeypatch.setattr(
+        proposer.subprocess,
+        "run",
+        lambda args, **kwargs: Completed(returncode=2, stderr="no"),
     )
     with pytest.raises(proposer.ModelUnavailable, match="no"):
-        failing("candidate")
+        client("candidate")
+    monkeypatch.setattr(
+        proposer.subprocess,
+        "run",
+        lambda args, **kwargs: (_ for _ in ()).throw(
+            proposer.subprocess.TimeoutExpired("provider", 1)
+        ),
+    )
+    with pytest.raises(proposer.ModelUnavailable):
+        client("candidate")
     with pytest.raises(ValueError, match="non-empty"):
         proposer.CommandModel(" ")
-    original_run = proposer.subprocess.run
-    proposer.subprocess.run = lambda *args, **kwargs: (_ for _ in ()).throw(
-        proposer.subprocess.TimeoutExpired("provider", 1)
-    )
-    try:
-        with pytest.raises(proposer.ModelUnavailable):
-            failing("candidate")
-    finally:
-        proposer.subprocess.run = original_run
