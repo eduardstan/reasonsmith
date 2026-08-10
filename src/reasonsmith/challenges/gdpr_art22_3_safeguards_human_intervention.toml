@@ -1,0 +1,36 @@
+requirement = "gdpr_art22_3_safeguards_human_intervention"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: artifact logs decision record, scope statements local vs global."
+[case.signals]
+artifact_logs_decision_record = "recorded artifact logs decision record"
+scope_statements_local_vs_global = "recorded scope statements local vs global"
+
+[[case]]
+id = "missing-artifact-logs-decision-record"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs decision record while the other required fields are supplied."
+[case.signals]
+scope_statements_local_vs_global = "recorded scope statements local vs global"
+
+[[case]]
+id = "missing-scope-statements-local-vs-global"
+kind = "violated"
+expected = "violated"
+description = "The record omits scope statements local vs global while the other required fields are supplied."
+[case.signals]
+artifact_logs_decision_record = "recorded artifact logs decision record"
+
+[[case]]
+id = "blank-artifact-logs-decision-record"
+kind = "near-miss"
+expected = "violated"
+description = "The artifact logs decision record field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+artifact_logs_decision_record = "   "
+scope_statements_local_vs_global = "recorded scope statements local vs global"

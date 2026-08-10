@@ -1,7 +1,28 @@
 schema_version = 1
-# This is the intentionally small starting subset; every listed requirement must have one file.
+# Gold coverage includes every record or logical requirement; temporal and counterfactual fragments need their dedicated engines.
 requirements = [
   "eu_ai_act_art12_1_automatic_logging",
   "ecoa_reg_b_1002_9_b_2_specific_reasons",
   "gdpr_art22_1_no_prohibited_decision_for_any_input",
+  "eu_ai_act_art12_2_traceability_monitoring",
+  "eu_ai_act_art13_1_transparency_deployers",
+  "eu_ai_act_art13_2_instructions_for_use",
+  "eu_ai_act_art13_transparency",
+  "eu_ai_act_art12_record_keeping",
+  "gdpr_art22_meaningful_information",
+  "ecoa_reg_b_adverse_action",
+  "fda_gmlp_samd",
+  "nist_ai_rmf_risk_evidence",
+  "gdpr_art22_1_automated_decision_prohibition",
+  "gdpr_art22_3_safeguards_human_intervention",
+  "gdpr_recital71_meaningful_explanation",
+  "eu_ai_act_art53_1_a_technical_documentation",
+  "eu_ai_act_art53_1_b_downstream_documentation",
+  "eu_ai_act_art53_1_c_copyright_policy",
+  "eu_ai_act_art53_1_d_training_content_summary",
+  "eu_ai_act_art55_1_a_model_evaluation",
+  "eu_ai_act_art55_1_b_systemic_risk_assessment",
+  "eu_ai_act_art55_1_c_serious_incident_reporting",
+  "eu_ai_act_art55_1_d_cybersecurity_protection",
+  "ecoa_reg_b_1002_9_b_2_principal_reasons_complete",
 ]

@@ -1,0 +1,36 @@
+requirement = "eu_ai_act_art53_1_c_copyright_policy"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: provenance copyright policy, provenance rights reservation identification."
+[case.signals]
+provenance_copyright_policy = "recorded provenance copyright policy"
+provenance_rights_reservation_identification = "recorded provenance rights reservation identification"
+
+[[case]]
+id = "missing-provenance-copyright-policy"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance copyright policy while the other required fields are supplied."
+[case.signals]
+provenance_rights_reservation_identification = "recorded provenance rights reservation identification"
+
+[[case]]
+id = "missing-provenance-rights-reservation-identification"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance rights reservation identification while the other required fields are supplied."
+[case.signals]
+provenance_copyright_policy = "recorded provenance copyright policy"
+
+[[case]]
+id = "blank-provenance-copyright-policy"
+kind = "near-miss"
+expected = "violated"
+description = "The provenance copyright policy field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+provenance_copyright_policy = "   "
+provenance_rights_reservation_identification = "recorded provenance rights reservation identification"

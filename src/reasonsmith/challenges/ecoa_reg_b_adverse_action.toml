@@ -1,0 +1,81 @@
+requirement = "ecoa_reg_b_adverse_action"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: stored reasons per decision, model version, score factors, audit ids, retention for regulatory lookback."
+[case.signals]
+stored_reasons_per_decision = "recorded stored reasons per decision"
+model_version = "recorded model version"
+score_factors = "recorded score factors"
+audit_ids = "recorded audit ids"
+retention_for_regulatory_lookback = "recorded retention for regulatory lookback"
+
+[[case]]
+id = "missing-stored-reasons-per-decision"
+kind = "violated"
+expected = "violated"
+description = "The record omits stored reasons per decision while the other required fields are supplied."
+[case.signals]
+model_version = "recorded model version"
+score_factors = "recorded score factors"
+audit_ids = "recorded audit ids"
+retention_for_regulatory_lookback = "recorded retention for regulatory lookback"
+
+[[case]]
+id = "missing-model-version"
+kind = "violated"
+expected = "violated"
+description = "The record omits model version while the other required fields are supplied."
+[case.signals]
+stored_reasons_per_decision = "recorded stored reasons per decision"
+score_factors = "recorded score factors"
+audit_ids = "recorded audit ids"
+retention_for_regulatory_lookback = "recorded retention for regulatory lookback"
+
+[[case]]
+id = "missing-score-factors"
+kind = "violated"
+expected = "violated"
+description = "The record omits score factors while the other required fields are supplied."
+[case.signals]
+stored_reasons_per_decision = "recorded stored reasons per decision"
+model_version = "recorded model version"
+audit_ids = "recorded audit ids"
+retention_for_regulatory_lookback = "recorded retention for regulatory lookback"
+
+[[case]]
+id = "missing-audit-ids"
+kind = "violated"
+expected = "violated"
+description = "The record omits audit ids while the other required fields are supplied."
+[case.signals]
+stored_reasons_per_decision = "recorded stored reasons per decision"
+model_version = "recorded model version"
+score_factors = "recorded score factors"
+retention_for_regulatory_lookback = "recorded retention for regulatory lookback"
+
+[[case]]
+id = "missing-retention-for-regulatory-lookback"
+kind = "violated"
+expected = "violated"
+description = "The record omits retention for regulatory lookback while the other required fields are supplied."
+[case.signals]
+stored_reasons_per_decision = "recorded stored reasons per decision"
+model_version = "recorded model version"
+score_factors = "recorded score factors"
+audit_ids = "recorded audit ids"
+
+[[case]]
+id = "blank-stored-reasons-per-decision"
+kind = "near-miss"
+expected = "violated"
+description = "The stored reasons per decision field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+stored_reasons_per_decision = "   "
+model_version = "recorded model version"
+score_factors = "recorded score factors"
+audit_ids = "recorded audit ids"
+retention_for_regulatory_lookback = "recorded retention for regulatory lookback"

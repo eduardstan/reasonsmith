@@ -1,0 +1,49 @@
+requirement = "gdpr_art22_meaningful_information"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: per decision reason string, feature to named concept mapping, dpia cross reference."
+[case.signals]
+per_decision_reason_string = "recorded per decision reason string"
+feature_to_named_concept_mapping = "recorded feature to named concept mapping"
+dpia_cross_reference = "recorded dpia cross reference"
+
+[[case]]
+id = "missing-per-decision-reason-string"
+kind = "violated"
+expected = "violated"
+description = "The record omits per decision reason string while the other required fields are supplied."
+[case.signals]
+feature_to_named_concept_mapping = "recorded feature to named concept mapping"
+dpia_cross_reference = "recorded dpia cross reference"
+
+[[case]]
+id = "missing-feature-to-named-concept-mapping"
+kind = "violated"
+expected = "violated"
+description = "The record omits feature to named concept mapping while the other required fields are supplied."
+[case.signals]
+per_decision_reason_string = "recorded per decision reason string"
+dpia_cross_reference = "recorded dpia cross reference"
+
+[[case]]
+id = "missing-dpia-cross-reference"
+kind = "violated"
+expected = "violated"
+description = "The record omits dpia cross reference while the other required fields are supplied."
+[case.signals]
+per_decision_reason_string = "recorded per decision reason string"
+feature_to_named_concept_mapping = "recorded feature to named concept mapping"
+
+[[case]]
+id = "blank-per-decision-reason-string"
+kind = "near-miss"
+expected = "violated"
+description = "The per decision reason string field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+per_decision_reason_string = "   "
+feature_to_named_concept_mapping = "recorded feature to named concept mapping"
+dpia_cross_reference = "recorded dpia cross reference"

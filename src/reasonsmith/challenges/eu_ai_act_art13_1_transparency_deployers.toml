@@ -1,0 +1,49 @@
+requirement = "eu_ai_act_art13_1_transparency_deployers"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: scope statements explanation scope, artifact logs reason explanation, provenance model version."
+[case.signals]
+scope_statements_explanation_scope = "recorded scope statements explanation scope"
+artifact_logs_reason_explanation = "recorded artifact logs reason explanation"
+provenance_model_version = "recorded provenance model version"
+
+[[case]]
+id = "missing-scope-statements-explanation-scope"
+kind = "violated"
+expected = "violated"
+description = "The record omits scope statements explanation scope while the other required fields are supplied."
+[case.signals]
+artifact_logs_reason_explanation = "recorded artifact logs reason explanation"
+provenance_model_version = "recorded provenance model version"
+
+[[case]]
+id = "missing-artifact-logs-reason-explanation"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs reason explanation while the other required fields are supplied."
+[case.signals]
+scope_statements_explanation_scope = "recorded scope statements explanation scope"
+provenance_model_version = "recorded provenance model version"
+
+[[case]]
+id = "missing-provenance-model-version"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance model version while the other required fields are supplied."
+[case.signals]
+scope_statements_explanation_scope = "recorded scope statements explanation scope"
+artifact_logs_reason_explanation = "recorded artifact logs reason explanation"
+
+[[case]]
+id = "blank-scope-statements-explanation-scope"
+kind = "near-miss"
+expected = "violated"
+description = "The scope statements explanation scope field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+scope_statements_explanation_scope = "   "
+artifact_logs_reason_explanation = "recorded artifact logs reason explanation"
+provenance_model_version = "recorded provenance model version"

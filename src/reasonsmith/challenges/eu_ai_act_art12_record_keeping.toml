@@ -1,0 +1,49 @@
+requirement = "eu_ai_act_art12_record_keeping"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: automatic event logs, retention schedule, signer."
+[case.signals]
+automatic_event_logs = "recorded automatic event logs"
+retention_schedule = "recorded retention schedule"
+signer = "recorded signer"
+
+[[case]]
+id = "missing-automatic-event-logs"
+kind = "violated"
+expected = "violated"
+description = "The record omits automatic event logs while the other required fields are supplied."
+[case.signals]
+retention_schedule = "recorded retention schedule"
+signer = "recorded signer"
+
+[[case]]
+id = "missing-retention-schedule"
+kind = "violated"
+expected = "violated"
+description = "The record omits retention schedule while the other required fields are supplied."
+[case.signals]
+automatic_event_logs = "recorded automatic event logs"
+signer = "recorded signer"
+
+[[case]]
+id = "missing-signer"
+kind = "violated"
+expected = "violated"
+description = "The record omits signer while the other required fields are supplied."
+[case.signals]
+automatic_event_logs = "recorded automatic event logs"
+retention_schedule = "recorded retention schedule"
+
+[[case]]
+id = "blank-automatic-event-logs"
+kind = "near-miss"
+expected = "violated"
+description = "The automatic event logs field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+automatic_event_logs = "   "
+retention_schedule = "recorded retention schedule"
+signer = "recorded signer"

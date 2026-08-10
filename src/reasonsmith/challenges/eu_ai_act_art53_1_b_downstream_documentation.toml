@@ -1,0 +1,36 @@
+requirement = "eu_ai_act_art53_1_b_downstream_documentation"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: provenance downstream provider documentation, scope statements capabilities and limitations."
+[case.signals]
+provenance_downstream_provider_documentation = "recorded provenance downstream provider documentation"
+scope_statements_capabilities_and_limitations = "recorded scope statements capabilities and limitations"
+
+[[case]]
+id = "missing-provenance-downstream-provider-documentation"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance downstream provider documentation while the other required fields are supplied."
+[case.signals]
+scope_statements_capabilities_and_limitations = "recorded scope statements capabilities and limitations"
+
+[[case]]
+id = "missing-scope-statements-capabilities-and-limitations"
+kind = "violated"
+expected = "violated"
+description = "The record omits scope statements capabilities and limitations while the other required fields are supplied."
+[case.signals]
+provenance_downstream_provider_documentation = "recorded provenance downstream provider documentation"
+
+[[case]]
+id = "blank-provenance-downstream-provider-documentation"
+kind = "near-miss"
+expected = "violated"
+description = "The provenance downstream provider documentation field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+provenance_downstream_provider_documentation = "   "
+scope_statements_capabilities_and_limitations = "recorded scope statements capabilities and limitations"

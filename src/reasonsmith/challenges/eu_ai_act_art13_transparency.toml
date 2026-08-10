@@ -1,0 +1,100 @@
+requirement = "eu_ai_act_art13_transparency"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: model and data version ids, extraction timestamp, dataset snapshot hash, fidelity coverage metrics, explanation scope, linkage from decision to artifact."
+[case.signals]
+model_and_data_version_ids = "recorded model and data version ids"
+extraction_timestamp = "recorded extraction timestamp"
+dataset_snapshot_hash = "recorded dataset snapshot hash"
+fidelity_coverage_metrics = "recorded fidelity coverage metrics"
+explanation_scope = "recorded explanation scope"
+linkage_from_decision_to_artifact = "recorded linkage from decision to artifact"
+
+[[case]]
+id = "missing-model-and-data-version-ids"
+kind = "violated"
+expected = "violated"
+description = "The record omits model and data version ids while the other required fields are supplied."
+[case.signals]
+extraction_timestamp = "recorded extraction timestamp"
+dataset_snapshot_hash = "recorded dataset snapshot hash"
+fidelity_coverage_metrics = "recorded fidelity coverage metrics"
+explanation_scope = "recorded explanation scope"
+linkage_from_decision_to_artifact = "recorded linkage from decision to artifact"
+
+[[case]]
+id = "missing-extraction-timestamp"
+kind = "violated"
+expected = "violated"
+description = "The record omits extraction timestamp while the other required fields are supplied."
+[case.signals]
+model_and_data_version_ids = "recorded model and data version ids"
+dataset_snapshot_hash = "recorded dataset snapshot hash"
+fidelity_coverage_metrics = "recorded fidelity coverage metrics"
+explanation_scope = "recorded explanation scope"
+linkage_from_decision_to_artifact = "recorded linkage from decision to artifact"
+
+[[case]]
+id = "missing-dataset-snapshot-hash"
+kind = "violated"
+expected = "violated"
+description = "The record omits dataset snapshot hash while the other required fields are supplied."
+[case.signals]
+model_and_data_version_ids = "recorded model and data version ids"
+extraction_timestamp = "recorded extraction timestamp"
+fidelity_coverage_metrics = "recorded fidelity coverage metrics"
+explanation_scope = "recorded explanation scope"
+linkage_from_decision_to_artifact = "recorded linkage from decision to artifact"
+
+[[case]]
+id = "missing-fidelity-coverage-metrics"
+kind = "violated"
+expected = "violated"
+description = "The record omits fidelity coverage metrics while the other required fields are supplied."
+[case.signals]
+model_and_data_version_ids = "recorded model and data version ids"
+extraction_timestamp = "recorded extraction timestamp"
+dataset_snapshot_hash = "recorded dataset snapshot hash"
+explanation_scope = "recorded explanation scope"
+linkage_from_decision_to_artifact = "recorded linkage from decision to artifact"
+
+[[case]]
+id = "missing-explanation-scope"
+kind = "violated"
+expected = "violated"
+description = "The record omits explanation scope while the other required fields are supplied."
+[case.signals]
+model_and_data_version_ids = "recorded model and data version ids"
+extraction_timestamp = "recorded extraction timestamp"
+dataset_snapshot_hash = "recorded dataset snapshot hash"
+fidelity_coverage_metrics = "recorded fidelity coverage metrics"
+linkage_from_decision_to_artifact = "recorded linkage from decision to artifact"
+
+[[case]]
+id = "missing-linkage-from-decision-to-artifact"
+kind = "violated"
+expected = "violated"
+description = "The record omits linkage from decision to artifact while the other required fields are supplied."
+[case.signals]
+model_and_data_version_ids = "recorded model and data version ids"
+extraction_timestamp = "recorded extraction timestamp"
+dataset_snapshot_hash = "recorded dataset snapshot hash"
+fidelity_coverage_metrics = "recorded fidelity coverage metrics"
+explanation_scope = "recorded explanation scope"
+
+[[case]]
+id = "blank-model-and-data-version-ids"
+kind = "near-miss"
+expected = "violated"
+description = "The model and data version ids field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+model_and_data_version_ids = "   "
+extraction_timestamp = "recorded extraction timestamp"
+dataset_snapshot_hash = "recorded dataset snapshot hash"
+fidelity_coverage_metrics = "recorded fidelity coverage metrics"
+explanation_scope = "recorded explanation scope"
+linkage_from_decision_to_artifact = "recorded linkage from decision to artifact"

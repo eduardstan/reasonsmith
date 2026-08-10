@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import pytest
 
@@ -57,6 +58,58 @@ def test_round_trip_reports_stronger_weaker_and_incomparable_without_rewriting()
     assert incomparable.status == "incomparable" and incomparable.witness
     assert not stronger.passed and not weaker.passed and not incomparable.passed
     assert stronger.candidate == stronger_candidate
+
+
+RECORD_CHALLENGE_REQUIREMENTS = frozenset({
+    "eu_ai_act_art12_2_traceability_monitoring",
+    "eu_ai_act_art13_1_transparency_deployers",
+    "eu_ai_act_art13_2_instructions_for_use",
+    "eu_ai_act_art13_transparency",
+    "eu_ai_act_art12_record_keeping",
+    "gdpr_art22_meaningful_information",
+    "ecoa_reg_b_adverse_action",
+    "fda_gmlp_samd",
+    "nist_ai_rmf_risk_evidence",
+    "gdpr_art22_1_automated_decision_prohibition",
+    "gdpr_art22_3_safeguards_human_intervention",
+    "gdpr_recital71_meaningful_explanation",
+    "eu_ai_act_art53_1_a_technical_documentation",
+    "eu_ai_act_art53_1_b_downstream_documentation",
+    "eu_ai_act_art53_1_c_copyright_policy",
+    "eu_ai_act_art53_1_d_training_content_summary",
+    "eu_ai_act_art55_1_a_model_evaluation",
+    "eu_ai_act_art55_1_b_systemic_risk_assessment",
+    "eu_ai_act_art55_1_c_serious_incident_reporting",
+    "eu_ai_act_art55_1_d_cybersecurity_protection",
+})
+
+
+@pytest.mark.parametrize("requirement_id", sorted(RECORD_CHALLENGE_REQUIREMENTS))
+def test_each_added_record_set_catches_a_dropped_required_field(requirement_id):
+    """A plausible AND-to-OR/omitted-field candidate must fail its gold cases."""
+    req = _requirements()[requirement_id]
+    fields = re.findall(r"present\(([^)]+)\)", req.spec)
+    assert len(fields) >= 2
+    for omitted in fields:
+        candidate = " and ".join(
+            f"present({field})" for field in fields if field != omitted
+        )
+        check = harness.check_challenges(req, candidate)
+        assert not check.passed
+        assert any(
+            case.case_id == "missing-" + omitted.replace("_", "-")
+            for case in check.failures
+        )
+
+
+def test_principal_reasons_set_catches_omitting_the_deletion_bound():
+    req = _requirements()["ecoa_reg_b_1002_9_b_2_principal_reasons_complete"]
+    candidate = "present(artifact_logs_reason_explanation)"
+    check = harness.check_challenges(req, candidate)
+    assert not check.passed
+    assert {case.case_id for case in check.failures} >= {
+        "complete-reasons", "deleted-principal-reason"
+    }
 
 
 def test_wrong_specific_reasons_candidate_is_caught_by_near_misses():

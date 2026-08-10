@@ -1,0 +1,36 @@
+requirement = "eu_ai_act_art55_1_b_systemic_risk_assessment"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: artifact logs systemic risk assessment, artifact logs systemic risk mitigation."
+[case.signals]
+artifact_logs_systemic_risk_assessment = "recorded artifact logs systemic risk assessment"
+artifact_logs_systemic_risk_mitigation = "recorded artifact logs systemic risk mitigation"
+
+[[case]]
+id = "missing-artifact-logs-systemic-risk-assessment"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs systemic risk assessment while the other required fields are supplied."
+[case.signals]
+artifact_logs_systemic_risk_mitigation = "recorded artifact logs systemic risk mitigation"
+
+[[case]]
+id = "missing-artifact-logs-systemic-risk-mitigation"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs systemic risk mitigation while the other required fields are supplied."
+[case.signals]
+artifact_logs_systemic_risk_assessment = "recorded artifact logs systemic risk assessment"
+
+[[case]]
+id = "blank-artifact-logs-systemic-risk-assessment"
+kind = "near-miss"
+expected = "violated"
+description = "The artifact logs systemic risk assessment field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+artifact_logs_systemic_risk_assessment = "   "
+artifact_logs_systemic_risk_mitigation = "recorded artifact logs systemic risk mitigation"

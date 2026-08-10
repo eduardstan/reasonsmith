@@ -1,0 +1,36 @@
+requirement = "eu_ai_act_art12_2_traceability_monitoring"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: artifact logs event log, provenance model version."
+[case.signals]
+artifact_logs_event_log = "recorded artifact logs event log"
+provenance_model_version = "recorded provenance model version"
+
+[[case]]
+id = "missing-artifact-logs-event-log"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs event log while the other required fields are supplied."
+[case.signals]
+provenance_model_version = "recorded provenance model version"
+
+[[case]]
+id = "missing-provenance-model-version"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance model version while the other required fields are supplied."
+[case.signals]
+artifact_logs_event_log = "recorded artifact logs event log"
+
+[[case]]
+id = "blank-artifact-logs-event-log"
+kind = "near-miss"
+expected = "violated"
+description = "The artifact logs event log field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+artifact_logs_event_log = "   "
+provenance_model_version = "recorded provenance model version"

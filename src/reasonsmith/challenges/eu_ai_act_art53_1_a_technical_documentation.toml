@@ -1,0 +1,49 @@
+requirement = "eu_ai_act_art53_1_a_technical_documentation"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: provenance technical documentation, artifact logs training and testing process, artifact logs model evaluation results."
+[case.signals]
+provenance_technical_documentation = "recorded provenance technical documentation"
+artifact_logs_training_and_testing_process = "recorded artifact logs training and testing process"
+artifact_logs_model_evaluation_results = "recorded artifact logs model evaluation results"
+
+[[case]]
+id = "missing-provenance-technical-documentation"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance technical documentation while the other required fields are supplied."
+[case.signals]
+artifact_logs_training_and_testing_process = "recorded artifact logs training and testing process"
+artifact_logs_model_evaluation_results = "recorded artifact logs model evaluation results"
+
+[[case]]
+id = "missing-artifact-logs-training-and-testing-process"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs training and testing process while the other required fields are supplied."
+[case.signals]
+provenance_technical_documentation = "recorded provenance technical documentation"
+artifact_logs_model_evaluation_results = "recorded artifact logs model evaluation results"
+
+[[case]]
+id = "missing-artifact-logs-model-evaluation-results"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs model evaluation results while the other required fields are supplied."
+[case.signals]
+provenance_technical_documentation = "recorded provenance technical documentation"
+artifact_logs_training_and_testing_process = "recorded artifact logs training and testing process"
+
+[[case]]
+id = "blank-provenance-technical-documentation"
+kind = "near-miss"
+expected = "violated"
+description = "The provenance technical documentation field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+provenance_technical_documentation = "   "
+artifact_logs_training_and_testing_process = "recorded artifact logs training and testing process"
+artifact_logs_model_evaluation_results = "recorded artifact logs model evaluation results"

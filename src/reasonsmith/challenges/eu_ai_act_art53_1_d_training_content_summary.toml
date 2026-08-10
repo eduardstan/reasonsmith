@@ -1,0 +1,36 @@
+requirement = "eu_ai_act_art53_1_d_training_content_summary"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: provenance training content summary, provenance training content summary template."
+[case.signals]
+provenance_training_content_summary = "recorded provenance training content summary"
+provenance_training_content_summary_template = "recorded provenance training content summary template"
+
+[[case]]
+id = "missing-provenance-training-content-summary"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance training content summary while the other required fields are supplied."
+[case.signals]
+provenance_training_content_summary_template = "recorded provenance training content summary template"
+
+[[case]]
+id = "missing-provenance-training-content-summary-template"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance training content summary template while the other required fields are supplied."
+[case.signals]
+provenance_training_content_summary = "recorded provenance training content summary"
+
+[[case]]
+id = "blank-provenance-training-content-summary"
+kind = "near-miss"
+expected = "violated"
+description = "The provenance training content summary field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+provenance_training_content_summary = "   "
+provenance_training_content_summary_template = "recorded provenance training content summary template"

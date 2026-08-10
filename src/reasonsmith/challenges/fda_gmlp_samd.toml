@@ -1,0 +1,49 @@
+requirement = "fda_gmlp_samd"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: design history links, verification logs, change control."
+[case.signals]
+design_history_links = "recorded design history links"
+verification_logs = "recorded verification logs"
+change_control = "recorded change control"
+
+[[case]]
+id = "missing-design-history-links"
+kind = "violated"
+expected = "violated"
+description = "The record omits design history links while the other required fields are supplied."
+[case.signals]
+verification_logs = "recorded verification logs"
+change_control = "recorded change control"
+
+[[case]]
+id = "missing-verification-logs"
+kind = "violated"
+expected = "violated"
+description = "The record omits verification logs while the other required fields are supplied."
+[case.signals]
+design_history_links = "recorded design history links"
+change_control = "recorded change control"
+
+[[case]]
+id = "missing-change-control"
+kind = "violated"
+expected = "violated"
+description = "The record omits change control while the other required fields are supplied."
+[case.signals]
+design_history_links = "recorded design history links"
+verification_logs = "recorded verification logs"
+
+[[case]]
+id = "blank-design-history-links"
+kind = "near-miss"
+expected = "violated"
+description = "The design history links field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+design_history_links = "   "
+verification_logs = "recorded verification logs"
+change_control = "recorded change control"

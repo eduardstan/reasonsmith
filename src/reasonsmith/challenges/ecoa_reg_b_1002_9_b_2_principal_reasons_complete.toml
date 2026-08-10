@@ -1,0 +1,37 @@
+requirement = "ecoa_reg_b_1002_9_b_2_principal_reasons_complete"
+rationale = "These cases distinguish a notice with no stated reason, a complete reason set, and a notice whose measured deletion count shows that a principal reason was omitted. The near-miss is the boundary count of zero: completeness is non-strict."
+
+[[case]]
+id = "no-reason-trigger"
+kind = "satisfied"
+expected = "satisfied"
+description = "No reason statement is supplied, so this implication makes no claim about deleted reasons."
+[case.signals]
+artifact_logs_deleted_reason_count = 4
+
+[[case]]
+id = "complete-reasons"
+kind = "satisfied"
+expected = "satisfied"
+description = "A reason statement is supplied and the measured deletion count is zero: every principal reason remains."
+[case.signals]
+artifact_logs_reason_explanation = "Income fell below the repayment threshold."
+artifact_logs_deleted_reason_count = 0
+
+[[case]]
+id = "deleted-principal-reason"
+kind = "violated"
+expected = "violated"
+description = "A reason statement is supplied but one principal reason was deleted by the inference artefact."
+[case.signals]
+artifact_logs_reason_explanation = "Income fell below the repayment threshold."
+artifact_logs_deleted_reason_count = 1
+
+[[case]]
+id = "boundary-zero-near-miss"
+kind = "near-miss"
+expected = "satisfied"
+description = "The deletion count is exactly zero; treating the non-strict completeness boundary as a breach would be too strict."
+[case.signals]
+artifact_logs_reason_explanation = "A complete explanation is recorded."
+artifact_logs_deleted_reason_count = 0

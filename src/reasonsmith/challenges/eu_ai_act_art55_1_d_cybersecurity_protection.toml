@@ -1,0 +1,36 @@
+requirement = "eu_ai_act_art55_1_d_cybersecurity_protection"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: provenance cybersecurity protection, provenance physical infrastructure protection."
+[case.signals]
+provenance_cybersecurity_protection = "recorded provenance cybersecurity protection"
+provenance_physical_infrastructure_protection = "recorded provenance physical infrastructure protection"
+
+[[case]]
+id = "missing-provenance-cybersecurity-protection"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance cybersecurity protection while the other required fields are supplied."
+[case.signals]
+provenance_physical_infrastructure_protection = "recorded provenance physical infrastructure protection"
+
+[[case]]
+id = "missing-provenance-physical-infrastructure-protection"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance physical infrastructure protection while the other required fields are supplied."
+[case.signals]
+provenance_cybersecurity_protection = "recorded provenance cybersecurity protection"
+
+[[case]]
+id = "blank-provenance-cybersecurity-protection"
+kind = "near-miss"
+expected = "violated"
+description = "The provenance cybersecurity protection field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+provenance_cybersecurity_protection = "   "
+provenance_physical_infrastructure_protection = "recorded provenance physical infrastructure protection"

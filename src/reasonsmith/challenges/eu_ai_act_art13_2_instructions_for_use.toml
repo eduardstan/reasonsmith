@@ -1,0 +1,36 @@
+requirement = "eu_ai_act_art13_2_instructions_for_use"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: scope statements approximation vs guarantee, provenance constraint set."
+[case.signals]
+scope_statements_approximation_vs_guarantee = "recorded scope statements approximation vs guarantee"
+provenance_constraint_set = "recorded provenance constraint set"
+
+[[case]]
+id = "missing-scope-statements-approximation-vs-guarantee"
+kind = "violated"
+expected = "violated"
+description = "The record omits scope statements approximation vs guarantee while the other required fields are supplied."
+[case.signals]
+provenance_constraint_set = "recorded provenance constraint set"
+
+[[case]]
+id = "missing-provenance-constraint-set"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance constraint set while the other required fields are supplied."
+[case.signals]
+scope_statements_approximation_vs_guarantee = "recorded scope statements approximation vs guarantee"
+
+[[case]]
+id = "blank-scope-statements-approximation-vs-guarantee"
+kind = "near-miss"
+expected = "violated"
+description = "The scope statements approximation vs guarantee field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+scope_statements_approximation_vs_guarantee = "   "
+provenance_constraint_set = "recorded provenance constraint set"

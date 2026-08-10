@@ -1,0 +1,64 @@
+requirement = "nist_ai_rmf_risk_evidence"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: continuous monitoring logs, metric thresholds and alerts, reviews and sign offs, incident tickets."
+[case.signals]
+continuous_monitoring_logs = "recorded continuous monitoring logs"
+metric_thresholds_and_alerts = "recorded metric thresholds and alerts"
+reviews_and_sign_offs = "recorded reviews and sign offs"
+incident_tickets = "recorded incident tickets"
+
+[[case]]
+id = "missing-continuous-monitoring-logs"
+kind = "violated"
+expected = "violated"
+description = "The record omits continuous monitoring logs while the other required fields are supplied."
+[case.signals]
+metric_thresholds_and_alerts = "recorded metric thresholds and alerts"
+reviews_and_sign_offs = "recorded reviews and sign offs"
+incident_tickets = "recorded incident tickets"
+
+[[case]]
+id = "missing-metric-thresholds-and-alerts"
+kind = "violated"
+expected = "violated"
+description = "The record omits metric thresholds and alerts while the other required fields are supplied."
+[case.signals]
+continuous_monitoring_logs = "recorded continuous monitoring logs"
+reviews_and_sign_offs = "recorded reviews and sign offs"
+incident_tickets = "recorded incident tickets"
+
+[[case]]
+id = "missing-reviews-and-sign-offs"
+kind = "violated"
+expected = "violated"
+description = "The record omits reviews and sign offs while the other required fields are supplied."
+[case.signals]
+continuous_monitoring_logs = "recorded continuous monitoring logs"
+metric_thresholds_and_alerts = "recorded metric thresholds and alerts"
+incident_tickets = "recorded incident tickets"
+
+[[case]]
+id = "missing-incident-tickets"
+kind = "violated"
+expected = "violated"
+description = "The record omits incident tickets while the other required fields are supplied."
+[case.signals]
+continuous_monitoring_logs = "recorded continuous monitoring logs"
+metric_thresholds_and_alerts = "recorded metric thresholds and alerts"
+reviews_and_sign_offs = "recorded reviews and sign offs"
+
+[[case]]
+id = "blank-continuous-monitoring-logs"
+kind = "near-miss"
+expected = "violated"
+description = "The continuous monitoring logs field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+continuous_monitoring_logs = "   "
+metric_thresholds_and_alerts = "recorded metric thresholds and alerts"
+reviews_and_sign_offs = "recorded reviews and sign offs"
+incident_tickets = "recorded incident tickets"

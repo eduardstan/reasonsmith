@@ -65,3 +65,29 @@ provenance_basis_contract = false
 provenance_basis_union_or_member_state_law = false
 provenance_basis_explicit_consent = false
 artifact_logs_human_intervention_route = true
+
+[[case]]
+id = "consent-with-human-review"
+kind = "satisfied"
+expected = "satisfied"
+description = "Explicit consent uses the contract/consent safeguard route, and human intervention is recorded."
+[case.signals]
+artifact_logs_solely_automated = true
+artifact_logs_significant_effect = true
+provenance_basis_contract = false
+provenance_basis_union_or_member_state_law = false
+provenance_basis_explicit_consent = true
+artifact_logs_human_intervention_route = true
+
+[[case]]
+id = "consent-without-human-review"
+kind = "violated"
+expected = "violated"
+description = "Explicit consent without the required human intervention route remains prohibited."
+[case.signals]
+artifact_logs_solely_automated = true
+artifact_logs_significant_effect = true
+provenance_basis_contract = false
+provenance_basis_union_or_member_state_law = false
+provenance_basis_explicit_consent = true
+artifact_logs_human_intervention_route = false

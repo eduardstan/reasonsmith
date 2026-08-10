@@ -1,0 +1,36 @@
+requirement = "eu_ai_act_art55_1_a_model_evaluation"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: artifact logs model evaluation results, artifact logs adversarial testing record."
+[case.signals]
+artifact_logs_model_evaluation_results = "recorded artifact logs model evaluation results"
+artifact_logs_adversarial_testing_record = "recorded artifact logs adversarial testing record"
+
+[[case]]
+id = "missing-artifact-logs-model-evaluation-results"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs model evaluation results while the other required fields are supplied."
+[case.signals]
+artifact_logs_adversarial_testing_record = "recorded artifact logs adversarial testing record"
+
+[[case]]
+id = "missing-artifact-logs-adversarial-testing-record"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs adversarial testing record while the other required fields are supplied."
+[case.signals]
+artifact_logs_model_evaluation_results = "recorded artifact logs model evaluation results"
+
+[[case]]
+id = "blank-artifact-logs-model-evaluation-results"
+kind = "near-miss"
+expected = "violated"
+description = "The artifact logs model evaluation results field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+artifact_logs_model_evaluation_results = "   "
+artifact_logs_adversarial_testing_record = "recorded artifact logs adversarial testing record"

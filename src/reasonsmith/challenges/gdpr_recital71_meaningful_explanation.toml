@@ -1,0 +1,49 @@
+requirement = "gdpr_recital71_meaningful_explanation"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: artifact logs reason explanation, scope statements explanation scope, provenance model version."
+[case.signals]
+artifact_logs_reason_explanation = "recorded artifact logs reason explanation"
+scope_statements_explanation_scope = "recorded scope statements explanation scope"
+provenance_model_version = "recorded provenance model version"
+
+[[case]]
+id = "missing-artifact-logs-reason-explanation"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs reason explanation while the other required fields are supplied."
+[case.signals]
+scope_statements_explanation_scope = "recorded scope statements explanation scope"
+provenance_model_version = "recorded provenance model version"
+
+[[case]]
+id = "missing-scope-statements-explanation-scope"
+kind = "violated"
+expected = "violated"
+description = "The record omits scope statements explanation scope while the other required fields are supplied."
+[case.signals]
+artifact_logs_reason_explanation = "recorded artifact logs reason explanation"
+provenance_model_version = "recorded provenance model version"
+
+[[case]]
+id = "missing-provenance-model-version"
+kind = "violated"
+expected = "violated"
+description = "The record omits provenance model version while the other required fields are supplied."
+[case.signals]
+artifact_logs_reason_explanation = "recorded artifact logs reason explanation"
+scope_statements_explanation_scope = "recorded scope statements explanation scope"
+
+[[case]]
+id = "blank-artifact-logs-reason-explanation"
+kind = "near-miss"
+expected = "violated"
+description = "The artifact logs reason explanation field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+artifact_logs_reason_explanation = "   "
+scope_statements_explanation_scope = "recorded scope statements explanation scope"
+provenance_model_version = "recorded provenance model version"

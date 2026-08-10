@@ -1,0 +1,49 @@
+requirement = "eu_ai_act_art55_1_c_serious_incident_reporting"
+rationale = "These cases exercise each independently required evidence field in the hand-authored property. The near-miss uses a blank value, which is not a recorded value even when the field key exists."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required record is supplied: artifact logs serious incident record, artifact logs serious incident report, artifact logs corrective measures."
+[case.signals]
+artifact_logs_serious_incident_record = "recorded artifact logs serious incident record"
+artifact_logs_serious_incident_report = "recorded artifact logs serious incident report"
+artifact_logs_corrective_measures = "recorded artifact logs corrective measures"
+
+[[case]]
+id = "missing-artifact-logs-serious-incident-record"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs serious incident record while the other required fields are supplied."
+[case.signals]
+artifact_logs_serious_incident_report = "recorded artifact logs serious incident report"
+artifact_logs_corrective_measures = "recorded artifact logs corrective measures"
+
+[[case]]
+id = "missing-artifact-logs-serious-incident-report"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs serious incident report while the other required fields are supplied."
+[case.signals]
+artifact_logs_serious_incident_record = "recorded artifact logs serious incident record"
+artifact_logs_corrective_measures = "recorded artifact logs corrective measures"
+
+[[case]]
+id = "missing-artifact-logs-corrective-measures"
+kind = "violated"
+expected = "violated"
+description = "The record omits artifact logs corrective measures while the other required fields are supplied."
+[case.signals]
+artifact_logs_serious_incident_record = "recorded artifact logs serious incident record"
+artifact_logs_serious_incident_report = "recorded artifact logs serious incident report"
+
+[[case]]
+id = "blank-artifact-logs-serious-incident-record"
+kind = "near-miss"
+expected = "violated"
+description = "The artifact logs serious incident record field is present only as blank text; a key-shaped record is not substantive evidence."
+[case.signals]
+artifact_logs_serious_incident_record = "   "
+artifact_logs_serious_incident_report = "recorded artifact logs serious incident report"
+artifact_logs_corrective_measures = "recorded artifact logs corrective measures"
