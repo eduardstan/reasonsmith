@@ -1,8 +1,0 @@
-{
-  "schema_version": 1,
-  "verified_at": "2026-08-05",
-  "match": 23,
-  "differ": 0,
-  "method": "python -m reasonsmith.drift",
-  "source": "official legal sources recorded in docs/legal-sources.md"
-}

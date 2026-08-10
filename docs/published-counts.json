@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-10T20:37:30.105976+00:00",
+  "generated_at": "2026-08-10T20:50:57.287771+00:00",
   "source": "reasonsmith tree (verdict.py, spec.py, packs/, docs/legal-sources.md)",
   "rungs": [
     "unattainable",
@@ -13,10 +13,9 @@
   "requirement_count": 29,
   "quote_count": 23,
   "statutory_source_document_count": 3,
-  "quotes_last_verified": "2026-08-05",
-  "quotes_last_verified_source": "statute-drift verification run (docs/legal-verification.json)",
+  "quotes_last_verified": null,
+  "quotes_last_verified_source": "no statute-drift verification run recorded",
   "quotes_verification": {
-    "match": 23,
-    "differ": 0
+    "status": "not_run"
   }
 }

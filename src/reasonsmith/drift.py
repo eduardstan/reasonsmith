@@ -485,11 +485,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--report", metavar="PATH", help="write the JSON drift report to PATH (default: none)"
     )
+    parser.add_argument(
+        "--verification-manifest", metavar="PATH",
+        help="write a successful-run quote verification manifest to PATH",
+    )
     args = parser.parse_args(argv)
     report = check_statute_drift(fetch_source)
     print(report.render_text())
     if args.report:
         Path(args.report).write_text(json.dumps(report.to_dict(), indent=2), encoding="utf-8")
+    if args.verification_manifest and not report.has_drift:
+        matches = sum(result.status == "match" for result in report.results)
+        differs = sum(result.status == "differ" for result in report.results)
+        Path(args.verification_manifest).write_text(
+            json.dumps({
+                "schema_version": 1,
+                "verified_at": report.checked_at.date().isoformat(),
+                "match": matches,
+                "differ": differs,
+                "method": "python -m reasonsmith.drift",
+            }, indent=2) + "\n",
+            encoding="utf-8",
+        )
     return 1 if report.has_drift else 0
 
 

@@ -19,8 +19,10 @@ _SOURCE = _ROOT / "docs" / "legal-sources.md"
 _VERIFICATION = _ROOT / "docs" / "legal-verification.json"
 
 
-def _verification() -> dict[str, object]:
-    """Read the committed output of a statute-drift verification run."""
+def _verification() -> dict[str, object] | None:
+    """Read the output of a statute-drift verification run, when one exists."""
+    if not _VERIFICATION.exists():
+        return None
     return json.loads(_VERIFICATION.read_text(encoding="utf-8"))
 
 
@@ -30,7 +32,9 @@ def published_counts() -> dict[str, object]:
     statutory = [load_pack(name) for name in STATUTORY_PACKS]
     verification = _verification()
     quote_count = sum(len(p.requirements) for p in statutory)
-    if verification["match"] != quote_count or verification["differ"] != 0:
+    if verification is not None and (
+        verification["match"] != quote_count or verification["differ"] != 0
+    ):
         raise ValueError("legal verification manifest does not cover all statutory quotes")
     # A quote is a requirement in a statutory pack; Table 7 rows quote the paper instead.
     return {
@@ -44,14 +48,15 @@ def published_counts() -> dict[str, object]:
         "statutory_source_document_count": len(
             {p.source_metadata.get("document") for p in statutory}
         ),
-        "quotes_last_verified": verification["verified_at"],
+        "quotes_last_verified": verification["verified_at"] if verification else None,
         "quotes_last_verified_source": (
             "statute-drift verification run (docs/legal-verification.json)"
+            if verification else "no statute-drift verification run recorded"
         ),
-        "quotes_verification": {
-            "match": verification["match"],
-            "differ": verification["differ"],
-        },
+        "quotes_verification": (
+            {"status": "verified", "match": verification["match"], "differ": verification["differ"]}
+            if verification else {"status": "not_run"}
+        ),
     }
 
 
