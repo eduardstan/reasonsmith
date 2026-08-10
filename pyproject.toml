@@ -66,7 +66,7 @@ where = ["src"]
 # `examples/sample_decisions.jsonl` is here for the same reason as the packs: a documented command
 # names it, so it has to be in the wheel. The example systems beside it are `.py` modules and are
 # packaged as modules. `tests/test_packaged_examples.py` fails if either stops shipping.
-reasonsmith = ["table7.toml", "packs/*.toml", "examples/*.jsonl"]
+reasonsmith = ["table7.toml", "packs/*.toml", "examples/*.jsonl", "challenges/*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

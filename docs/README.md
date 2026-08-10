@@ -37,3 +37,5 @@ Welcome to the documentation directory for `reasonsmith`.
 - [`ROADMAP.md`](../ROADMAP.md): The public backlog — five numbered objectives, each with the gap it closes, a measurable outcome that fails today, and what it depends on, plus what is deliberately not planned.
 - [`CONTRIBUTING.md`](../CONTRIBUTING.md): Contributor on-ramp, coding rules, and concrete open work.
 - [`CHANGELOG.md`](../CHANGELOG.md): Notable changes per release, starting at 0.3.0 — including the breaking ones an externally authored pack or an existing CLI invocation has to answer for.
+
+For the model-free autoformalisation verification gates, see [`autoformalization.md`](autoformalization.md).

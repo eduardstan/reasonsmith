@@ -1,0 +1,67 @@
+requirement = "gdpr_art22_1_no_prohibited_decision_for_any_input"
+rationale = "These cases exercise the implication trigger, each lawful basis branch, and the human-intervention condition that applies to contract and consent but not to a statutory basis."
+
+[[case]]
+id = "ordinary-nonautomated"
+kind = "satisfied"
+expected = "satisfied"
+description = "The significant-effect trigger does not fire when the decision is not solely automated."
+[case.signals]
+artifact_logs_solely_automated = false
+artifact_logs_significant_effect = true
+provenance_basis_contract = false
+provenance_basis_union_or_member_state_law = false
+provenance_basis_explicit_consent = false
+artifact_logs_human_intervention_route = false
+
+[[case]]
+id = "contract-with-human-review"
+kind = "satisfied"
+expected = "satisfied"
+description = "A contract basis is used and the required human intervention route is recorded."
+[case.signals]
+artifact_logs_solely_automated = true
+artifact_logs_significant_effect = true
+provenance_basis_contract = true
+provenance_basis_union_or_member_state_law = false
+provenance_basis_explicit_consent = false
+artifact_logs_human_intervention_route = true
+
+[[case]]
+id = "contract-without-human-review"
+kind = "violated"
+expected = "violated"
+description = "A contract basis without the required human intervention route is a breach of the formal property."
+[case.signals]
+artifact_logs_solely_automated = true
+artifact_logs_significant_effect = true
+provenance_basis_contract = true
+provenance_basis_union_or_member_state_law = false
+provenance_basis_explicit_consent = false
+artifact_logs_human_intervention_route = false
+
+[[case]]
+id = "statutory-basis-no-review"
+kind = "near-miss"
+expected = "satisfied"
+description = "The Union or Member State law basis is the exception: this property does not require the contract/consent review route."
+[case.signals]
+artifact_logs_solely_automated = true
+artifact_logs_significant_effect = true
+provenance_basis_contract = false
+provenance_basis_union_or_member_state_law = true
+provenance_basis_explicit_consent = false
+artifact_logs_human_intervention_route = false
+
+[[case]]
+id = "trigger-without-basis"
+kind = "violated"
+expected = "violated"
+description = "A triggered decision with no one of the three permitted bases is prohibited."
+[case.signals]
+artifact_logs_solely_automated = true
+artifact_logs_significant_effect = true
+provenance_basis_contract = false
+provenance_basis_union_or_member_state_law = false
+provenance_basis_explicit_consent = false
+artifact_logs_human_intervention_route = true

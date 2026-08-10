@@ -436,3 +436,5 @@ and the built-in stands, so installing a package can never change what `load_pac
 Engines install the same way, through `reasonsmith.engines` — see
 [`authoring-engines.md`](authoring-engines.md), which is also where the discipline lives: what a
 plug-in may claim, and what a `proved` from an engine this repository never audited is worth.
+
+For the model-free autoformalisation verification gates, see [`autoformalization.md`](autoformalization.md).

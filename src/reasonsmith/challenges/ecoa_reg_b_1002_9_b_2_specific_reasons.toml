@@ -1,0 +1,47 @@
+requirement = "ecoa_reg_b_1002_9_b_2_specific_reasons"
+rationale = "The cases use the clause's own three named insufficiencies, while preserving the distinction between a present but open-textured reason and no reason at all."
+
+[[case]]
+id = "specific-local-reason"
+kind = "satisfied"
+expected = "satisfied"
+description = "A local reason is recorded with provenance and scope."
+[case.signals]
+artifact_logs_reason_explanation = "Income fell below the repayment threshold."
+provenance_model_version = "model-7"
+scope_statements_local_vs_global = "local"
+
+[[case]]
+id = "internal-standards"
+kind = "violated"
+expected = "violated"
+description = "The notice rests on the exact insufficiency named by the regulation: internal standards."
+[case.signals]
+artifact_logs_reason_explanation = "Internal standards were not met."
+provenance_model_version = "model-7"
+scope_statements_local_vs_global = "local"
+
+[[case]]
+id = "qualifying-score-case-fold"
+kind = "violated"
+expected = "violated"
+description = "ASCII case folding must still catch the named qualifying-score insufficiency."
+[case.signals]
+artifact_logs_reason_explanation = "FAILED TO ACHIEVE A QUALIFYING SCORE"
+provenance_model_version = "model-7"
+scope_statements_local_vs_global = "local"
+
+[[case]]
+id = "missing-provenance"
+kind = "violated"
+expected = "violated"
+description = "A reason alone is insufficient when the provenance and local scope fields are absent."
+[case.signals]
+artifact_logs_reason_explanation = "Income fell below the repayment threshold."
+
+[[case]]
+id = "no-reason-trigger"
+kind = "near-miss"
+expected = "satisfied"
+description = "No statement of reasons is supplied; the implication's antecedent is false, so this formula does not decide adequacy."
+[case.signals]

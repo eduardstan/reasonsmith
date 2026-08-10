@@ -1,0 +1,7 @@
+schema_version = 1
+# This is the intentionally small starting subset; every listed requirement must have one file.
+requirements = [
+  "eu_ai_act_art12_1_automatic_logging",
+  "ecoa_reg_b_1002_9_b_2_specific_reasons",
+  "gdpr_art22_1_no_prohibited_decision_for_any_input",
+]

@@ -1,0 +1,35 @@
+requirement = "eu_ai_act_art12_1_automatic_logging"
+rationale = "This set separates the three independently required logging fields, including blank values that look present to a naive key-presence checker."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Automatic event logging and the model provenance version are both recorded."
+[case.signals]
+artifact_logs_event_log = "events-2026-08-04"
+provenance_model_version = "model-7"
+
+[[case]]
+id = "missing-event-log"
+kind = "violated"
+expected = "violated"
+description = "The provenance version exists, but no automatic event log was recorded."
+[case.signals]
+provenance_model_version = "model-7"
+
+[[case]]
+id = "blank-provenance-near-miss"
+kind = "near-miss"
+expected = "violated"
+description = "A provenance key is present in the record shape but its value is blank."
+[case.signals]
+artifact_logs_event_log = "events-2026-08-04"
+provenance_model_version = "   "
+
+[[case]]
+id = "missing-both"
+kind = "near-miss"
+expected = "violated"
+description = "Neither required record is supplied."
+[case.signals]
