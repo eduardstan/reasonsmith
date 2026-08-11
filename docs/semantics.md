@@ -429,6 +429,14 @@ module docstring.
 
 ## 3. Soundness, one engine at a time
 
+```mermaid
+flowchart LR
+    u["unattainable<br/>capability gap; no execution"] --> o["observed<br/>supplied records only"]
+    o --> r["recounted<br/>system-recounted reasons"]
+    r --> p["probed<br/>bounded replay or deletion search"]
+    p --> v["proved<br/>all inputs admitted by declared logic"]
+```
+
 ### `record` — `engines/record.py`
 
 > **If the record engine reports `satisfied` at strength `observed`, then:** for every record in the
@@ -1893,6 +1901,21 @@ Nothing is recomputed per reader: every part of every artefact is a part of the 
 (`test_no_audience_sees_a_different_verdict_from_another`), and dropping the flag renders the full
 report unchanged (`test_the_default_rendering_is_the_full_report_and_the_auditors`) — which is why
 every generated document under `docs/` still regenerates byte-for-byte.
+
+```mermaid
+flowchart TB
+    report["One ConformanceReport"]
+    report --> developer
+    report --> deployer
+    report --> auditor
+    report --> regulator
+    report --> affected
+    developer["developer<br/>shown: verdict, limits, strength, counts, required and missing signals, capability gaps, summaries, budgets, counterexamples, witnesses<br/>not shown: binding or scope/domain limits, plain account"]
+    deployer["deployer<br/>shown: verdict, limits, strength, counts, binding and scope/domain limits, capability gaps, summaries, budgets<br/>not shown: required signals, trace witnesses, counterexamples, plain account"]
+    auditor["auditor<br/>shown: every report field except the plain-language account<br/>not shown: plain account"]
+    regulator["regulator<br/>shown: verdict, limits, strength, counts, binding and scope/domain limits, summaries, budgets<br/>not shown: required and missing signals, capability gaps, counterexamples, witnesses, plain account"]
+    affected["affected-individual<br/>shown: verdict, limits, quoted plain-language account<br/>not shown: strength, counts, binding/scope/domain limits, signals, gaps, summaries, budgets, counterexamples, witnesses"]
+```
 
 **The table below is authored, not derived.** It is the same kind of choice a pack author makes
 when they pick a threshold: nothing in the law, in the packs or in the evidence says a deployer

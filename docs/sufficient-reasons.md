@@ -142,6 +142,14 @@ is not two premises, it is one.
 >
 > Left-to-right of the first ⟺ is Definition 3 at `D = A_q \ S`; right-to-left is Lemma 1.
 
+```mermaid
+flowchart LR
+    axp["AXp<br/>minimal sufficient reason"] -->|are exactly| hitcx["minimal hitting sets of CXps"]
+    cxp["CXp<br/>minimal contrastive deletion"] -->|are exactly| hitax["minimal hitting sets of AXps"]
+    hitcx --> cxp
+    hitax --> axp
+```
+
 > **Theorem (minimal-hitting-set duality).** The AXps are exactly the minimal hitting sets of the
 > CXps, and the CXps are exactly the minimal hitting sets of the AXps.
 >
