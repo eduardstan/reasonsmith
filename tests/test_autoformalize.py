@@ -249,7 +249,7 @@ def test_new_challenge_shapes_are_explicit_and_baselines_pass():
     [
         (
             "gdpr_recital71_error_risk_minimised",
-            "always(scope_statements_declared_deviation < artifact_logs_decision_margin)",
+            "always(artifact_logs_semantics_value_gap < artifact_logs_decision_margin)",
             "equal-is-not-breach",
         ),
         (

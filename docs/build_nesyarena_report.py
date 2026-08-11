@@ -166,6 +166,17 @@ UNDECLARED_SIGNALS = (
         "provenance_basis_explicit_consent",
         "as above",
     ),
+    (
+        "artifact_logs_semantics_value_gap",
+        "this is the one signal here reasonsmith measures rather than reads, and measuring it "
+        "needs the model encoding behind a decision — an artifact() this adapter deliberately "
+        "does not expose. The deviation figures in the inference table below exist because "
+        "nesyarena ships an exact oracle beside each approximate provenance, which is a property "
+        "of a measurement harness and not of a deployed system, and handing that oracle to "
+        "reasonsmith would report agreement this tool established from an artefact the system "
+        "never gave it. So the error-risk duty of Recital 71 is reported unattainable for all "
+        "five provenances rather than judged against a number the harness supplied",
+    ),
 )
 
 #: Every signal the adapter declares. Each one has a value computed from the system's own run.
@@ -179,7 +190,6 @@ DECLARED_SIGNALS = (
     "scope_statements_local_vs_global",
     "scope_statements_explanation_scope",
     "scope_statements_approximation_vs_guarantee",
-    "scope_statements_declared_deviation",
 )
 
 PACKS = ("gdpr", "eu_ai_act", "ecoa")
@@ -298,7 +308,6 @@ class NesyArenaSUT(BaseSUT):
                         f"{inst.params['depth']} and no proof beyond that depth"
                     ),
                     "scope_statements_approximation_vs_guarantee": guarantee,
-                    "scope_statements_declared_deviation": deviation,
                 }
             )
         return records

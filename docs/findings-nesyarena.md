@@ -28,23 +28,27 @@ enumeration at the depth each generator itself records. Nothing was chosen after
 **The decision.** Each provenance aggregates the proofs of one instance and the value is
 thresholded at `0.5` into approve/deny. The threshold was fixed before the run and not moved.
 
-**The record.** Ten signals, each computed from that system's own inference on that instance:
+**The record.** Nine signals, each computed from that system's own inference on that instance:
 the decision record, the decision's margin from the approve threshold, an event-log entry, the
 per-decision reason, the model version, the constraint set (the program's ground rules), the
-local-vs-global scope statement, the explanation-scope statement, the approximation-vs-guarantee
-statement carrying the measured deviation from the semantics the system claims, and that deviation
-as a number. The decision margin and numeric deviation are the two signals added for the duty below;
-its property compares them, and its capability declaration also requires the existing approximation
-statement. The first run carried eight signals and no duty read the deviation at all.
+local-vs-global scope statement, the explanation-scope statement, and the approximation-vs-guarantee
+statement carrying the measured deviation from the semantics the system claims. The first run
+carried eight signals and no duty read the deviation at all; the decision margin is the one added
+since, for the duty below. The *numeric* deviation was a tenth signal for one release and is gone
+again: the duty that read it now reads a deviation reasonsmith measures for itself, which is a
+thing this adapter cannot supply — see [what changed](#what-changed-since-this-finding).
 
-Thirteen further pack signals were **not** declared, because the system genuinely cannot emit them —
+Fourteen further pack signals were **not** declared, because the system genuinely cannot emit them —
 `provenance_active_exceptions` (definite Horn programs have no defeater mechanism),
 `artifact_logs_notification_latency_days` and `artifact_logs_counteroffer_not_accepted` (no
 notification exists in this domain), `artifact_logs_right_to_reasons_disclosure` (the system issues
 no adverse-action notice; it is the ungated branch of the either/or of 12 CFR 1002.9(a)(2), so its
 absence makes no duty unattainable), `artifact_logs_deleted_reason_count` (the one signal
 reasonsmith *measures* from an inference artefact rather than reads from a record, and no
-provenance here exposes one through `artifact()`), `applicant_prohibited_basis` (a fact about a
+provenance here exposes one through `artifact()`), `artifact_logs_semantics_value_gap` (the
+second such signal, and undeclared for the same reason: measuring how far an inference stands from
+the semantics it claims needs the model encoding it ran over, which `artifact()` is the way to
+supply and no provenance here does), `applicant_prohibited_basis` (a fact about a
 natural person, and no applicant exists for a graph solver to accept one about),
 `artifact_logs_incompleteness_notice_sent` (the system receives no application, so nothing about
 one is incomplete and no notice of incompleteness exists to send), and the six
@@ -67,18 +71,21 @@ and it is the reason the gate exists.
 
 | outcome | count |
 | --- | ---: |
-| satisfied, at strength `observed` | 12 |
-| violated, at strength `observed` | 3 |
-| inconclusive, `unattainable` | 10 |
+| satisfied, at strength `observed` | 9 |
+| violated, at strength `observed` | 1 |
+| inconclusive, `unattainable` | 15 |
 | not applicable (no class declared) | 20 |
 | not applicable (no decision domain declared) | 30 |
 | satisfied at `probed` | 0 |
 | satisfied at `proved` | 0 |
 
-One of the three violations is the missing-reason finding below, which the first run of this
-battery already produced against 11 requirements. The other two are the twelfth requirement, added
-after that run to read the declared deviation rather than the field that explains it — see
-[what changed](#what-changed-since-this-finding), under finding 1.
+The single violation is the missing-reason finding below, which the first run of this battery
+already produced against 11 requirements. Two further violations stood here for one release, both
+on the twelfth requirement — added after that run to read the deviation each system *declared* —
+and both are gone, replaced by five `unattainable` results. That is not these systems improving:
+the duty stopped taking their word for the number and started measuring it, and measuring it needs
+an artefact none of them exposes. See [what changed](#what-changed-since-this-finding), under
+finding 1.
 
 The whole ECOA column moved to *not applicable* when the decision-domain gate landed: 8 satisfied,
 2 violated and 5 unattainable results became 15 not-applicable ones. Nothing about these systems
@@ -155,44 +162,71 @@ procedures for the profiling, implement technical and organisational measures ap
 13(2) it reaches a system that declares no regulatory class. Its property is
 
 ```text
-always(scope_statements_declared_deviation <= artifact_logs_decision_margin)
+always(artifact_logs_semantics_value_gap <= artifact_logs_decision_margin)
 ```
 
-— the deviation a system declares about its own approximation, against the distance between that
-decision and its own threshold. No number in it is invented: the bound is the system's own margin,
-so the duty fails exactly when a system's *declared* error is larger than the margin.
+— the distance between the system's own engine's answer and exact inference's answer to the same
+query on the same interpretation, against the distance between that decision and its own threshold.
+No number in it is invented: the bound is the system's own margin, so the duty fails exactly when
+the error reasonsmith *measured* is larger than the margin.
 
-Against this battery:
+For one release the left-hand side was `scope_statements_declared_deviation` — the deviation a
+system declared about itself — and this section reported `top-1-proofs` and `min-max-prob` violated
+on it. Both are now `unattainable`, and the exchange is stated plainly because it is not a
+free one. What was given up: two violations that were only ever available because this harness
+writes its own true deviation into its own log, which is the property finding 5 below says a
+deployed system does not have. What was bought: the number can no longer be written by the system
+being measured. reasonsmith computes exact inference over the model encoding behind the decision and
+compares it against the answer the system gave, and a system exposing no such encoding through
+`artifact()` is reported `unattainable` rather than judged on a figure it supplied. None of these
+five provenances exposes one, so all five land there.
 
-| system | max declared deviation | decisions where the declared deviation exceeds the margin | verdict |
+The columns below are the harness's own measurements, unchanged, beside what the duty now reports.
+They no longer agree, and that disagreement is the finding: everything the first three columns
+know, the verdict column no longer gets to use.
+
+| system | max deviation the harness measured | decisions where that deviation exceeds the margin | verdict |
 | --- | ---: | ---: | --- |
-| `exact-wmc` | 0.000000 | 0/16 | satisfied |
-| `add-mult(clamped)` | 0.347356 | 0/16 | satisfied |
-| `top-1-proofs` | 0.470679 | **8/16** | **violated** |
-| `top-3-proofs` | 0.097273 | 0/16 | satisfied |
-| `min-max-prob` | 0.357000 | **5/16** | **violated** |
+| `exact-wmc` | 0.000000 | 0/16 | inconclusive |
+| `add-mult(clamped)` | 0.347356 | 0/16 | inconclusive |
+| `top-1-proofs` | 0.470679 | **8/16** | inconclusive |
+| `top-3-proofs` | 0.097273 | 0/16 | inconclusive |
+| `min-max-prob` | 0.357000 | **5/16** | inconclusive |
 
-The two systems the finding names are the two the duty flags, and the exact oracle is untouched:
-its declared deviation is `0.000000` on every instance, and `0.0 <= margin` holds even where the
-margin is zero. `add-mult(clamped)` and `top-3-proofs` stay satisfied on this duty and are right to
-— both deviate, neither ever declares a deviation larger than the decision margin. `min-max-prob`
-breaches on five decisions where the four it actually flips are a subset: a declared deviation can
-exceed the margin without having flipped the decision, and the duty reports the risk, not the flip.
+On the harness's own numbers `min-max-prob` still
+breaches on five decisions where the four it actually flips are a subset: a
+deviation can exceed the margin without having flipped the decision, and the duty reports the risk,
+not the flip. That relationship is a property of those numbers and holds whether or not any duty
+reads them.
+
+What **has** changed:
+
+- The duty no longer reads a **self-declaration**. Its left-hand side is measured by reasonsmith
+  from the inference artefact, so a system that silently under-reports its own error no longer
+  passes on the strength of the report. It rewards the accuracy, and it reaches only a system that
+  exposes what the accuracy can be measured from.
+- A system whose declared semantics this build computes no reference for is *not evaluated* naming
+  the claim, and never violated. The vocabulary a system declares its semantics in
+  (`reasonsmith.spec.CLAIMED_SEMANTICS`) has no member for a documented approximation of another
+  member, so an approximating system's honest declaration lands there — unjudged rather than
+  accused of a claim it never made. That refusal is why the vocabulary had to close before any
+  verdict read a gap.
 
 What has **not** changed, and what an adopter must still read the same way:
 
-- The duty reads a **self-declaration**. Nothing in reasonsmith verifies the number. A system that
-  silently under-reports its own error passes; a system honest enough to report a large one is the
-  only kind this duty can flag. It rewards the measurement, not the accuracy.
-- Silence is still not compliance, but it is not a violation either: a system that declares no
-  deviation is `unattainable` on the signal and one that declares an unmeasured statement is not
-  evaluated. Neither is `satisfied`, and neither is a finding about the system's accuracy.
-- An exact equality is a checked limit: the duty's own comparison is non-strict, so the observed
-  engine reports a tie satisfied and cannot detect a decision that turns on an exact threshold tie
-  without signed evidence and the system's own tie-break.
-- Finding 5 below now carries twice the weight: this duty is checkable here only because nesyarena
-  ships the exact oracle beside the approximate provenance. A deployed neuro-symbolic system would
-  come back `unattainable`, and that is the honest outcome rather than a gap in the pack.
+- Silence is still not compliance, but it is not a violation either: a system exposing no inference
+  artefact is `unattainable` on the measured signal and one whose family computes no reference is
+  `unattainable` too. Neither is `satisfied`, and neither is a finding about the system's accuracy.
+- An exact equality is a checked limit: the duty's own comparison is non-strict, so a measured gap
+  exactly equal to the margin is reported satisfied, and the duty cannot detect a decision that
+  turns on an exact threshold tie without the system's own tie-break.
+- Finding 5 below carries the same weight it did, pointed the other way: the deviation columns above
+  are available only because nesyarena ships the exact oracle beside each approximate provenance.
+  What the duty now needs instead is narrower and more ordinary — the model encoding the inference
+  ran over. These provenances have one and this adapter does not hand it over, which is why they
+  are `unattainable` here rather than measured. **This is the part of finding 1 that is still open**:
+  the two systems whose decisions are wrong are no longer falsely cleared on this duty, and they
+  are not yet caught by it either.
 - Every satisfied record-formalism row in this report still means only *the record has the fields*.
 - **The "conformance verdicts" column above is the run as it stood then.** The decision-domain gate
   of finding 3 has since moved every ECOA result to *not applicable*, so `add-mult(clamped)` is
@@ -218,14 +252,17 @@ declare `consumer-credit` would report it *not evaluated*, because these provena
 `decide()` nor `logic()` and no length of decision log establishes what a system would have decided.
 The capability gate does not answer it either: the protected variable is an input the decision
 procedure accepts rather than a field a decision record carries, so it is the one name that gate
-does not subtract (`docs/semantics.md` §3, *counterfactual*). Two duties came back `unattainable` for all five systems —
-the whole unattainable column of ten: the GDPR logical duty
-`gdpr_art22_1_no_prohibited_decision_for_any_input` and the GDPR record duty
-`gdpr_art22_1_automated_decision_prohibition`. The logical duty needs six signals; the system can
+does not subtract (`docs/semantics.md` §3, *counterfactual*). Three duties came back `unattainable` for all five systems —
+the whole unattainable column of fifteen: the GDPR logical duty
+`gdpr_art22_1_no_prohibited_decision_for_any_input`, the GDPR record duty
+`gdpr_art22_1_automated_decision_prohibition` and the GDPR temporal duty
+`gdpr_recital71_error_risk_minimised`. The logical duty needs six signals; the system can
 emit none of them, because five are facts about a controller's legal basis or about a
 human-intervention route and one is about the effect a decision has on a person. The record duty
 needs `provenance_active_exceptions`, and definite Horn programs have no defeater mechanism to
-record as active. The ECOA *timing* duty is not `unattainable` in this run at all — it is one of
+record as active. The temporal duty needs `artifact_logs_semantics_value_gap`, which is not a field
+any record carries: it is measured from the inference artefact behind a decision, and no provenance
+here exposes one. The ECOA *timing* duty is not `unattainable` in this run at all — it is one of
 the twenty-five not-applicable results, because the domain gate of finding 3 reports it without running
 it. It needs a notification latency and a counteroffer signal the system has no concept of, so a
 run that declared `consumer-credit` would report it `unattainable`, but this run is not that run.
@@ -233,8 +270,9 @@ run that declared `consumer-credit` would report it `unattainable`, but this run
 The two ECOA `logical` duties and the ECOA content duty produce no `probed` or `proved` verdict
 for the same reason the ECOA timing duty produces no `unattainable` one: the domain gate reports
 them not applicable without running any engine, so their rung is decided by finding 3 rather than
-by the evidence ladder. The GDPR error-risk duty is the one temporal duty this run checks, and it
-produces `observed` verdicts; temporal monitoring does not reach either of the top two rungs, and
+by the evidence ladder. The GDPR error-risk duty was the one temporal duty this run checked, and it now checks none: that
+duty is settled against the inference artefact or not at all, so it is `unattainable` here before
+any monitor runs. Temporal monitoring would not have reached either of the top two rungs anyway, and
 no engine in this build reasons about a formula quantified over a trace (`docs/semantics.md` §3.5).
 
 **The conclusion still holds, against the current counts: the Z3 proved engine and the replay
@@ -362,16 +400,19 @@ this run as evidence that a production neuro-symbolic system can emit that field
 it. Where the tool looks strongest here, it is standing on a property of the research harness
 rather than of a deployable one.
 
-### 6. The reason rule decided three of the five violations in the run
+### 6. The reason rule decided the only violation in the run
 
-Full disclosure, because it is the one judgement call responsible for three verdicts. The reason
-field was defined before the run as *the facts the system's own gradient gives non-zero influence*.
-Under that rule, `add-mult(clamped)`'s saturated decisions carry no reason and are violations.
+Full disclosure, because it is the one judgement call responsible for the run's one adverse verdict.
+The reason field was defined before the run as *the facts the system's own gradient gives non-zero
+influence*. Under that rule, `add-mult(clamped)`'s saturated decisions carry no reason and are
+violations.
 
 Had the reason been defined instead as *the proof supports enumerated for the query* — also a
 defensible reading, and non-empty on every instance in this battery — the run would have produced
-**two remaining violations** and 23 satisfied results. Those two deviation-duty violations do not
-depend on the reason rule. The rule was fixed first and applied identically to all five systems, and
+**zero remaining violations** and 25 satisfied results. This finding used to say *three of the five*,
+because two deviation-duty violations stood beside it that did not depend on the reason rule; those
+two are gone with the duty that read a self-declaration, so the judgement call now carries the whole
+adverse column on its own. The rule was fixed first and applied identically to all five systems, and
 it is stated in the builder as `REASON_RULE` so a reader can disagree with it in the open. But an
 adopter should know that reasonsmith checks the field the adapter author decided to fill, and that
 the decision of what counts as a reason sits with that author, not with the tool.

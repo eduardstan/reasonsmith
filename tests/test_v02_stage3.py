@@ -1280,6 +1280,39 @@ _UNCOMPUTED_MAGNITUDE_SIGNALS = {
 }
 
 
+#: The duty these tests were written against, in the shape it had before it moved to the artefact
+#: basis. It is built here rather than loaded from the pack, and that is a deliberate exception to
+#: this repository's rule that a duty test reads the shipped duty: what every test below exercises
+#: is `engines/proved.py`'s guard on magnitudes the declared rules never compute, and the guard
+#: needs a property comparing two of them. `gdpr_recital71_error_risk_minimised` was that property
+#: until its left-hand side became a measurement (`engines.certificate.SEMANTICS_VALUE_GAP`), which
+#: gives it a one-rung ladder and takes it off the proof rung entirely. No shipped duty has the
+#: shape now, so the fixture carries it; the day one does, load that one instead.
+def _magnitude_duty() -> Requirement:
+    return Requirement(
+        id="fixture_two_declared_magnitudes",
+        source_document="Fixture",
+        article_clause="Article 1",
+        verbatim_text="A fixture clause, quoted from nothing.",
+        stakeholder="fixture",
+        formalism="temporal",
+        spec="always(scope_statements_declared_deviation <= artifact_logs_decision_margin)",
+        rationale="Two magnitudes compared, so the proof rung's direction guard has something "
+                  "to refuse.",
+        requires=(
+            "scope_statements_declared_deviation",
+            "scope_statements_approximation_vs_guarantee",
+            "artifact_logs_decision_margin",
+        ),
+        binding=False,
+        scope="",
+        domains=(),
+        deontic_type="obligation",
+        defeasibility="trigger-unmodelled",
+        algebra="",
+    )
+
+
 def _deviation_sut(test_inputs: list[dict]) -> RulesAdapter:
     """A system deciding on a score alone, declaring the deviation signals and computing none."""
     return RulesAdapter(
@@ -1294,7 +1327,7 @@ def _deviation_sut(test_inputs: list[dict]) -> RulesAdapter:
 def test_a_magnitude_the_rules_never_compute_is_not_proved_violated():
     """No proof verdict from arithmetic over two names no rule assigns.
 
-    `gdpr_recital71_error_risk_minimised` compares a declared deviation with a decision's own
+    `_magnitude_duty` compares a declared deviation with a decision's own
     margin. A system that decides on a score alone computes neither, so both are free constants of
     the solver's encoding, and the solver will happily pick `deviation = 1, margin = 0`. The
     counterexample verification does not catch it: the reference interpreter is handed the same
@@ -1311,7 +1344,7 @@ def test_a_magnitude_the_rules_never_compute_is_not_proved_violated():
     the same case for logic that declares no directions —
     `test_logic_that_declares_no_directions_keeps_the_sort_heuristic`.
     """
-    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    req = _magnitude_duty()
 
     unmeasured = evaluate_requirement(
         req, _deviation_sut([{"score": 700}, {"score": 300}])
@@ -1377,7 +1410,7 @@ def test_logic_that_declares_no_directions_keeps_the_sort_heuristic():
     not, and this system — whose variable table lists both magnitudes and whose rules assign
     neither — is refused a proof by the heuristic with no declaration guard beside it.
     """
-    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    req = _magnitude_duty()
 
     result = evaluate_requirement(req, _UndeclaredDirectionsSUT())
 
@@ -1394,7 +1427,7 @@ def test_a_declared_output_the_rules_never_settle_is_refused_a_proof():
     the constant standing in for it in the encoding is free after all. A proof read off that
     constant would be a proof about the declaration and not about the system.
     """
-    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    req = _magnitude_duty()
     sut = RulesAdapter(
         rules=["approved = score >= 650"],
         variables={
@@ -1433,7 +1466,7 @@ def test_a_logged_magnitude_is_not_an_input_because_the_type_table_names_it():
     additional filter over every logic and not as an alternative to the declaration. The duty falls
     to the engine that reads the trace, where an unmeasured magnitude is reported unmeasured.
     """
-    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    req = _magnitude_duty()
     sut = RulesAdapter(
         rules=["approved = score >= 650"],
         variables={
@@ -1464,7 +1497,7 @@ def test_a_constraint_restating_the_duty_cannot_prove_the_system_satisfies_it():
     constraint. The property still reads no name the rules assign, so the same filter answers both
     directions.
     """
-    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    req = _magnitude_duty()
     sut = RulesAdapter(
         rules=["approved = score >= 650"],
         variables={
@@ -1571,7 +1604,7 @@ def test_a_computed_name_outside_the_type_table_is_an_output_not_an_unknown():
     genuinely establish. The margin is assigned on every path, the deviation is a declared input,
     and the duty is decided rather than refused.
     """
-    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    req = _magnitude_duty()
 
     result = evaluate_requirement(req, _ComputesOutsideTheTypeTableSUT())
 
@@ -1596,7 +1629,7 @@ def test_computes_declared_as_a_string_is_refused_rather_than_read_as_characters
     reading `docs/semantics.md` §3.5 says hands back the `violated`-at-`proved` verdict the
     declaration exists to stop. Refused at the misdeclaration, before any solver call.
     """
-    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    req = _magnitude_duty()
 
     result = evaluate_requirement(req, _StringComputesSUT())
 
@@ -1639,7 +1672,7 @@ def test_a_computes_that_cannot_be_read_as_names_is_refused_by_the_engine(sut, e
     as an input the situation supplies — the widening `docs/semantics.md` §3.5 says the
     declaration exists to stop.
     """
-    req = load_pack("gdpr").get_requirement("gdpr_recital71_error_risk_minimised")
+    req = _magnitude_duty()
 
     result = evaluate_requirement(req, sut)
 

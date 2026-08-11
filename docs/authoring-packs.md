@@ -340,8 +340,8 @@ A `temporal` or `logical` spec can bound a measured quantity, and a statute rare
 Where the clause names one — the 30 and 90 days of 12 CFR 1002.9(a)(1) — the quotation carries it and
 the spec repeats it. Where it does not, the threshold is the pack author's, and writing one into a
 requirement quoting a statute presents an invented figure as the regulation's. Prefer a bound the
-record itself supplies: `gdpr_recital71_error_risk_minimised` compares a declared deviation against
-the decision's own margin (`always(scope_statements_declared_deviation <=
+record itself supplies: `gdpr_recital71_error_risk_minimised` compares the deviation reasonsmith
+measures against the decision's own margin (`always(artifact_logs_semantics_value_gap <=
 artifact_logs_decision_margin)`), so the duty needs no invented number at all. If a constant is
 unavoidable, say in the pack description what it is, what its default is, and why it was chosen.
 

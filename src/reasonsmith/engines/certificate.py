@@ -1,10 +1,14 @@
 """Certificate engine for reasonsmith v0.2.
 
 What this module is for:
-  Evaluates a *reason adequacy* duty — whether the reasons a decision states are all the reasons
-  its own inference had — by running `reasonsmith.certificate.certify` against the inference
-  artefact the system exposes, and grounding one measured signal,
-  `artifact_logs_deleted_reason_count`, with what the deletion probe found.
+  Evaluates the duties settled against the inference artefact behind a decision, by running
+  `reasonsmith.certificate.certify` over the artefact the system exposes and grounding the two
+  signals in `MEASURED_SIGNALS` with what it measured. A *reason adequacy* duty — whether the
+  reasons a decision states are all the reasons its own inference had — reads
+  `artifact_logs_deleted_reason_count`, from the deletion probe. A *semantics agreement* duty —
+  whether the system's answer is the semantics it claims — reads
+  `artifact_logs_semantics_value_gap`, from the certificate's own `value_gap`. Both are measured
+  here and read from no record.
 
   This is the bridge between the two halves of this package. The certificate could compare an
   engine's answer against exact inference and name the reasons the engine stopped depending on,
@@ -80,6 +84,26 @@ What a reader must not break:
     here: an unseparable reason stays in the certified set and is reported as a caveat rather than
     turning the verdict. Lowering the artefact's own `exact_depth` to 0 would otherwise turn the
     demonstration's breached decision clean, which is weaker evidence buying a stronger verdict.
+  - A duty reading the value gap is refused **before** the gap is read as evidence, on the two
+    semantics names the certificate carries: `artifacts.semantics_reference_refusal` asks whether
+    the family's own reference (`artifacts.reference_semantics`) computes the semantics the artefact
+    claims, and the two failures land on different outcomes. A family computing no reference is
+    UNATTAINABLE, and a claim the reference does not match is NOT EVALUATED, naming the claim.
+    Why this matters: they are the four-outcome distinction of `docs/semantics.md` §4 on one
+    measurement. `artifacts/reason_trace.py`'s exact side is the weight the *system* recounted, so
+    the difference between it and the system's answer is a rationale's faithfulness and not a
+    semantics claim — the fix is to expose a model encoding, which is a fact about the system. But a
+    system that *documents* its approximation is behaving exactly as declared, and this build can
+    compute a reference for one semantics: telling it to change would be the wrong instruction, and
+    telling it that it departed from a semantics it never claimed would be a false accusation. The
+    closed vocabulary (`spec.CLAIMED_SEMANTICS`) has no member for a documented approximation of
+    another member, which is why that case must be refused rather than answered, and why the
+    vocabulary had to close before any verdict read a gap.
+  - The two monotonicity refusals above are asked **only** of a duty reading the deleted count.
+    Why this matters: the declaration is the premise `deleted` rests on and no other. The value gap
+    is read at the unperturbed interpretation, where nothing has been switched off and no definition
+    of a reason is in play, so refusing there would report a system whose inference is lawfully
+    defeasible unmeasurable on a duty its defeasibility has no bearing on.
   - A certified decision whose reasons the notice never stated does not satisfy this duty
     vacuously: a run where the property's antecedent held on no certified decision is reported NOT
     EVALUATED, never `satisfied`. The rule is not this engine's own — it is written once,
@@ -117,6 +141,7 @@ from reasonsmith.artifacts import (
     InferenceArtifact,
     deletion_semantics_refusal,
     reason_set_is_exact,
+    semantics_reference_refusal,
 )
 from reasonsmith.certificate import Certificate, ReasonVerdict, certify, certify_artifact
 from reasonsmith.conformance import measured
@@ -142,12 +167,33 @@ from reasonsmith.spec import Requirement
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Strength, Verdict
 
-__all__ = ["ARTIFACT_METHOD", "DELETED_REASON_COUNT", "SEED", "STRATEGY", "CertificateEngine"]
+__all__ = [
+    "ARTIFACT_METHOD",
+    "DELETED_REASON_COUNT",
+    "MEASURED_SIGNALS",
+    "SEED",
+    "SEMANTICS_VALUE_GAP",
+    "STRATEGY",
+    "CertificateEngine",
+]
 
-#: The one signal this engine measures rather than reads. A duty naming it in `requires` is a
+#: The first signal this engine measures rather than reads. A duty naming it in `requires` is a
 #: duty only this engine may settle (`report._engine_ladder`), and a system declaring it is
 #: claiming it can expose the inference artefact below — not that it writes the number into a log.
 DELETED_REASON_COUNT = "artifact_logs_deleted_reason_count"
+
+#: The second, and the same discipline: the distance between the system's own engine's answer and
+#: exact inference's answer to the same query on the same interpretation, as an absolute value.
+#: Measured from the artefact, never read from a record, and only ever measured where the artefact's
+#: reference computes the semantics the system claims — see `_semantics_refusal`. It is the value
+#: gap `Certificate.value_gap` already carried and no verdict read.
+SEMANTICS_VALUE_GAP = "artifact_logs_semantics_value_gap"
+
+#: Both, in the order they were added. `report._engine_ladder` gives a duty naming any of them a
+#: ladder of one rung and `report.evidence_basis` gives it the `artifact` basis, for the reason the
+#: ladder's own docstring states: every other rung would answer a weaker question off the system's
+#: own log.
+MEASURED_SIGNALS = (DELETED_REASON_COUNT, SEMANTICS_VALUE_GAP)
 
 #: The optional SUT method, exactly parallel to the optional `decide(case)`: given one decision
 #: record, return the inference artefact that decision came from, or None for a decision this
@@ -248,8 +294,68 @@ def _refused(
 
 
 def _env(record: Mapping[str, Any], cert: Certificate) -> dict[str, Any]:
-    """The record, with the measured count written over anything the record claimed for it."""
-    return {**record, DELETED_REASON_COUNT: len(cert.deleted)}
+    """The record, with both measurements written over anything the record claimed for them."""
+    return {
+        **record,
+        DELETED_REASON_COUNT: len(cert.deleted),
+        SEMANTICS_VALUE_GAP: abs(cert.value_gap),
+    }
+
+
+def _unattainable(req: Requirement, index: int, refusal: str) -> RequirementResult:
+    """Unattainable: this artefact's family grounds no semantics-agreement measurement.
+
+    `unattainable` and not *not evaluated*, on the four-outcome test of `docs/semantics.md` §4: the
+    gap is in the system, and the instruction that follows from it — expose the model encoding the
+    inference ran over — is one an adopter can act on. Every family outside the one that computes a
+    reference lands here, including a system exposing no `artifact()` at all, which the branch at
+    the top of `evaluate` already reports the same way.
+    """
+    return _result(
+        req,
+        Verdict.INCONCLUSIVE,
+        Strength.UNATTAINABLE,
+        (
+            f"Unattainable as built: on decision #{index}, {refusal}. {SEMANTICS_VALUE_GAP} is "
+            "measured against exact inference over a model encoding the system exposes, and this "
+            "system exposes none."
+        ),
+        missing=(SEMANTICS_VALUE_GAP,),
+        details={
+            "engine": "certificate",
+            "reason": "no_semantics_reference",
+            "decision_index": index,
+        },
+    )
+
+
+def _mismatched_claim(
+    req: Requirement, index: int, refusal: str, claimed: str, reference: str
+) -> RequirementResult:
+    """Not evaluated: the system claims a semantics this build computes no reference for.
+
+    The other side of the same fork, and the opposite outcome: here the artefact is exactly the
+    family this duty wants and the gap in this tool is that it can evaluate one semantics. Reporting
+    a system that documents its own approximation `violated` against a semantics it never claimed is
+    the false accusation the whole ordering of this work exists to prevent, and reporting it
+    `unattainable` would tell an honest adopter to change a system that is behaving as declared.
+    """
+    return _result(
+        req,
+        Verdict.INCONCLUSIVE,
+        None,
+        (
+            f"Not evaluated: on decision #{index}, {refusal}. Nothing is claimed either way about "
+            "this system's agreement with the semantics it declared."
+        ),
+        details={
+            "engine": "certificate",
+            "reason": "no_reference_for_the_claimed_semantics",
+            "decision_index": index,
+            "claimed_semantics": claimed,
+            "reference_semantics": reference,
+        },
+    )
 
 
 def _reason_record(verdict: ReasonVerdict) -> dict:
@@ -286,6 +392,8 @@ def _certificate_record(index: int, cert: Certificate) -> dict:
         "exact_value": cert.exact_value,
         "engine_value": cert.engine_value,
         "claimed_semantics": cert.claimed_semantics,
+        "exact_semantics": cert.exact_semantics,
+        "value_gap": cert.value_gap,
         "monotone": cert.monotone,
         "reasons": [_reason_record(v) for v in cert.verdicts],
     }
@@ -311,6 +419,11 @@ class CertificateEngine:
         sut: SystemUnderTest,
         records: list[dict[str, Any]],
     ) -> RequirementResult:
+        # Imported here and not at module scope: `engines/temporal.py` imports `report`, which
+        # reaches this engine, and the cycle is not worth a second spelling of the reduction.
+        from reasonsmith.engines.temporal import state_property_under_always
+
+        gated = tuple(name for name in MEASURED_SIGNALS if name in req.requires)
         artifact = getattr(sut, ARTIFACT_METHOD, None)
         if not callable(artifact):
             return _result(
@@ -318,32 +431,39 @@ class CertificateEngine:
                 Verdict.INCONCLUSIVE,
                 Strength.UNATTAINABLE,
                 (
-                    f"Unattainable as built: this duty asks whether the reasons a decision states "
-                    f"are all the reasons its inference had, which is measured against the "
-                    f"inference artefact and never read from a log. "
+                    f"Unattainable as built: this duty is settled against the inference artefact "
+                    f"behind a decision and never read from a log. "
                     f"{type(sut).__name__} exposes no {ARTIFACT_METHOD}() supplying one, so "
-                    f"{DELETED_REASON_COUNT} cannot be measured here. Nothing weaker stands in "
-                    "for it: that the decision states some reason is a different property, and "
-                    "reporting it in place of this one is the substitution this duty exists to "
-                    "refuse."
+                    f"{', '.join(gated) or 'the signal this engine measures'} cannot be measured "
+                    "here. Nothing weaker stands in for it: what a system writes about its own "
+                    "inference into its own record is a different property, and reporting it in "
+                    "place of this one is the substitution this duty exists to refuse."
                 ),
-                missing=(DELETED_REASON_COUNT,),
+                missing=gated or (DELETED_REASON_COUNT,),
             )
 
+        # `always(f)` over a finite trace holds exactly when `f` holds at every position, and every
+        # position below is one decision this engine certifies — the same reduction
+        # `engines/temporal.py` makes for the solver, and sound here for the same reason. It is
+        # taken from the language's own function rather than re-derived, so one spelling of the
+        # operator exists.
+        inner = state_property_under_always(req.spec)
         try:
-            node = parse_property(req.spec)
+            node = parse_property(req.spec if inner is None else inner)
         except UnsupportedConstructError as exc:
             return _result(
                 req, Verdict.INCONCLUSIVE, None, f"Not evaluated: {exc}."
             )
-        if DELETED_REASON_COUNT not in signal_names(node):
+        measures = tuple(name for name in MEASURED_SIGNALS if name in signal_names(node))
+        if not measures:
             return _result(
                 req,
                 Verdict.INCONCLUSIVE,
                 None,
                 (
-                    f"Not evaluated: {req.spec!r} does not read {DELETED_REASON_COUNT}, which is "
-                    "the only signal this engine measures. Nothing here grounds the rest of it."
+                    f"Not evaluated: {req.spec!r} reads none of "
+                    f"{', '.join(MEASURED_SIGNALS)}, which are the only signals this engine "
+                    "measures. Nothing here grounds the rest of it."
                 ),
             )
 
@@ -407,13 +527,22 @@ class CertificateEngine:
             if not (isinstance(supplied, Mapping) or reason_set_is_exact(supplied)):
                 recounted_at.add(index)
             # Asked of the declaration before anything is measured: an artefact this definition of
-            # a reason does not apply to must not be probed and then explained away.
+            # a reason does not apply to must not be probed and then explained away. Asked only of
+            # a duty that reads the *deleted count*, because the monotonicity declaration is the
+            # premise that count rests on and no other: the value gap is read at the unperturbed
+            # interpretation, where nothing has been switched off and no definition of a reason is
+            # in play. Refusing it here too would report a system whose inference is lawfully
+            # defeasible unmeasurable on a duty its defeasibility has no bearing on.
             declared = (
                 supplied.get(MONOTONE_KEY)
                 if isinstance(supplied, Mapping)
                 else supplied.monotone
             )
-            refusal = deletion_semantics_refusal(declared)
+            refusal = (
+                deletion_semantics_refusal(declared)
+                if DELETED_REASON_COUNT in measures
+                else None
+            )
             if refusal:
                 return _refused(req, index, refusal, declared)
             try:
@@ -435,11 +564,34 @@ class CertificateEngine:
                 )
             # And asked again of the measurement: the declaration is a claim the system makes about
             # itself, and a deletion that moved its answer *up* is the one thing that refutes it.
-            refusal = deletion_semantics_refusal(
-                declared, refuted_by_measurement=bool(cert.non_monotone)
+            refusal = (
+                deletion_semantics_refusal(
+                    declared, refuted_by_measurement=bool(cert.non_monotone)
+                )
+                if DELETED_REASON_COUNT in measures
+                else None
             )
             if refusal:
                 return _refused(req, index, refusal, declared, len(cert.non_monotone))
+            # And, for a duty reading the value gap, asked of the two semantics names before the
+            # gap is read as evidence about either. Both certificate forms answer it the same way,
+            # because `certify_artifact` carries the family's own reference onto the certificate.
+            if SEMANTICS_VALUE_GAP in measures:
+                refusal = semantics_reference_refusal(
+                    cert.claimed_semantics, cert.exact_semantics
+                )
+                if refusal:
+                    return (
+                        _unattainable(req, index, refusal)
+                        if cert.exact_semantics is None
+                        else _mismatched_claim(
+                            req,
+                            index,
+                            refusal,
+                            cert.claimed_semantics,
+                            cert.exact_semantics,
+                        )
+                    )
             try:
                 env = _env(record, cert)
                 val = eval_expression(node, env)
@@ -490,7 +642,7 @@ class CertificateEngine:
                 None,
                 (
                     f"Not evaluated: the system exposed no inference artefact for any of the "
-                    f"{len(records)} decision(s) in the trace, so {DELETED_REASON_COUNT} was "
+                    f"{len(records)} decision(s) in the trace, so {', '.join(measures)} was "
                     "measured for none of them."
                 ),
             )
@@ -507,7 +659,7 @@ class CertificateEngine:
                 None,
                 (
                     f"Not evaluated: bounded proof enumeration found no reason at all behind any "
-                    f"of the {unenumerated} certified decision(s), so {DELETED_REASON_COUNT} is "
+                    f"of the {unenumerated} certified decision(s), so {', '.join(measures)} is "
                     "unmeasured for every one of them and no reason was switched off. A zero "
                     "deleted-reason count on a decision whose reasons were never enumerated is "
                     "the absence of a measurement, not a measurement of zero — the artefact's own "
@@ -600,7 +752,7 @@ class CertificateEngine:
         # it is still kept, and `deletion_semantics_refusal` is what reads it.
         unmeasured = (
             f" {unenumerated} decision(s) had no reason enumerated at all, so "
-            f"{DELETED_REASON_COUNT} is unmeasured for them and this verdict covers them not at "
+            f"{', '.join(measures)} is unmeasured for them and this verdict covers them not at "
             "all."
             if unenumerated
             else ""
@@ -610,18 +762,35 @@ class CertificateEngine:
         if breached:
             details["violation_step_indices"] = [index for index, _ in breached]
             details["offending_trace_segment"] = [records[index] for index, _ in breached]
-            worst = max(breached, key=lambda item: len(item[1].deleted))[1]
-            missing_reasons = "; ".join(worst.missing_reasons()) or "none named"
+            if DELETED_REASON_COUNT in measures:
+                worst = max(breached, key=lambda item: len(item[1].deleted))[1]
+                missing_reasons = "; ".join(worst.missing_reasons()) or "none named"
+                finding = (
+                    f"the stated reasons are not all the reasons. On decision "
+                    f"#{breached[0][0]} exact inference found {len(worst.verdicts)} reason(s) and "
+                    f"the deletion probe showed the system's answer does not depend on "
+                    f"{len(worst.deleted)} of them — {missing_reasons}."
+                )
+            else:
+                # The other measured signal: the finding is about the *value*, so the decision the
+                # summary names is the one furthest from exact inference rather than the one
+                # missing the most reasons.
+                worst = max(breached, key=lambda item: abs(item[1].value_gap))[1]
+                finding = (
+                    f"the system's inference is not the semantics it claims. On decision "
+                    f"#{breached[0][0]} the engine answered {worst.engine_value:.6f} where exact "
+                    f"{worst.exact_semantics} over the same model encoding and the same "
+                    f"interpretation answers {worst.exact_value:.6f} — a gap of "
+                    f"{abs(worst.value_gap):.6f}, larger than the margin that decision's own "
+                    "record states for itself."
+                )
             return _result(
                 req,
                 Verdict.VIOLATED,
                 reached,
                 (
-                    f"Violated on {len(breached)} of {len(certified)} certified decision(s): the "
-                    f"stated reasons are not all the reasons. On decision #{breached[0][0]} exact "
-                    f"inference found {len(worst.verdicts)} reason(s) and the deletion probe "
-                    f"showed the system's answer does not depend on {len(worst.deleted)} of them "
-                    f"— {missing_reasons}. Attribution: {worst.attribution}"
+                    f"Violated on {len(breached)} of {len(certified)} certified decision(s): "
+                    f"{finding} Attribution: {worst.attribution}"
                     f"{caveat}{skipped}{unmeasured} Measured against the inference "
                     f"artefact the system exposed, not read from its decision log.{recounted_note}"
                 ),
@@ -638,7 +807,7 @@ class CertificateEngine:
                 (
                     f"Not evaluated: bounded proof enumeration found no reason at all behind "
                     f"{unenumerated} of the {unenumerated + len(certified)} certified "
-                    f"decision(s), so {DELETED_REASON_COUNT} is unmeasured for them. No reason "
+                    f"decision(s), so {', '.join(measures)} is unmeasured for them. No reason "
                     f"was shown deleted on the other {len(certified)}, but satisfaction over a "
                     "subset of the trace is not satisfaction over the trace: a violation needs "
                     "one witness, a satisfaction needs complete evidence. The artefact's own "
@@ -695,8 +864,17 @@ class CertificateEngine:
                 else f"Probed over {len(certified)} certified decision(s)"
             )
             + (
-                ": every reason exact bounded proof enumeration found is one the system's own "
-                "answer depends on, so no reason was shown deleted"
+                (
+                    ": every reason exact bounded proof enumeration found is one the system's own "
+                    "answer depends on, so no reason was shown deleted"
+                    if DELETED_REASON_COUNT in measures
+                    else (
+                        ": on every one of them the system's own engine answered within the "
+                        "margin that decision's record states for itself of exact "
+                        f"{certified[0][1].exact_semantics} over the same model encoding, so the "
+                        "inference was not shown to depart from the semantics it claims"
+                    )
+                )
                 + (" on those." if untriggered else ".")
                 + f"{untouched}{caveat}{skipped} Holds on the decisions whose artefact was "
                 "exposed and within the probes the budget below names; nothing here extends the "

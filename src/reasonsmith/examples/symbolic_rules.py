@@ -45,8 +45,13 @@ What a reader must not break:
         approval has no adverse factor, so it states the credit score's distance from the score
         threshold; that choice is this example's, not a fact about margins.
       * `scope_statements_declared_deviation` is `0.0` because an exact rule set approximates
-        nothing. It is a self-declaration and no engine verifies it — see `docs/semantics.md` §3,
-        *the first shipped duty that reads a declared approximation error*.
+        nothing. It is a self-declaration and no engine verifies it, which is why no shipped duty
+        reads it any more: GDPR Recital 71's error-risk duty now compares a deviation reasonsmith
+        measures from an inference artefact, and a rule set exposing no `artifact()` is reported
+        `unattainable` on it rather than cleared by its own claim. The declaration is left standing
+        because it is a true statement about this system, and it is a worked example of the thing
+        `docs/semantics.md` §3 warns about: a number a system writes about itself, believed by
+        nobody.
 """
 
 from __future__ import annotations

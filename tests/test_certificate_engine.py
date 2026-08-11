@@ -384,10 +384,12 @@ def test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated():
 def test_a_property_that_cannot_be_decided_on_a_record_is_not_evaluated():
     """The measurement can succeed and the property still fail to decide. Neither raises through.
 
-    Two ways in, both reachable from a pack: a construct this engine's interpreter does not
-    implement, and a second signal the certified record does not carry. The count was measured
-    either way, so the failure is reported as not evaluated rather than escaping the run as a
-    traceback the CLI does not catch.
+    Two ways in, both reachable from a pack: a temporal construct this engine does not reduce, and
+    a second signal the certified record does not carry. The count was measured either way, so the
+    failure is reported as not evaluated rather than escaping the run as a traceback the CLI does
+    not catch.
+
+    `always(f)` is the one temporal shape that is *not* here, and its own test below says why.
     """
     from dataclasses import replace
 
@@ -396,7 +398,7 @@ def test_a_property_that_cannot_be_decided_on_a_record_is_not_evaluated():
     temporal = replace(
         _duty(),
         spec=(
-            "always(present(artifact_logs_reason_explanation) -> "
+            "eventually(present(artifact_logs_reason_explanation) -> "
             "(artifact_logs_deleted_reason_count <= 0))"
         ),
         formalism="temporal",
@@ -417,6 +419,28 @@ def test_a_property_that_cannot_be_decided_on_a_record_is_not_evaluated():
     assert result.strength is None
     assert result.verdict == Verdict.INCONCLUSIVE
     assert "artifact_logs_notification_latency_days" in result.evidence_summary
+
+
+def test_an_always_over_a_state_property_is_reduced_rather_than_refused():
+    """The one temporal shape this engine answers, and it answers it as the state property it is.
+
+    `always(f)` over a finite trace holds exactly when `f` holds at every position, and every
+    position here is one decision this engine certifies — the same reduction `engines/temporal.py`
+    makes for the solver, taken from that module's own `state_property_under_always` so that one
+    spelling of the operator exists. Without it the shipped duty that reads the measured value gap
+    could not be written the way its clause reads, in every decision.
+    """
+    from dataclasses import replace
+
+    sut = _CreditSystem(oracle=_artifact_of(ReferenceAdapter(TopK(1))))
+    quantified = replace(_duty(), spec=f"always({_duty().spec})", formalism="temporal")
+
+    reduced = CertificateEngine.evaluate(quantified, sut, sut.decisions())
+    direct = CertificateEngine.evaluate(_duty(), sut, sut.decisions())
+
+    assert reduced.verdict == direct.verdict
+    assert reduced.strength == direct.strength
+    assert reduced.strength is not None
 
 
 def test_the_engine_refuses_a_property_it_cannot_ground():

@@ -78,7 +78,11 @@ import json
 from dataclasses import dataclass, replace
 from typing import Any
 
-from reasonsmith.artifacts import InferenceArtifact, deletion_semantics_refusal
+from reasonsmith.artifacts import (
+    InferenceArtifact,
+    deletion_semantics_refusal,
+    reference_semantics,
+)
 from reasonsmith.explanations import (
     DEFAULT_PROBE_BUDGET,
     DeletionSearch,
@@ -182,6 +186,11 @@ class Certificate:
     #: The joint-deletion search, or None where no reason survived the per-fact pass as a candidate
     #: for deletion and there was nothing for it to resolve. `docs/sufficient-reasons.md` §7.
     search: DeletionSearch | None = None
+    #: Which semantics `exact_value` above *is* — the artefact family's own
+    #: `artifacts.reference_semantics`, carried so a reader of a value gap can see what the engine
+    #: was compared against, and so a duty can refuse to compare it with a claim it does not match.
+    #: None where the family computes no reference at all.
+    exact_semantics: str | None = None
 
     def __post_init__(self) -> None:
         # Certificates are a public boundary: never carry an uninterpretable semantics claim.
@@ -332,6 +341,7 @@ class Certificate:
             "query": str(self.query),
             "adapter_name": self.adapter_name,
             "claimed_semantics": self.claimed_semantics,
+            "exact_semantics": self.exact_semantics,
             "exact_inference": self.exact_inference,
             "monotone": self.monotone,
             "deletion_semantics_refusal": self.deletion_semantics_refusal,
@@ -626,4 +636,5 @@ def certify_artifact(
         artifact.query, artifact.engine_name, artifact.claimed_semantics, artifact.exact_depth,
         exact_value, engine_value, tol, verdicts,
         _attribute(verdicts, engine_value - exact_value, tol),
-        artifact.exact_inference, artifact.monotone, search)
+        artifact.exact_inference, artifact.monotone, search,
+        reference_semantics(artifact))

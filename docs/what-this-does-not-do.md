@@ -28,14 +28,17 @@ decision from its claimed semantics on **8 of 16 instances — half the battery*
 Read a satisfied row as *the record has the fields*, never as *the system computes what it says it
 computes*.
 
-**What has changed since that finding, and what has not.** One duty now reads a system's
-approximation error rather than ignoring it: `gdpr_recital71_error_risk_minimised` compares the
-deviation a system declares about itself against that decision's own margin. It closes nothing
-here, and the finding says so — the number it reads is still the system's own, so it rewards the
-measurement and not the accuracy, and a system that under-reports passes. The open objective is
-[`ROADMAP.md`](../ROADMAP.md) §5, whose measurable outcome is a check that fails today: drive two
-systems differing *only* in whether their inference matches their declared semantics, and the two
-reports come back identical.
+**What has changed since that finding, and what has not.** One duty now reads an approximation
+error reasonsmith *measures* rather than one a system declares:
+`gdpr_recital71_error_risk_minimised` runs exact inference over the model encoding behind a decision
+and compares it against the answer the system's own engine gave, against that decision's own margin.
+Two systems differing only in whether their inference implements the semantics they declare now get
+different reports, which is the measurable outcome of [`ROADMAP.md`](../ROADMAP.md) §5. What it does
+**not** close is the run above: measuring needs a declarative model encoding exposed through
+`artifact()`, and the five provenances here expose none, so all five are now `unattainable` on that
+duty rather than cleared by it. `top-1-proofs` and `min-max-prob` were reported violated on it while
+it read their self-declaration, and are not any more. They are no longer falsely cleared and they
+are not yet caught — that is the honest state, and §5 says which change would catch them.
 
 The same shape covers the domain gate. `--system-domain consumer-credit` is what puts a system
 inside a duty about credit decisions, and **nothing checks that a system declaring it issues

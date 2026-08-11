@@ -1164,8 +1164,8 @@ def evidence_basis(req: Requirement) -> EvidenceBasis:
     The three tests below are the three branches of `_engine_ladder`, in `_engine_ladder`'s own
     order, and they are the whole of the derivation:
 
-    - a duty gating on `engines.certificate.DELETED_REASON_COUNT` is measured against the inference
-      artefact behind a decision — the `artifact` basis, one rung;
+    - a duty gating on any of `engines.certificate.MEASURED_SIGNALS` is measured against the
+      inference artefact behind a decision — the `artifact` basis, one rung;
     - a `counterfactual` duty is a property of a pair of executions — the `relational` basis, no
       trace rung;
     - an `undetermined` or `graded` duty rests on a predicate an authority applies rather than on
@@ -1175,9 +1175,9 @@ def evidence_basis(req: Requirement) -> EvidenceBasis:
     rung the system's exposed surface allows. `test_the_basis_admits_exactly_the_rungs_the_ladder_
     can_reach` is what keeps this function and that one from drifting apart.
     """
-    from reasonsmith.engines.certificate import DELETED_REASON_COUNT
+    from reasonsmith.engines.certificate import MEASURED_SIGNALS
 
-    if DELETED_REASON_COUNT in req.requires:
+    if any(signal in req.requires for signal in MEASURED_SIGNALS):
         return EvidenceBasis.ARTIFACT
     if req.formalism == "counterfactual":
         return EvidenceBasis.RELATIONAL
@@ -1661,14 +1661,15 @@ def _engine_ladder(
     and no strength, and it runs only when the proof rung reached one, so nothing here pays for it
     twice.
 
-    One duty is deliberately given a ladder of **one** rung: a duty gating on
-    `engines.certificate.DELETED_REASON_COUNT` asks whether the reasons a decision states are all
-    the reasons its inference had, and that is measured against the inference artefact or not at
-    all. Every other rung here would answer a weaker question off the system's own log — that the
-    reason field is non-blank, or that the number the system wrote in it is small — and reporting
-    either in place of the measurement is the substitution the certificate engine exists to
-    remove. A system exposing no artefact is therefore reported *unattainable* by that engine
-    rather than falling through to a presence check. That single rung stays single: the plug-in
+    Two duties are deliberately given a ladder of **one** rung: a duty gating on any of
+    `engines.certificate.MEASURED_SIGNALS` asks something about the inference behind a decision —
+    whether the reasons it stated are all the reasons it had, or whether its answer is the
+    semantics it claims — and that is measured against the inference artefact or not at all. Every
+    other rung here would answer a weaker question off the system's own log — that the reason field
+    is non-blank, or that the number the system wrote in it is small — and reporting either in
+    place of the measurement is the substitution the certificate engine exists to remove. A
+    system exposing no artefact is therefore reported *unattainable* by that engine rather than
+    falling through to a presence check. That single rung stays single: the plug-in
     rungs below are appended after it has already returned, so no installed package can answer that
     duty off the system's log either.
 
@@ -1677,9 +1678,9 @@ def _engine_ladder(
     exists" mean *installed* rather than *in this tree*. What a plug-in may claim, and what happens
     when one misbehaves, is `reasonsmith.plugins` and `docs/authoring-engines.md`.
     """
-    from reasonsmith.engines.certificate import DELETED_REASON_COUNT
+    from reasonsmith.engines.certificate import MEASURED_SIGNALS
 
-    if DELETED_REASON_COUNT in req.requires:
+    if any(signal in req.requires for signal in MEASURED_SIGNALS):
         from reasonsmith.engines.certificate import CertificateEngine
         return [
             (

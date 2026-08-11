@@ -521,49 +521,6 @@ evaluated on it — not satisfied, not violated — and leaves the binding headl
 (`test_a_single_decision_trace_is_not_evaluated_never_satisfied`). A one-record log was enough
 while it was a `record` duty; the pack description and `docs/refinement.md` carry the same limit.
 
-### The first shipped duty that reads a declared approximation error — `gdpr_recital71_error_risk_minimised`
-
-This is the first shipped duty whose verdict comes from a value a system declares about its own
-approximation error. It is interpretive (`binding = false`): GDPR Recital 71 asks that "the risk of
-errors is minimised", and a recital creates no obligation of its own. It runs on the observed
-engine, so everything said about `observed` above applies unchanged; what follows is what this duty
-adds.
-
-> **If it reports `satisfied` at strength `observed`, then:** in every record of the supplied trace,
-> the deviation the system declared for that decision (`scope_statements_declared_deviation`) was no
-> larger than the margin it declared between that decision and its own threshold
-> (`artifact_logs_decision_margin`)
-> (`test_a_declared_deviation_below_the_decision_margin_is_satisfied`,
-> `test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied`).
-
-*What it does not tell you.* Nothing about whether the system computes what it claims to compute.
-The deviation is a self-declaration and no engine here verifies it: a system that under-reports its
-own error is not detected, and a system honest enough to report a large one is the only kind this
-duty can flag. Nothing about decisions outside the trace. And nothing about the law — the bound is
-the system's own decision margin, not a figure Recital 71 states, and no number in this duty comes
-from the regulation (`test_the_deviation_duty_is_interpretive_and_not_class_limited`).
-
-Nor does `satisfied` exclude a decision that turns on an exact boundary tie. The property this duty
-states is non-strict, and where deviation and margin are equal it *holds* — that is the comparison,
-not a rounding of a margin, and the engine reads strict and non-strict comparisons apart at their
-boundary (`test_strict_comparison_boundary_table`). In the threshold-facing case the claimed oracle
-value sits exactly on the decision threshold, but whether the decision would have differed depends
-on the system's own tie-break, which this record does not carry. This duty therefore reports an
-exact tie satisfied and does not detect a decision that turns on one. Closing that gap would require
-signed evidence and a stricter reading of the clause than the pack states; no duty was changed here
-(`test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied`).
-
-> **If it reports `violated` at strength `observed`, then:** at least one record declared a deviation
-> larger than that decision's own margin, and the result names the step. On the system's own numbers
-> that decision could have gone the other way had the system computed what it claims
-> (`test_a_declared_deviation_that_could_have_moved_a_decision_is_violated`).
-
-Silence is not compliance. A system that declares no deviation is `unattainable` on that signal, and
-one whose record carries anything but a finite number where the deviation belongs is not evaluated
-(§2, magnitudes). Neither is ever satisfied
-(`test_an_undeclared_deviation_is_unattainable_never_satisfied`,
-`test_an_unparseable_deviation_is_not_evaluated_never_satisfied`).
-
 ### `probed` — `engines/probed.py`
 
 This is the rung for a system that exposes `decide()` but no `logic()`: there is nothing to reason
@@ -866,11 +823,72 @@ system could open up (`test_a_trace_with_no_artifact_is_not_evaluated_never_sati
 `artifact()` that raises, returns something that is neither an `artifacts.InferenceArtifact` nor a
 mapping, or returns arguments `certify`
 refuses (`test_an_artifact_that_raises_or_is_the_wrong_shape_is_not_evaluated`); a property
-that never reads the one signal this engine measures
+that never reads either signal this engine measures
 (`test_the_engine_refuses_a_property_it_cannot_ground`); and a property this engine cannot decide
 on a certified decision — a construct it does not interpret, or a second signal the record does not
 carry — where the measurement was made and the verdict is still withheld
 (`test_a_property_that_cannot_be_decided_on_a_record_is_not_evaluated`).
+
+### The first shipped duty whose deviation is measured rather than declared — `gdpr_recital71_error_risk_minimised`
+
+This duty used to read `scope_statements_declared_deviation`: a number the system wrote about its
+own approximation error into its own record. It rewarded the measurement and not the accuracy, and
+`docs/findings-nesyarena.md` finding 1 says so in its own words. Its left-hand side is now
+`engines.certificate.SEMANTICS_VALUE_GAP` — the absolute distance between the system's own engine's
+answer and exact inference's answer to the same query on the same interpretation, both computed by
+reasonsmith from the inference artefact behind the decision. It is the second signal this package
+*measures* rather than reads, and it is settled by the certificate engine or by nothing
+(`test_the_deviation_duty_is_interpretive_and_settled_against_the_artefact`).
+
+The duty stays interpretive (`binding = false`): GDPR Recital 71 asks that "the risk of errors is
+minimised", and a recital creates no obligation of its own.
+
+> **If it reports `satisfied` at strength `probed`, then:** on every decision the system exposed an
+> artefact for, and whose reasons bounded proof enumeration found, the gap between the system's own
+> answer and exact inference's was no larger than the margin that decision's own record states
+> between it and the system's threshold. Both sides of that comparison came from the artefact and
+> not from the record (`test_a_gap_exactly_equal_to_the_margin_is_satisfied`,
+> `test_the_measured_gap_is_never_read_from_the_record`).
+
+> **If it reports `violated` at strength `probed`, then:** at least one certified decision's
+> measured gap was larger than that decision's own margin, and the result names the decision, the
+> two answers and the semantics they were computed under
+> (`test_the_violation_names_the_two_answers_it_compared`).
+
+*What it does not tell you.* Nothing about a decision the system did not open up, and nothing about
+inputs outside the interpretation each artefact fixes — exact inference is exact on one ground
+program and one base interpretation, and `certificate.LIMITS` says so. Nothing about the law: the
+bound is the system's own decision margin, not a figure Recital 71 states, and no number in this
+duty comes from the regulation. And nothing about a system whose declared semantics this build
+computes no reference for, which is the next paragraph.
+
+**Three ways this duty declines to answer, and none of them is `satisfied`.** A system exposing no
+`artifact()` is `unattainable` — the measurement needs the model encoding the inference ran over,
+and no field of any record stands in for it
+(`test_a_system_exposing_no_artefact_is_unattainable_never_satisfied`). An artefact whose family
+computes no reference at all is `unattainable` too: `artifacts/reason_trace.py`'s exact side is the
+weight the *system* recounted, so the difference between it and the system's answer measures how
+faithful a rationale is to an answer — a different question that looks identical as a number
+(`test_an_artefact_family_that_computes_no_reference_is_unattainable`). And an artefact claiming a
+semantics the family's reference does not compute is **not evaluated**, naming the claim: that gap
+is in this tool and not in the system (§4, the four outcomes).
+
+**Why the third refusal is the important one.** `claimed_semantics` is a closed vocabulary
+(`reasonsmith.spec.CLAIMED_SEMANTICS`), and it has no member for a *documented approximation* of
+another member. So a system that honestly documents its own truncation cannot declare the semantics
+this build computes a reference for, and the duty leaves it unjudged rather than comparing it
+against a semantics it never claimed. Reporting such a system `violated` is the false accusation the
+whole ordering of this work — the vocabulary closing before any verdict read a gap — exists to
+prevent, and `test_an_honestly_declared_approximation_is_not_accused` is the case that holds it.
+Its counterpart, `test_two_systems_differing_only_in_their_inference_get_different_verdicts`, is the
+other half: two systems alike but for whether their engine implements what it declares no longer
+produce the same report.
+
+**Reach, stated rather than discovered.** One artefact family. A log-only system, a language model
+behind `complete()`, and the five `nesyarena` provenances as adapted in
+`docs/build_nesyarena_report.py` all come back `unattainable`, and that is the honest outcome rather
+than a gap in the pack. A duty that silently answered only where it could measure, while looking
+like it answered everywhere, would be worse than one that refuses out loud.
 
 ### The inference artefact, and the one premise it declares — `artifacts/`
 
@@ -1459,7 +1477,8 @@ about the property:
 
 - **A name the system has no notion of.** `_Scope.read` declares a constant for any name it meets,
   so without this the encoding invents the very value the verdict is then about. Left unguarded,
-  `always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` against a system
+  `always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` — the shape that
+  duty had before its left-hand side became a measurement — against a system
   whose rules decide on a score alone was reported `violated` at `proved` — the one verdict that
   exits non-zero — on the solver's own choice of `deviation = 1, margin = 0`. The counterexample
   verification does not catch that: the reference interpreter is handed the same free inputs, so
@@ -1799,10 +1818,12 @@ Two consequences of that report text, followed by a separate package-level termi
 | A signal cannot occupy bare-Boolean and measured-magnitude roles in one property | `test_the_loader_refuses_conflicting_boolean_and_magnitude_roles`, `test_conflicting_boolean_and_magnitude_roles_are_not_evaluated` |
 | The formula selects flag versus magnitude treatment, and flag values follow the stated conversion | `test_non_finite_flag_counts_as_absent`, `test_temporal_satisfied`, `test_ecoa_thirty_day_notice_violated_by_a_late_notification`, `test_ecoa_unaccepted_counteroffer_gets_the_ninety_day_deadline`, `test_ecoa_accepted_counteroffer_keeps_the_thirty_day_deadline` |
 | A magnitude bound over an unmeasured signal is not evaluated, never scored | `test_quantitative_bound_needs_a_measurement`, `test_non_finite_flag_counts_as_absent` |
-| The Recital 71 error duty is satisfied only when every declared deviation is no larger than that decision's own margin, including the known exact-tie boundary | `test_a_declared_deviation_below_the_decision_margin_is_satisfied`, `test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied` |
-| A declared deviation larger than that margin violates it, naming the decision | `test_a_declared_deviation_that_could_have_moved_a_decision_is_violated` |
-| An undeclared or unmeasured deviation is unattainable or not evaluated, never satisfied | `test_an_undeclared_deviation_is_unattainable_never_satisfied`, `test_an_unparseable_deviation_is_not_evaluated_never_satisfied` |
-| The duty that reads a deviation is interpretive and not class-limited | `test_the_deviation_duty_is_interpretive_and_not_class_limited` |
+| The Recital 71 error duty is satisfied only when every *measured* gap is no larger than that decision's own margin, including the non-strict boundary | `test_a_gap_exactly_equal_to_the_margin_is_satisfied`, `test_the_measured_gap_is_never_read_from_the_record` |
+| A measured gap larger than that margin violates it, naming the decision and the two answers | `test_the_violation_names_the_two_answers_it_compared` |
+| A system with no artefact, or an artefact family computing no reference, is unattainable and never satisfied | `test_a_system_exposing_no_artefact_is_unattainable_never_satisfied`, `test_an_artefact_family_that_computes_no_reference_is_unattainable`, `test_a_system_that_does_not_declare_the_measured_signal_is_unattainable` |
+| A system that honestly declares an approximation is not evaluated, never accused | `test_an_honestly_declared_approximation_is_not_accused` |
+| Two systems differing only in whether their inference is the semantics they declare get different reports | `test_two_systems_differing_only_in_their_inference_get_different_verdicts` |
+| The duty that reads the measured gap is interpretive and settled against the artefact | `test_the_deviation_duty_is_interpretive_and_settled_against_the_artefact` |
 | `probed satisfied` ⇒ no counterexample among the replayed inputs, and every rendering carries the budget | `test_no_counterexample_in_budget_is_probed_and_every_rendering_carries_the_budget` |
 | A probed result cannot exist without its budget | `test_a_probed_result_cannot_be_constructed_without_its_budget` |
 | The probe plan is re-derivable from its seed | `test_the_same_seed_searches_the_same_space` |
@@ -1887,7 +1908,7 @@ Two consequences of that report text, followed by a separate package-level termi
 | A result cannot carry a rung its basis does not admit, and the basis is derived from the duty rather than declared | `test_a_result_cannot_carry_a_rung_its_basis_does_not_admit`, `test_the_basis_is_derived_from_the_duty_and_never_declared`, `test_every_basis_admits_unattainable_so_the_capability_gate_is_never_bypassed` |
 | The rungs a basis advertises are the rungs the engine ladder can reach, in both directions | `test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach`, `test_an_assessment_duty_reaches_no_engine_at_all` |
 | The three pressures are discharged: a graded duty is counted apart from an unsettled one, a counterfactual duty is never observed, and the certificate duty's ceiling is named as the duty's | `test_a_graded_duty_is_counted_apart_from_a_duty_no_engine_settled`, `test_a_counterfactual_duty_is_never_observed_however_long_the_trace`, `test_the_certificate_dutys_ceiling_is_named_as_the_dutys_and_not_the_systems` |
-| The basis changed no verdict, the behavioural basis renders as it always did, and the shipped census is pinned | `test_the_basis_changed_no_verdict_and_no_strength`, `test_the_behavioural_basis_says_nothing_and_the_other_three_name_their_ceiling`, `test_exactly_two_shipped_duties_are_not_on_the_behavioural_basis`, `test_the_json_envelope_carries_the_basis_on_every_result` |
+| The basis changed no verdict, the behavioural basis renders as it always did, and the shipped census is pinned | `test_the_basis_changed_no_verdict_and_no_strength`, `test_the_behavioural_basis_says_nothing_and_the_other_three_name_their_ceiling`, `test_exactly_three_shipped_duties_are_not_on_the_behavioural_basis`, `test_the_json_envelope_carries_the_basis_on_every_result` |
 | No audience mistakes a kind for a rank, and the lay reader is shown no basis at all | `test_the_lay_audience_is_never_shown_an_evidence_basis` |
 | This document is linked, and every test it names exists | `test_semantics_doc_is_linked_from_the_readmes`, `test_every_test_named_in_the_semantics_doc_exists` |
 
@@ -2529,7 +2550,7 @@ three:
   whose duties sit on three bases has no aggregate to compute over them.
 - **It adds no engine, no rung and no duty.** Two shipped duties are not on the behavioural basis
   and there is no shipped graded one, which is the census
-  `test_exactly_two_shipped_duties_are_not_on_the_behavioural_basis` pins, on the shape
+  `test_exactly_three_shipped_duties_are_not_on_the_behavioural_basis` pins, on the shape
   `test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy` already uses. A third arriving
   is a decision rather than a side effect of a pack edit.
 - **It does not accommodate a basis nobody has.** Two more are foreseeable — evidence with a

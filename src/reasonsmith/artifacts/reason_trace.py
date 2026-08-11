@@ -122,6 +122,13 @@ class ReasonTraceArtifact:
     #: certificate is not offered a number that would read as one.
     exact_depth = None
 
+    #: And for the same reason this family computes no semantics reference. `exact_value()` below
+    #: is the weight the *system* recounted, so the difference between it and the system's answer
+    #: says how faithful the rationale is and nothing about which semantics the inference is.
+    #: Stated rather than left absent: silence here already means None, and a family this close to
+    #: the one that does compute a reference should say so out loud.
+    exact_semantics = None
+
     @property
     def exact_inference(self) -> str:
         return (

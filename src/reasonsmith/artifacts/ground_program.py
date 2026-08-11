@@ -54,6 +54,11 @@ class GroundProgramArtifact:
     #: is what separates them.
     reasons_are_exact = True
 
+    #: And `exact_value()` below is exact weighted model counting over that enumeration, which is
+    #: the distribution semantics of the ground program. Named from `spec.CLAIMED_SEMANTICS` so a
+    #: duty can hold the adapter's claim against it rather than against a string nobody can compare.
+    exact_semantics = "distribution semantics"
+
     def __init__(
         self,
         program: GroundProgram,

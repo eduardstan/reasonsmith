@@ -44,7 +44,6 @@ Each carries a value computed from that system's own inference on that instance:
 - `scope_statements_local_vs_global`
 - `scope_statements_explanation_scope`
 - `scope_statements_approximation_vs_guarantee`
-- `scope_statements_declared_deviation`
 
 ### Signals deliberately not declared
 
@@ -64,6 +63,7 @@ reported unattainable rather than filled in:
 - `provenance_basis_contract` — the lawful basis for processing is a controller's legal position, not a value any provenance semiring computes
 - `provenance_basis_union_or_member_state_law` — as above
 - `provenance_basis_explicit_consent` — as above
+- `artifact_logs_semantics_value_gap` — this is the one signal here reasonsmith measures rather than reads, and measuring it needs the model encoding behind a decision — an artifact() this adapter deliberately does not expose. The deviation figures in the inference table below exist because nesyarena ships an exact oracle beside each approximate provenance, which is a property of a measurement harness and not of a deployed system, and handing that oracle to reasonsmith would report agreement this tool established from an artefact the system never gave it. So the error-risk duty of Recital 71 is reported unattainable for all five provenances rather than judged against a number the harness supplied
 
 ## The instance battery
 
@@ -168,7 +168,7 @@ system: nesyarena:exact-wmc
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 2 observed
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -185,9 +185,11 @@ REQUIREMENT FINDINGS:
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_meaningful_explanation (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
-  [OBSERVED] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
-    requires: scope_statements_declared_deviation, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
-    summary: Observed over 16 decision(s): temporal monitor for 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' satisfied at every decision step.
+  [UNATTAINABLE] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): inconclusive
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
+    requires: artifact_logs_semantics_value_gap, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
+    MISSING SIGNALS: artifact_logs_semantics_value_gap
+    summary: Unattainable as built: the system declares no capability to emit artifact_logs_semantics_value_gap, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
@@ -276,7 +278,7 @@ system: nesyarena:add-mult(clamped)
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 violated
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 violated, 1 unattainable
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -295,9 +297,11 @@ REQUIREMENT FINDINGS:
     ABSENT FROM TRACE: artifact_logs_reason_explanation
     summary: Violated over 16 observed decision(s): the system declares it can emit these signals, but records carry no value for artifact_logs_reason_explanation.
     offending records: step 8, step 9, step 10, step 11
-  [OBSERVED] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
-    requires: scope_statements_declared_deviation, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
-    summary: Observed over 16 decision(s): temporal monitor for 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' satisfied at every decision step.
+  [UNATTAINABLE] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): inconclusive
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
+    requires: artifact_logs_semantics_value_gap, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
+    MISSING SIGNALS: artifact_logs_semantics_value_gap
+    summary: Unattainable as built: the system declares no capability to emit artifact_logs_semantics_value_gap, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
@@ -386,7 +390,7 @@ system: nesyarena:top-1-proofs
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 violated
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -403,10 +407,11 @@ REQUIREMENT FINDINGS:
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_meaningful_explanation (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
-  [OBSERVED] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): violated
-    requires: scope_statements_declared_deviation, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
-    summary: Violated over 16 decision(s): temporal property 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' failed at decision step(s) [4, 5, 6, 7, 8, 9, 10, 11].
-    offending records: step 4, step 5, step 6, step 7, step 8, step 9, step 10, step 11
+  [UNATTAINABLE] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): inconclusive
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
+    requires: artifact_logs_semantics_value_gap, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
+    MISSING SIGNALS: artifact_logs_semantics_value_gap
+    summary: Unattainable as built: the system declares no capability to emit artifact_logs_semantics_value_gap, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
@@ -495,7 +500,7 @@ system: nesyarena:top-3-proofs
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 2 observed
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -512,9 +517,11 @@ REQUIREMENT FINDINGS:
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_meaningful_explanation (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
-  [OBSERVED] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
-    requires: scope_statements_declared_deviation, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
-    summary: Observed over 16 decision(s): temporal monitor for 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' satisfied at every decision step.
+  [UNATTAINABLE] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): inconclusive
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
+    requires: artifact_logs_semantics_value_gap, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
+    MISSING SIGNALS: artifact_logs_semantics_value_gap
+    summary: Unattainable as built: the system declares no capability to emit artifact_logs_semantics_value_gap, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
@@ -603,7 +610,7 @@ system: nesyarena:min-max-prob
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 violated
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -620,10 +627,11 @@ REQUIREMENT FINDINGS:
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_meaningful_explanation (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
-  [OBSERVED] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): violated
-    requires: scope_statements_declared_deviation, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
-    summary: Violated over 16 decision(s): temporal property 'always(scope_statements_declared_deviation <= artifact_logs_decision_margin)' failed at decision step(s) [0, 1, 2, 3, 8].
-    offending records: step 0, step 1, step 2, step 3, step 8
+  [UNATTAINABLE] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): inconclusive
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
+    requires: artifact_logs_semantics_value_gap, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
+    MISSING SIGNALS: artifact_logs_semantics_value_gap
+    summary: Unattainable as built: the system declares no capability to emit artifact_logs_semantics_value_gap, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
@@ -710,5 +718,3 @@ The decisions behind every `violated` verdict above, named so a reader can
 reproduce them from the measured-inference table.
 
 - `add-mult(clamped)` / `gdpr` / `gdpr_recital71_meaningful_explanation`: 4 of 16 decisions carry no artifact_logs_reason_explanation — instances G1-P4-L2-c0, G1-P4-L2-c1, G1-P4-L3-c0, G1-P4-L3-c1 (record index 8, 9, 10, 11)
-- `top-1-proofs` / `gdpr` / `gdpr_recital71_error_risk_minimised`: 8 of 16 decisions breach `always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` — instances G1-P2-L2-c0, G1-P2-L2-c1, G1-P2-L3-c0, G1-P2-L3-c1, G1-P4-L2-c0, G1-P4-L2-c1, G1-P4-L3-c0, G1-P4-L3-c1 (record index 4, 5, 6, 7, 8, 9, 10, 11)
-- `min-max-prob` / `gdpr` / `gdpr_recital71_error_risk_minimised`: 5 of 16 decisions breach `always(scope_statements_declared_deviation <= artifact_logs_decision_margin)` — instances G1-P1-L2-c0, G1-P1-L2-c1, G1-P1-L3-c0, G1-P1-L3-c1, G1-P4-L2-c0 (record index 0, 1, 2, 3, 8)

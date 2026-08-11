@@ -56,6 +56,7 @@ from reasonsmith.verdict import BASIS_RUNGS, EvidenceBasis, Strength, Verdict, c
 #: so the `assessment` row is exercised by a fixture below and by no pack.
 NON_BEHAVIOURAL = {
     "ecoa_reg_b_1002_9_b_2_principal_reasons_complete": EvidenceBasis.ARTIFACT,
+    "gdpr_recital71_error_risk_minimised": EvidenceBasis.ARTIFACT,
     "ecoa_reg_b_1002_4_a_no_disparate_treatment": EvidenceBasis.RELATIONAL,
 }
 
@@ -403,8 +404,8 @@ def test_the_basis_changed_no_verdict_and_no_strength():
     assert got == expected
 
 
-def test_exactly_two_shipped_duties_are_not_on_the_behavioural_basis():
-    """The census, pinned. A third one arriving is a decision, not a side effect of a pack edit.
+def test_exactly_three_shipped_duties_are_not_on_the_behavioural_basis():
+    """The census, pinned. A fourth one arriving is a decision, not a side effect of a pack edit.
 
     The shape of `test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy`: a count that
     fails when the packs move, so the count in `docs/semantics.md` §10 cannot go stale silently.

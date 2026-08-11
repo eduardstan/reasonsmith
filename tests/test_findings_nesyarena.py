@@ -120,6 +120,7 @@ REQS = _requirements()
 _NUM_WORDS = {
     0: "zero", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
     7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen",
+    14: "fourteen", 15: "fifteen",
 }
 
 
@@ -447,7 +448,7 @@ def test_finding_1_min_max_prose():
 
 def test_finding_1_deviation_duty_table():
     """The deviation-duty table matches a real run of the duty, verdicts included."""
-    table = _finding_table(_document(), "| system | max declared deviation")
+    table = _finding_table(_document(), "| system | max deviation the harness measured")
     assert set(table) == {sut.name for sut in SYSTEMS}
     for sut in SYSTEMS:
         max_dev, _, _, exceeding = _inference_stats(sut)
@@ -504,15 +505,16 @@ def test_finding_2_formalism_census():
         )
 
 
-def test_finding_2_unattainable_pair():
-    """The sentence naming the unattainable pair names exactly the run's pair."""
+def test_finding_2_unattainable_set():
+    """The sentence naming the unattainable duties names exactly the run's."""
     prose = _prose()
     derived = _unattainable_ids()
     assert derived == {
         "gdpr_art22_1_no_prohibited_decision_for_any_input",
         "gdpr_art22_1_automated_decision_prohibition",
+        DEVIATION_DUTY,
     }, (
-        f"the unattainable duties are no longer that pair but {sorted(derived)} — re-derive "
+        f"the unattainable duties are no longer that set but {sorted(derived)} — re-derive "
         "finding 2 against the run before updating the prose"
     )
     sentence = _unattainable_sentence(prose)
@@ -682,7 +684,7 @@ def test_finding_6_alternative_reason_rule():
     remaining = len(violated) - len(reason_rule_dependent)
     not_applicable = sum(1 for r in RESULTS if r.verdict is Verdict.NOT_APPLICABLE)
     non_violations = len(RESULTS) - not_applicable - remaining
-    assert remaining == 2 and non_violations == 23, (
+    assert remaining == 0 and non_violations == 25, (
         "the alternative-reason-rule counterfactual is stale: the run now leaves "
         f"{remaining} violations and {non_violations} non-violations"
     )

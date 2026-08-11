@@ -20,10 +20,15 @@ counterfactual engine, which spans both `proved` and `probed`).
 
 **What closed it.** `engines/temporal.py` proves an `always(f)` whose `f` is a property of a single
 decision, by the one reduction that is exact over a finite trace: `always(f)` holds iff `f` holds at
-every position, and every position is a decision the system's exposed `logic()` admits. The two
-temporal requirements this objective named — `ecoa_reg_b_1002_9_a_1_timing_of_notice` and
-`gdpr_recital71_error_risk_minimised` — now report `proved` against
-`reasonsmith.examples.symbolic_rules`, and `test_a_temporal_duty_never_rises_above_observed` was
+every position, and every position is a decision the system's exposed `logic()` admits. Of the two
+temporal requirements this objective named, `ecoa_reg_b_1002_9_a_1_timing_of_notice` reports
+`proved` against `reasonsmith.examples.symbolic_rules`. The second,
+`gdpr_recital71_error_risk_minimised`, did too until objective 5 replaced its left-hand side with a
+measurement: it is now settled against the inference artefact behind a decision or not at all, so
+that rule set — which exposes no `artifact()` — is reported `unattainable` on it. The reduction is
+unchanged and reaches it still; what moved is which engine may answer that duty, and
+`engines/certificate.py` makes the same `always(f)` reduction, over the decisions it certifies, so
+one spelling of the operator exists. `test_a_temporal_duty_never_rises_above_observed` was
 replaced by `test_only_always_reaches_the_temporal_proof_rung`, which pins the new ceiling from both
 sides. The soundness paragraph is [`docs/semantics.md`](docs/semantics.md) §3, *`proved`, over a
 trace*.
@@ -154,40 +159,53 @@ waits on. The intake is the Discussion
 and the [pack proposal template](.github/ISSUE_TEMPLATE/pack_proposal.yml); the rules a pack must
 satisfy are in [`docs/authoring-packs.md`](docs/authoring-packs.md).
 
-## 5. Evidence that a system's inference is the semantics it claims
+## 5. Evidence that a system's inference is the semantics it claims — closed, for one artefact family
 
-**The gap.** A system declares what it computes; nothing here checks that the declaration is true.
-Every verdict this tool reaches stands on a claim the system makes about itself — the semantics its
-inference implements, the deviation it reports from that semantics, the decision domain it operates
-in — and no engine measures any of them against the system's behaviour. The measured consequence is
-finding 1 of [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md): two provenances whose
-decisions disagree with the semantics they claim, one on half the battery, were reported satisfied
-on every duty this tool could check, with verdicts identical to the exact oracle's. The same shape
-is stated twice more in that document — the error-risk duty "rewards the measurement, not the
-accuracy" (finding 1, *What has not changed*), and "a declaration is a self-declaration" about the
-domain gate (finding 3).
+**What closed it.** `gdpr_recital71_error_risk_minimised` now reads a deviation reasonsmith
+*measures* instead of one the system declares. Its left-hand side is
+`engines.certificate.SEMANTICS_VALUE_GAP` — the distance between the system's own engine's answer
+and exact inference's answer to the same query on the same interpretation, both computed from the
+inference artefact the system exposes — and the certificate engine is the only engine that may
+settle it. This is the repair of an existing duty and not a new clause: the same Recital, the same
+quotation, the same property shape, with the self-declaration overwritten by a measurement, exactly
+as `engines/certificate.py` already did for `artifact_logs_deleted_reason_count`.
 
-**Measurable outcome.** A check in the suite that drives two systems differing *only* in whether
-their inference agrees with the semantics they declare — the same pack, the same inputs, the same
-declared semantics, one implementing it and one deviating from it — and fails unless the two reports
-differ on at least one requirement. Such a check cannot be written to pass today: the two reports
-are identical, which is what finding 1 measures rather than predicts. When it passes, finding 1's
-*What changed since this finding* section gains the row that says so; the finding itself stays as
-written, because it is the reason the objective exists.
+**The measurable outcome now passes.** `test_two_systems_differing_only_in_their_inference_get_
+different_verdicts` drives two systems identical in every respect a report can see — same pack, same
+decisions, same capability set, same records, same declared semantics — differing only in whether
+the engine behind `artifact()` implements what it declares, and the two reports disagree on this
+requirement: `satisfied` at `probed` against `violated` at `probed`. Finding 1 of
+[`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) has gained its *What changed* row.
 
-**Depends on.** A design answer before any code, on the same terms as objective 3, and the question
-is narrower than it looks: **what would a system have to expose for reasonsmith to establish
-agreement rather than take its word?** `engines/certificate.py` is the precedent worth studying — it
-took a claim previously read out of a log and made it something the tool measures against an
-artefact the system exposes — and the trap it avoided is the one to avoid here. A `semantics_matches`
-flag would be a second self-declaration wearing an engine's clothes; so would any design that needs
-the system to hand over the very number in dispute. It also depends on not assuming an oracle:
-finding 5 of the same document records that the deviation figures in that run exist because
-`nesyarena` ships an exact oracle beside each approximate provenance, which a deployed system does
-not have, so a design reachable only with one closes nothing outside a measurement harness. And it
-depends on the four-outcome discipline of [`docs/semantics.md`](docs/semantics.md) §4 holding: a
-system exposing nothing that grounds its claim must report *not evaluated*, never `satisfied`.
-The intake is the Discussion
+**What it reaches, and it is one artefact family.** The measurement needs a declarative model
+encoding exposed through `artifact()` whose own exact side computes the semantics the system claims.
+Everything else is `unattainable`: a log-only system, the language-model adapter, a recounted reason
+trace, and the five `nesyarena` provenances as adapted in `docs/build_nesyarena_report.py`. A duty
+that silently answered only where it could measure, while looking like it answered everywhere, would
+be worse than one that refuses out loud, so the reach is stated in the pack description, in
+[`docs/semantics.md`](docs/semantics.md) §3 and in the fourth column of
+[`docs/refinement.md`](docs/refinement.md) rather than left to be discovered.
+
+**What this cost, stated because it is not nothing.** Two violations went away. `top-1-proofs` and
+`min-max-prob` were reported *violated* on this duty in the nesyarena run and are now
+*unattainable*, because the verdicts they earned rested on a deviation that harness computes with
+an exact oracle and writes into its own log — the property finding 5 of the same document says a
+deployed system does not have. The duty stopped being gameable and stopped reaching them in the same
+change. `reasonsmith.examples.symbolic_rules` lost a `proved` verdict here for the same reason, and
+objective 1 above records it.
+
+**What is left, and it is the part of finding 1 still open.** The two provenances whose decisions
+disagree with the semantics they claim are no longer *falsely cleared* on this duty, and they are
+not yet *caught* by it: they hold a ground program and the adapter in
+`docs/build_nesyarena_report.py` does not hand it over. Closing that is an adapter change and no
+engine work — the reference reasonsmith computes is derived from the encoding the system exposes and
+needs no oracle shipped beside it. Two of the three self-declarations this objective named are
+untouched: the deviation is now measured, the **semantics claim itself** is checked only in the weak
+sense that a claim outside `spec.CLAIMED_SEMANTICS` is refused and one this build computes no
+reference for is *not evaluated*, and the **decision domain** (finding 3) is reached by nothing here
+and is recorded in *Two axes of reach are modelled* in
+[`docs/refinement.md`](docs/refinement.md) rather than as an objective, because no design answer
+found a handle on it. The intake stays the Discussion
 [*reasonsmith cleared two systems whose decisions are wrong — what should a pack do about it?*](https://github.com/eduardstan/reasonsmith/discussions/59).
 
 **What exists now, and it does not close this.** The design answer was written, and one half of one

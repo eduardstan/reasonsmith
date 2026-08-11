@@ -73,10 +73,11 @@ deployed decision procedure buys a proof about something else — and `real` is 
 solver and IEEE-754 to your system, which the engine states in its own summary.
 `symbolic_rules.py` is the worked case ([`three-systems.md`](three-systems.md), *Symbolic*).
 
-**An inference artefact.** The one duty measured against the inference *behind* a decision rather
-than against what was decided is reason adequacy, and it needs `artifact(decision)` returning an
-[`InferenceArtifact`](../src/reasonsmith/artifacts/__init__.py) — the only signal reasonsmith
-measures rather than reads from a record. Two families ship:
+**An inference artefact.** Two duties are measured against the inference *behind* a decision rather
+than against what was decided — reason adequacy, and whether the system's answer is the semantics it
+claims — and both need `artifact(decision)` returning an
+[`InferenceArtifact`](../src/reasonsmith/artifacts/__init__.py). Their two signals are the only ones
+reasonsmith measures rather than reads from a record. Two families ship:
 [`GroundProgramArtifact`](../src/reasonsmith/artifacts/ground_program.py), whose reasons are
 enumerated from a model encoding (`reasons_are_exact = True`, so `probed`), and
 [`ReasonTraceArtifact`](../src/reasonsmith/artifacts/reason_trace.py), the reasons a system
@@ -84,7 +85,13 @@ enumerated from a model encoding (`reasons_are_exact = True`, so `probed`), and
 (`recounted`). Silence claims the weaker rung. The artefact must also declare whether its inference
 is monotone; one that does not is reported *not evaluated* and never downgraded to the presence
 check sharing its clause ([`semantics.md`](semantics.md) §3, *The inference artefact*;
-[`sufficient-reasons.md`](sufficient-reasons.md) for what a `deleted` reason is).
+[`sufficient-reasons.md`](sufficient-reasons.md) for what a `deleted` reason is). The semantics duty
+needs one thing more of the family and nothing more of you: the artefact's own `exact_value()` must
+compute the semantics your adapter claims, which the ground-program family does for `distribution
+semantics` and the recounted family does for none — so a reason trace is reported *unattainable*
+there, and an adapter claiming any other member of `spec.CLAIMED_SEMANTICS` is reported *not
+evaluated* naming the claim, never violated ([`semantics.md`](semantics.md) §3, *The first shipped
+duty whose deviation is measured rather than declared*).
 
 `--system` and `--system-module` name two different systems and refuse each other, as does
 `--capabilities` against `--system-module`. Adapt from whichever of the four files under

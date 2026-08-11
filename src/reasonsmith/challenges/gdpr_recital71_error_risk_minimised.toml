@@ -1,33 +1,33 @@
 formalism = "temporal"
 requirement = "gdpr_recital71_error_risk_minimised"
-rationale = "The cases are finite decision traces: equality is a lawful boundary, one decision exceeds its own margin, and a later boundary decision ensures every position is checked."
+rationale = "The cases are finite decision traces over the measured value gap: equality is a lawful boundary, one decision exceeds its own margin, and a later boundary decision ensures every position is checked."
 
 [[case]]
 id = "every-decision-within-margin"
 kind = "satisfied"
 expected = "satisfied"
-description = "Both decisions declare no more approximation error than their own decision margin."
+description = "Both decisions are measured no further from exact inference than their own decision margin."
 trace = [
-  { scope_statements_declared_deviation = 1.0, artifact_logs_decision_margin = 1.0 },
-  { scope_statements_declared_deviation = 0.0, artifact_logs_decision_margin = 0.0 },
+  { artifact_logs_semantics_value_gap = 1.0, artifact_logs_decision_margin = 1.0 },
+  { artifact_logs_semantics_value_gap = 0.0, artifact_logs_decision_margin = 0.0 },
 ]
 
 [[case]]
 id = "one-decision-exceeds-margin"
 kind = "violated"
 expected = "violated"
-description = "The second decision declares more approximation error than its margin permits."
+description = "The second decision is measured further from exact inference than its margin permits."
 trace = [
-  { scope_statements_declared_deviation = 0.25, artifact_logs_decision_margin = 0.5 },
-  { scope_statements_declared_deviation = 1.0, artifact_logs_decision_margin = 0.5 },
+  { artifact_logs_semantics_value_gap = 0.25, artifact_logs_decision_margin = 0.5 },
+  { artifact_logs_semantics_value_gap = 1.0, artifact_logs_decision_margin = 0.5 },
 ]
 
 [[case]]
 id = "equal-is-not-breach"
 kind = "near-miss"
 expected = "satisfied"
-description = "A declaration exactly equal to the decision margin remains compliant with the clause's non-strict bound."
+description = "A measured gap exactly equal to the decision margin remains compliant with the clause's non-strict bound."
 trace = [
-  { scope_statements_declared_deviation = 0.5, artifact_logs_decision_margin = 0.5 },
-  { scope_statements_declared_deviation = 0.25, artifact_logs_decision_margin = 0.25 },
+  { artifact_logs_semantics_value_gap = 0.5, artifact_logs_decision_margin = 0.5 },
+  { artifact_logs_semantics_value_gap = 0.25, artifact_logs_decision_margin = 0.25 },
 ]

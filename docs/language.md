@@ -940,7 +940,8 @@ comparison satisfied nowhere by the reference reading is reported **violated** a
 `always(b > 0)` on a trace of `b = 0.0` is violated and `always(b >= 0)` satisfied
 (`test_strict_comparison_boundary_table`). Every shipped duty uses `<=`, and at a tie `<=` *is*
 satisfied, so no shipped verdict turns on this;
-`test_a_declared_deviation_exactly_equal_to_the_margin_is_reported_satisfied` is that duty's case.
+`test_a_gap_exactly_equal_to_the_margin_is_satisfied` is that duty's case — though it is
+no longer read by a monitor at all, since that duty moved to the certificate rung.
 
 **Why the fix is a refusal and not a repair.** §2 is the reading, and three encodings — the
 interpreter, the Z3 encoding and the finite-trace rendering — implement it. One backend disagreeing

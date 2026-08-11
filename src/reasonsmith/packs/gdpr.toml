@@ -9,7 +9,19 @@ intervention is closed under point (a) or (c). A `proved` verdict there is a sta
 every input the declared constraints admit. It is not a determination that the controller has discharged Article 22, \
 and reasonsmith makes no such determination: the rules are taken as describing the system, whether the recorded \
 inputs are true of a real decision is outside what any engine here checks, and Article 22 reaches organisational \
-facts no decision rule carries."""
+facts no decision rule carries. One duty here is settled against the inference artefact behind a decision and by \
+nothing else: `gdpr_recital71_error_risk_minimised` asks whether the error in the system's own inference is smaller \
+than the decision's own margin, and its gate, `artifact_logs_semantics_value_gap`, is measured rather than read. \
+reasonsmith runs exact inference over the model encoding the system exposes and compares it against the answer the \
+system's own engine gave, so a system that documents a small deviation and does not have one no longer passes on \
+the strength of the documentation. What that reaches is narrow and is stated here rather than discovered: one \
+artefact family — an exposed declarative model encoding whose exact side computes the semantics the system claims. \
+A system exposing no such artefact is reported unattainable on this duty rather than judged by the number it wrote \
+about itself, and a system claiming a semantics this build computes no reference for is reported not evaluated \
+naming the claim, never violated. That second refusal is the point of the ordering: the vocabulary a system \
+declares its semantics in (reasonsmith.spec.CLAIMED_SEMANTICS) has no member for a documented approximation of \
+another member, so an approximating system's honest declaration is one this build cannot compute a reference for, \
+and it is left unjudged rather than accused of a claim it never made."""
 
 [source]
 document = "Regulation (EU) 2016/679 of the European Parliament and of the Council (GDPR)"
@@ -114,13 +126,19 @@ article_clause = "Recital 71"
 verbatim_text = "In order to ensure fair and transparent processing in respect of the data subject, taking into account the specific circumstances and context in which the personal data are processed, the controller should use appropriate mathematical or statistical procedures for the profiling, implement technical and organisational measures appropriate to ensure, in particular, that factors which result in inaccuracies in personal data are corrected and the risk of errors is minimised, secure personal data in a manner that takes account of the potential risks involved for the interests and rights of the data subject and that prevents, inter alia, discriminatory effects on natural persons on the basis of racial or ethnic origin, political opinion, religion or beliefs, trade union membership, genetic or health status or sexual orientation, or that result in measures having such an effect."
 stakeholder = "affected individual"
 formalism = "temporal"
-spec = "always(scope_statements_declared_deviation <= artifact_logs_decision_margin)"
-rationale = """In every decision, the approximation error the system declares for itself is no larger than that \
-decision's own margin from its threshold: an error big enough to have moved the decision is not an error that has \
-been minimised. The bound is the system's own margin, deliberately, so no number in this duty is an invented \
-threshold presented as the Recital's."""
+spec = "always(artifact_logs_semantics_value_gap <= artifact_logs_decision_margin)"
+rationale = """In every decision, the approximation error reasonsmith *measures* for the system is no larger than \
+that decision's own margin from its threshold: an error big enough to have moved the decision is not an error that \
+has been minimised. The error is the absolute distance between the system's own engine's answer and exact \
+inference's answer to the same query on the same interpretation, both computed from the inference artefact the \
+system exposes, and it is never read from the record — a system that could discharge this duty by writing a small \
+number about itself into its own log would be grading its own homework. The reference is only ever computed where \
+the artefact's family computes one *for the semantics the system claims*: a system whose declared semantics this \
+build cannot compute is reported not evaluated naming the claim, and is never accused of departing from a \
+semantics it never claimed. The bound is still the system's own margin, deliberately, so no number in this duty is \
+an invented threshold presented as the Recital's."""
 requires = [
-    "scope_statements_declared_deviation",
+    "artifact_logs_semantics_value_gap",
     "scope_statements_approximation_vs_guarantee",
     "artifact_logs_decision_margin",
 ]

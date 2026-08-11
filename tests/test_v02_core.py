@@ -972,16 +972,18 @@ def test_interpretive_requirements_excluded_from_binding_counts_and_recital71():
     assert report.counts["not_evaluated"] == 1
     assert report.counts["interpretive_total"] == 2
     assert report.counts["interpretive_observed"] == 1
-    # The second recital duty reads a declared deviation over a trace, and one decision is not a
-    # trace a discrete-time monitor can read a sampling period off: not evaluated, never satisfied.
-    assert report.counts["interpretive_not_evaluated"] == 1
+    # The second recital duty is settled against the inference artefact behind a decision and by
+    # nothing else, and this system exposes no artifact(): unattainable, never satisfied. Declaring
+    # the signal does not buy it — what the duty needs is the artefact, and the capability set is
+    # what a system writes into a record.
+    assert report.counts["interpretive_unattainable"] == 1
     # The recital is satisfied on the trace too, but it never joins the binding tally: the
     # headline says how many statutory duties held, not how many statements of any kind did.
     assert report.counts["observed"] == sum(
         1 for r in report.results if r.binding and r.verdict == Verdict.SATISFIED
     )
     assert "3 binding: 2 observed, 1 not evaluated" in report.headline
-    assert "2 interpretive: 1 observed, 1 not evaluated" in report.headline
+    assert "2 interpretive: 1 observed, 1 unattainable" in report.headline
 
 
 def test_ai_act_pack_high_risk_declaration_outcomes():

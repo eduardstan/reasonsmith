@@ -88,8 +88,10 @@ __all__ = [
     "DECLARATION_REFUTED",
     "DECLARED_NON_MONOTONE",
     "EXACT_REASONS_KEY",
+    "EXACT_SEMANTICS_KEY",
     "MONOTONE_KEY",
     "NO_INTERPRETATION",
+    "NO_SEMANTICS_REFERENCE",
     "RECOUNTED_REASONS",
     "UNDECLARED_MONOTONICITY",
     "InferenceArtifact",
@@ -97,6 +99,8 @@ __all__ = [
     "default_label",
     "deletion_semantics_refusal",
     "reason_set_is_exact",
+    "reference_semantics",
+    "semantics_reference_refusal",
 ]
 
 #: The name of the declaration, on an artefact object and in the mapping form of `artifact()`.
@@ -104,6 +108,12 @@ MONOTONE_KEY = "monotone"
 
 #: The name of the exactness declaration, on an artefact object and in the mapping form.
 EXACT_REASONS_KEY = "reasons_are_exact"
+
+#: The name of the reference declaration: which semantics this family's own `exact_value()`
+#: *computes*, as a member of `spec.CLAIMED_SEMANTICS`. It is a fact about the adapter, not about
+#: the audited system — `claimed_semantics` is the system's claim and this is what the artefact can
+#: hold that claim against.
+EXACT_SEMANTICS_KEY = "exact_semantics"
 
 
 #: Said on every verdict measured from a reason set the system recounted, and the whole of what
@@ -151,6 +161,51 @@ def reason_set_is_exact(artifact: object) -> bool:
     understates one.
     """
     return bool(getattr(artifact, EXACT_REASONS_KEY, False))
+
+
+def reference_semantics(artifact: object) -> str | None:
+    """Which semantics this artefact's own `exact_value()` computes, or None where it computes none.
+
+    Read with `getattr` and defaulting to **None**, on the same terms as `reason_set_is_exact`: a
+    family that does not say claims nothing, and a duty comparing the system's answer against a
+    reference is *unattainable* on it rather than measured against a number that answers a
+    different question. `artifacts.reason_trace` is the shipped family that says None — its
+    `exact_value()` is the sum of the weights the system itself recounted, so a gap measured there
+    is a faithfulness figure about a rationale and never evidence about a semantics.
+    """
+    value = getattr(artifact, EXACT_SEMANTICS_KEY, None)
+    return value if isinstance(value, str) else None
+
+
+#: Said where an artefact's family computes no semantics reference at all.
+NO_SEMANTICS_REFERENCE = (
+    "this artefact's family computes no reference for any semantics: its exact side is the weight "
+    "the system itself recounted, not inference over a model encoding, so the difference between "
+    "it and the system's answer measures how faithful a rationale is to an answer and not whether "
+    "an inference is the semantics it claims. The two look identical as a number and instruct a "
+    "reader to do opposite things. Nothing weaker stands in for the measurement"
+)
+
+
+def semantics_reference_refusal(claimed: str, reference: str | None) -> str | None:
+    """Why this artefact grounds no semantics-agreement measurement, or None where it does.
+
+    Worded once, for the reason `deletion_semantics_refusal` is: the engine asks this of the
+    artefact and a reader meets it on the result, and two wordings would drift. The two refusals
+    are deliberately different *outcomes* — a family with no reference is a gap in the system
+    (expose a model encoding), a claim this build computes no reference for is a gap in this tool
+    (`docs/semantics.md` §4) — and this function only supplies the words.
+    """
+    if reference is None:
+        return NO_SEMANTICS_REFERENCE
+    if claimed != reference:
+        return (
+            f"this artefact claims {claimed!r} and the only reference its family computes is "
+            f"{reference!r}. Comparing the system's answer against a semantics it never claimed "
+            "would report a system that documents its own approximation exactly as it reports one "
+            "that hides it, which is the accusation this duty is ordered to avoid"
+        )
+    return None
 
 
 #: Said where an artefact declares its inference non-monotone. The refusal is structural: there is
@@ -221,7 +276,7 @@ class InferenceArtifact(Protocol):
     what a fact is belongs to the family, and the certificate only ever counts, sorts and switches
     them off.
 
-    Three members are **optional and deliberately not declared below**, for the same mechanical
+    Four members are **optional and deliberately not declared below**, for the same mechanical
     reason: a `runtime_checkable` protocol tests every annotated member and every method in its body
     with `hasattr`, so declaring one here would make a family that does not offer it fail
     `isinstance` — the opposite of a default that claims the narrower surface.
@@ -229,6 +284,12 @@ class InferenceArtifact(Protocol):
     - `reasons_are_exact: bool` — True where `reasons()` is an exact enumeration over a model
       encoding, absent or False where the system recounted the set instead. Read through
       `reason_set_is_exact` and never off the attribute.
+    - `exact_semantics: str | None` — which member of `spec.CLAIMED_SEMANTICS` this family's own
+      `exact_value()` computes, absent or None where it computes none. Read through
+      `reference_semantics`. It is not a second `claimed_semantics`: that one is the audited
+      system's claim about its own inference, this one is what the adapter beside it can compute. A
+      duty asking whether an inference *is* the semantics it claims needs both, and needs them to be
+      the same member before it may compare two numbers at all.
     - `at(fact, probability) -> InferenceArtifact` and `probability(fact) -> float` — the widened
       perturbation and the reading of the base interpretation it moves from. A family offering both
       can be asked for its inference at an interpretation the *caller* chose, which is strictly more

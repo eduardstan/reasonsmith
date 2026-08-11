@@ -422,15 +422,33 @@ eighteen times, what the two applicability gates still do not reach — *Two axe
 modelled, and the trigger is still not one*, whose largest remaining item is the trigger inside a
 decision that no system-level gate can close.
 
-The first shipped duty whose verdict comes from a value a system declares about its own approximation
-error is `gdpr_recital71_error_risk_minimised`. It compares
-`scope_statements_declared_deviation` against `artifact_logs_decision_margin`, so a nonzero declared
-error fails when it is larger than the decision's own margin. The bound is the system's own margin
-on purpose — no threshold in a shipped pack may be a number invented for it and presented as the
-regulation's. Exact equality is a checked limit, not a breach, because the clause's own comparison
-is non-strict — not because a margin came back zero: the rung's verdict is the property's value over
-the trace and the robustness score is only the margin reported beside it.
-What the verdict does and does not claim is in `docs/semantics.md` §3; why it exists is finding 1 of `docs/findings-nesyarena.md`.
+`gdpr_recital71_error_risk_minimised` is the duty whose approximation error reasonsmith
+**measures** rather than reads. It compares `engines.certificate.SEMANTICS_VALUE_GAP` — the absolute
+distance between the system's own engine's answer and exact inference's answer to the same query on
+the same interpretation, both computed from the artefact `artifact()` returns — against
+`artifact_logs_decision_margin`, so an error larger than the decision's own margin fails. It was a
+self-declaration (`scope_statements_declared_deviation`) until ROADMAP objective 5 repaired it, and
+the repair is one overwrite in `engines/certificate._env`, the same move that duty's sibling already
+made for `artifact_logs_deleted_reason_count`. Five things must not be undone. `MEASURED_SIGNALS` is
+what `report._engine_ladder` and `report.evidence_basis` key on, so a duty naming either signal gets
+one rung and the `artifact` basis and can never be answered off a log. The reference is refused
+before it is used: `artifacts.reference_semantics` says which member of `spec.CLAIMED_SEMANTICS` a
+family's own `exact_value()` computes (`distribution semantics` for the ground program, None for a
+reason trace), and `artifacts.semantics_reference_refusal` splits the two outcomes —
+no reference at all is **unattainable** (the gap is in the system, expose a model encoding), a claim
+the reference does not match is **not evaluated** naming the claim (the gap is in this tool). That
+second refusal is what stops the duty accusing a system that documents its own approximation, since
+the closed vocabulary has no member for an approximation *of* a member; it is the reason the
+vocabulary closed first and `test_an_honestly_declared_approximation_is_not_accused` is what holds
+it. The monotonicity refusals are asked only of the deleted-count duty, because the declaration is
+the premise `deleted` rests on and the gap is read at the unperturbed interpretation. And the reach
+is one artefact family, stated in the pack description, `docs/semantics.md` §3 and column four of
+`docs/refinement.md` — every other system is `unattainable`, including all five nesyarena
+provenances, which is why two violations left `docs/nesyarena-conformance-report.md` in the same
+change. The bound is still the system's own margin, so no number in the duty is invented, and exact
+equality is a checked limit because the clause's comparison is non-strict.
+`tests/test_deviation_duty.py` holds all of it; why it exists is finding 1 of
+`docs/findings-nesyarena.md`.
 
 `docs/example-output.md` is derived too. `tests/test_docs_example_output.py` re-runs every command
 block in it and compares stdout byte-for-byte, and cross-checks the header's line count and
