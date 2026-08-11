@@ -433,9 +433,12 @@ the repair is one overwrite in `engines/certificate._env`, the same move that du
 made for `artifact_logs_deleted_reason_count`. Five things must not be undone. `MEASURED_SIGNALS` is
 what `report._engine_ladder` and `report.evidence_basis` key on, so a duty naming either signal gets
 one rung and the `artifact` basis and can never be answered off a log. The reference is refused
-before it is used: `artifacts.reference_semantics` says which member of `spec.CLAIMED_SEMANTICS` a
-family's own `exact_value()` computes (`distribution semantics` for the ground program, None for a
-reason trace), and `artifacts.semantics_reference_refusal` splits the two outcomes —
+before it is used: `artifacts.reference_semantics` names what a family's own `exact_value()`
+computes (`distribution semantics` for the ground program, None for a reason trace) — canonicalising
+an accepted spelling and **carrying** a name outside `spec.CLAIMED_SEMANTICS` rather than raising,
+because that name is not the audited system's claim and it is read mid-audit, where the outcome owed
+is the refusal below and never an exception a reader meets as a failed decision — and
+`artifacts.semantics_reference_refusal` splits the two outcomes —
 no reference at all is **unattainable** (the gap is in the system, expose a model encoding), a claim
 the reference does not match is **not evaluated** naming the claim (the gap is in this tool). That
 second refusal is what stops the duty accusing a system that documents its own approximation, since

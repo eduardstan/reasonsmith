@@ -1,8 +1,8 @@
 """Machine-readable facts for the Reasonsmith site build.
 
 The values in this module are deliberately computed from the shipped packs and the
-strength enum.  ``render`` is the only operation that writes an artefact; the artefact
-therefore carries both the source verification date and its own generation timestamp.
+strength enum.  ``write_published_counts`` is the only operation that writes an artefact; the
+artefact therefore carries both the source verification date and its own generation timestamp.
 """
 from __future__ import annotations
 
