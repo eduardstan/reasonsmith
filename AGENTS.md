@@ -21,8 +21,9 @@ adapter protocol. Depend on it; do not reimplement any of those. `pyproject.toml
 `pip install -e ".[dev]"` in a venv is the contributor install, the one CI
 (`.github/workflows/ci.yml`) runs. Never point it at a sibling checkout, tag, or a
 branch: the measured numbers must stay reconstructible. `torch` is
-deliberately not a declared dependency of *this* package (see README, "Dependencies & PyPI") but
-has been installed and measured in a separate environment — see [RESULTS.md](RESULTS.md) for the
+deliberately not a declared dependency of *this* package but
+has been installed and measured in a separate environment — see [RESULTS.md](RESULTS.md),
+"What Changed From Prior Torch Caveats" and "Build and Reproduction Commands", for the
 exact commands and counts, and do not re-litigate that caveat from stale memory of "torch was never
 installed here". `tests/conftest.py` puts `src` on the path so this package itself needs no
 install, but nesyarena does. `pip install`ing nesyarena only gets the built package, not its
@@ -714,9 +715,9 @@ the *language* to suit this backend.
 The live home is `https://reasonsmith.dev` (landing) with the conformance dossier at
 `https://reasonsmith.dev/report.html`; the old `eduardstan.github.io/reasonsmith` Pages URL is
 superseded and nothing should reintroduce it. `reasonsmith` is published on PyPI — the
-README's Quick Start and *Dependencies & PyPI* paragraphs own that claim and the install
-commands, and this file names no version, because one written here goes stale at the
-next release. The forbidden string appears here deliberately:
+README's *Install and run* section owns that claim and the install commands,
+[RESULTS.md](RESULTS.md) owns the `torch` caveat, and this file names no version, because one
+written here goes stale at the next release. The forbidden string appears here deliberately:
 this paragraph is the statement of the rule, and a rule that cannot name what it forbids
 is not a rule — any repository-wide check for it must exclude this file.
 
@@ -797,7 +798,7 @@ temporal duty, in the shape `test_the_solvers_fold_is_the_interpreters_fold` giv
 ## The front door
 
 Before editing the CLI, read the maintenance contracts in `src/reasonsmith/cli.py`'s module
-docstring. README, "The CLI", owns user-facing usage, and `docs/authoring-packs.md` owns the
+docstring. README, "Install and run", owns user-facing usage, and `docs/authoring-packs.md` owns the
 pack-authoring rules.
 
 `ROADMAP.md` is the public backlog and the one document that may state what is *missing*: four
