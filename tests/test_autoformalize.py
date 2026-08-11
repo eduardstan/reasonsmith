@@ -347,3 +347,86 @@ def test_challenge_case_pair_compatibility_view():
         pairs=(({"x": 0}, {"x": 1}),),
     )
     assert case.pair == ({"x": 0}, {"x": 1})
+
+
+# Coverage boundary cases for this subject.
+def _challenge_file(tmp_path, body):
+    path = tmp_path / "challenge.toml"
+    path.write_text(body, encoding="utf-8")
+    return path
+
+
+@pytest.mark.parametrize(
+    "suffix,match",
+    [
+        ("kind='bad'\nexpected='satisfied'\ndescription='d'\nsignals={}", "kind must"),
+        ("kind='satisfied'\nexpected='bad'\ndescription='d'\nsignals={}", "expected must"),
+        ("kind='satisfied'\nexpected='satisfied'\ndescription=''\nsignals={}", "description"),
+        ("kind='satisfied'\nexpected='satisfied'\ndescription='d'\ntrace=1", "trace must"),
+        ("kind='satisfied'\nexpected='satisfied'\ndescription='d'\npairs=[]", "pairs must"),
+        ("kind='satisfied'\nexpected='satisfied'\ndescription='d'\npair={}", "pair 1 must"),
+        ("kind='satisfied'\nexpected='satisfied'\ndescription='d'", "signals, trace"),
+    ],
+)
+def test_challenge_loader_rejects_malformed_cases(tmp_path, suffix, match):
+    prefix = "requirement='r'\nrationale='x'\n[[case]]\nid='a'\n"
+    with pytest.raises(ValueError, match=match):
+        harness._load_file(_challenge_file(tmp_path, prefix + suffix))
+
+
+def test_challenge_loader_rejects_set_level_and_duplicate_cases(tmp_path):
+    with pytest.raises(ValueError, match="unknown top-level"):
+        harness._load_file(_challenge_file(tmp_path, "extra = true"))
+    with pytest.raises(ValueError, match="at least one"):
+        harness._load_file(_challenge_file(tmp_path, "requirement='r'\nrationale='x'"))
+    body = "requirement='r'\nrationale='x'\ncase=[1]"
+    with pytest.raises(ValueError, match="case 1 is not"):
+        harness._load_file(_challenge_file(tmp_path, body))
+    duplicate = """requirement='r'
+rationale='x'
+[[case]]
+id='a'
+kind='satisfied'
+expected='satisfied'
+description='d'
+signals={}
+[[case]]
+id='a'
+kind='violated'
+expected='violated'
+description='d'
+signals={}
+"""
+    with pytest.raises(ValueError, match="unique"):
+        harness._load_file(_challenge_file(tmp_path, duplicate))
+
+
+def test_challenge_loader_accepts_trace_and_pair_shapes(tmp_path):
+    path = _challenge_file(
+        tmp_path,
+        """
+requirement = 'r'
+rationale = 'why'
+[[case]]
+id = 's'
+kind = 'satisfied'
+expected = 'satisfied'
+description = 'd'
+trace = [{x = 1}]
+[[case]]
+id = 'v'
+kind = 'violated'
+expected = 'violated'
+description = 'd'
+pair = {left = {x = 1}, right = {x = 2}}
+[[case]]
+id = 'n'
+kind = 'near-miss'
+expected = 'satisfied'
+description = 'd'
+signals = {x = 1}
+""",
+    )
+    loaded = harness._load_file(path)
+    assert loaded.cases[0].trace[0]["x"] == 1
+    assert loaded.cases[1].pairs[0][1]["x"] == 2

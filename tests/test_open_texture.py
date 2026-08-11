@@ -714,3 +714,26 @@ def test_no_shipped_pack_uses_either_open_texture_construct(pack_name):
     for req in pack.requirements:
         assert req.formalism not in ("graded", "undetermined")
         assert req.algebra == ""
+
+
+# Coverage boundary cases for this subject.
+def test_many_valued_degree_negation_and_implication_are_evaluated():
+    algebra = algebra_named("lukasiewicz")
+    grading = Grading("audit", "[0,1]", "review", {"predicate(signal)": 0.25})
+    assert (
+        degree_of(
+            ast.parse("not degree(signal, 'predicate')", mode="eval").body, {}, algebra, grading
+        )
+        == 0.75
+    )
+    assert (
+        degree_of(
+            ast.parse(
+                "implies(degree(signal, 'predicate'), degree(signal, 'predicate'))", mode="eval"
+            ).body,
+            {},
+            algebra,
+            grading,
+        )
+        == 1.0
+    )

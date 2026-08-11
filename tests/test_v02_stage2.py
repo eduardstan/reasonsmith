@@ -13,11 +13,13 @@ Covers:
 from __future__ import annotations
 
 import json
+from io import StringIO
 from pathlib import Path
 
 import pytest
 
 from reasonsmith.adapters import CallableAdapter, JSONLAdapter
+from reasonsmith.adapters.rules import RulesAdapter
 from reasonsmith.cli import main as cli_main
 from reasonsmith.engines.observed import ObservedEngine
 from reasonsmith.engines.record import RecordEngine
@@ -1150,3 +1152,56 @@ class TestDefinitionOfDoneEndToEnd:
         captured = capsys.readouterr()
         assert "violated" in captured.out
         assert "provenance_active_exceptions" in captured.out
+
+
+# Coverage boundary cases for this subject.
+def test_callable_adapter_rejects_missing_target():
+    with pytest.raises(ValueError, match="non-None"):
+        CallableAdapter(None, {"decision"})
+
+
+def test_callable_adapter_calls_plain_function_and_formats_cases():
+    sut = CallableAdapter(lambda value: value * 2, {"decision"}, test_inputs=[3, 4])
+    assert list(sut.decisions()) == [{"input": 3, "decision": 6}, {"input": 4, "decision": 8}]
+
+
+def test_callable_adapter_preserves_dict_output_and_precomputed_records():
+    sut = CallableAdapter(
+        lambda case: {"decision": case["x"]}, {"decision"}, test_inputs=[{"x": 2}]
+    )
+    assert list(sut.decisions()) == [{"decision": 2}]
+    scalar = CallableAdapter(lambda case: case["x"] + 1, {"decision"}, test_inputs=[{"x": 2}])
+    assert list(scalar.decisions()) == [{"x": 2, "decision": 3}]
+    assert list(CallableAdapter(lambda _: 1, {"decision"}).decisions()) == []
+    precomputed = [{"decision": "approved"}]
+    ready = CallableAdapter(lambda _: None, {"decision"}, decisions=precomputed)
+    assert list(ready.decisions()) == precomputed
+
+
+def test_jsonl_adapter_rejects_missing_file_and_bad_records():
+    with pytest.raises(FileNotFoundError, match="not found"):
+        JSONLAdapter("not-a-jsonl-path")
+    with pytest.raises(ValueError, match="Line 1"):
+        JSONLAdapter(StringIO("not json\n"))
+    with pytest.raises(TypeError, match="JSON object"):
+        JSONLAdapter(StringIO("[1]\n"))
+
+
+def test_jsonl_adapter_accepts_blank_lines_and_empty_log():
+    sut = JSONLAdapter(StringIO("\n"))
+    assert list(sut.decisions()) == []
+    assert sut.capabilities() == set()
+
+
+def test_rules_adapter_string_inputs_and_invalid_declarations():
+    sut = RulesAdapter(
+        "approved = income >= 10\n", constraints="income >= 0", test_inputs=[{"income": 12}]
+    )
+    assert list(sut.decisions())[0]["approved"] is True
+    with pytest.raises(ValueError, match="collection of names"):
+        RulesAdapter("x = 1", computes="x")
+    with pytest.raises(TypeError, match="cannot be iterated"):
+        RulesAdapter("x = 1", computes=1)
+    RulesAdapter("x = 1", constraints="not valid ???")
+    with pytest.raises(ValueError, match="Invalid rule syntax"):
+        RulesAdapter("x =").decide({})

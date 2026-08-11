@@ -8,6 +8,7 @@ What this module is for:
 
 from __future__ import annotations
 
+import ast
 import json
 
 import pytest
@@ -22,6 +23,7 @@ from reasonsmith.report import (
     check_conformance,
     evaluate_requirement,
 )
+from reasonsmith.rulelang import UnsupportedConstructError
 from reasonsmith.spec import Pack, Requirement
 from reasonsmith.sut import BaseSUT
 from reasonsmith.verdict import Strength, Verdict
@@ -675,3 +677,128 @@ def test_recorded_strategy_distinguishes_seed_replays_from_perturbations():
     assert strategy == STRATEGY
     assert "first unmodified" in strategy
     assert "remaining inputs" in strategy
+
+
+# Coverage boundary cases for this subject.
+def test_probed_trace_kind_validation_catches_boolean_and_arithmetic_conflicts():
+    assert probed._trace_operand_kind(
+        ast.parse("-income", mode="eval").body, {"income": "number"}
+    ) == ("number", (("income", "number"),))
+    assert (
+        probed._trace_operand_kind(ast.parse("income + 1", mode="eval").body, {"income": "number"})[
+            0
+        ]
+        == "number"
+    )
+    assert (
+        probed._trace_operand_kind(
+            ast.parse("abs(income)", mode="eval").body, {"income": "number"}
+        )[0]
+        == "number"
+    )
+    with pytest.raises(UnsupportedConstructError, match="Boolean operation"):
+        probed._validate_trace_kinds(
+            ast.parse("approved and income", mode="eval"),
+            {"approved": "number", "income": "number"},
+        )
+    with pytest.raises(UnsupportedConstructError, match="arithmetic operation"):
+        probed._trace_operand_kind(
+            ast.parse("-approved", mode="eval").body, {"approved": "boolean"}
+        )
+
+
+def test_probed_shared_mutable_path_checks_nested_containers_and_slots():
+    shared = []
+    assert probed._shared_mutable_path(shared, shared) == "input"
+    assert probed._shared_mutable_path({"x": shared}, {"x": shared}) == "input['x']"
+    assert probed._shared_mutable_path([1, 2], [1, 2]) is None
+    assert probed._shared_mutable_path({1, 2}, {1, 2}) is None
+    assert probed._spec_numbers("income >= 10 and age < 2.5") == {10, 2.5}
+    assert probed._spec_numbers("not valid ???") == set()
+
+
+def test_probed_operand_calls_and_shared_object_shapes():
+    assert (
+        probed._trace_operand_kind(
+            ast.parse("min(income, 2)", mode="eval").body, {"income": "number"}
+        )[0]
+        == "number"
+    )
+    with pytest.raises(UnsupportedConstructError, match="arithmetic operation"):
+        probed._trace_operand_kind(
+            ast.parse("max(approved, 2)", mode="eval").body, {"approved": "boolean"}
+        )
+
+    class Slotted:
+        __slots__ = ("items",)
+
+        def __init__(self, items):
+            self.items = items
+
+    original = Slotted([])
+    clone = Slotted(original.items)
+    assert probed._shared_mutable_path(original, clone) == "input.items"
+    assert probed._shared_mutable_path({"a": [1]}, {"a": [1]}) is None
+    assert probed._shared_mutable_path({1}, {1}) is None
+
+
+def test_probed_shared_path_handles_identity_and_object_containers():
+    item = []
+    assert probed._shared_mutable_path([item], [item]) == "input[0]"
+
+    class HashableMutable:
+        __hash__ = object.__hash__
+
+    member = HashableMutable()
+    assert probed._shared_mutable_path({member}, {member}) == f"input{{{member!r}}}.__dict__"
+
+    class Dynamic:
+        pass
+
+    obj = Dynamic()
+    clone = Dynamic()
+    obj.value = []
+    clone.value = obj.value
+    assert probed._shared_mutable_path(obj, clone) == "input.__dict__['value']"
+
+    class StringSlot:
+        __slots__ = "value"
+
+    left = StringSlot()
+    right = StringSlot()
+    left.value = []
+    right.value = left.value
+    assert probed._shared_mutable_path(left, right) == "input.value"
+    assert probed._shared_mutable_path(left, left) == "input.value"
+
+
+def test_probed_kind_refusal_reports_established_comparison_evidence(monkeypatch):
+    assert probed._trace_operand_kind(ast.parse("mystery", mode="eval").body, {}) == (
+        "unknown",
+        (),
+    )
+    with pytest.raises(UnsupportedConstructError, match="Trace-established field kind"):
+        probed._validate_trace_kinds(
+            ast.parse("approved < income", mode="eval"),
+            {"approved": "boolean", "income": "number"},
+        )
+    monkeypatch.setattr(probed.copy, "deepcopy", lambda value: value)
+    with pytest.raises(TypeError, match="deep copy"):
+        probed._clone_case({"nested": []})
+
+
+def test_probed_replay_record_and_empty_plan_boundaries():
+    assert probed._as_record({"x": 1}, "approved") == {"x": 1, "decision": "approved"}
+    assert probed._as_record({"x": 1}, {"decision": "approved"}) == {"decision": "approved"}
+    req = _req()
+    assert probed.plan_inputs(req, [], trials=10) == []
+    assert probed.plan_inputs(req, [{"signal": True}], trials=0) == []
+
+
+def test_probed_trace_validation_handles_boolean_name_and_cycles():
+    probed._validate_trace_kinds(ast.parse("approved", mode="eval"), {"approved": "boolean"})
+    cyclic = {}
+    cyclic["self"] = cyclic
+    assert probed._shared_mutable_path(cyclic, cyclic) == "input"
+    key = []
+    assert probed._shared_mutable_path({"k": key}, {"k": key}) == "input['k']"
