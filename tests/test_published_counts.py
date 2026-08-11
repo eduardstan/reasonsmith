@@ -10,7 +10,7 @@ from reasonsmith.spec import list_packs
 
 
 def test_published_counts_artifact_matches_tree():
-    path = Path("docs/published-counts.json")
+    path = Path(__file__).resolve().parents[1] / "docs" / "published-counts.json"
     artifact = json.loads(path.read_text(encoding="utf-8"))
     expected = published_counts()
     assert artifact["generated_at"]

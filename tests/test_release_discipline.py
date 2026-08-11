@@ -512,6 +512,18 @@ def _topmost_released_version() -> str:
     raise AssertionError("CHANGELOG.md has no released (non-[Unreleased]) version heading")
 
 
+def test_the_changelog_carries_a_fresh_unreleased_section():
+    """A cut closes `[Unreleased]` into the new version *and* opens a fresh one, so the next
+    contributor has somewhere to land an entry (`CONTRIBUTING.md`, *Versioning and Releases*)."""
+    changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    headings = re.findall(r"^## \[([^\]]+)\]", changelog, re.MULTILINE)
+    assert headings and headings[0] == "Unreleased", (
+        "CHANGELOG.md's first `##` heading is "
+        f"[{headings[0] if headings else 'nothing'}]. Cutting a release closes [Unreleased] into "
+        "the new version and opens a fresh empty [Unreleased] above it."
+    )
+
+
 def _citation_version() -> str:
     """The one top-level `version:` in `CITATION.cff`, read without a YAML dependency."""
     citation = (REPO_ROOT / "CITATION.cff").read_text(encoding="utf-8")

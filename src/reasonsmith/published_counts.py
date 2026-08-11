@@ -15,7 +15,6 @@ from reasonsmith.spec import list_packs, load_pack
 from reasonsmith.verdict import Strength
 
 _ROOT = Path(__file__).resolve().parents[2]
-_SOURCE = _ROOT / "docs" / "legal-sources.md"
 _VERIFICATION = _ROOT / "docs" / "legal-verification.json"
 
 

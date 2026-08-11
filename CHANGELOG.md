@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). This file starts at 0.3.0:
 releases before it predate the file and are not reconstructed here.
 
+## [Unreleased]
+
 ## [0.9.0] - 2026-08-11
 
 ### Changed
