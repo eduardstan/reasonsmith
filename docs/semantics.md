@@ -1013,8 +1013,9 @@ behind a `complete()` stub is one, and the whole of the coupling is one module, 
 `test_the_protocol_is_satisfiable_without_a_ground_program` said it would be. It does **not** reach
 a system that is only a log. The re-run is what makes the measurement independent of the rationale
 it is measuring; without it, `exact_value` and `engine_value` are the same self-report and every
-reason comes back live by construction. The auditors' blocker in the README — reach into systems
-that are only logs — is therefore narrowed and not closed. No shipped example system uses this
+reason comes back live by construction. The auditors' blocker in
+[`what-this-does-not-do.md`](what-this-does-not-do.md) §4 — reach into systems that are only
+logs — is therefore narrowed and not closed. No shipped example system uses this
 family, so no shipped verdict moved.
 
 ### `proved` — `engines/proved.py`

@@ -800,10 +800,10 @@ temporal duty, in the shape `test_the_solvers_fold_is_the_interpreters_fold` giv
 
 Before editing the CLI, read the maintenance contracts in `src/reasonsmith/cli.py`'s module
 docstring. README, "Install and run", owns the install and the one worked `check` invocation;
-`docs/adopting.md` owns the rest of the user-facing usage — `validate-pack`, `explain` and the
-surfaces a system comes in through — and `docs/authoring-packs.md` owns the pack-authoring rules.
+`docs/adopting.md` owns the rest of the user-facing usage — `explain` and the surfaces a system
+comes in through — and `docs/authoring-packs.md` owns `validate-pack` and the pack-authoring rules.
 
-`ROADMAP.md` is the public backlog and the one document that may state what is *missing*: four
+`ROADMAP.md` is the public backlog and the one document that may state what is *missing*: six
 numbered objectives, each citing the committed document that names the gap, with a measurable
 outcome that fails today and its dependencies. Nothing goes on it that no document already states —
 find the gap in `docs/refinement.md`, `docs/semantics.md` or `docs/findings-nesyarena.md` first, or

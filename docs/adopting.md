@@ -27,7 +27,11 @@ ask; a record duty asks whether a field is present, never whether the number the
 the number the system claims to compute.
 
 Read a satisfied row as *the record has the fields*, never as *the system computes what it says it
-computes*. Closing this is objective 5 of [`ROADMAP.md`](../ROADMAP.md), and it is open.
+computes*. Objective 5 of [`ROADMAP.md`](../ROADMAP.md) closed this for **one artefact family**:
+`gdpr_recital71_error_risk_minimised` reads an approximation error reasonsmith measures from the
+inference artefact `artifact()` returns, not one the system wrote into its own record. Every other
+system — a decision log, a callable, a language model, a recounted reason trace — is `unattainable`
+on that duty, so for it the sentence above still holds in full.
 
 No run here is a compliance determination. `reasonsmith.report.LIMITS` travels on every report and
 says so in the report's own words; nothing on this page may be read past it.

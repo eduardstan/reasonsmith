@@ -151,8 +151,9 @@ def test_a_creditor_who_took_the_disclosure_branch_is_not_violated(tmp_path):
     12 CFR 1002.9(b)(2) governs "the statement of reasons required by paragraph (a)(2)(i)". A
     creditor that lawfully disclosed the right to request reasons under (a)(2)(ii) has no such
     statement yet, so the clause does not reach that notification. Reporting them `violated` on a
-    binding duty was the worst error this tool can make, and the README's Impact section said so in
-    public. That is the assertion this test exists for and it is unchanged.
+    binding duty was the worst error this tool can make, and this clause's row in
+    `docs/refinement.md` records it as the false violation the row used to carry. That is the
+    assertion this test exists for and it is unchanged.
 
     What changed is the second half. This creditor used to be reported `satisfied` at `observed`,
     which was the duty's antecedent being false rather than its consequent being met — nothing about
