@@ -354,3 +354,10 @@ counterfactual duty over a log-only system is the second sort. The summary says 
 - [`three-systems.md`](three-systems.md) and [`language-model.md`](language-model.md) — the worked systems behind §1's table.
 - [`refinement.md`](refinement.md) — per duty, what the formalisation left out; `reasonsmith explain` prints the same column.
 - [`authoring-packs.md`](authoring-packs.md) — once your system answers the shipped packs and you need a duty they do not carry.
+
+One further command exists and is **not** part of adopting a system: `reasonsmith published-counts`
+emits this tree's own counts — packs, requirements, verbatim statutory quotes, rungs — as JSON, with
+the provenance of every date, and `--output FILE` writes it instead of printing it. It reads no
+system, runs no engine and reports no duty; it exists so the website and this repository cannot
+disagree about how many duties ship. The committed artefact is
+[`published-counts.json`](published-counts.json). Nothing on this page needs it.

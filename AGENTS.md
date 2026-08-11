@@ -80,7 +80,7 @@ system while guessing recounted only understates one), one recounted decision ca
 `report.EXACT_REASON_SET_KEY`. It is a *rung* and not a fifth basis by the test §10 now states:
 different object, different basis; same object less deeply, different rung. It reaches no log-only
 system — the re-run is what makes the measurement independent of the rationale it measures — so the
-README's auditors blocker is narrowed, not closed. `docs/semantics.md` §3 (*The inference artefact*)
+auditors blocker of `docs/what-this-does-not-do.md` §4 is narrowed, not closed. `docs/semantics.md` §3 (*The inference artefact*)
 is the contract and `tests/test_artifact_protocol.py` holds it.
 
 The **probe** is one-directional; the **protocol** is not, since 2026-08-11. `at(fact, probability)`
@@ -800,8 +800,9 @@ temporal duty, in the shape `test_the_solvers_fold_is_the_interpreters_fold` giv
 
 Before editing the CLI, read the maintenance contracts in `src/reasonsmith/cli.py`'s module
 docstring. README, "Install and run", owns the install and the one worked `check` invocation;
-`docs/adopting.md` owns the rest of the user-facing usage — `explain` and the surfaces a system
-comes in through — and `docs/authoring-packs.md` owns `validate-pack` and the pack-authoring rules.
+`docs/adopting.md` owns the rest of the user-facing usage — `explain`, the surfaces a system comes
+in through, and `published-counts`, which is a site-build command rather than an audit one — and
+`docs/authoring-packs.md` owns `validate-pack` and the pack-authoring rules.
 
 `ROADMAP.md` is the public backlog and the one document that may state what is *missing*: six
 numbered objectives, each citing the committed document that names the gap, with a measurable

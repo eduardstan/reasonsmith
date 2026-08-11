@@ -59,7 +59,9 @@ Extending an engine, rather than adding another demo, is now the concrete, high-
 3. **Preserve the Non-Pass Distinctions:**
    Do not combine unattainable, not-evaluated, and not-applicable results or treat any of them as a
    pass. Their authoritative contracts and invariants live in `verdict.py` and `report.py`; the
-   user-facing explanation lives in the README's Conformance Core section.
+   user-facing explanation lives in [`docs/semantics.md`](docs/semantics.md) §4, with the shorter
+   statements in the README's *Limits* section and
+   [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md) §3.
 
 4. **What Makes a Good Change:**
    - Minimal, focused diffs addressing a specific requirement or issue.
