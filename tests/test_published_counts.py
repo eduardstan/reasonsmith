@@ -57,6 +57,33 @@ def test_published_counts_command_reports_an_unusable_manifest(
     assert captured.err.startswith("Error computing published counts:")
 
 
+def test_a_pre_digest_manifest_is_refused_as_a_schema_version_not_as_drift(monkeypatch, tmp_path):
+    """A 0.8.0 manifest carries no digest; saying the quotes drifted would deny the one thing
+    it exists to establish."""
+    manifest = tmp_path / "legal-verification.json"
+    monkeypatch.setattr(counts, "_VERIFICATION", manifest)
+    baseline_quotes = sum(
+        len(counts.load_pack(name).requirements) for name in counts.STATUTORY_PACKS
+    )
+    manifest.write_text(
+        json.dumps({
+            "schema_version": 1,
+            "match": baseline_quotes,
+            "differ": 0,
+            "verified_at": "today",
+        }),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError) as caught:
+        published_counts()
+
+    message = str(caught.value)
+    assert "schema version 1" in message
+    assert "--verification-manifest" in message
+    assert "does not match the statutory quote corpus" not in message
+
+
 def test_published_counts_verification_manifest_and_writer(monkeypatch, tmp_path):
     manifest = tmp_path / "legal-verification.json"
     monkeypatch.setattr(counts, "_VERIFICATION", manifest)

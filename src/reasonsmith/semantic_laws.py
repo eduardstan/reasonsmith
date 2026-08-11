@@ -153,7 +153,8 @@ def law_refusal(artifact: InferenceArtifact) -> str | None:
     """Why these laws cannot be checked against this artefact, or None if they can."""
     if not admits_interpretation(artifact):
         return NO_INTERPRETATION
-    claimed = normalize_claimed_semantics(getattr(artifact, "claimed_semantics", ""))
+    raw = getattr(artifact, "claimed_semantics", None)
+    claimed = "" if raw is None else normalize_claimed_semantics(raw)
     if claimed not in SEMANTICS_WITH_LAWS:
         return NO_LAWS_FOR_SEMANTICS.format(
             claimed=claimed, with_laws=", ".join(repr(s) for s in SEMANTICS_WITH_LAWS)

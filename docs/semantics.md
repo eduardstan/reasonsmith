@@ -916,9 +916,12 @@ members currently mean:
 
 The vocabulary is owned in one place (`spec.py`), and its refusal names every accepted value
 (`test_claimed_semantics_outside_vocabulary_is_refused_with_accepted_set`). The certificate boundary
-refuses independently (`test_certificate_post_init_refuses_unknown_claimed_semantics`), and the
-source-derived declaration inventory is checked by
-`test_every_shipped_artefact_family_exposes_only_normalized_claims`.
+refuses independently (`test_certificate_post_init_refuses_unknown_claimed_semantics`), and each of
+the two artefact families shipped here — the ground program and the reason trace — is checked to
+expose only a canonical member and to refuse anything else by
+`test_every_shipped_artefact_family_exposes_only_normalized_claims`. That is a per-family check and
+not an inventory of the tree: a family added later is covered by the boundary refusal it inherits,
+not by that test.
 
 **Three states, and only the first is measured.** `engines/certificate.py` asks the declaration
 before it certifies anything, and asks it again of the measurement afterwards; every refusal is
