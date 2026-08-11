@@ -199,6 +199,19 @@ REASON_SIGNAL = "artifact_logs_reason_explanation"
 _is_present = is_present
 
 
+def certificate_findings(result: "RequirementResult") -> list[dict[str, Any]]:
+    """Expose failed certificate measurements as findings without changing the duty verdict."""
+    return [
+        {
+            "type": "certificate",
+            "verdict": "FAIL",
+            "decision_index": certificate.get("decision_index"),
+        }
+        for certificate in (result.details.get(CERTIFICATES_KEY) or ())
+        if certificate.get("certificate_verdict") == "FAIL"
+    ]
+
+
 @dataclass(frozen=True)
 class RequirementResult:
     """The conformance result for a single requirement.
@@ -574,6 +587,7 @@ class RequirementResult:
             "signals_missing": list(self.signals_missing),
             "evidence_summary": self.evidence_summary,
             "details": dict(self.details),
+            "findings": certificate_findings(self),
             "binding": self.binding,
             "scope": self.scope,
             "domains": list(self.domains),

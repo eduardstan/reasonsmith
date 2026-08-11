@@ -83,6 +83,15 @@ def test_a_result_with_no_certificate_has_no_certificate_key():
 # ----------------------------------------------------------- the deletion certificates ----
 
 
+def test_a_failed_certificate_is_a_reported_finding_beside_the_verdict():
+    payload = _run()
+    result = next(r for r in payload["results"] if r["requirement_id"] == ADEQUACY)
+    assert result["verdict"] == "violated"
+    assert result["findings"] == [
+        {"type": "certificate", "verdict": "FAIL", "decision_index": 1}
+    ]
+
+
 def test_a_certificate_result_carries_the_full_reason_record():
     """Add 3: the verdict names the reasons, and the details name the reasons' verdicts.
 

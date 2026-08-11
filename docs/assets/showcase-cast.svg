@@ -74,7 +74,7 @@
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k8" x="18.0" y="207.5" xml:space="preserve">  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied</text>
   <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k9" x="18.0" y="225.5" xml:space="preserve">  ⋯ 3 line(s) not shown</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k10" x="18.0" y="243.5" xml:space="preserve">  [PROBED] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated</text>
-  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k11" x="18.0" y="261.5" xml:space="preserve">  ⋯ 4 line(s) not shown</text>
+  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k11" x="18.0" y="261.5" xml:space="preserve">  ⋯ 5 line(s) not shown</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k12" x="18.0" y="279.5" xml:space="preserve">    offending record: decision APP-1042 (step 1)</text>
   <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k13" x="18.0" y="297.5" xml:space="preserve">  ⋯ 14 line(s) not shown</text>
   <text class="rs-cast-row rs-cast-exit" style="animation-name: rs-cast-k14" x="18.0" y="315.5" xml:space="preserve">  [exit status 2]</text>

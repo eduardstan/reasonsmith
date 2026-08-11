@@ -40,6 +40,7 @@ from reasonsmith.report import (
     PROBE_BUDGET_KEY,
     TRUTH_DEGREE_KEY,
     ConformanceReport,
+    certificate_findings,
 )
 from reasonsmith.verdict import EvidenceBasis, Strength, Verdict
 
@@ -479,6 +480,12 @@ def render_text(report: ConformanceReport, audience: str | None = None) -> str:
                 lines.append(f"    ABSENT FROM TRACE: {', '.join(absent)}")
             if view.evidence_summary and r.evidence_summary:
                 lines.append(f"    summary: {r.evidence_summary}")
+            if view.evidence_summary:
+                for finding in certificate_findings(r):
+                    lines.append(
+                        f"    certificate finding: {finding['verdict']} "
+                        f"(decision {finding['decision_index']})"
+                    )
             # A violated finding names the decision record it came from, the way the JSON
             # (`details.offending_trace_segment`) and HTML (witness table) renderings already
             # do: the record's own `decision_id` when it carries one, and the step index
@@ -795,6 +802,15 @@ def render_html(
             )
 
             details_html = ""
+            if view.evidence_summary:
+                for finding in certificate_findings(r):
+                    details_html += (
+                        '<div class="callout-box callout-violated">'
+                        f"<strong>CERTIFICATE FINDING — "
+                        f"{html.escape(finding['verdict'])}:</strong> "
+                        f"decision {html.escape(str(finding['decision_index']))}"
+                        "</div>"
+                    )
             if view.missing_signals and r.signals_missing:
                 missing_tags = "".join(
                     f'<span class="signal-tag missing">{html.escape(s)}</span>'

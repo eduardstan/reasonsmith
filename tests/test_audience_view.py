@@ -268,6 +268,18 @@ def test_no_audience_sees_a_different_verdict_from_another():
             assert result.verdict.value.replace("_", " ").upper() in page.upper()
 
 
+def test_certificate_fail_finding_is_expert_only():
+    report = _run()
+    assert "certificate finding: FAIL" in render_text(report)
+    assert "certificate finding: FAIL" not in render_text(
+        report, audience="affected-individual"
+    )
+    assert "CERTIFICATE FINDING — FAIL" in render_html(report, commit_hash="")
+    assert "CERTIFICATE FINDING — FAIL" not in render_html(
+        report, commit_hash="", audience="affected-individual"
+    )
+
+
 # --- Rule 2: every audience keeps the limits ---------------------------------------------------
 
 

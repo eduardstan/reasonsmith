@@ -72,6 +72,9 @@ _RESULT_KEYS = {
     "signals_missing",
     "evidence_summary",
     "details",
+    # Certificate FAIL measurements are additive findings beside the unchanged requirement
+    # verdict. They do not alter the schema version under the additive-key convention.
+    "findings",
     # Added, not renamed or retyped, so the convention says this is not a version bump — the
     # decision was made here rather than skipped. `basis` is the evidence basis of
     # `verdict.EvidenceBasis`: which kind of thing this duty's evidence is about, beside `strength`,
