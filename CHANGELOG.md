@@ -10,6 +10,15 @@ releases before it predate the file and are not reconstructed here.
 
 ### Added
 
+- **The JSON envelope carries the undeclared-domain notice.** `ConformanceReport.to_dict()` now
+  emits `undeclared_domain_notice` beside the existing top-level keys, preserving the distinction
+  between a duty's answer and a missing decision-domain declaration. The value is the same notice
+  shown in human renderings, or `null` when no duty was skipped, so consumers have a defined value
+  in both cases. `JSON_SCHEMA_VERSION` remains **2** because this is an additive key under the
+  envelope's compatibility convention, not a removal, rename or change of meaning or type; no
+  audience projection suppresses it because the JSON record is complete machine output rather than
+  an audience-filtered finding set.
+
 - **When the counterfactual duty's two rungs disagree, the report names the cause rather than the symptom.**
   The `proved` and `probed` rungs of `counterfactually_invariant(o, p)` do not range over the same object: the first asks whether the *declared rules* treat alike every pair the *declared constraints* admit, the second whether the *implementation* treated alike the pairs built from the decisions the system logged. So their disagreement is evidence in its own right, and [`docs/formal.md`](docs/formal.md) §6.6 now states the relation — `R ⊆ P` and `decide_S` agreeing with the declared logic on the declared space together make `probed = violated` imply `proved = violated` — with the contrapositive that is the whole feature: `proved = satisfied` beside `probed = violated` eliminates one of those two hypotheses. The lower rung is therefore run whenever the higher one reached a verdict, and a disagreement is reported as the **disjunct it eliminates** under `engines.counterfactual.RUNG_DISAGREEMENT_KEY`. `proved = violated` with `probed = satisfied` is the relation holding rather than a defect, and what it names is the log: it does not exercise what the rules permit. The other direction discharges the cheap hypothesis first, by evaluating the declared constraints on the replayed pair — a pair the declared input space does not admit is named as such and the declaration is not impeached, and only a pair *inside* that space leaves the residual finding, that the system's `decide()` does not implement the `logic()` it declared. A record that leaves a declared constraint unsettled eliminates neither and says so. Nothing here moves a verdict, a strength or a witness; no shipped system reaches either rung on the one shipped counterfactual duty, so no shipped verdict moved. `tests/test_counterfactual_invariance.py` carries a witness per direction, including the second one the item allowed might be unreachable — it is reachable, and the fixture is a rule set whose `decide()` deliberately departs from what it declares. No new shipped example system, and no shipped record holding a protected attribute about a natural person.
 
