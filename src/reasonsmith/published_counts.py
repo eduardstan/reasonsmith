@@ -19,10 +19,25 @@ _VERIFICATION = _ROOT / "docs" / "legal-verification.json"
 
 
 def _verification() -> dict[str, object] | None:
-    """Read the output of a statute-drift verification run, when one exists."""
+    """Read the output of a statute-drift verification run, when one exists.
+
+    A manifest that cannot be read as a JSON object is refused as a `ValueError` rather than
+    surfacing as whatever the decoder raised: every way this file can fail to establish a
+    verification date is one refusal for a caller to report.
+    """
     if not _VERIFICATION.exists():
         return None
-    return json.loads(_VERIFICATION.read_text(encoding="utf-8"))
+    try:
+        manifest = json.loads(_VERIFICATION.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ValueError(
+            f"legal verification manifest {_VERIFICATION} is unreadable: {exc}"
+        ) from exc
+    if not isinstance(manifest, dict):
+        raise ValueError(
+            f"legal verification manifest {_VERIFICATION} is not a JSON object"
+        )
+    return manifest
 
 
 def published_counts() -> dict[str, object]:
@@ -32,9 +47,11 @@ def published_counts() -> dict[str, object]:
     verification = _verification()
     quote_count = sum(len(p.requirements) for p in statutory)
     if verification is not None and (
-        verification["match"] != quote_count or verification["differ"] != 0
+        verification.get("match") != quote_count or verification.get("differ") != 0
     ):
         raise ValueError("legal verification manifest does not cover all statutory quotes")
+    if verification is not None and not verification.get("verified_at"):
+        raise ValueError("legal verification manifest records no verification date")
     # A quote is a requirement in a statutory pack; Table 7 rows quote the paper instead.
     return {
         "schema_version": 1,

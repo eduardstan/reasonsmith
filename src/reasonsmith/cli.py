@@ -481,7 +481,11 @@ def main(args: list[str] | None = None) -> int:
     if parsed.command == "published-counts":
         from reasonsmith.published_counts import published_counts
 
-        payload = json.dumps(published_counts(), indent=2) + "\n"
+        try:
+            payload = json.dumps(published_counts(), indent=2) + "\n"
+        except ValueError as exc:
+            print(f"Error computing published counts: {exc}", file=sys.stderr)
+            return 1
         if parsed.output == "-":
             print(payload, end="")
         else:
