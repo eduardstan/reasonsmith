@@ -174,9 +174,22 @@ def reference_semantics(artifact: object) -> str | None:
     different question. `artifacts.reason_trace` is the shipped family that says None — its
     `exact_value()` is the sum of the weights the system itself recounted, so a gap measured there
     is a faithfulness figure about a rationale and never evidence about a semantics.
+
+    An accepted spelling is canonicalized, so a family writing `" Distribution Semantics "` is not
+    reported as referencing something other than what it does. A value outside
+    `spec.CLAIMED_SEMANTICS` is **carried as written rather than refused here**: this is not the
+    audited system's claim but a name for what an artefact family's own reference computes, and it
+    is read inside a conformance run, where the outcome owed is the *not evaluated* one
+    `semantics_reference_refusal` already words — naming the claim and the reference — and never a
+    raised exception a reader meets as a failed decision. A non-string says nothing, so it is None.
     """
     value = getattr(artifact, EXACT_SEMANTICS_KEY, None)
-    return normalize_claimed_semantics(value) if value is not None else None
+    if not isinstance(value, str):
+        return None
+    try:
+        return normalize_claimed_semantics(value)
+    except ValueError:
+        return value
 
 
 #: Said where an artefact's family computes no semantics reference at all.

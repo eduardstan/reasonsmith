@@ -34,6 +34,7 @@ from __future__ import annotations
 from nesyarena.adapters.base import ReferenceAdapter
 from nesyarena.suts import ExactWMC
 
+from reasonsmith.artifacts.ground_program import GroundProgramArtifact
 from reasonsmith.artifacts.reason_trace import ReasonTraceArtifact
 from reasonsmith.demo import DEPLOYED_CASES, SilentDropAdapter, certify_case
 from reasonsmith.engines.certificate import SEMANTICS_VALUE_GAP
@@ -144,6 +145,22 @@ class _RecountingPipeline(_Pipeline):
             monotone=True,
             weights={"C01 — income insufficient": 0.8},
         )
+
+
+class _UnrecognisedReferenceArtifact(GroundProgramArtifact):
+    """An out-of-tree family naming a reference this build's vocabulary has no member for."""
+
+    exact_semantics = "approximate WMC"
+
+
+class _UnrecognisedReferencePipeline(_Pipeline):
+    def artifact(self, decision: dict) -> GroundProgramArtifact | None:
+        for case in DEPLOYED_CASES:
+            if case.case_id == decision.get("decision_id"):
+                return _UnrecognisedReferenceArtifact(
+                    case.program, case.base, case.query, self.engine, 1, case.labels, True
+                )
+        return None
 
 
 def _result(sut):
@@ -259,6 +276,23 @@ def test_an_honestly_declared_approximation_is_not_accused():
     assert "Not evaluated" in result.evidence_summary
     assert result.details["claimed_semantics"] == "weighted sum"
     assert result.details["reference_semantics"] == "distribution semantics"
+
+
+def test_a_reference_outside_the_vocabulary_is_reported_and_never_raised():
+    """A family naming a reference this build cannot compare is the tool's gap, not a failure.
+
+    The value is not the audited system's claim, so refusing it where it is read — inside a
+    conformance run — would turn a duty this build cannot evaluate into a decision that raised.
+    The outcome owed is the mismatch refusal, naming both names.
+    """
+    result = _result(_UnrecognisedReferencePipeline(SilentDropAdapter()))
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert "Not evaluated" in result.evidence_summary
+    assert result.details["reason"] == "no_reference_for_the_claimed_semantics"
+    assert result.details["claimed_semantics"] == "distribution semantics"
+    assert result.details["reference_semantics"] == "approximate WMC"
 
 
 def test_an_artefact_family_that_computes_no_reference_is_unattainable():

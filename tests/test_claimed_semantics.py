@@ -54,13 +54,23 @@ def test_certificate_retains_canonical_semantics_at_its_public_boundary():
     assert certificate.exact_semantics == "distribution semantics"
 
 
-def test_reference_semantics_canonicalizes_and_refuses_unknown_values():
+def test_reference_semantics_canonicalizes_and_carries_an_unknown_reference():
+    """The reference is not the audited system's claim, and it is read mid-audit.
+
+    An accepted spelling is canonical, so no family is reported as referencing something other than
+    what it does. A value outside the vocabulary is carried as written rather than raised, because
+    the outcome owed there is the *not evaluated* one `semantics_reference_refusal` words.
+    """
     assert (
         reference_semantics(SimpleNamespace(exact_semantics=" Distribution Semantics "))
         == "distribution semantics"
     )
-    with pytest.raises(ValueError, match="Accepted:"):
-        reference_semantics(SimpleNamespace(exact_semantics="invented semantics"))
+    assert (
+        reference_semantics(SimpleNamespace(exact_semantics="approximate WMC"))
+        == "approximate WMC"
+    )
+    assert reference_semantics(SimpleNamespace(exact_semantics=object())) is None
+    assert reference_semantics(SimpleNamespace()) is None
 
 
 def test_every_shipped_artefact_family_exposes_only_normalized_claims():

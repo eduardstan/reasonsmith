@@ -197,9 +197,7 @@ class Certificate:
             self, "claimed_semantics", normalize_claimed_semantics(self.claimed_semantics)
         )
         if self.exact_semantics is not None:
-            object.__setattr__(
-                self, "exact_semantics", normalize_claimed_semantics(self.exact_semantics)
-            )
+            object.__setattr__(self, "exact_semantics", reference_semantics(self))
 
     def _by(self, status: str) -> list[ReasonVerdict]:
         return [v for v in self.verdicts if v.status == status]

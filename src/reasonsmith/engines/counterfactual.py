@@ -1084,7 +1084,13 @@ def _pair_membership(
                 kleene_value(eval_expression(node, {**case, protected: value}))
                 for value in values
             ]
-        except Exception:
+        except Exception:  # noqa: BLE001 — any failure to read a constraint is the third answer
+            # A constraint this interpreter cannot read, or cannot evaluate against the values the
+            # record carries, is one whose truth on the replayed pair is unknown — the third answer
+            # rather than a reason to claim either of the other two. The catch is deliberately
+            # every exception class: `eval_expression` raises `UnsupportedConstructError` for a
+            # construct outside the language and whatever the operands raise for a comparison the
+            # record's own values do not support, and neither eliminates a disjunct.
             undetermined = undetermined or text
             continue
         if any(val is False for val in held):

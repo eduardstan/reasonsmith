@@ -51,21 +51,22 @@ def published_counts() -> dict[str, object]:
         for pack in statutory
         for requirement in pack.requirements
     )
-    if verification is not None and (
-        verification.get("match") != quote_count or verification.get("differ") != 0
-    ):
-        raise ValueError("legal verification manifest does not cover all statutory quotes")
-    if verification is not None and verification.get("schema_version") != 2:
-        raise ValueError(
-            f"legal verification manifest {_VERIFICATION} is schema version "
-            f"{verification.get('schema_version')!r}, not 2, so it carries no quote corpus "
-            "digest to check; regenerate it with "
-            "`python -m reasonsmith.drift --verification-manifest docs/legal-verification.json`"
-        )
-    if verification is not None and verification.get("quote_corpus_sha256") != corpus_sha256:
-        raise ValueError("legal verification manifest does not match the statutory quote corpus")
-    if verification is not None and not verification.get("verified_at"):
-        raise ValueError("legal verification manifest records no verification date")
+    if verification is not None:
+        if verification.get("match") != quote_count or verification.get("differ") != 0:
+            raise ValueError("legal verification manifest does not cover all statutory quotes")
+        if verification.get("schema_version") != 2:
+            raise ValueError(
+                f"legal verification manifest {_VERIFICATION} is schema version "
+                f"{verification.get('schema_version')!r}, not 2, so it carries no quote corpus "
+                "digest to check; regenerate it with "
+                "`python -m reasonsmith.drift --verification-manifest docs/legal-verification.json`"
+            )
+        if verification.get("quote_corpus_sha256") != corpus_sha256:
+            raise ValueError(
+                "legal verification manifest does not match the statutory quote corpus"
+            )
+        if not verification.get("verified_at"):
+            raise ValueError("legal verification manifest records no verification date")
     # A quote is a requirement in a statutory pack; Table 7 rows quote the paper instead.
     return {
         "schema_version": 1,
