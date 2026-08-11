@@ -99,6 +99,8 @@ build a release whose tag is not `v` plus that version.
 
 ## Reporting Issues
 
+**A suspected vulnerability is not a bug report.** Do not open a discussion, an issue, or a pull request for one. Report it privately, to the email address in [SECURITY.md](SECURITY.md), which owns the reporting process, the scope, and the response times for security reports.
+
 For a bug, question, or pack proposal:
 1. **Questions go to [GitHub Discussions](https://github.com/eduardstan/reasonsmith/discussions)**; issues are for bugs and pack proposals.
 2. Check the existing discussions or issues before starting a new one.
