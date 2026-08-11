@@ -45,4 +45,4 @@ What a reader must not break:
     Why this matters: Technical record checks cannot replace legal determination or guarantees.
 """
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
