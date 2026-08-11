@@ -33,6 +33,7 @@ What a reader must not break:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import urllib.request
@@ -163,6 +164,15 @@ def classify(quote: str, passage: str) -> Literal["match", "differ"]:
     if normalize_whitespace(quote) in normalize_whitespace(passage):
         return "match"
     return "differ"
+
+
+def quote_corpus_sha256(entries: Iterable[tuple[str, str, str]]) -> str:
+    """Fingerprint pack, requirement and exact quote text in a stable order."""
+    corpus = sorted(entries)
+    encoded = json.dumps(
+        corpus, ensure_ascii=False, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 class _PassageExtractor(HTMLParser):
@@ -497,12 +507,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.verification_manifest and not report.has_drift:
         matches = sum(result.status == "match" for result in report.results)
         differs = sum(result.status == "differ" for result in report.results)
+        corpus_sha256 = quote_corpus_sha256(
+            (result.pack_id, result.requirement_id, result.quote)
+            for result in report.results
+        )
         Path(args.verification_manifest).write_text(
             json.dumps({
-                "schema_version": 1,
+                "schema_version": 2,
                 "verified_at": report.checked_at.date().isoformat(),
                 "match": matches,
                 "differ": differs,
+                "quote_corpus_sha256": corpus_sha256,
                 "method": "python -m reasonsmith.drift",
             }, indent=2) + "\n",
             encoding="utf-8",

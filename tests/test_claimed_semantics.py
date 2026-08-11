@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 from nesyarena.ir import Atom, GroundProgram
 
+from reasonsmith.artifacts import reference_semantics
 from reasonsmith.artifacts.ground_program import GroundProgramArtifact
 from reasonsmith.artifacts.reason_trace import ReasonTraceArtifact
 from reasonsmith.certificate import Certificate
@@ -33,6 +34,33 @@ def test_certificate_post_init_refuses_unknown_claimed_semantics():
             verdicts=(),
             attribution="none",
         )
+
+
+def test_certificate_retains_canonical_semantics_at_its_public_boundary():
+    certificate = Certificate(
+        query="decision-1",
+        adapter_name="example",
+        claimed_semantics=" Distribution Semantics ",
+        exact_depth=None,
+        exact_value=0.0,
+        engine_value=0.0,
+        tol=1e-9,
+        verdicts=(),
+        attribution="none",
+        exact_semantics=" DISTRIBUTION SEMANTICS ",
+    )
+
+    assert certificate.claimed_semantics == "distribution semantics"
+    assert certificate.exact_semantics == "distribution semantics"
+
+
+def test_reference_semantics_canonicalizes_and_refuses_unknown_values():
+    assert (
+        reference_semantics(SimpleNamespace(exact_semantics=" Distribution Semantics "))
+        == "distribution semantics"
+    )
+    with pytest.raises(ValueError, match="Accepted:"):
+        reference_semantics(SimpleNamespace(exact_semantics="invented semantics"))
 
 
 def test_every_shipped_artefact_family_exposes_only_normalized_claims():

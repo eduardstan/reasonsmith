@@ -5,9 +5,10 @@ private backlog. Every objective below is a gap this repository's own documents 
 each one cites where. Nothing here is aspirational: an item is on this list because a committed
 document names it as a limit, not because it would be nice to have.
 
-Each objective gives a **measurable outcome** — a check that fails today and would pass when the
-objective is met — and what it **depends on**. Where the honest answer is that an objective is
-blocked, or deliberately not started, that is written down rather than left as an implied "soon".
+Each objective gives a **measurable outcome** and what it **depends on**. An open objective names a
+check that fails today and would pass when the objective is met; a closed objective records why the
+same check now passes. Where the honest answer is that an objective is blocked, or deliberately not
+started, that is written down rather than left as an implied "soon".
 
 Current state, for scale: **5 packs, 29 requirements, 7 engines** (`record`, `observed`, `probed`,
 `certificate` — also at `probed` — `proved`, the temporal proof engine, also at `proved`, and the

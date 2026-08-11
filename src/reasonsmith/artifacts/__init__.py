@@ -84,6 +84,8 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
+from reasonsmith.spec import normalize_claimed_semantics
+
 __all__ = [
     "DECLARATION_REFUTED",
     "DECLARED_NON_MONOTONE",
@@ -174,7 +176,7 @@ def reference_semantics(artifact: object) -> str | None:
     is a faithfulness figure about a rationale and never evidence about a semantics.
     """
     value = getattr(artifact, EXACT_SEMANTICS_KEY, None)
-    return value if isinstance(value, str) else None
+    return normalize_claimed_semantics(value) if value is not None else None
 
 
 #: Said where an artefact's family computes no semantics reference at all.

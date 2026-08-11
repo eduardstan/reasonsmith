@@ -24,7 +24,8 @@ The boundary is:
    using the solver helpers already used by `analysis.py`;
 3. `reasonsmith.autoformalize.check_challenges` evaluates it on the requirement's gold cases; and
 4. `reasonsmith.proposer` may retry a failed candidate within its fixed attempt budget, handing
-   back only the round-trip witness and failing gold cases; it never rewrites a formula; and
+   back only the round-trip finding (with a witness where that fragment provides one) and failing
+   gold cases; it never rewrites a formula; and
 5. a human records `Human sign-off: signed-off` in that requirement's row in
    [`refinement.md`](refinement.md).
 
@@ -33,9 +34,11 @@ formula accepted by the repository parser is a refusal, not an extraction or gue
 measurement command is `python -m reasonsmith.proposer --model MODEL --attempts 3` (or
 `--command COMMAND` for any provider adapter that reads a prompt on stdin); its result is
 reported in [`RESULTS.md`](../RESULTS.md). A strictly stronger, strictly weaker or
-incomparable formula is returned as a repair finding with a solver witness; this harness never
-rewrites it. Unsupported fragments and unavailable optional procedures are refusals, not guesses.
-The result is not a conformance verdict and does not construct a report result.
+incomparable formula is returned as a repair finding; record and logical comparisons include a
+solver witness, temporal comparisons return the entailment relation without one, and differing
+counterfactual atoms name the outcome/protected-signal mismatch. This harness never rewrites the
+formula. Unsupported fragments and unavailable optional procedures are refusals, not guesses. The
+result is not a conformance verdict and does not construct a report result.
 
 ## Gold cases
 

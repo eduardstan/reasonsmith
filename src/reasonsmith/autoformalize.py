@@ -519,10 +519,11 @@ def round_trip_check(
 ) -> RoundTripCheck:
     """Compare a candidate with the shipped property using the existing solver encoding.
 
-    ``equivalent`` is the only passing relation.  Stronger, weaker and incomparable candidates are
-    returned with a solver witness so a proposer or human can repair the text explicitly; nothing
-    is rewritten here.  Temporal formulas use the existing optional LTLf adapter and therefore
-    refuse clearly when that backend is unavailable.
+    ``equivalent`` is the only passing relation. For record and logical formulas, stronger, weaker
+    and incomparable candidates carry a solver witness. Temporal formulas return the entailment
+    relation without a witness, and differing counterfactual atoms return their signal mismatch.
+    Nothing is rewritten here. Temporal formulas use the existing optional LTLf adapter and refuse
+    clearly when that backend is unavailable.
     """
     req = _requirement_index()[requirement] if isinstance(requirement, str) else requirement
     baseline = req.spec

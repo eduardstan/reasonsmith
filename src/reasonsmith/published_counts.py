@@ -10,7 +10,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from reasonsmith.drift import STATUTORY_PACKS
+from reasonsmith.drift import STATUTORY_PACKS, quote_corpus_sha256
 from reasonsmith.spec import list_packs, load_pack
 from reasonsmith.verdict import Strength
 
@@ -46,10 +46,20 @@ def published_counts() -> dict[str, object]:
     statutory = [load_pack(name) for name in STATUTORY_PACKS]
     verification = _verification()
     quote_count = sum(len(p.requirements) for p in statutory)
+    corpus_sha256 = quote_corpus_sha256(
+        (pack.id, requirement.id, requirement.verbatim_text)
+        for pack in statutory
+        for requirement in pack.requirements
+    )
     if verification is not None and (
         verification.get("match") != quote_count or verification.get("differ") != 0
     ):
         raise ValueError("legal verification manifest does not cover all statutory quotes")
+    if verification is not None and (
+        verification.get("schema_version") != 2
+        or verification.get("quote_corpus_sha256") != corpus_sha256
+    ):
+        raise ValueError("legal verification manifest does not match the statutory quote corpus")
     if verification is not None and not verification.get("verified_at"):
         raise ValueError("legal verification manifest records no verification date")
     # A quote is a requirement in a statutory pack; Table 7 rows quote the paper instead.

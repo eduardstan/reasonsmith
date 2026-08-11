@@ -806,12 +806,12 @@ in through, and `published-counts`, which is a site-build command rather than an
 
 `ROADMAP.md` is the public backlog and the one document that may state what is *missing*: six
 numbered objectives, each citing the committed document that names the gap, with a measurable
-outcome that fails today and its dependencies. Nothing goes on it that no document already states —
-find the gap in `docs/refinement.md`, `docs/semantics.md` or `docs/findings-nesyarena.md` first, or
-write it there first. Closing an objective means deleting the sentence it quotes from that source
-document in the same commit; `docs/what-this-does-not-do.md` and the README's *Limits* section
-cite the same gaps and go stale with it. `CONTRIBUTING.md` defers its roadmap
-table here rather than keeping a second list.
+outcome and its dependencies: open outcomes fail today, while closed objectives record why the same
+check now passes. Nothing goes on it that no document already states — find the gap in
+`docs/refinement.md`, `docs/semantics.md` or `docs/findings-nesyarena.md` first, or write it there
+first. Closing an objective means deleting the sentence it quotes from that source document in the
+same commit; `docs/what-this-does-not-do.md` and the README's *Limits* section cite the same gaps and
+go stale with it. `CONTRIBUTING.md` defers its roadmap table here rather than keeping a second list.
 
 ## Autoformalisation corpus
 

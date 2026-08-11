@@ -71,7 +71,7 @@ from reasonsmith.artifacts import (
     InferenceArtifact,
     admits_interpretation,
 )
-from reasonsmith.spec import CLAIMED_SEMANTICS
+from reasonsmith.spec import CLAIMED_SEMANTICS, normalize_claimed_semantics
 
 __all__ = [
     "DISTRIBUTION_SEMANTICS",
@@ -153,7 +153,7 @@ def law_refusal(artifact: InferenceArtifact) -> str | None:
     """Why these laws cannot be checked against this artefact, or None if they can."""
     if not admits_interpretation(artifact):
         return NO_INTERPRETATION
-    claimed = getattr(artifact, "claimed_semantics", "")
+    claimed = normalize_claimed_semantics(getattr(artifact, "claimed_semantics", ""))
     if claimed not in SEMANTICS_WITH_LAWS:
         return NO_LAWS_FOR_SEMANTICS.format(
             claimed=claimed, with_laws=", ".join(repr(s) for s in SEMANTICS_WITH_LAWS)
@@ -203,7 +203,7 @@ def check_laws(artifact: InferenceArtifact, *, tol: float = 1e-9) -> LawReport |
             )
 
     return LawReport(
-        claimed_semantics=artifact.claimed_semantics,
+        claimed_semantics=normalize_claimed_semantics(artifact.claimed_semantics),
         probes=2 * len(facts) + 1,
         facts=len(facts),
         violations=tuple(violations),

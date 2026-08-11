@@ -25,6 +25,7 @@ from reasonsmith.drift import (
     classify,
     extract_passage,
     normalize_whitespace,
+    quote_corpus_sha256,
 )
 from reasonsmith.spec import load_pack
 
@@ -289,6 +290,14 @@ class TestReport:
         )
         monkeypatch.setattr(drift, "check_statute_drift", lambda fetcher: match_report)
         assert drift.main([]) == 0
+        manifest_path = tmp_path / "legal-verification.json"
+        assert drift.main(["--verification-manifest", str(manifest_path)]) == 0
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert manifest["schema_version"] == 2
+        assert manifest["quote_corpus_sha256"] == quote_corpus_sha256(
+            (result.pack_id, result.requirement_id, result.quote)
+            for result in match_report.results
+        )
 
         drift_report = DriftReport(
             (DriftResult("gdpr", "r1", "Article 22(1)", "http://x/", "differ", "q", "p"),),

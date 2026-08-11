@@ -721,6 +721,43 @@ def test_a_constraint_the_interpreter_cannot_read_is_undetermined_and_not_a_brea
     )
 
 
+def test_a_constraint_that_cannot_be_evaluated_on_the_record_is_undetermined():
+    from reasonsmith.engines.counterfactual import _pair_membership
+
+    assert _pair_membership(
+        {"income": "not numeric"}, PROTECTED, [0, 1], ["income + 1 > 0"]
+    ) == ("undetermined", "income + 1 > 0")
+
+
+class _PartlyFailingReplay(RulesAdapter):
+    def decide(self, case):
+        if case["credit_score"] == 660 and case.get(PROTECTED) == 1:
+            raise RuntimeError("protected twin failed")
+        return super().decide(case)
+
+
+def test_partial_replay_evidence_never_becomes_satisfaction_or_a_cross_rung_cause():
+    sut = _PartlyFailingReplay(
+        rules=list(DISCRIMINATING_RULES),
+        variables=dict(AWARE_VARIABLES),
+        constraints=list(AWARE_CONSTRAINTS),
+        declared_capabilities={"decision", OUTCOME},
+        test_inputs=[
+            {"credit_score": 660, PROTECTED: 0},
+            {"credit_score": 715, PROTECTED: 0},
+        ],
+    )
+
+    replay = PairedReplayEngine.evaluate(_requirement(), sut)
+    assert (replay.verdict, replay.strength) == (Verdict.INCONCLUSIVE, None)
+    assert replay.details["reason"] == "some_replays_failed"
+    assert replay.details["probe_budget"]["pairs_errored"] == 1
+
+    result = evaluate_requirement(_requirement(), sut, system_domains=("consumer-credit",))
+    assert (result.verdict, result.strength) == (Verdict.VIOLATED, Strength.PROVED)
+    assert RUNG_DISAGREEMENT_KEY not in result.details
+
+
 def test_two_rungs_that_agree_carry_no_signal_at_all():
     """The control. This is evidence about a disagreement and says nothing in its absence."""
     result = evaluate_requirement(

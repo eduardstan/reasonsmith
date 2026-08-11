@@ -61,8 +61,19 @@ def test_published_counts_verification_manifest_and_writer(monkeypatch, tmp_path
     manifest = tmp_path / "legal-verification.json"
     monkeypatch.setattr(counts, "_VERIFICATION", manifest)
     baseline = published_counts()
+    valid_manifest = {
+        "schema_version": 2,
+        "match": baseline["quote_count"],
+        "differ": 0,
+        "verified_at": "today",
+        "quote_corpus_sha256": counts.quote_corpus_sha256(
+            (pack.id, requirement.id, requirement.verbatim_text)
+            for pack in [counts.load_pack(name) for name in counts.STATUTORY_PACKS]
+            for requirement in pack.requirements
+        ),
+    }
     manifest.write_text(
-        json.dumps({"match": baseline["quote_count"], "differ": 0, "verified_at": "today"}),
+        json.dumps(valid_manifest),
         encoding="utf-8",
     )
     verified = published_counts()
@@ -72,14 +83,17 @@ def test_published_counts_verification_manifest_and_writer(monkeypatch, tmp_path
     with pytest.raises(ValueError, match="does not cover"):
         published_counts()
     manifest.write_text(
-        json.dumps({"match": baseline["quote_count"], "differ": 0}), encoding="utf-8"
+        json.dumps({**valid_manifest, "quote_corpus_sha256": "0" * 64}), encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="quote corpus"):
+        published_counts()
+    manifest.write_text(
+        json.dumps({k: v for k, v in valid_manifest.items() if k != "verified_at"}),
+        encoding="utf-8",
     )
     with pytest.raises(ValueError, match="no verification date"):
         published_counts()
-    manifest.write_text(
-        json.dumps({"match": baseline["quote_count"], "differ": 0, "verified_at": "today"}),
-        encoding="utf-8",
-    )
+    manifest.write_text(json.dumps(valid_manifest), encoding="utf-8")
     output = tmp_path / "published.json"
     counts.write_published_counts(output)
     assert json.loads(output.read_text(encoding="utf-8"))["schema_version"] == 1

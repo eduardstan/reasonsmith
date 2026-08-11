@@ -1022,11 +1022,16 @@ class PairedReplayEngine:
                 **{PROBE_BUDGET_KEY: budget()},
             )
 
-        skipped = (
-            f" {errored} pair(s) raised and were counted rather than read as a pass."
-            if errored
-            else ""
-        )
+        if errored:
+            return not_evaluated(
+                f"Not evaluated: {errored} of the {attempted} planned pair(s) raised rather than "
+                f"producing two decisions this duty could compare. The other {replayed} pair(s) "
+                "showed no change, but satisfaction requires every planned pair to complete. "
+                f"First failure: {first_error}.",
+                "some_replays_failed",
+                **{PROBE_BUDGET_KEY: budget()},
+            )
+
         # What was searched, and out of what: the values below are what this search moved the
         # variable across, which is the whole admitted set only when the enumeration ran out
         # before the bound did.
@@ -1044,7 +1049,7 @@ class PairedReplayEngine:
                 f"Probed over {replayed} pair(s): no recorded decision changed its {outcome!r} "
                 f"when {protected!r} was moved across {searched} "
                 f"({', '.join(repr(value) for value in values)}) and nothing else was "
-                f"changed.{skipped} This is a bounded search over the decisions the system logged "
+                "changed. This is a bounded search over the decisions the system logged "
                 "and the values the budget below names, not a proof: the property is unchecked for "
                 "every input outside it."
             ),
@@ -1079,10 +1084,7 @@ def _pair_membership(
                 kleene_value(eval_expression(node, {**case, protected: value}))
                 for value in values
             ]
-        except UnsupportedConstructError:
-            # A constraint this interpreter cannot read is one whose truth on the replayed pair is
-            # unknown, which is the third answer rather than a reason to claim either of the other
-            # two.
+        except Exception:
             undetermined = undetermined or text
             continue
         if any(val is False for val in held):
