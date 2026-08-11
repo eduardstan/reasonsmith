@@ -38,7 +38,7 @@ def test_every_shipped_claimed_semantics_literal_is_in_the_vocabulary():
     root = Path(__file__).parents[1] / "src" / "reasonsmith"
     declarations: list[str] = []
     for path in root.rglob("*.py"):
-        tree = ast.parse(path.read_text(), filename=str(path))
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             if (
                 isinstance(node, ast.Assign)
