@@ -185,6 +185,14 @@ def test_model_name_configures_default_transport_and_main(monkeypatch, capsys):
         ["--model", "m", "--url", "http://configured", "--command", "provider", "--attempts", "1"]
     ) == 0
     assert '"agreement_rate": 1.0' in capsys.readouterr().out
+
+    class FakeClaude:
+        def __init__(self, command):
+            assert command == "claude"
+
+    monkeypatch.setattr(proposer, "ClaudeModel", FakeClaude)
+    assert proposer.main(["--claude", "--attempts", "1"]) == 0
+    assert '"model": "m"' in capsys.readouterr().out
     empty = proposer.AgreementMeasurement((), "m", 1)
     assert empty.rate == 0.0
 
@@ -206,6 +214,60 @@ def test_module_entrypoint_is_executable(monkeypatch, capsys):
     with pytest.raises(SystemExit):
         runpy.run_module("reasonsmith.proposer", run_name="__main__")
     assert "sample_size" in capsys.readouterr().out
+
+
+def test_claude_model_invokes_cli_with_prompt_and_refuses_failures(monkeypatch):
+    class Completed:
+        def __init__(self, returncode=0, stdout="candidate\n", stderr=""):
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    calls = []
+    monkeypatch.setattr(
+        proposer.subprocess,
+        "run",
+        lambda args, **kwargs: (calls.append((args, kwargs)) or Completed()),
+    )
+    client = proposer.ClaudeModel("claude --verbose", timeout=7)
+    assert client("write a formula") == "candidate\n"
+    assert calls[0][0] == ["claude", "--verbose", "-p", "write a formula"]
+    assert calls[0][1]["timeout"] == 7
+    monkeypatch.setattr(
+        proposer.subprocess,
+        "run",
+        lambda args, **kwargs: Completed(returncode=2, stderr="not authenticated"),
+    )
+    with pytest.raises(proposer.ModelUnavailable, match="not authenticated"):
+        client("prompt")
+    monkeypatch.setattr(
+        proposer.subprocess,
+        "run",
+        lambda args, **kwargs: (_ for _ in ()).throw(
+            proposer.subprocess.TimeoutExpired("claude", 7)
+        ),
+    )
+    with pytest.raises(proposer.ModelUnavailable):
+        client("prompt")
+    with pytest.raises(ValueError, match="non-empty"):
+        proposer.ClaudeModel(" ")
+
+
+def test_measurement_distinguishes_wrong_candidates_from_refusals(monkeypatch):
+    req = _requirements()["eu_ai_act_art12_1_automatic_logging"]
+
+    def fake_propose(requirement_id, **kwargs):
+        if requirement_id == req.id:
+            attempt = proposer.ProposalAttempt(1, "prompt", req.spec[:-1], None, "wrong")
+            return proposer.Proposal(requirement_id, (attempt,), 1, "budget-exhausted")
+        return proposer.Proposal(requirement_id, (), 1, "refused", "unparseable")
+
+    monkeypatch.setattr(proposer, "propose", fake_propose)
+    measurement = proposer.measure_agreement(model_name="test", max_attempts=1)
+    row = next(row for row in measurement.rows if row.requirement_id == req.id)
+    assert row.status == "wrong"
+    assert row.candidate == req.spec[:-1]
+    assert any(row.status == "refused" for row in measurement.rows)
 
 
 def test_command_model_supports_provider_neutral_measurement(monkeypatch):

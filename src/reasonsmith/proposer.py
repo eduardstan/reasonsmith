@@ -36,6 +36,7 @@ PROPOSER_EXTRA = "proposer"
 PROPOSER_MODEL_ENV = "REASONSMITH_PROPOSER_MODEL"
 PROPOSER_URL_ENV = "REASONSMITH_PROPOSER_URL"
 PROPOSER_COMMAND_ENV = "REASONSMITH_PROPOSER_COMMAND"
+CLAUDE_COMMAND_ENV = "REASONSMITH_CLAUDE_COMMAND"
 DEFAULT_URL = "http://127.0.0.1:11434/api/generate"
 DEFAULT_ATTEMPTS = 3
 UNAVAILABLE_NOTE = (
@@ -138,6 +139,37 @@ class CommandModel:
             raise ModelUnavailable(str(exc)) from exc
         if result.returncode:
             message = result.stderr.strip() or f"provider exited with {result.returncode}"
+            raise ModelUnavailable(message)
+        return result.stdout
+
+
+class ClaudeModel:
+    """Callable adapter for the optional Claude Code CLI.
+
+    The CLI is deliberately invoked as a subprocess rather than imported.  This keeps Claude an
+    optional provider, while ``--command`` and caller-supplied models remain available for every
+    other provider.  ``claude -p`` accepts the complete proposer prompt as its positional prompt.
+    """
+
+    def __init__(self, command: str = "claude", *, timeout: float = 120.0):
+        self.command = command.strip()
+        if not self.command:
+            raise ValueError("Claude command must be non-empty")
+        self.timeout = timeout
+
+    def __call__(self, prompt: str) -> str:
+        try:
+            result = subprocess.run(
+                [*shlex.split(self.command), "-p", prompt],
+                capture_output=True,
+                text=True,
+                timeout=self.timeout,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise ModelUnavailable(str(exc)) from exc
+        if result.returncode:
+            message = result.stderr.strip() or f"Claude CLI exited with {result.returncode}"
             raise ModelUnavailable(message)
         return result.stdout
 
@@ -346,11 +378,24 @@ def measure_agreement(
         result = propose(
             requirement_id, model=model, model_name=model_name, max_attempts=max_attempts
         )
+        status = (
+            "agreed"
+            if result.machine_passed
+            else "wrong"
+            if any(attempt.candidate is not None for attempt in result.attempts)
+            else result.status
+        )
+        candidate = result.candidate
+        if candidate is None:
+            candidate = next(
+                (attempt.candidate for attempt in reversed(result.attempts) if attempt.candidate),
+                None,
+            )
         rows.append(
             AgreementRow(
                 requirement_id,
-                "agreed" if result.machine_passed else result.status,
-                result.candidate,
+                status,
+                candidate,
                 len(result.attempts),
                 result.refusal,
             )
@@ -370,6 +415,16 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help=f"provider command reading prompt on stdin (or {PROPOSER_COMMAND_ENV})",
     )
+    parser.add_argument(
+        "--claude",
+        action="store_true",
+        help="use the optional Claude Code CLI (claude -p PROMPT)",
+    )
+    parser.add_argument(
+        "--claude-command",
+        default=None,
+        help=f"Claude executable command (or {CLAUDE_COMMAND_ENV})",
+    )
     parser.add_argument("--attempts", type=int, default=DEFAULT_ATTEMPTS)
     args = parser.parse_args(argv)
     if args.model:
@@ -378,7 +433,13 @@ def main(argv: list[str] | None = None) -> int:
         os.environ[PROPOSER_URL_ENV] = args.url
     if args.command:
         os.environ[PROPOSER_COMMAND_ENV] = args.command
-    measurement = measure_agreement(model_name=args.model, max_attempts=args.attempts)
+    if args.claude:
+        claude_command = args.claude_command or os.getenv(CLAUDE_COMMAND_ENV, "claude")
+        measurement = measure_agreement(
+            model=ClaudeModel(claude_command), model_name="claude-cli", max_attempts=args.attempts
+        )
+    else:
+        measurement = measure_agreement(model_name=args.model, max_attempts=args.attempts)
     print(
         json.dumps(
             {
@@ -399,6 +460,7 @@ def main(argv: list[str] | None = None) -> int:
 __all__ = [
     "AgreementMeasurement",
     "AgreementRow",
+    "ClaudeModel",
     "CommandModel",
     "DEFAULT_ATTEMPTS",
     "ModelUnavailable",

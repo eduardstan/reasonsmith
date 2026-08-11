@@ -1,7 +1,23 @@
 # Autoformalisation verification harness
 
 The model-facing proposer is optional (`reasonsmith.proposer`, via the empty `proposer` extra); it
-uses a configured Ollama model and is absent by default. The boundary is:
+uses a configured provider and is absent by default. Ollama is supported without a Python client,
+and the installed Claude Code CLI is available through the same optional boundary:
+
+```python
+from reasonsmith.proposer import ClaudeModel, measure_agreement
+
+measurement = measure_agreement(model=ClaudeModel(), model_name="claude-cli", max_attempts=2)
+```
+
+`ClaudeModel` invokes `claude -p PROMPT`; configure another executable with
+`REASONSMITH_CLAUDE_COMMAND`. The command-line equivalent is
+`python -m reasonsmith.proposer --claude --attempts 2`. Any provider can instead implement the
+one-call `Model` protocol, or use `--command` for a program that reads the prompt on stdin. A
+provider that cannot be reached is `unavailable`; an unparseable model response is `refused`, and
+a parseable but non-equivalent proposal is `wrong`. These are not silently counted as disagreement.
+
+The boundary is:
 
 1. a candidate is parsed by `rulelang.py` and must have the requirement's exact fragment;
 2. `reasonsmith.autoformalize.round_trip_check` compares its denotation with the shipped property
