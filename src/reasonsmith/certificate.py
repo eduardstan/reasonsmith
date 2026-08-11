@@ -26,9 +26,11 @@ What this module is for:
     published sources; this module is its measurement.
 
 What a reader must not break:
-  - The probe only ever switches a fact *off*. It never raises one and it never adds a fact — the
-    protocol has a `without` and deliberately no `with` — so `deleted` means "the engine's answer
-    did not depend on this reason under this interpretation" and nothing stronger.
+  - The probe only ever switches a fact *off*. It never raises one and it never adds a fact — this
+    module calls `without` and nothing else, and a family offering the wider `at(fact, probability)`
+    is probed here exactly as one offering only `without` is
+    (`test_the_deletion_probe_never_reaches_the_widened_perturbation`) — so `deleted` means "the
+    engine's answer did not depend on this reason under this interpretation" and nothing stronger.
     Why this matters: on an engine whose reasons can be *retracted* by an added fact, a lawfully
     retracted reason is indistinguishable from a dropped one under this definition. That is why an
     artefact declares whether its inference is monotone, why a certificate over one that declares

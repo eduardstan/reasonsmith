@@ -190,6 +190,19 @@ system exposing nothing that grounds its claim must report *not evaluated*, neve
 The intake is the Discussion
 [*reasonsmith cleared two systems whose decisions are wrong — what should a pack do about it?*](https://github.com/eduardstan/reasonsmith/discussions/59).
 
+**What exists now, and it does not close this.** The design answer was written, and one half of one
+of its two candidates is built: `semantic_laws.py` refutes a false `claimed_semantics` from the
+system's own answers alone, with no reference implementation anywhere in the loop, and does it for
+every one of the four `nesyarena` provenances that deviates from what it claims while refuting the
+exact one on nothing. It needed a perturbation the artefact protocol refused in writing, so
+[`docs/formal.md`](docs/formal.md) §3.6 now records that reversal and §3.7 states the soundness of
+what replaced it. **The measurable outcome above still fails**, and deliberately: no requirement
+reads the measurement, so the two reports the check drives are still identical on every requirement.
+Closing this objective needs a duty, and a duty needs `claimed_semantics` to become a name from a
+closed vocabulary first — today the certificate's reference side is hard-wired to exact WMC whatever
+an artefact claims, so a system that *honestly documents* its truncation already measures a value
+gap, and promoting that to a verdict before the claim binds would ship a false accusation.
+
 ## 6. The first duty written with an open-textured predicate
 
 **The gap.** [`docs/semantics.md`](docs/semantics.md) §9 opens by stating it: twenty-one of the

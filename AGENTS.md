@@ -82,6 +82,31 @@ system — the re-run is what makes the measurement independent of the rationale
 README's auditors blocker is narrowed, not closed. `docs/semantics.md` §3 (*The inference artefact*)
 is the contract and `tests/test_artifact_protocol.py` holds it.
 
+The **probe** is one-directional; the **protocol** is not, since 2026-08-11. `at(fact, probability)`
+and `probability(fact)` are optional members (read through `artifacts.admits_interpretation`,
+implemented by the ground-program family and deliberately not by `reason_trace`), and admitting them
+reversed a refusal this repository had published in `artifacts/__init__.py` and `docs/formal.md`
+§3.6. Both now **record** the reversal in the shape `ROADMAP.md` §2 records the `since` one, and the
+record is not a postscript: what was refused, what changed, what is *still* refused. Four things must
+not be undone. Nothing in §3 of `docs/formal.md` quantifies over anything but the deletion lattice
+`L(β)`, and `certificate.py`/`explanations.py` call `without` and nothing else — checked by
+`test_the_deletion_probe_never_reaches_the_widened_perturbation`, not asserted in prose. `deleted`,
+its lemmas and its one premise did not move, and `without(fact)` is now literally `at(fact, 0.0)`.
+No requirement reads the wider surface, so a family offering no `at` loses no verdict and no shipped
+verdict moved. And the widening is paid for by a measurement, not by a possibility:
+`semantic_laws.py` refutes a false `claimed_semantics` from the system's own answers with no
+reference implementation in the loop, and `test_neither_one_directional_variant_refutes_a_top_k_engine`
+is the measured fact that nothing narrower buys the discrimination — delete that test and the
+reversal is unearned. `semantic_laws.py` is a **measurement and not a verdict**: no
+`RequirementResult`, no rung, no requirement reading it, and deliberately not under `engines/`, the
+standing `ltlf.py` has. It keeps two vocabularies apart and must go on doing so:
+`spec.CLAIMED_SEMANTICS` is what an artefact may *claim* (closed, refused outside itself by
+`normalize_claimed_semantics` at the artefact and certificate boundaries) and
+`SEMANTICS_WITH_LAWS` is the one member of it this tool can *refute*, derived by intersection so a
+rename there cannot leave a dangling member here. An admitted claim with no law is *not evaluated*
+naming it; an unadmitted one never arrives. `docs/formal.md` §3.6 (the reversal) and §3.7 (the soundness proposition,
+and why the design's vertex law is absent) are the contract; `tests/test_semantic_laws.py` holds it.
+
 `engines/certificate.py` asks the declaration before it certifies and again of the
 measurement afterwards, and reports **not evaluated** — never violated, never satisfied, never
 downgraded to the presence check sharing the clause — for an artefact declaring non-monotone,

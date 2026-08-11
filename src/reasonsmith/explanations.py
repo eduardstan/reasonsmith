@@ -10,9 +10,11 @@ What this module is for:
 
   The objects are Ignatiev, Narodytska and Marques-Silva's abductive explanation
   (AXp — `[@ignatiev-2019]`) and its
-  contrastive dual (CXp), specialised to the one perturbation space `artifacts.InferenceArtifact`
-  reaches — the *deletion lattice*, since the protocol has a `without(fact)` and deliberately no
-  `with_(fact)`. A **CXp** is a subset-minimal set of facts whose joint removal moves the engine's
+  contrastive dual (CXp), specialised to the one perturbation space this search ranges over — the
+  *deletion lattice*, since it calls `without(fact)` and nothing else. That is a property of this
+  module and not a limit of the protocol any more; `docs/formal.md` §3.6 records the wider
+  perturbation a family may offer and the fact that no definition here reads it.
+  A **CXp** is a subset-minimal set of facts whose joint removal moves the engine's
   answer; an **AXp** is a subset-minimal set of facts whose retention holds it, and the two are
   minimal hitting sets of each other (Reiter 1987 — `[@reiter-1987]`; Ignatiev, Narodytska, Asher
   and Marques-Silva 2020 — `[@ignatiev-2020]`). A fact is **relevant** iff it lies in some CXp,

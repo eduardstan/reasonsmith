@@ -9,8 +9,8 @@ What this module is for:
   names no nesyarena type, and neither does the protocol this class satisfies.
 
 What a reader must not break:
-  - **`without` re-scores the reasons the base enumeration found, and never re-enumerates.** The
-    perturbed artefact carries its parent's reason set.
+  - **`without` and `at` re-score the reasons the base enumeration found, and never re-enumerate.**
+    The perturbed artefact carries its parent's reason set.
     Why this matters: the probe compares exact inference's answer before and after one fact is
     switched off. Enumerating again would compare two answers to two questions, and a family whose
     enumeration is sensitive to a zeroed fact would report drops that are an artefact of the
@@ -106,11 +106,22 @@ class GroundProgramArtifact:
     def engine_value(self) -> float:
         return float(self.adapter.infer(self.program, self.base, [self.query])[self.query])
 
-    def without(self, fact: Atom) -> "GroundProgramArtifact":
-        """The same inference with `fact` at probability zero — the only perturbation there is."""
+    def probability(self, fact: Atom) -> float:
+        """This fact's probability under the base interpretation — half of the wider surface."""
+        return float(self.base[fact])
+
+    def at(self, fact: Atom, probability: float) -> "GroundProgramArtifact":
+        """The same inference at `probability` for `fact`, and the same reason set to score it over.
+
+        The widened perturbation. It re-scores what the base enumeration found and never
+        re-enumerates, for the reason `without` does not: a family whose enumeration moved with the
+        interpretation would compare two answers to two questions.
+        """
+        if not 0.0 <= probability <= 1.0:
+            raise ValueError(f"probability must lie in [0, 1], got {probability!r}")
         return GroundProgramArtifact(
             self.program,
-            {**self.base, fact: 0.0},
+            {**self.base, fact: float(probability)},
             self.query,
             self.adapter,
             self.exact_depth,
@@ -118,3 +129,7 @@ class GroundProgramArtifact:
             self.monotone,
             _reasons=self._reasons,
         )
+
+    def without(self, fact: Atom) -> "GroundProgramArtifact":
+        """The same inference with `fact` at probability zero — the deletion probe's one call."""
+        return self.at(fact, 0.0)

@@ -57,9 +57,11 @@ matter:
 
 1. **The decision is a probability, not a label.** There is no `f(v) = c` to preserve. What is
    preserved is the engine's *answer*, up to `tol`.
-2. **The perturbation space is not a product of feature domains.** The artefact protocol has a
-   `without(fact)` and, deliberately, no `with_(fact)`. So the reachable interpretations are exactly
-   the ones below `β` in the deletion order.
+2. **The perturbation space is not a product of feature domains.** Everything below is stated over
+   `without(fact)`, the deletion perturbation, and over nothing else: the reachable interpretations
+   are exactly the ones below `β` in the deletion order. A family may also offer the wider
+   `at(fact, probability)`, and no definition here reads it — [`formal.md`](formal.md) §3.6 records
+   that widening and what it left refused.
 
 Both differences make the definitions below **weaker** than their classifier counterparts, never
 stronger. That is the correct direction and §7 states what it costs.
@@ -301,11 +303,13 @@ invariant to keep when tuning it.
 
 ## 8. What this does not do
 
-- **It does not widen the perturbation space.** The lattice is downward-only, because the protocol
-  is (`artifacts.InferenceArtifact.without`, and deliberately no `with_`). An AXp here is an AXp
-  *relative to the deletions the artefact admits*, which is a weaker object than an AXp over a full
-  feature space. §2 of `semantics.md` and the `LIMITS` string say the same thing about `deleted` and
-  they still say it.
+- **It does not widen the perturbation space.** The lattice is downward-only because every
+  definition here is stated over `artifacts.InferenceArtifact.without` and the measurement calls
+  nothing else — not because that is all a family can do. An AXp here is an AXp *relative to the
+  deletions the artefact admits*, which is a weaker object than an AXp over a full feature space.
+  §2 of `semantics.md` and the `LIMITS` string say the same thing about `deleted` and they still
+  say it. [`formal.md`](formal.md) §3.6 records the optional `at(fact, probability)` a family may
+  now offer, why it was admitted, and the fact that no definition here reads it.
 - **It does not detect defeat.** A defeater holding no fact of any enumerated reason is still never
   switched off, still leaves no fingerprint, and is still refused at the declaration
   (`semantics.md` §3, *The inference artefact*). Nothing here weakens that refusal and nothing here

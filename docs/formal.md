@@ -88,7 +88,7 @@ being about that trace (`test_unattainable_from_a_trace_does_not_speak_for_the_s
 An **inference artefact** for one decision (`artifacts.InferenceArtifact`) is
 
 ```
-𝒜 = (F, β, q, R, without, exact_depth, monotone, reasons_are_exact)
+𝒜 = (F, β, q, R, without, exact_depth, monotone, reasons_are_exact)   [ , at ]
 ```
 
 - `F` — the **facts**, whatever the artefact treats as switchable. For the one shipped ground-program
@@ -97,8 +97,15 @@ An **inference artefact** for one decision (`artifacts.InferenceArtifact`) is
 - `q` — the decision, as a query atom.
 - `R = {r₁, …, r_n}` with each `rᵢ ⊆ F` — the **reasons**: every support bounded proof enumeration
   finds for `q` at the artefact's own `exact_depth`. Write `F_q = ⋃ᵢ rᵢ`.
-- `without : F → 𝒜` — the perturbation. There is a `without` and, deliberately, **no** `with_`;
-  §3.1 is the whole consequence.
+- `without : F → 𝒜` — the **deletion** perturbation, `without(a) = 𝒜[β ↦ β[a↦0]]`. It is the only
+  perturbation §3 quantifies over and the only one the certificate calls; §3.1 is the whole
+  consequence.
+- `at : F × [0,1] → 𝒜` — **optional**, and present on the ground-program family only:
+  `at(a, v) = 𝒜[β ↦ β[a↦v]]`, with `without(a) = at(a, 0)`. Read together with `probability : F →
+  [0,1]`, which returns `β(a)`; a family offering both admits an arbitrary interpretation over one
+  fact and a family offering neither is reached by every shipped verdict all the same, because
+  nothing in §3 and no engine in §6 calls it (`test_the_deletion_probe_never_reaches_the_widened_perturbation`).
+  §3.6 records what admitting it reversed and §3.7 is the one measurement that uses it.
 - `monotone ∈ {True, False, None}` — whether the artefact's inference is monotone in its facts.
   It is **required**, not defaulted, and `None` is refused rather than read as `True` (§6.7).
 - `reasons_are_exact ∈ {True, False}` — whether `R` was enumerated from a model encoding or
@@ -408,9 +415,10 @@ notation of §1.3, with that document's `A` written `F`.
 > set to probability zero. The **deletion lattice** is `L(β) = { β[D↦0] : D ⊆ F_q }`, ordered by `⊆`
 > on `D`, with `β` as its top element.
 
-`L(β)` is the whole of what the artefact protocol can reach, because the protocol has a
-`without(fact)` and deliberately no `with_(fact)`. Giving a fact probability zero deletes exactly
-the worlds in which it holds:
+`L(β)` is the whole of what **this section** quantifies over, because `without` is the only
+perturbation the certificate and the CXp enumeration call. It is no longer all the protocol can
+reach — §3.6 records that reversal — and nothing below reads the wider surface. Giving a fact
+probability zero deletes exactly the worlds in which it holds:
 
 ```
 V(β[D↦0])  =  Pr_β[ φ_q ∧ ⋀_{a∈D} ¬a ]
@@ -423,9 +431,9 @@ V(β[D↦0])  =  Pr_β[ φ_q ∧ ⋀_{a∈D} ¬a ]
 This is not a classifier over a feature space, which is the setting the published definitions are
 stated in. Two things differ and both matter: the decision is a **probability, not a label**, so
 what is preserved is the engine's answer up to `tol` rather than an `f(v) = c`; and the perturbation
-space is **not a product of feature domains**, so the reachable interpretations are exactly those
-below `β` in the deletion order. Both differences make the definitions below **weaker** than their
-counterparts, never stronger.
+space these definitions range over is **not a product of feature domains**, so the interpretations
+they reach are exactly those below `β` in the deletion order. Both differences make the definitions
+below **weaker** than their counterparts, never stronger.
 
 ### 3.2 Sufficiency, AXp, CXp, relevance
 
@@ -548,10 +556,39 @@ a claim that the engine's *value* is wrong and **not** a claim that any particul
 irrelevant, and `Σ_r Δ(private facts of r)` is not the gap in either direction. No rendering adds
 per-reason drops up, and none may start.
 
-### 3.6 What is out of reach
+### 3.6 What is out of reach — and one reversal, recorded
 
-- **The perturbation space is not widened.** An AXp here is an AXp *relative to the deletions the
-  artefact admits*, which is a weaker object than an AXp over a full feature space.
+- **The perturbation space *of §3* is not widened, and the protocol's is.** An AXp here is an AXp
+  *relative to `L(β)`*, which is a weaker object than an AXp over a full feature space, and that
+  has not changed. What has changed is the sentence this bullet used to carry, which said the
+  protocol admits no perturbation but deletion. **That is a reversal and this is the record of it**,
+  in the shape [`ROADMAP.md`](../ROADMAP.md) §2 records the `since` reversal, because a document
+  that quietly drops a refusal it published is worse than one that never published it.
+
+  **What was refused.** `artifacts.InferenceArtifact` stated that there is a `without(fact)` and
+  deliberately no `with_(fact)`, and that adding one was work no verdict here is authorised to rest
+  on. The ground for the refusal was the soundness of `deleted`: §3.1–§3.4 are stated over `L(β)`,
+  Lemma 1 needs the deletion order, and a reason measured over a wider space would be a different
+  object wearing the same name.
+
+  **What changed.** A measurement was designed that never touches `deleted` and needs the width:
+  §3.7. Its discrimination was measured to live in the *width* of the perturbation and in nothing
+  cheaper — over the 16 generated instances of `docs/build_nesyarena_report.py`, a triple that only
+  lowers a fact's probability and a triple that only raises it each refute a top-`k` engine on
+  **none** of them, while the triple spanning `[0,1]` refutes `top-1-proofs` on 8 and `top-3-proofs`
+  on 4 (`test_neither_one_directional_variant_refutes_a_top_k_engine`). A top-`k` engine's
+  kept-proof set is locally constant, so `E` is locally multilinear and the kink appears only where
+  the ranking changes. So `at : F × [0,1] → 𝒜` is admitted, **optionally**, by the captain's
+  explicit decision of 2026-08-11.
+
+  **What is still refused, and it is the whole of what the old refusal was protecting.** No
+  definition in §3 quantifies over anything but `L(β)`; `certificate.py` and `explanations.py` call
+  `without` and nothing else, which is checked rather than asserted
+  (`test_the_deletion_probe_never_reaches_the_widened_perturbation`); every one of Lemma 1,
+  Lemma 2, the duality theorem and Definitions 3–9 is unchanged and rests on the same one premise;
+  and a family offering no `at` loses no verdict, because no requirement in this repository reads
+  the wider surface at all. `reason_trace` deliberately offers none: a rationale the system
+  recounted has no interpretation to move.
 - **Defeat is not detected.** A defeater holding no fact of any enumerated reason is never switched
   off, leaves no fingerprint, and is refused at the declaration instead (§6.7).
 - **A shared fact is not attributed.** Splitting a reason from its sharers is a question about the
@@ -560,6 +597,67 @@ per-reason drops up, and none may start.
   `unseparable` or `inconclusive` reason into it, and the implementation deliberately does not:
   minting accusations out of a search whose completeness rests on a declaration nothing here
   confirms is a decision to make on purpose, not a corollary to fall into.
+
+### 3.7 The claimed semantics, refuted over the wider surface
+
+This is the one thing `at` is for, and it is not a verdict: `semantic_laws` returns no
+`RequirementResult`, occupies no rung and is read by no requirement, the standing `ltlf.py` has.
+
+An artefact carries a `claimed_semantics`, and §1.3 says what it is worth today — printed on the
+certificate, checked by nothing. Write `S` for the semantics it names and `⟦·⟧_S` for its
+denotation. The claim is
+
+```
+    (C)     ∀ β' ∈ [0,1]^F .  E(β') = ⟦P, β', q⟧_S
+```
+
+— about the black box `E` at *every* interpretation and not only at the `β` the decision was taken
+at. Nothing on this evidence model establishes (C). Its **refutation** needs one witness, and that
+is all this measures.
+
+`claimed_semantics` is a name from `spec.CLAIMED_SEMANTICS`, closed and refused outside itself at
+the artefact and certificate boundaries ([`semantics.md`](semantics.md) §3, *The semantics claim is
+a closed vocabulary*). `semantic_laws.SEMANTICS_WITH_LAWS` is the subset of that vocabulary this
+tool has laws for, and it has one member today. For it, `S` = distribution semantics and
+`⟦P, β', q⟧_S = Pr_{β'}[φ_q]`.
+Two laws are checked at each `a ∈ F_q`, over the three interpretations `β`, `β[a↦0]`, `β[a↦1]`:
+
+```
+    L2 (multilinearity)   E(β) = β(a)·E(β[a↦1]) + (1−β(a))·E(β[a↦0])
+    L3 (monotonicity)     E(β[a↦0]) ≤ E(β) ≤ E(β[a↦1])
+```
+
+> **Proposition (refutation is sound).** If (C) holds then L2 and L3 hold at every `a ∈ F_q`.
+> Hence a measured violation of either refutes (C).
+>
+> L2: `Pr_{β'}[ψ]` is affine in `β'(a)` for **every** propositional `ψ` — Shannon expansion,
+> `Pr[ψ] = Pr[a]·Pr[ψ | a] + (1−Pr[a])·Pr[ψ | ¬a]`, with the two conditionals independent of
+> `β'(a)` under the artefact's independent-facts reading of `β`. The step needs no premise about
+> which facts `ψ` mentions, so it needs none about the artefact's enumeration being complete for
+> `q`.
+> L3: `φ_q` is a disjunction of conjunctions of **positive** literals (§1.3), so it is monotone,
+> so `Pr_{β'}[φ_q]` is non-decreasing in each `β'(a)`. This is the same positivity §3.1 already
+> uses and the one premise beyond L2's.
+
+**Three things this deliberately does not claim.** Non-refutation is not agreement: refutation is a
+lower bound on deviation, and on the shipped battery one provenance deviates on 16 instances and is
+refuted on 12 (`test_the_battery_refutes_every_deviating_provenance_and_never_the_exact_one`). The
+laws move one fact at a time, so a disagreement needing two facts moved together is not looked for —
+the same blindness `MOVED` had before §3.2 lifted it, and it is not lifted here. And a claim the
+vocabulary admits but no law here characterises — `weighted sum`, `free-text rationale` — is **not
+evaluated** naming the claim, in the sense [`semantics.md`](semantics.md) §4 gives it: the gap is in
+this tool, and running the laws of one semantics against a claim of another would refute a system
+for implementing exactly what it said. A claim *outside* the vocabulary reaches no law at all,
+because the artefact boundary refuses it first
+(`test_a_claim_outside_the_vocabulary_never_reaches_this_module`); the two must not be collapsed,
+since one says *this tool cannot answer* and the other says *this declaration is not admitted*
+(`test_the_law_sets_name_a_subset_of_the_shipped_vocabulary`).
+
+**Why the third law of the design is absent.** A vertex law — `β'` 0/1-valued ⟹ `E(β') ∈ {0,1}` —
+needs a premise L2 and L3 do not: that `F_q` covers every fact `φ_q` mentions, so that fixing `F_q`
+to a vertex fixes `φ_q`'s truth value. An artefact bounded by its own `exact_depth` cannot establish
+that, and a law whose premise the instrument cannot check is a false-accusation machine. It is left
+out rather than shipped with a caveat.
 
 ---
 
