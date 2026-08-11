@@ -552,12 +552,13 @@ inline SVG `<style>` is document-scoped once the page inlines it, and
 it. Regenerate with `python docs/build_showcase.py`; `tests/test_docs_showcase.py` holds all three
 files byte-for-byte.
 
-The README's first screen is that result: the figure, the sentence that makes it bite, `pip
-install` plus one command, and the cast. The full unprojected transcript that used to sit there is
+After the badges, README opens with the two generated preview SVGs and the measured sentence they
+summarise. It then gives the organising question and diagram, the five reading paths, and *Install
+and run* with `pip install`, the trusted-code warning and one generated `check` transcript; *Limits*
+states six boundaries before the licence. The full unprojected transcript is
 `docs/example-output.md` **§3** — the one committed transcript whose run exits 2 — and
-`REPORTING_EXIT_CODES` in `tests/test_docs_example_output.py` is what admits it. Nothing was
-deleted in that move; the theory sections, the four things this tool cannot do, and both preview
-images live below the fold and must not be moved back above the demonstration.
+`REPORTING_EXIT_CODES` in `tests/test_docs_example_output.py` is what admits it. The theory lives in
+the documents the reading paths link rather than being embedded on the front page.
 
 `ConformanceReport.to_dict()` leads with `schema_version` (`report.JSON_SCHEMA_VERSION`), the
 `--json` envelope's shape version. It is not the package version, it increments only when a key is
@@ -599,9 +600,9 @@ and the committed dossier, so a second copy would be a fourth thing to keep in s
 clause's *content* duty (`..._principal_reasons_complete`), never the *form* duty its siblings
 check, which this same system satisfies. `reasonsmith check --help`'s epilogue names it first;
 `test_a_shipped_example_reports_a_violation_and_help_names_it` in `tests/test_adoption_surface.py`
-pins both halves. The README's first screen after the badges is that run and its transcript, then
-[`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md) — the theory sections live below
-the demonstration and nothing may move them back above it.
+pins both halves. README uses that run for the worked transcript in *Install and run*, after the two
+generated previews, organising diagram and five reading paths. It routes the deeper limits to
+[`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md) instead of embedding the theory.
 
 They live under `src/` and not under `docs/` for one reason: **a documented command must run for
 someone who only ran `pip install reasonsmith`**, and no wheel carries `docs/`. So a command a

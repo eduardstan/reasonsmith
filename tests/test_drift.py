@@ -308,6 +308,23 @@ class TestReport:
         assert drift.main(["--report", str(out)]) == 1
         assert json.loads(out.read_text(encoding="utf-8"))["has_drift"] is True
 
+    def test_successful_manifest_is_accepted_by_published_counts(self, monkeypatch, tmp_path):
+        import reasonsmith.published_counts as counts
+
+        manifest = tmp_path / "legal-verification.json"
+        monkeypatch.setattr(drift, "fetch_source", fixture_fetcher)
+        monkeypatch.setattr(counts, "_VERIFICATION", manifest)
+
+        assert drift.main(["--verification-manifest", str(manifest)]) == 0
+        published = counts.published_counts()
+
+        assert published["quotes_verification"] == {
+            "status": "verified",
+            "match": STATUTORY_REQUIREMENT_COUNT,
+            "differ": 0,
+        }
+        assert published["quotes_last_verified"] is not None
+
     def test_main_reports_invalid_utf8_as_could_not_verify(self, monkeypatch, tmp_path):
         monkeypatch.setattr(
             drift.urllib.request,

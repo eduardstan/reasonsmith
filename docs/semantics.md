@@ -918,7 +918,7 @@ The vocabulary is owned in one place (`spec.py`), and its refusal names every ac
 (`test_claimed_semantics_outside_vocabulary_is_refused_with_accepted_set`). The certificate boundary
 refuses independently (`test_certificate_post_init_refuses_unknown_claimed_semantics`), and the
 source-derived declaration inventory is checked by
-`test_every_shipped_claimed_semantics_literal_is_in_the_vocabulary`.
+`test_every_shipped_artefact_family_exposes_only_normalized_claims`.
 
 **Three states, and only the first is measured.** `engines/certificate.py` asks the declaration
 before it certifies anything, and asks it again of the measurement afterwards; every refusal is
@@ -1188,14 +1188,17 @@ inferred.
   encoding twice: `unknown`, a timeout, premises admitting no pair, a copy that disagrees with the
   interpreter, or a witness pair that does not reproduce all yield not evaluated.
 
-> **If the paired-replay engine reports `satisfied` at strength `probed`, then:** for every decision
-> in the trace and every admissible value of `protected` beyond the first, `decide()` was run on the
-> recorded input with `protected` set to the first admissible value and again with it set to that
-> other value, **nothing else changed**, and the two runs produced the same `outcome`; the values
-> came from the system's declared `constraints` and its declared sort, never from the trace; and the
-> budget on the result names the pairs replayed, the values used and the pairs that raised
+> **If the paired-replay engine reports `satisfied` at strength `probed`, then:** for every pair
+> completed within the reported budget, `decide()` was run on the recorded input with `protected`
+> set to the first admissible value and again with it set to the other value, **nothing else
+> changed**, and the two runs produced the same `outcome`; the values came from the system's
+> declared `constraints` and its declared sort, never from the trace. Every planned pair inside that
+> budget completed: if any one raises, the whole search is *not evaluated* rather than satisfied
+> over the part that answered, so `pairs_errored` is zero on a satisfied result. The budget names
+> the pairs planned and replayed and the values used
 > (`test_paired_replay_reaches_probed_when_the_proof_rung_cannot`,
-> `test_paired_replay_takes_no_protected_value_from_the_trace`).
+> `test_paired_replay_takes_no_protected_value_from_the_trace`,
+> `test_partial_replay_evidence_never_becomes_satisfaction_or_a_cross_rung_cause`).
 
 *What it does not tell you.* Everything above, and the bound of a search — including a bound on the
 protected values themselves. `DEFAULT_MAX_VALUES` stops the enumeration at four, so over a band
