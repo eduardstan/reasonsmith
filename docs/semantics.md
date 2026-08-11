@@ -886,7 +886,11 @@ members currently mean:
 | `weighted sum` | The inference claims its answer is the weighted sum of the declared reasons. |
 | `free-text rationale` | The artefact claims only a recounted rationale, not a model-level semantics; consumers must not treat it as an exact distribution claim. |
 
-The vocabulary is owned in one place (`spec.py`), and its refusal names every accepted value.
+The vocabulary is owned in one place (`spec.py`), and its refusal names every accepted value
+(`test_claimed_semantics_outside_vocabulary_is_refused_with_accepted_set`). The certificate boundary
+refuses independently (`test_certificate_post_init_refuses_unknown_claimed_semantics`), and the
+source-derived declaration inventory is checked by
+`test_every_shipped_claimed_semantics_literal_is_in_the_vocabulary`.
 
 **Three states, and only the first is measured.** `engines/certificate.py` asks the declaration
 before it certifies anything, and asks it again of the measurement afterwards; every refusal is
