@@ -229,6 +229,31 @@ DECISION_DOMAINS = (
     "public-services",
 )
 
+#: Semantics labels an inference artefact may claim.  This is deliberately closed: consumers
+#: may compare these declarations without treating an author's prose as a new, interpretable
+#: semantics.
+CLAIMED_SEMANTICS = (
+    "distribution semantics",
+    "weighted sum",
+    "free-text rationale",
+)
+
+
+def normalize_claimed_semantics(value: Any) -> str:
+    """Normalize and refuse an inference artefact's claimed semantics declaration."""
+    if not isinstance(value, str):
+        raise TypeError(
+            f"claimed semantics must be a string, got {type(value).__name__}: {value!r}"
+        )
+    normalized = value.strip().lower()
+    if normalized not in CLAIMED_SEMANTICS:
+        raise ValueError(
+            f"{value!r} is not a known claimed semantics value. Accepted: "
+            f"{', '.join(repr(s) for s in CLAIMED_SEMANTICS)}"
+        )
+    return normalized
+
+
 
 def normalize_domain(value: Any, what: str = "decision domain") -> str:
     """Normalize one decision domain for comparison and refuse one outside the vocabulary.

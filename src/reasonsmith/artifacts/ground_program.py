@@ -34,6 +34,7 @@ from nesyarena.oracle import wmc
 from nesyarena.suts import proof_score
 
 from reasonsmith.artifacts import default_label
+from reasonsmith.spec import normalize_claimed_semantics
 
 __all__ = ["GroundProgramArtifact"]
 
@@ -81,7 +82,7 @@ class GroundProgramArtifact:
 
     @property
     def claimed_semantics(self) -> str:
-        return self.adapter.claimed_semantics
+        return normalize_claimed_semantics(self.adapter.claimed_semantics)
 
     @property
     def exact_inference(self) -> str:

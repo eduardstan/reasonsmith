@@ -52,6 +52,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from reasonsmith.artifacts import default_label
+from reasonsmith.spec import normalize_claimed_semantics
 
 __all__ = ["ReasonTraceArtifact"]
 
@@ -94,7 +95,7 @@ class ReasonTraceArtifact:
     ):
         self.query = query
         self.engine_name = engine_name
-        self.claimed_semantics = claimed_semantics
+        self.claimed_semantics = normalize_claimed_semantics(claimed_semantics)
         self.monotone = monotone
         self.recounted_by = recounted_by
         self._reasons = {name: frozenset(facts) for name, facts in reasons.items()}

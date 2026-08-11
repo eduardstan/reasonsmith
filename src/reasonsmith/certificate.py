@@ -82,6 +82,7 @@ from reasonsmith.explanations import (
     DeletionSearch,
     contrastive_sets,
 )
+from reasonsmith.spec import normalize_claimed_semantics
 
 LIMITS = (
     "This certificate compares one engine's answer against exact inference on one ground program "
@@ -179,6 +180,10 @@ class Certificate:
     #: The joint-deletion search, or None where no reason survived the per-fact pass as a candidate
     #: for deletion and there was nothing for it to resolve. `docs/sufficient-reasons.md` §7.
     search: DeletionSearch | None = None
+
+    def __post_init__(self) -> None:
+        # Certificates are a public boundary: never carry an uninterpretable semantics claim.
+        normalize_claimed_semantics(self.claimed_semantics)
 
     def _by(self, status: str) -> list[ReasonVerdict]:
         return [v for v in self.verdicts if v.status == status]

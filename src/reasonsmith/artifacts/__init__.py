@@ -191,8 +191,8 @@ class InferenceArtifact(Protocol):
     #: The decision this artefact is the inference behind, named on the certificate.
     query: Any
 
-    #: The engine whose answer is being compared against exact inference, and the semantics it
-    #: claims. Both are printed on the certificate and neither is checked.
+    #: The engine whose answer is being compared against exact inference, and its closed-vocabulary
+    #: semantics claim. Both are printed on the certificate; the claim is refused if unknown.
     engine_name: str
     claimed_semantics: str
 
