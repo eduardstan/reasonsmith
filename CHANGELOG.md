@@ -8,6 +8,13 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+### Changed
+
+- **The observed rung refuses monitor-misread formulas.** A trace-rung result is not emitted
+  when rtamt parses a known divergent shape; this avoids pairing a verdict with a robustness
+  margin computed for a different formula. The four divergence witnesses and the no-margin
+  boundary are covered by the language and observed-rung tests.
+
 ### Added
 
 - **The JSON envelope carries the undeclared-domain notice.** `ConformanceReport.to_dict()` now

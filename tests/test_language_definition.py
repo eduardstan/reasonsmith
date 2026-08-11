@@ -629,6 +629,9 @@ def test_a_duty_using_a_misread_shape_is_not_evaluated_and_names_the_construct(
     assert result.strength is None
     assert result.evidence_summary.startswith("Not evaluated:")
     assert construct in result.evidence_summary, result.evidence_summary
+    # Refusal is the soundness boundary: no robustness margin may accompany a
+    # record that deliberately has no verdict for the monitor-misread formula.
+    assert "evaluation_scores" not in result.details
 
 
 def test_both_spellings_of_equivalence_reach_the_same_refusal():

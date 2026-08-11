@@ -491,6 +491,8 @@ quantitative margin; it is a margin and not an answer, because `ρ = 0` decides 
 not represent strictness at all — `ρ(x > c) = ρ(x >= c)`. So a strict comparison is breached at its
 boundary and a non-strict one is not (`test_strict_comparison_boundary_table`), and a shape the
 monitor renders differently is refused rather than answered ([`language.md`](language.md) §4).
+The refusal carries no robustness margin: a result with no observed verdict does not emit
+`evaluation_scores` (`test_a_duty_using_a_misread_shape_is_not_evaluated_and_names_the_construct`).
 
 *What it does not tell you.* Nothing about any execution of the system that is not in that trace.
 "Held for every step we monitored" is a statement about a finite, supplied sequence. Nothing about

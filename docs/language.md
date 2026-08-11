@@ -961,11 +961,11 @@ What is **not** done, and is a separate decision: verifying that what rtamt pars
 rendered, rather than naming the shapes it misreads. That is the general form of this fix and would
 not need a list.
 
-A second question is open and is deliberately not settled here. Since the verdict is now this
-package's own and only the margin is the monitor's, the rung *could* be produced from
-`eval_temporal_trace` with `evaluation_scores` suppressed for a shape rtamt misreads — a verdict
-without a margin rather than no verdict. That trades one silence for another and needs a decision
-about what an `observed` result owes a reader, so it is filed rather than taken.
+The margin question is settled by the same soundness boundary: a shape rtamt misreads is
+refused, not answered with a verdict and no margin. Suppressing `evaluation_scores` would still
+leave a result claiming that the observed rung evaluated the duty while the only monitor margin
+available came from another formula. The refusal therefore keeps both the verdict and its
+misleading margin out of the record (`test_a_duty_using_a_misread_shape_is_not_evaluated_and_names_the_construct`).
 
 ---
 
