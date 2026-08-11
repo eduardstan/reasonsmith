@@ -63,6 +63,13 @@ def test_every_audience_leaves_results_byte_identical(report):
         assert report.to_dict(audience=audience)["results"] == expected
 
 
+def test_every_audience_carries_the_domain_notice_unchanged(report):
+    """The notice is a machine-record fact, so no audience projection suppresses it."""
+    expected = report.to_dict()["undeclared_domain_notice"]
+    for audience in [None, *AUDIENCES]:
+        assert report.to_dict(audience=audience)["undeclared_domain_notice"] == expected
+
+
 def test_each_audience_block_matches_its_audiences_entry(
     report,
 ):

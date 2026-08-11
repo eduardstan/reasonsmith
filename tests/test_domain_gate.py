@@ -27,6 +27,7 @@ What a reader must not break:
 from __future__ import annotations
 
 import html
+import json
 
 import pytest
 
@@ -306,6 +307,8 @@ def test_a_run_that_skipped_duties_for_a_missing_declaration_says_so():
     assert "--system-domain <domain>" in notice
     assert f"DUTIES NOT CHECKED: {notice}" in undeclared.render_text()
     assert html.escape(notice) in undeclared.render_html(commit_hash="")
+    assert undeclared.to_dict()["undeclared_domain_notice"] == notice
+    assert json.loads(undeclared.to_json())["undeclared_domain_notice"] == notice
 
     mismatched = check_conformance(BaseSUT(signals), pack, system_domains=["healthcare"])
     assert all(r.verdict == Verdict.NOT_APPLICABLE for r in mismatched.results)

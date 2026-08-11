@@ -1094,6 +1094,10 @@ class ConformanceReport:
             "results": [r.to_dict() for r in self.results],
             "limits": self.limits,
             "time_domain": self.time_domain,
+            # The notice is a machine-record fact, not a display-only annotation.  Keep it in
+            # every audience projection (null when no duty was skipped) so consumers never have
+            # to infer missing input from the result prose or from the requested audience.
+            "undeclared_domain_notice": self.undeclared_domain_notice,
             "audience": _audience_block(audience),
         }
 

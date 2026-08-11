@@ -42,6 +42,11 @@ _TOP_LEVEL_KEYS = {
     "results",
     "limits",
     "time_domain",
+    # Added beside existing envelope keys, not renamed or retyped, so the convention says this
+    # is not a version bump — the decision was made here rather than skipped.  The value is the
+    # report's undeclared-domain notice, or null when every domain-limited duty was evaluated;
+    # consumers therefore have a defined value in both cases.
+    "undeclared_domain_notice",
     # Added, not renamed or retyped, so the convention says this is not a version bump — the
     # decision was made here rather than skipped. `audience` is the projection the record was
     # asked for, declared rather than applied: it carries the resolved `AudienceProjection`
@@ -80,6 +85,12 @@ _RESULT_KEYS = {
 
 def test_the_envelope_declares_its_schema_version(sample_report: ConformanceReport) -> None:
     assert sample_report.to_dict()["schema_version"] == JSON_SCHEMA_VERSION
+
+
+def test_declared_domain_has_a_defined_null_notice(sample_report: ConformanceReport) -> None:
+    """The added notice key is null when no domain-limited duty was skipped."""
+    assert sample_report.undeclared_domain_notice is None
+    assert sample_report.to_dict()["undeclared_domain_notice"] is None
 
 
 def test_the_version_survives_serialisation(sample_report: ConformanceReport) -> None:
