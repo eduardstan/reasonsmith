@@ -96,6 +96,14 @@ For a bug, question, or pack proposal:
 2. Check the existing discussions or issues before starting a new one.
 3. Pick a template from `.github/ISSUE_TEMPLATE/` — GitHub offers them automatically when you open an issue. **Bug report** asks for the exact command you ran and the output you saw; **Pack proposal** is how a new regulation pack gets started (which regulation, which official source, which duty). A proposal is the fastest way to go from interested reader to contributor.
 
+## Response times
+
+We aim to acknowledge a contribution within one week and to give it an initial review within two weeks. A release or other urgent work can make the review take longer; a friendly ping after either window is welcome, never rude.
+
+## Attribution convention
+
+Commit messages, pull-request bodies, and pull-request comments should not include an AI co-author trailer or an AI-attribution footer. The commit record names the humans accountable for the change. Human co-author trailers remain welcome. This is a contributor-facing convention, not an automated check: no build, test, lint rule, or CI job enforces it.
+
 ## Submitting Pull Requests
 
 1. Create a focused topic branch (`git checkout -b my-feature-branch`).
