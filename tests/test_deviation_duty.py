@@ -67,6 +67,19 @@ class _HonestlyApproximate(SilentDropAdapter):
         self.claimed_semantics = "weighted sum"
 
 
+class _FixedGapAdapter:
+    supports_grad = False
+    claimed_semantics = "distribution semantics"
+
+    def __init__(self, gap: float):
+        self.gap = gap
+        self.name = f"test:fixed-gap-{gap}"
+
+    def infer(self, program, base, queries):
+        exact = ReferenceAdapter(ExactWMC()).infer(program, base, queries)
+        return {query: max(0.0, value - self.gap) for query, value in exact.items()}
+
+
 class _Pipeline:
     """The demonstration's own two decisions, behind a swappable engine, logging its own margin."""
 
@@ -183,6 +196,41 @@ def test_the_violation_names_the_two_answers_it_compared():
     assert "distribution semantics" in result.evidence_summary
     assert "0.632000" in result.evidence_summary
     assert result.details["violation_step_indices"] == [0]
+
+
+def test_value_gap_summary_names_the_decision_with_the_largest_gap():
+    class _TwoGapPipeline(_Pipeline):
+        def decisions(self):
+            return [
+                {
+                    "decision_id": case.case_id,
+                    "artifact_logs_decision_record": f"adverse action on {case.case_id}",
+                    "artifact_logs_decision_margin": 0.0,
+                    "scope_statements_approximation_vs_guarantee": "approximation",
+                }
+                for case in DEPLOYED_CASES
+            ]
+
+        def artifact(self, decision):
+            for index, case in enumerate(DEPLOYED_CASES):
+                if case.case_id == decision.get("decision_id"):
+                    return {
+                        "program": case.program,
+                        "base": case.base,
+                        "query": case.query,
+                        "adapter": _FixedGapAdapter((index + 1) / 100),
+                        "exact_depth": 1,
+                        "monotone": True,
+                        "labels": case.labels,
+                    }
+            return None
+
+    result = _result(_TwoGapPipeline(ReferenceAdapter(ExactWMC())))
+
+    assert result.verdict == Verdict.VIOLATED
+    assert result.details["violation_step_indices"] == [0, 1]
+    assert "On decision #1" in result.evidence_summary
+    assert "a gap of 0.020000" in result.evidence_summary
 
 
 def test_the_measured_gap_is_never_read_from_the_record():

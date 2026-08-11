@@ -763,11 +763,11 @@ class CertificateEngine:
             details["violation_step_indices"] = [index for index, _ in breached]
             details["offending_trace_segment"] = [records[index] for index, _ in breached]
             if DELETED_REASON_COUNT in measures:
-                worst = max(breached, key=lambda item: len(item[1].deleted))[1]
+                worst_index, worst = max(breached, key=lambda item: len(item[1].deleted))
                 missing_reasons = "; ".join(worst.missing_reasons()) or "none named"
                 finding = (
                     f"the stated reasons are not all the reasons. On decision "
-                    f"#{breached[0][0]} exact inference found {len(worst.verdicts)} reason(s) and "
+                    f"#{worst_index} exact inference found {len(worst.verdicts)} reason(s) and "
                     f"the deletion probe showed the system's answer does not depend on "
                     f"{len(worst.deleted)} of them — {missing_reasons}."
                 )
@@ -775,10 +775,10 @@ class CertificateEngine:
                 # The other measured signal: the finding is about the *value*, so the decision the
                 # summary names is the one furthest from exact inference rather than the one
                 # missing the most reasons.
-                worst = max(breached, key=lambda item: abs(item[1].value_gap))[1]
+                worst_index, worst = max(breached, key=lambda item: abs(item[1].value_gap))
                 finding = (
                     f"the system's inference is not the semantics it claims. On decision "
-                    f"#{breached[0][0]} the engine answered {worst.engine_value:.6f} where exact "
+                    f"#{worst_index} the engine answered {worst.engine_value:.6f} where exact "
                     f"{worst.exact_semantics} over the same model encoding and the same "
                     f"interpretation answers {worst.exact_value:.6f} — a gap of "
                     f"{abs(worst.value_gap):.6f}, larger than the margin that decision's own "

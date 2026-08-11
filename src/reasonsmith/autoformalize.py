@@ -606,6 +606,8 @@ def signoff(requirement: Requirement | str, refinement: Path | None = None) -> S
     """Read the explicit human sign-off marker on the requirement's refinement row."""
     req = _requirement_index()[requirement] if isinstance(requirement, str) else requirement
     path = refinement or Path(__file__).resolve().parents[2] / "docs" / "refinement.md"
+    if not path.is_file():
+        return SignOff(req.id, "missing", "no refinement record")
     lines = [
         line for line in path.read_text(encoding="utf-8").splitlines()
         if line.startswith("|") and len(line.split("|")) > 1 and f"`{req.id}`" in line.split("|")[1]

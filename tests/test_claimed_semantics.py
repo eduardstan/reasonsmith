@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-import ast
-from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from nesyarena.ir import Atom, GroundProgram
 
+from reasonsmith.artifacts.ground_program import GroundProgramArtifact
+from reasonsmith.artifacts.reason_trace import ReasonTraceArtifact
 from reasonsmith.certificate import Certificate
 from reasonsmith.spec import CLAIMED_SEMANTICS, normalize_claimed_semantics
 
@@ -33,23 +35,41 @@ def test_certificate_post_init_refuses_unknown_claimed_semantics():
         )
 
 
-def test_every_shipped_claimed_semantics_literal_is_in_the_vocabulary():
-    """Derive declarations from source so this cannot drift behind a hand-copied inventory."""
-    root = Path(__file__).parents[1] / "src" / "reasonsmith"
-    declarations: list[str] = []
-    for path in root.rglob("*.py"):
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        for node in ast.walk(tree):
-            if (
-                isinstance(node, ast.Assign)
-                and isinstance(node.value, ast.Constant)
-                and isinstance(node.value.value, str)
-                and any(
-                    isinstance(target, ast.Attribute) and target.attr == "claimed_semantics"
-                    for target in node.targets
-                )
-            ):
-                declarations.append(node.value.value)
+def test_every_shipped_artefact_family_exposes_only_normalized_claims():
+    query = Atom("decision")
+    ground_program = GroundProgramArtifact(
+        GroundProgram(()),
+        {},
+        query,
+        SimpleNamespace(name="ground-program", claimed_semantics="distribution semantics"),
+        0,
+        monotone=True,
+    )
+    reason_trace = ReasonTraceArtifact(
+        query,
+        {},
+        lambda suppressed: 0.0,
+        engine_name="reason-trace",
+        claimed_semantics="free-text rationale",
+        monotone=True,
+    )
 
-    assert declarations
-    assert set(declarations) <= set(CLAIMED_SEMANTICS)
+    assert ground_program.claimed_semantics in CLAIMED_SEMANTICS
+    assert ground_program.exact_semantics in CLAIMED_SEMANTICS
+    assert reason_trace.claimed_semantics in CLAIMED_SEMANTICS
+
+    invalid_adapter = SimpleNamespace(name="invalid", claimed_semantics="invented semantics")
+    invalid_ground_program = GroundProgramArtifact(
+        GroundProgram(()), {}, query, invalid_adapter, 0, monotone=True
+    )
+    with pytest.raises(ValueError, match="Accepted:"):
+        _ = invalid_ground_program.claimed_semantics
+    with pytest.raises(ValueError, match="Accepted:"):
+        ReasonTraceArtifact(
+            query,
+            {},
+            lambda suppressed: 0.0,
+            engine_name="invalid",
+            claimed_semantics="invented semantics",
+            monotone=True,
+        )

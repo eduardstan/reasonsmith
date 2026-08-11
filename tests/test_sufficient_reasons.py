@@ -78,6 +78,15 @@ class _KeepsOneProof:
         return answers
 
 
+class _IgnoresEveryProof:
+    supports_grad = False
+    name = "test:ignores-every-proof"
+    claimed_semantics = "distribution semantics"
+
+    def infer(self, program, base, queries):
+        return {query: 0.0 for query in queries}
+
+
 def _artifact(**overrides) -> dict:
     """Three reasons: two the engine needs one of, and one it ignores outright."""
     return {
@@ -194,6 +203,39 @@ def test_the_duty_no_longer_reports_this_system_violated_on_the_two_it_uses():
     )
     assert result.details["certificates"][0]["missing_reasons"] == [R3]
     assert result.details["reasons_live_only_jointly"] == 2
+
+
+def test_deleted_reason_summary_names_the_decision_with_the_worst_certificate():
+    requirement = load_pack("ecoa").get_requirement(ADEQUACY)
+    records = [
+        {
+            "decision_id": f"APP-{index}",
+            "artifact_logs_reason_explanation": "a stated reason",
+            DELETED_REASON_COUNT: 0,
+        }
+        for index in range(2)
+    ]
+
+    class _System:
+        system_domains = ("consumer-credit",)
+
+        def capabilities(self):
+            return {"decision_id", "artifact_logs_reason_explanation", DELETED_REASON_COUNT}
+
+        def artifact(self, decision):
+            adapter = (
+                _KeepsOneProof()
+                if decision["decision_id"] == "APP-0"
+                else _IgnoresEveryProof()
+            )
+            return _artifact(adapter=adapter)
+
+    result = CertificateEngine.evaluate(requirement, _System(), records)
+
+    assert result.verdict is Verdict.VIOLATED
+    assert result.details["violation_step_indices"] == [0, 1]
+    assert "On decision #1" in result.evidence_summary
+    assert all(reason in result.evidence_summary for reason in (R1, R2, R3))
 
 
 # ------------------------------------------------------------ the budget, and degrading ----

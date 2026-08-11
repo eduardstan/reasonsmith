@@ -9,6 +9,7 @@ import pytest
 
 import reasonsmith.autoformalize as harness
 import reasonsmith.proposer as proposer
+from reasonsmith.report import ConformanceReport, RequirementResult
 from reasonsmith.spec import list_packs, load_pack
 
 
@@ -204,19 +205,35 @@ signals = {}
         harness._load_file(path)
 
 
-def test_harness_and_proposer_have_no_conformance_surface():
-    from types import ModuleType
+def test_public_verification_paths_construct_no_conformance_result(monkeypatch):
+    req = _requirements()["eu_ai_act_art12_1_automatic_logging"]
 
-    for module in (harness, proposer):
-        bound_names = vars(module)
-        bound_modules = {
-            value.__name__ for value in bound_names.values() if isinstance(value, ModuleType)
-        }
-        assert "RequirementResult" not in bound_names
-        assert "check_conformance" not in bound_names
-        assert "evaluate_requirement" not in bound_names
-        assert "reasonsmith.conformance" not in bound_modules
-        assert not any(name.startswith("reasonsmith.engines") for name in bound_modules)
+    def reject_conformance_result(self):
+        raise AssertionError(f"constructed a conformance result: {type(self).__name__}")
+
+    monkeypatch.setattr(RequirementResult, "__post_init__", reject_conformance_result)
+    monkeypatch.setattr(ConformanceReport, "__post_init__", reject_conformance_result)
+
+    verification = harness.verify_candidate(req, req.spec)
+    proposal = proposer.propose(req, model=lambda _: req.spec, max_attempts=1)
+
+    assert isinstance(verification, harness.CandidateVerification)
+    assert proposal.status == "proposed"
+    assert isinstance(proposal.attempts[0].verification, harness.CandidateVerification)
+
+
+def test_installed_proposer_treats_unpackaged_refinement_as_missing(monkeypatch, tmp_path):
+    req = _requirements()["eu_ai_act_art12_1_automatic_logging"]
+    installed_module = tmp_path / "site-packages" / "reasonsmith" / "autoformalize.py"
+    monkeypatch.setattr(harness, "__file__", str(installed_module))
+
+    proposal = proposer.propose(req, model=lambda _: req.spec, max_attempts=1)
+
+    assert proposal.status == "proposed"
+    assert proposal.attempts[0].verification.signoff == harness.SignOff(
+        req.id, "missing", "no refinement record"
+    )
+
 
 TEMPORAL_CHALLENGE_REQUIREMENTS = frozenset(
     {
