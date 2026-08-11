@@ -588,7 +588,8 @@ the one binding duty `ecoa_reg_b_1002_9_b_2_specific_reasons` and reaching `obse
 `proved` respectively. `tests/test_docs_three_systems.py` holds each transcript byte-for-byte the
 way `test_docs_example_output.py` does, asserts the three rungs are still three, and pins the
 neural system's ceiling. That ceiling is the point of the artefact: raising it means changing the
-*system*, never the adapter, and the README carries the same table.
+*system*, never the adapter, and `docs/three-systems.md` is the one home of that table since the
+README reorganisation routed the front page at the document instead of restating it.
 
 A fifth example, `truncating_credit_system.py`, is the only one that comes back **violated**, and
 that is its whole job: the other four pass, so before it a reader who ran every shipped example
@@ -798,16 +799,17 @@ temporal duty, in the shape `test_the_solvers_fold_is_the_interpreters_fold` giv
 ## The front door
 
 Before editing the CLI, read the maintenance contracts in `src/reasonsmith/cli.py`'s module
-docstring. README, "Install and run", owns user-facing usage, and `docs/authoring-packs.md` owns the
-pack-authoring rules.
+docstring. README, "Install and run", owns the install and the one worked `check` invocation;
+`docs/adopting.md` owns the rest of the user-facing usage — `validate-pack`, `explain` and the
+surfaces a system comes in through — and `docs/authoring-packs.md` owns the pack-authoring rules.
 
 `ROADMAP.md` is the public backlog and the one document that may state what is *missing*: four
 numbered objectives, each citing the committed document that names the gap, with a measurable
 outcome that fails today and its dependencies. Nothing goes on it that no document already states —
 find the gap in `docs/refinement.md`, `docs/semantics.md` or `docs/findings-nesyarena.md` first, or
 write it there first. Closing an objective means deleting the sentence it quotes from that source
-document in the same commit; the README's four-audience section ("Who could use this, and what is
-missing first") cites the same gaps and goes stale with it. `CONTRIBUTING.md` defers its roadmap
+document in the same commit; `docs/what-this-does-not-do.md` and the README's *Limits* section
+cite the same gaps and go stale with it. `CONTRIBUTING.md` defers its roadmap
 table here rather than keeping a second list.
 
 ## Autoformalisation corpus

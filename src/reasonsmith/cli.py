@@ -44,7 +44,7 @@ What a reader must not break:
     gunicorn's application path use. It is the only way a shell run reaches a system that exposes
     `decide()` or `logic()`, and so the only way `probed` and `proved` are reachable without
     writing Python. It must read as a code-loading flag everywhere it is named: `--help` says it
-    imports and executes, and so do README and `docs/three-systems.md`.
+    imports and executes, and so do README's *Install and run* block and `docs/three-systems.md`.
     Why this matters: a flag that loads and runs the user's code must never read as an innocuous
     file argument.
   - `--system-module` refuses `--system` and `--capabilities`: a decision log names a second,
@@ -293,7 +293,7 @@ def main(args: list[str] | None = None) -> int:
             "    reasonsmith check --system-module "
             "reasonsmith.examples.truncating_credit_system:system_under_test --pack ecoa\n"
             "\n"
-            "  the same three systems the README's table compares, one duty at three rungs:\n"
+            "  the same three systems docs/three-systems.md compares, one duty at three rungs:\n"
             "    reasonsmith check --system-module "
             "reasonsmith.examples.neural_scorer:system_under_test --pack ecoa\n"
             "    reasonsmith check --system-module "

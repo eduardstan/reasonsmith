@@ -23,7 +23,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # Same one command a stranger runs from a fresh clone (README, "Quick Start").
+      # Same one command a contributor runs from a fresh clone (CONTRIBUTING.md, "Development
+      # Environment Setup").
       - run: pip install -e ".[dev]"
       # Exits 1 when any quote differs, any source is unreachable, or a registered passage can no
       # longer be extracted, and always writes drift-report.json before doing so, so the issue step

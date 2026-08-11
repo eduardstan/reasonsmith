@@ -19,7 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # Same one command a stranger runs from a fresh clone (README, "Quick Start"), plus the
+      # Same one command a contributor runs from a fresh clone (CONTRIBUTING.md, "Development
+      # Environment Setup"), plus the
       # `build` frontend that provides `python -m build`. nesyarena is pinned to exact 0.1.0 on
       # PyPI in pyproject.toml, so this environment and a local one resolve to the same code.
       - run: pip install -e ".[dev]" build

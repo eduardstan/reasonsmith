@@ -160,7 +160,7 @@ EXACT_REASON_SET_KEY = "reason_set_is_exact"
 #: The version of the `--json` envelope's *shape*, carried as `schema_version` on every
 #: `ConformanceReport.to_dict()`. It is a single integer and it is not the package version:
 #: a consumer reads it to know which keys to expect, and pinning it to `__version__` would make
-#: every release look like a shape change. The convention, stated in README, "The CLI", is that
+#: every release look like a shape change. The convention, stated in docs/semantics.md §7, is that
 #: it increments when an existing key is **removed, renamed, or changes type or meaning** —
 #: anything a parser written against the previous number could get wrong — and does **not**
 #: increment when a key is added, because a consumer reading known keys is unaffected.

@@ -25,9 +25,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      # Same one command a stranger runs from a fresh clone (README, "Quick Start"):
-      # nesyarena is pinned to exact version 0.1.0 on PyPI in pyproject.toml, so this environment
-      # and a local one resolve to the same code. torch is deliberately not installed — see README.
+      # Same one command a contributor runs from a fresh clone (CONTRIBUTING.md, "Development
+      # Environment Setup"): nesyarena is pinned to exact version 0.1.0 on PyPI in pyproject.toml,
+      # so this environment and a local one resolve to the same code. torch is deliberately not
+      # installed — see RESULTS.md, "What Changed From Prior Torch Caveats".
       - run: pip install -e ".[dev]"
       - name: Install BLACK solver (Linux)
         if: runner.os == 'Linux'
