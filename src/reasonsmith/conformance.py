@@ -16,9 +16,11 @@ What a reader must not break:
     the fraction of the exact answer's value the engine's answer still carries, catches the
     relative value loss absolute fidelity misses. The two disagree, and the disagreement is
     informative.
-  - An unmeasured certificate (where exact inference enumerated zero reasons) must never be
-    scored as measured.
-    Why this matters: Prevents un-evaluated certificates from inflating coverage or fidelity scores.
+  - A certificate whose reason enumeration found nothing must not enter this module's measured
+    cohort.
+    Why this matters: Every Table 19 metric here shares one reason-enumeration cohort, so an
+    unmeasured certificate cannot inflate coverage or fidelity, and the cohort cannot vary by
+    metric.
   - Per-group comparisons carry explicit disclaimers regarding cohort size limits.
     Why this matters: Per-group figures are only as representative as the cases behind them.
 """
@@ -39,24 +41,24 @@ def measured(cert) -> bool:
 
     For this module's conformance metrics, exact inference that enumerated no reason produced no
     deletion-probe result: nothing was probed, so every metric here reports None rather than a
-    score. There is one predicate for that, and every metric is gated on it, so the difference
-    between checked-and-sound and not-checked cannot come back metric by metric. The certificate
-    engine's separate value-gap duty reads its unperturbed comparison independently of this gate.
+    score. There is one predicate for that, and every metric is gated on it, so all Table 19 metrics
+    use one cohort rather than silently ranging over different cases. The certificate engine's
+    separate value-gap duty reads its unperturbed comparison independently of this gate.
     """
     return bool(cert.verdicts)
 
 
 def fidelity(cert) -> float | None:
     """Table 19 'fidelity to base model', per nesyarena's metrics.fidelity: 1 - |error|, clamped.
-    None on a certificate that measured nothing: zero error against a query whose reasons were
-    never enumerated is not perfect fidelity."""
+    None outside the shared reason-enumeration cohort: even zero error is not scored as fidelity
+    when no reason was enumerated, so Table 19 metrics cannot silently use different cases."""
     return max(0.0, min(1.0, 1.0 - abs(cert.value_gap))) if measured(cert) else None
 
 
 def retained_share(cert) -> float | None:
     """The fraction of the exact answer's value the engine still carries (1.0 = nothing lost).
     Reasons enumerated but an exact value of zero is a case with nothing to lose, reported as 1.0;
-    no reason enumerated at all is a case nobody measured, reported as None."""
+    no reason enumerated at all is outside the shared metric cohort, reported as None."""
     if not measured(cert):
         return None
     return 1.0 if cert.exact_value == 0.0 else cert.engine_value / cert.exact_value
