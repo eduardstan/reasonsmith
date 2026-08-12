@@ -19,35 +19,49 @@ What can this system honestly establish about this duty, and what can each audie
 
 ```mermaid
 flowchart TB
-    clause["A clause of law"] --> quote["Its verbatim text<br/>retrieved and recorded"]
-    quote --> formula["A formal property<br/>one recorded judgement per clause"]
+    clause(["A clause of law"]) --> quote(["Its verbatim text — retrieved and recorded"])
+    quote --> formula(["A formal property — one recorded judgement per clause"])
 
-    surface["What the system exposes"] --> log["a log of decisions"]
-    surface --> callable["a decide() you can re-run"]
-    surface --> rules["declared logic()"]
-    surface --> artefact["an inference artefact"]
+    subgraph exposed["What the system exposes"]
+        log["a log of decisions"]
+        callable["a decide() you can re-run"]
+        rules["declared logic()"]
+        artefact["an inference artefact"]
+    end
 
-    formula --> reach{"Does this duty<br/>reach this system?"}
-    log --> reach
-    callable --> reach
-    rules --> reach
-    artefact --> reach
+    formula --> reach{"Does this duty reach this system?"}
+    exposed --> reach
 
-    reach -->|"no class or domain declared"| na["not applicable"]
-    reach -->|"the system cannot emit what the duty needs"| un["unattainable"]
-    reach -->|"it reaches"| strongest["Every engine the property and the<br/>exposed surface both allow.<br/>The strongest evidence wins."]
+    reach -->|"nothing declared to place it in scope"| na{{"not applicable"}}
+    reach -->|"cannot emit the evidence the duty needs"| un[/"unattainable"/]
+    reach -->|"it reaches"| ladder(["Every engine the property and the surface both allow"])
 
-    strongest --> observed["observed<br/>from a trace"]
-    strongest --> recounted["recounted<br/>reasons re-run"]
-    strongest --> probed["probed<br/>bounded replay"]
-    strongest --> proved["proved<br/>a solver over declared rules"]
+    ladder --> observed["observed — from a trace"]
+    ladder --> recounted["recounted — reasons re-run"]
+    ladder --> probed["probed — bounded replay"]
+    ladder --> proved["proved — a solver over declared rules"]
 
     observed --> verdict
     recounted --> verdict
     probed --> verdict
     proved --> verdict
 
-    verdict["A verdict carrying how far it was pushed<br/>and what it is about"] --> five["Five projections: developer · deployer ·<br/>auditor · regulator · affected individual"]
+    verdict[["The strongest evidence wins — how far it was pushed, and what it is about"]]
+    verdict --> five[["Five projections: developer · deployer · auditor · regulator · affected individual"]]
+
+    classDef law fill:#eef3fb,stroke:#1f4f8f,color:#16181d
+    classDef surface fill:#f4f1fa,stroke:#5b4a8a,color:#16181d
+    classDef notapp fill:#fff4d6,stroke:#9a6700,color:#16181d
+    classDef unattainable fill:#fde2e2,stroke:#a33a3a,color:#16181d
+    classDef rung fill:#eaf6ef,stroke:#1d6b45,color:#16181d
+    classDef outcome fill:#ffffff,stroke:#16181d,color:#16181d
+
+    class clause,quote,formula law
+    class log,callable,rules,artefact surface
+    class na notapp
+    class un unattainable
+    class observed,recounted,probed,proved rung
+    class ladder,verdict,five outcome
 ```
 
 The rung is decided by what the system exposes and what the property permits; an auditor cannot choose a stronger engine. **Unattainable** means the system cannot emit the evidence the duty needs. **Not applicable** means the system has not declared the regulatory class or decision domain to which the duty is limited. They are different answers, not interchangeable failures.

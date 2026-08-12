@@ -430,11 +430,11 @@ module docstring.
 ## 3. Soundness, one engine at a time
 
 ```mermaid
-flowchart LR
-    u["unattainable<br/>capability gap; no execution"] --> o["observed<br/>supplied records only"]
-    o --> r["recounted<br/>system-recounted reasons"]
-    r --> p["probed<br/>bounded replay or deletion search"]
-    p --> v["proved<br/>all inputs admitted by declared logic"]
+flowchart TB
+    u["unattainable — capability gap; no execution"] --> o["observed — supplied records only"]
+    o --> r["recounted — system-recounted reasons"]
+    r --> p["probed — bounded replay or deletion search"]
+    p --> v["proved — all inputs admitted by declared logic"]
 ```
 
 ### `record` — `engines/record.py`
@@ -1940,11 +1940,11 @@ flowchart TB
     report --> auditor
     report --> regulator
     report --> affected
-    developer["developer<br/>shown: verdict, limits, strength, counts, required and missing signals, capability gaps, summaries, budgets, counterexamples, witnesses<br/>not shown: binding or scope/domain limits, plain account"]
-    deployer["deployer<br/>shown: verdict, limits, strength, counts, binding and scope/domain limits, capability gaps, summaries, budgets<br/>not shown: required signals, trace witnesses, counterexamples, plain account"]
-    auditor["auditor<br/>shown: every report field except the plain-language account<br/>not shown: plain account"]
-    regulator["regulator<br/>shown: verdict, limits, strength, counts, binding and scope/domain limits, summaries, budgets<br/>not shown: required and missing signals, capability gaps, counterexamples, witnesses, plain account"]
-    affected["affected-individual<br/>shown: verdict, limits, quoted plain-language account<br/>not shown: strength, counts, binding/scope/domain limits, signals, gaps, summaries, budgets, counterexamples, witnesses"]
+    developer["developer — shown: verdict, limits, strength, counts, required and missing signals, capability gaps, summaries, budgets, counterexamples, witnesses — not shown: binding or scope/domain limits, plain account"]
+    deployer["deployer — shown: verdict, limits, strength, counts, binding and scope/domain limits, capability gaps, summaries, budgets — not shown: required signals, trace witnesses, counterexamples, plain account"]
+    auditor["auditor — shown: every report field except the plain-language account — not shown: plain account"]
+    regulator["regulator — shown: verdict, limits, strength, counts, binding and scope/domain limits, summaries, budgets — not shown: required and missing signals, capability gaps, counterexamples, witnesses, plain account"]
+    affected["affected-individual — shown: verdict, limits, quoted plain-language account — not shown: strength, counts, binding/scope/domain limits, signals, gaps, summaries, budgets, counterexamples, witnesses"]
 ```
 
 **The table below is authored, not derived.** It is the same kind of choice a pack author makes

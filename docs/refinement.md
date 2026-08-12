@@ -16,15 +16,14 @@ section rather than paraphrasing it. Where this document and `docs/semantics.md`
 `tests/test_docs_refinement.py` reads the shipped packs and fails if a pack gains a requirement this
 record does not name, or if this record names one no pack ships.
 
+The refinement record ends where the legal judgement becomes a formal property. Applicability,
+evidence branching and audience projections are shown in the corrected organising diagram in the
+[README](../README.md).
+
 ```mermaid
 flowchart LR
     clause["statute clause"] --> quote["verbatim quote"]
     quote --> spec["spec formula"]
-    spec --> fragment["fragment"]
-    fragment --> engine["engine"]
-    engine --> result["RequirementResult"]
-    result --> projection["audience projection"]
-    projection --> report["report"]
 ```
 
 ---

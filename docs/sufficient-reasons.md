@@ -143,9 +143,9 @@ is not two premises, it is one.
 > Left-to-right of the first ⟺ is Definition 3 at `D = A_q \ S`; right-to-left is Lemma 1.
 
 ```mermaid
-flowchart LR
-    axp["AXp<br/>minimal sufficient reason"] -->|are exactly| hitcx["minimal hitting sets of CXps"]
-    cxp["CXp<br/>minimal contrastive deletion"] -->|are exactly| hitax["minimal hitting sets of AXps"]
+flowchart TB
+    axp["AXp — minimal sufficient reason"] -->|are exactly| hitcx["minimal hitting sets of CXps"]
+    cxp["CXp — minimal contrastive deletion"] -->|are exactly| hitax["minimal hitting sets of AXps"]
     hitcx --> cxp
     hitax --> axp
 ```

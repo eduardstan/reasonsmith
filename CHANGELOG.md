@@ -8,6 +8,12 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-08-12
+
+### Fixed
+
+- Mermaid diagrams used `<br/>` line breaks that GitHub strips, so labels rendered with glued words; diagrams now use single-line labels and clearer visual categories.
+
 ## [0.9.1] - 2026-08-12
 
 ### Changed
