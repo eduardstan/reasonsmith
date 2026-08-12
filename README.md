@@ -74,7 +74,7 @@ pip install reasonsmith
 
 ![Terminal interface preview](artifacts/tui/tui-check/preview.gif)
 
-*The terminal interface is not part of the Python distribution and requires Bun.* [Watch the recording](artifacts/tui/tui-check/demo.mp4) · [View the layout report](docs/tui/layout-report.html)
+*The terminal interface is not part of the Python distribution and requires Bun.* [Watch the recording](artifacts/tui/tui-check/demo.mp4) · [View the layout report](docs/tui/layout-report.png)
 
 `--system-module` **imports and executes** the module it names, so point it only at code you trust; `--system` reads a decision log and runs nothing.
 
