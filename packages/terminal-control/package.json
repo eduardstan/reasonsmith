@@ -1,0 +1,35 @@
+{
+  "name": "@nikcli-ai/terminal-control",
+  "version": "1.235.0",
+  "private": true,
+  "description": "Control, inspect, capture and test real terminal applications (TUIs) — a custom-built terminal-control engine for nikcli.",
+  "license": "MIT",
+  "bin": {
+    "terminal-control": "./src/cli.ts"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "bundle": "bun src/cli.ts bundle",
+    "control": "bun src/cli.ts",
+    "install-skill": "bun src/cli.ts install-skill",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "1.1.0",
+    "@kitlangton/terminal-control": "0.3.1",
+    "bun-pty": "0.4.4",
+    "strip-ansi": "7.1.2"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  },
+  "optionalDependencies": {
+    "@resvg/resvg-js": "2.6.2"
+  }
+}

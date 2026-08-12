@@ -1,0 +1,10 @@
+# OpenTUI's Solid renderer needs Solid's own JSX compiler, not bun's default transform.
+#
+# Without this preload, bun compiles JSX with the automatic runtime and evaluates a component's
+# children *eagerly*. Solid's `<Context.Provider>` depends on the compiler wrapping children in a
+# thunk, so eager evaluation runs every child before the provider has set its value and every
+# `useContext` in the tree comes back `undefined` — which surfaces here as "Theme context must be
+# used within its provider" from a tree where the provider is plainly above the consumer.
+#
+# This is the same line nikcli's `packages/nikcli/bunfig.toml` carries, for the same reason.
+preload = ["@opentui/solid/preload"]

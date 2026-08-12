@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "reasonsmith",
+  "description": "Reasonsmith — the OpenTUI renderer, terminal-control recording harness, and a thin CLI launcher. The Python reasonsmith package (`src/reasonsmith/`) is the only source of truth for packs, engines, and systems.",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "packageManager": "bun@1.3.14",
+  "scripts": {
+    "typecheck": "bun turbo typecheck",
+    "test": "bun turbo test",
+    "dev:tui": "bun run --cwd packages/tui dev",
+    "record:tui": "bash scripts/record-tui.sh",
+    "install-skill": "bun run --cwd packages/terminal-control install-skill"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "catalog": {
+      "@opentui/core": "0.4.5",
+      "@opentui/solid": "0.4.5",
+      "@tsconfig/bun": "1.0.9",
+      "solid-js": "1.9.10",
+      "typescript": "5.8.2",
+      "@types/bun": "1.3.14"
+    }
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "catalog:",
+    "turbo": "2.9.18",
+    "typescript": "catalog:",
+    "@types/bun": "catalog:"
+  },
+  "license": "MIT"
+}

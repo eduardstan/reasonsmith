@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "createdAt": "2026-08-12T00:09:12.271Z",
+  "result": "passed",
+  "title": "reasonsmith TUI — layout and responsive pass",
+  "summary": "The OpenTUI renderer over one conformance record: findings, the certificate finding beside a verdict, the five audience projections, limits and the command palette. Recorded at 112x34 with terminal-control.",
+  "capture": {
+    "marker": "finding",
+    "final": false
+  },
+  "sourceRecordingSha256": "d4c5c04faa6e05eea5387f4a286b93d273d1cbaf75952c94d63e710b6e7b6419",
+  "artifacts": [
+    {
+      "kind": "screen-text",
+      "path": "screen.txt",
+      "bytes": 4786,
+      "sha256": "7c86ca0f57b5b94764b3950b1b195fcef0f2e3c1d8da6908696255114a1a4b17"
+    },
+    {
+      "kind": "screen-frame",
+      "path": "screen.json",
+      "bytes": 1747302,
+      "sha256": "a53ebcfe757e3027d78f12cb97abc01ee14bae19a91d00f335062e42115afc02"
+    },
+    {
+      "kind": "screen-svg",
+      "path": "screen.svg",
+      "bytes": 419463,
+      "sha256": "92936267e910e58bfece641e2b6547563bd7cee1c9a9bb45ddffa2907c91e866"
+    },
+    {
+      "kind": "screen-png",
+      "path": "screen.png",
+      "bytes": 122799,
+      "sha256": "e57d4fee1e2395e147312eaa639560d3979b1e95806edb691cbca470704eef2a"
+    },
+    {
+      "kind": "video",
+      "path": "demo.mp4",
+      "bytes": 811650,
+      "sha256": "309cf16642e7414665037e28dc194d2a379ea19610758eef068c626e9f05baf2"
+    },
+    {
+      "kind": "preview",
+      "path": "preview.gif",
+      "bytes": 1122681,
+      "sha256": "6737afffef0f8bb3d87658fc3244ab7c173d6ade48a5841984e7e39a8ec86762"
+    },
+    {
+      "kind": "recording",
+      "path": "recording.termctrl",
+      "bytes": 269641,
+      "sha256": "d4c5c04faa6e05eea5387f4a286b93d273d1cbaf75952c94d63e710b6e7b6419"
+    },
+    {
+      "kind": "pr-markdown",
+      "path": "pr.md",
+      "bytes": 504,
+      "sha256": "e28eaf791c1b383f1f824c86944b4b4c3f9af4a98abe3e99dea9ef7d4861742a"
+    }
+  ]
+}

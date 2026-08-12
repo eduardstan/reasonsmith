@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@reasonsmith/tui",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Reasonsmith OpenTUI renderer: one subprocess call to `reasonsmith check --json`, no engine, no system, no pack loading in this process.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test ./src/",
+    "dev": "bun run ./src/index.tsx"
+  },
+  "dependencies": {
+    "@opentui/core": "catalog:",
+    "@opentui/solid": "catalog:",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "catalog:",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  },
+  "bin": {
+    "reasonsmith-tui": "./bin/reasonsmith-tui"
+  }
+}

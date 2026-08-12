@@ -1,0 +1,4 @@
+interface:
+  display_name: "Terminal Control"
+  short_description: "Record real TUIs with raw PTY evidence"
+  default_prompt: "Use $terminal-control to operate and verify the real TUI, retain its raw .termctrl recording, show a local preview, and prepare safe PR evidence."

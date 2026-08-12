@@ -1,0 +1,34 @@
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ █▀█ █▀▀ ▄▀█ █▀▀ █▀█ █▄ █ █▀▀ █▀▄▀█ █ ▀█▀ █ █  │   Findings  Limits  Settings                                 │
+│ █▀▄ ██▄ █▀█ ▄▄█ █▄█ █ ▀█ ▄▄█ █ ▀ █ █  █  █▀█                                                                 │
+│                                                                                                              │
+│ TruncatingCreditSystem  ·  pack ecoa  ·  6 requirements                                ctrl+p · for: auditor │
+│ 6 requirements · 6 binding: 3 observed, 1 violated, 2 unattainable                                           │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ 6 req │ 3 observed · 1 violated · 2 unattainable
+
+ ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ← back to findings                                                                                         │
+ │ ecoa_reg_b_1002_9_b_2_principal_reasons_complete                                                          ▲│
+ │ FAIL probed        violated                                                                               ▀│
+ │                                                                                                            │
+ │ a certificate measurement failed                                                                           │
+ │ The duty above was settled on what its engine could check. Separately, the reason-deletion                 │
+ │ certificate over the decision(s) named below did not hold. Both are reported; neither stands               │
+ │ in for the other.                                                                                          │
+ │   · certificate FAIL at decision #2                                                                        │
+ │                                                                                                            │
+ │ clause                                                                                                     │
+ │ ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)                                                    │
+ │                                                                                                            │
+ │ classification                                                                                             │
+ │ binding · domains consumer-credit                                                                          │
+ │                                                                                                            │
+ │ the clause, as the regulation writes it                                                                    │
+ │ The statement of reasons for adverse action required by paragraph (a)(2)(i) of this                        │
+ │   section must be specific and indicate the principal reason(s) for the adverse action.                    │
+ │                                                                                                            │
+ │ evidence basis                                                                                             │
+ │ artifact — this duty is measured against the inference artefact behind a decision rather                  ▼│
+ ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+ ctrl+p commands  ·  esc back  ·  a audience  ·  L limits  ·  t theme  ·  h help  +2 (?)           for: auditor

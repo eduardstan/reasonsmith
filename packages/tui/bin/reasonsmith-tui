@@ -1,0 +1,11 @@
+#!/usr/bin/env -S bun --conditions=browser
+/**
+ * The TUI's launcher.
+ *
+ * `--conditions=browser` is not optional and is why this is a shim rather than a bare entry in
+ * `bin`: without it Solid resolves through its `node` export condition to the *server* build, whose
+ * `createContext` does not carry a provider's value down the tree. The failure is not a missing
+ * frame — it is every `useContext` in the app coming back `undefined` from a tree whose providers
+ * are plainly above the consumers. nikcli passes the same flag in its own `dev` script.
+ */
+import "../src/index.tsx"
