@@ -622,36 +622,43 @@ package proves has four of five legally owed reasons deleted. This engine is wha
 > (`test_the_certificate_verdict_carries_its_probe_budget`,
 > `test_an_engine_that_deletes_nothing_is_probed_and_never_proved`).
 
-**A decision whose enumeration found no reason at all is covered by no verdict here.** The
+**A decision whose enumeration found no reason at all is covered by no deleted-count verdict here.** The
 antecedent above says *at least one* because the zero it would otherwise report is the absence of a
-measurement, not a measurement of zero: with nothing enumerated, nothing is switched off,
-`len(cert.deleted)` is zero, and a property reading
-`engines.certificate.DELETED_REASON_COUNT` comes out clean without exact inference having
-evaluated anything. The engine asks `conformance.measured(cert)` — this package's single predicate
-for whether a certificate measured anything at all — rather than reading the count. That predicate
-is the no-enumerated-reason clause of `Certificate.verdict`'s refusal to report `PASS`, and the
-refusal exists because *a zero value gap on an un-enumerated query is not agreement*. The other
-clause of that property, that `uncertified` also blocks `PASS`, is deliberately **not** acted on
-here: an unseparable reason stays in the certified set and is reported as a caveat rather than
-turning the verdict, which is the rule *the domain, exactly* below already states. Such a decision
-is dropped from the certified set, counted in `decisions_without_an_enumerated_reason`, and named
-in the summary. The artefact's own `exact_depth` is the usual cause, and lowering it needs no
-intent — a misconfiguration, a program that grew a rule layer or a wrong query identifier produce
-the same artefact. Weaker evidence must not buy a stronger verdict
+deleted-reason measurement, not a measurement of zero: with nothing enumerated, nothing is switched
+off, `len(cert.deleted)` is zero, and a property reading
+`engines.certificate.DELETED_REASON_COUNT` comes out clean without a deletion probe. When that
+measure is requested, the engine asks `conformance.measured(cert)` — this package's single predicate
+for whether a certificate has a deletion-probe measurement — rather than reading the count. That
+predicate is the no-enumerated-reason clause of `Certificate.verdict`'s refusal to report `PASS`, and
+the refusal protects the deleted count, whose premise is that reasons were enumerated and switched
+off. The value-gap measure has no such enumeration premise. `certify_artifact` computes the engine and
+exact inference values before its reason loop, so exact inference evaluated the query even when it
+found no sufficient reason. The gap is therefore read at the unperturbed interpretation, where
+nothing was switched off (`test_a_value_gap_with_no_enumerated_reason_is_evaluated`,
+`test_a_value_gap_with_no_enumerated_reason_can_be_satisfied`). A requirement asking for both
+measures still needs the deletion-probe measurement and is refused when enumeration found no reason
+(`test_a_requirement_reading_both_measures_still_requires_enumeration`). The other clause of
+`Certificate.verdict`, that `uncertified` also blocks `PASS`, is deliberately **not** acted on here:
+an unseparable reason stays in the certified set and is reported as a caveat rather than turning the
+verdict, which is the rule *the domain, exactly* below already states. A decision requiring the
+deleted count is dropped from the certified set, counted in `decisions_without_an_enumerated_reason`,
+and named in the summary. The artefact's own `exact_depth` is the usual cause, and lowering it needs
+no intent — a misconfiguration, a program that grew a rule layer or a wrong query identifier produce
+the same artefact. Weaker evidence must not buy a stronger deleted-count verdict
 (`test_a_decision_whose_reasons_were_never_enumerated_cannot_buy_satisfied`).
 
-**A violation needs one witness; a satisfaction needs complete evidence.** So the two verdicts
-treat such a decision differently, and the asymmetry is the one *`proved`, over a trace* below
-already states for a trace: a satisfied verdict is universal over it, a violated one existential.
-A breach measured on a decision that *was* enumerated is a witness and is still reported
-**violated** at `probed`, naming the unmeasured decisions in its summary. A run that would
-otherwise be satisfied is **not evaluated** the moment one certified decision went unmeasured,
-naming the count and `engines.certificate.DELETED_REASON_COUNT` as unmeasured for them. The
-lenient rule — satisfied over whatever remained — is defeated by the same move the refusal was
-written to stop: declare `exact_depth=0` on every decision but one genuinely clean one. This is
-not the `decisions_without_an_artifact` case and that precedent is not equivalent: a decision
-without an artefact was never certified, while a decision whose artefact declared depth 0 was
-certified and produced nothing, which is a stronger signal rather than a weaker one
+**For the deleted-reason count, a violation needs one witness; a satisfaction needs complete evidence.**
+So the two verdicts treat such a decision differently, and the asymmetry is the one *`proved`, over
+a trace* below already states for a trace: a satisfied verdict is universal over it, a violated one
+existential. A breach measured on a decision that *was* enumerated is a witness and is still reported
+**violated** at `probed`, naming the unmeasured decisions in its summary. A run that would otherwise be
+satisfied is **not evaluated** the moment one certified decision went unmeasured, naming the count and
+`engines.certificate.DELETED_REASON_COUNT` as unmeasured for them. The lenient rule — satisfied over
+whatever remained — is defeated by the same move the refusal was written to stop: declare
+`exact_depth=0` on every decision but one genuinely clean one. This is not the
+`decisions_without_an_artifact` case and that precedent is not equivalent: a decision without an
+artefact was never certified, while a decision whose artefact declared depth 0 was certified and
+produced nothing, which is a stronger signal rather than a weaker one
 (`test_a_decision_whose_reasons_were_never_enumerated_cannot_buy_satisfied`).
 
 **A trace whose decisions never triggered the duty is not evaluated here either.** This duty is an
@@ -844,10 +851,12 @@ The duty stays interpretive (`binding = false`): GDPR Recital 71 asks that "the 
 minimised", and a recital creates no obligation of its own.
 
 > **If it reports `satisfied` at strength `probed`, then:** on every decision the system exposed an
-> artefact for, and whose reasons bounded proof enumeration found, the gap between the system's own
-> answer and exact inference's was no larger than the margin that decision's own record states
-> between it and the system's threshold. Both sides of that comparison came from the artefact and
-> not from the record (`test_a_gap_exactly_equal_to_the_margin_is_satisfied`,
+> artefact for, the gap between the system's own answer and exact inference's was no larger than the
+> margin that decision's own record states between it and the system's threshold. This value-gap
+> comparison is made at the unperturbed interpretation and does not require reason enumeration;
+> both sides came from the artefact and not from the record
+> (`test_a_gap_exactly_equal_to_the_margin_is_satisfied`,
+> `test_a_value_gap_with_no_enumerated_reason_can_be_satisfied`,
 > `test_the_measured_gap_is_never_read_from_the_record`).
 
 > **If it reports `violated` at strength `probed`, then:** at least one certified decision's

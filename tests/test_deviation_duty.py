@@ -31,13 +31,15 @@ What a reader must not break:
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from nesyarena.adapters.base import ReferenceAdapter
-from nesyarena.suts import ExactWMC
+from nesyarena.suts import ExactWMC, TopK
 
 from reasonsmith.artifacts.ground_program import GroundProgramArtifact
 from reasonsmith.artifacts.reason_trace import ReasonTraceArtifact
 from reasonsmith.demo import DEPLOYED_CASES, SilentDropAdapter, certify_case
-from reasonsmith.engines.certificate import SEMANTICS_VALUE_GAP
+from reasonsmith.engines.certificate import DELETED_REASON_COUNT, SEMANTICS_VALUE_GAP
 from reasonsmith.report import check_conformance, evaluate_requirement
 from reasonsmith.spec import load_pack
 from reasonsmith.sut import BaseSUT
@@ -161,6 +163,21 @@ class _UnrecognisedReferencePipeline(_Pipeline):
                     case.program, case.base, case.query, self.engine, 1, case.labels, True
                 )
         return None
+
+
+class _ShallowPipeline(_Pipeline):
+    """The same exposed artefacts, with reason enumeration deliberately finding none."""
+
+    def artifact(self, decision: dict) -> dict | None:
+        artifact = super().artifact(decision)
+        if artifact is not None:
+            artifact["exact_depth"] = 0
+        return artifact
+
+
+class _ShallowBothMeasuresPipeline(_ShallowPipeline):
+    def capabilities(self):
+        return super().capabilities() | {DELETED_REASON_COUNT}
 
 
 def _result(sut):
@@ -332,6 +349,46 @@ def test_a_system_that_does_not_declare_the_measured_signal_is_unattainable():
     assert result.verdict == Verdict.INCONCLUSIVE
     assert result.strength == Strength.UNATTAINABLE
     assert SEMANTICS_VALUE_GAP in result.signals_missing
+
+
+def test_a_value_gap_with_no_enumerated_reason_is_evaluated():
+    """A breached value gap remains a witness even when reason enumeration found nothing."""
+    result = _result(_ShallowPipeline(SilentDropAdapter()))
+
+    assert result.verdict == Verdict.VIOLATED
+    assert result.strength == Strength.PROBED
+    assert result.details["violation_step_indices"] == [1]
+    assert "Measured against the inference artefact" in result.evidence_summary
+
+
+def test_a_value_gap_with_no_enumerated_reason_can_be_satisfied():
+    """A within-margin value comparison does not need a deletion-probe reason set."""
+    result = _result(_ShallowPipeline(ReferenceAdapter(TopK(0))))
+
+    assert result.verdict == Verdict.SATISFIED
+    assert result.strength == Strength.PROBED
+    assert "inference was not shown to depart" in result.evidence_summary
+
+
+def test_a_requirement_reading_both_measures_still_requires_enumeration():
+    """Adding the deleted count restores its enumeration gate for the same certificate."""
+    req = requirement()
+    both = replace(
+        req,
+        spec=(
+            "always(artifact_logs_semantics_value_gap <= artifact_logs_decision_margin and "
+            "artifact_logs_deleted_reason_count <= 0)"
+        ),
+        requires=(*req.requires, DELETED_REASON_COUNT),
+    )
+    result = evaluate_requirement(
+        both, _ShallowBothMeasuresPipeline(ReferenceAdapter(ExactWMC()))
+    )
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert DELETED_REASON_COUNT in result.evidence_summary
+    assert "no reason at all" in result.evidence_summary
 
 
 def test_a_gap_exactly_equal_to_the_margin_is_satisfied():

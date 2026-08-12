@@ -71,18 +71,18 @@ What a reader must not break:
     (`docs/sufficient-reasons.md` §7), so how far it got is not a curiosity about performance — it
     is the bound on what every `deleted` here claims, and `PROBE_BUDGET_FIELDS` exists so a bound
     a reader cannot see cannot be relied on.
-  - A certificate whose enumeration found *no* reason measures nothing, and is evidence for
-    nothing. It is dropped from the certified set, counted, and reported, and no run holding one
-    reports SATISFIED: it is NOT EVALUATED naming `artifact_logs_deleted_reason_count`.
-    Why this matters: `len(cert.deleted)` is zero on such a certificate for the same reason it is
-    zero on a decision whose reasons the engine all used, and the two are not the same fact. The
-    engine asks `conformance.measured(cert)` — this package's single predicate for whether a
-    certificate measured anything at all, and the no-enumerated-reason clause of
-    `Certificate.verdict`'s refusal to report PASS, "a zero value gap on an un-enumerated query is
-    not agreement; exact inference never evaluated it" — rather than reading the zero. That
-    property's other clause, that `uncertified` also blocks PASS, is deliberately *not* acted on
-    here: an unseparable reason stays in the certified set and is reported as a caveat rather than
-    turning the verdict. Lowering the artefact's own `exact_depth` to 0 would otherwise turn the
+  - A certificate whose enumeration found *no* reason measures nothing for the deleted-reason
+    count. When that count is requested, it is dropped from the certified set, counted, and
+    reported, and no run holding one reports SATISFIED: it is NOT EVALUATED naming
+    `artifact_logs_deleted_reason_count`. Why this matters: `len(cert.deleted)` is zero on such a
+    certificate for the same reason it is zero on a decision whose reasons the engine all used,
+    and the two are not the same fact. The engine asks `conformance.measured(cert)` — this package's
+    single predicate for whether a certificate measured anything for that count — rather than
+    reading the zero. Its other clause, that `uncertified` also blocks PASS, is deliberately *not*
+    acted on here: an unseparable reason stays in the certified set and is reported as a caveat
+    rather than turning the verdict. The value gap is separate: it compares the engine and exact
+    inference at the unperturbed interpretation, so it remains available when no reason was
+    enumerated. Lowering the artefact's own `exact_depth` to 0 would otherwise turn the
     demonstration's breached decision clean, which is weaker evidence buying a stronger verdict.
   - A duty reading the value gap is refused **before** the gap is read as evidence, on the two
     semantics names the certificate carries: `artifacts.semantics_reference_refusal` asks whether
@@ -647,25 +647,34 @@ class CertificateEngine:
                 ),
             )
 
-        # A certificate whose enumeration found no reason at all measured nothing: its zero
-        # deleted-reason count is the absence of a measurement, not a measurement of zero. This is
-        # the refusal `Certificate.verdict` already makes one layer down, asked for here.
-        unenumerated = sum(1 for _, cert, _ in certified if not measured(cert))
-        certified = [item for item in certified if measured(item[1])]
-        if not certified:
-            return _result(
-                req,
-                Verdict.INCONCLUSIVE,
-                None,
-                (
-                    f"Not evaluated: bounded proof enumeration found no reason at all behind any "
-                    f"of the {unenumerated} certified decision(s), so {', '.join(measures)} is "
-                    "unmeasured for every one of them and no reason was switched off. A zero "
-                    "deleted-reason count on a decision whose reasons were never enumerated is "
-                    "the absence of a measurement, not a measurement of zero — the artefact's own "
-                    "exact_depth is the usual cause. Nothing is claimed either way."
-                ),
-            )
+        # A certificate whose enumeration found no reason at all measured nothing for the
+        # deleted-reason count: its zero count is the absence of a deletion measurement, not a
+        # measurement of zero. This is the refusal `Certificate.verdict` already makes one layer
+        # down, asked for here only when that count is requested. The value gap is independent: it
+        # compares the engine and exact inference at the unperturbed interpretation, even when no
+        # reason was enumerated.
+        if DELETED_REASON_COUNT in measures:
+            unenumerated = sum(1 for _, cert, _ in certified if not measured(cert))
+            certified = [item for item in certified if measured(item[1])]
+            if not certified:
+                return _result(
+                    req,
+                    Verdict.INCONCLUSIVE,
+                    None,
+                    (
+                        "Not evaluated: bounded proof enumeration found no reason at all behind "
+                        f"any of the {unenumerated} certified decision(s), so "
+                        f"{', '.join(measures)} is unmeasured for every one of them and no reason "
+                        "was switched off. A zero "
+                        "deleted-reason count on a decision whose reasons were never enumerated is "
+                        "the absence of a measurement, not a measurement of zero — the artefact's "
+                        "own exact_depth is the usual cause. Nothing is claimed either way."
+                    ),
+                )
+        else:
+            # No deletion count was requested, so an empty reason enumeration does not suppress the
+            # value-gap measurement made at the unperturbed interpretation.
+            unenumerated = 0
 
         uncertified_reasons = sum(len(cert.uncertified) for _, cert, _ in certified)
         undetermined_reasons = sum(len(cert.undetermined) for _, cert, _ in certified)

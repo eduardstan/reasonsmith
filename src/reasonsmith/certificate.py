@@ -68,8 +68,8 @@ What a reader must not break:
     Why this matters: Zero drop means the private fact already had zero probability, producing no
     measurable signal.
   - A query with no enumerated reasons is never a `PASS` (returns `INCONCLUSIVE` or `FAIL`).
-    Why this matters: A zero value gap on an un-enumerated query is not agreement; exact inference
-    never evaluated it.
+    Why this matters: a zero value gap does not establish a deleted reason was measured; exact
+    inference may have evaluated the query while finding no sufficient reason.
 """
 
 from __future__ import annotations

@@ -37,10 +37,11 @@ LIMITS = (
 def measured(cert) -> bool:
     """Whether this certificate measured anything at all.
 
-    Exact inference that enumerated no reason produced no result about the engine: nothing was
-    probed and nothing was compared, so every check in this module reports None for it rather than
-    a score. There is one predicate for that, and every metric is gated on it, so the difference
-    between checked-and-sound and not-checked cannot come back metric by metric.
+    For this module's conformance metrics, exact inference that enumerated no reason produced no
+    deletion-probe result: nothing was probed, so every metric here reports None rather than a
+    score. There is one predicate for that, and every metric is gated on it, so the difference
+    between checked-and-sound and not-checked cannot come back metric by metric. The certificate
+    engine's separate value-gap duty reads its unperturbed comparison independently of this gate.
     """
     return bool(cert.verdicts)
 
