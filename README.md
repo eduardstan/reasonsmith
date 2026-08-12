@@ -19,20 +19,19 @@ What can this system honestly establish about this duty, and what can each audie
 
 ```mermaid
 flowchart TB
-    clause(["A clause of law"]) --> quote(["Its verbatim text — retrieved and recorded"])
-    quote --> formula(["A formal property — one recorded judgement per clause"])
-
     log["a log of decisions"] --> exposed
     callable["a decide() you can re-run"] --> exposed
     rules["declared logic()"] --> exposed
     artefact["an inference artefact"] --> exposed
     exposed["What the system exposes"] --> reach
 
+    clause(["A clause of law"]) --> quote(["Its verbatim text — retrieved and recorded"])
+    quote --> formula(["A formal property — one recorded judgement per clause"])
     formula --> reach{"Does this duty reach this system?"}
 
-    reach -->|"nothing declared to place it in scope"| na{{"not applicable"}}
-    reach -->|"cannot emit the evidence the duty needs"| un[/"unattainable"/]
-    reach -->|"it reaches"| ladder(["Every engine the property and the surface both allow"])
+    reach --> na{{"not applicable — nothing was declared to place it in scope"}}
+    reach --> un[/"unattainable — the system cannot emit the evidence the duty needs"/]
+    reach --> ladder(["Every engine the property and the surface both allow"])
 
     ladder --> observed["observed — from a trace"]
     ladder --> recounted["recounted — reasons re-run"]
@@ -53,9 +52,13 @@ flowchart TB
     classDef unattainable fill:#fde2e2,stroke:#a33a3a,color:#16181d
     classDef rung fill:#eaf6ef,stroke:#1d6b45,color:#16181d
     classDef outcome fill:#ffffff,stroke:#16181d,color:#16181d
+    classDef decision fill:#fff8e7,stroke:#9a6700,color:#16181d
+    classDef collector fill:#e9e2f5,stroke:#5b4a8a,color:#16181d
 
     class clause,quote,formula law
     class log,callable,rules,artefact surface
+    class exposed collector
+    class reach decision
     class na notapp
     class un unattainable
     class observed,recounted,probed,proved rung
