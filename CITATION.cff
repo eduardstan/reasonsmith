@@ -7,7 +7,7 @@ title: "reasonsmith — evidence records and reason-deletion certificates for de
 authors:
   - family-names: "Stan"
     given-names: "Ionel Eduard"
-version: "0.9.0"
+version: "0.9.1"
 license: "MIT"
 repository-code: "https://github.com/eduardstan/reasonsmith"
 url: "https://reasonsmith.dev"

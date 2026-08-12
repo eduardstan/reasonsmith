@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing to `reasonsmith`.
 
+The terminal interface and recording harness were contributed by **nikomatt69**.
+
 ## Development Environment Setup
 
 Follow the single pinned installation path:

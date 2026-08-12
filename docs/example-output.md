@@ -8,11 +8,11 @@ what the tool would print. Regenerate any block by running the command shown abo
   regenerated over the four Table 7 demos added on that branch. The CLI blocks were regenerated
   from the commands below for the property-language change; `test_committed_transcripts_are_the_real_stdout`
   re-runs all three commands and holds every committed block to its real stdout.
-- **Version:** every block below was generated on reasonsmith `0.9.0`, the version of the tree
+- **Version:** every block below was generated on reasonsmith `0.9.1`, the version of the tree
   these transcripts were captured from. If the same command prints differently on your install,
   your `reasonsmith` is a different version than this document describes — `pip show reasonsmith`
   will name it. A mismatch against an older release means this document is ahead of your package,
-  not that your install is broken; upgrade to `0.9.0` or newer and re-run before comparing.
+  not that your install is broken; upgrade to `0.9.1` or newer and re-run before comparing.
 - **Environment:** Python 3.12.9, Linux, `nesyarena` at the commit `pyproject.toml` pinned when
   these transcripts were captured (`57720fa212834689692e171882272140f1d1fed7`); re-run since
   against the PyPI release `nesyarena==0.1.0` now pinned, byte-for-byte identical

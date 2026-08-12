@@ -15,18 +15,42 @@ On decision `APP-1042`, the system stated one reason while its inference used fi
 
 ## The organising question
 
-The five stakeholders are the shipped `--audience` projections: `developer`, `deployer`, `auditor`, `regulator`, and `affected-individual`. The five packs map legal duties to artefacts; [`docs/refinement.md`](docs/refinement.md) records each clause-to-formula judgement. Seven engines derive evidence, and the strength lattice records what that evidence licenses. The complete semantics, mathematics, and refinement record are linked directly below.
+What can this system honestly establish about this duty, and what can each audience take away from the evidence? A clause becomes a recorded formal property, then meets the evidence surface the system actually exposes. The result is not a pipeline: applicability comes first, evidence branches by available surface, and one finding can be read five ways.
 
 ```mermaid
-flowchart LR
-    statute[Statute clause] --> quote[Verbatim quote]
-    quote --> spec[spec formula]
-    spec --> fragment[Fragment]
-    fragment --> engine[Engine]
-    engine --> result[RequirementResult]
-    result --> projection[Audience projection]
-    projection --> report[Report]
+flowchart TB
+    clause["A clause of law"] --> quote["Its verbatim text<br/>retrieved and recorded"]
+    quote --> formula["A formal property<br/>one recorded judgement per clause"]
+
+    surface["What the system exposes"] --> log["a log of decisions"]
+    surface --> callable["a decide() you can re-run"]
+    surface --> rules["declared logic()"]
+    surface --> artefact["an inference artefact"]
+
+    formula --> reach{"Does this duty<br/>reach this system?"}
+    log --> reach
+    callable --> reach
+    rules --> reach
+    artefact --> reach
+
+    reach -->|"no class or domain declared"| na["not applicable"]
+    reach -->|"the system cannot emit what the duty needs"| un["unattainable"]
+    reach -->|"it reaches"| strongest["Every engine the property and the<br/>exposed surface both allow.<br/>The strongest evidence wins."]
+
+    strongest --> observed["observed<br/>from a trace"]
+    strongest --> recounted["recounted<br/>reasons re-run"]
+    strongest --> probed["probed<br/>bounded replay"]
+    strongest --> proved["proved<br/>a solver over declared rules"]
+
+    observed --> verdict
+    recounted --> verdict
+    probed --> verdict
+    proved --> verdict
+
+    verdict["A verdict carrying how far it was pushed<br/>and what it is about"] --> five["Five projections: developer · deployer ·<br/>auditor · regulator · affected individual"]
 ```
+
+The rung is decided by what the system exposes and what the property permits; an auditor cannot choose a stronger engine. **Unattainable** means the system cannot emit the evidence the duty needs. **Not applicable** means the system has not declared the regulatory class or decision domain to which the duty is limited. They are different answers, not interchangeable failures.
 
 This tree ships **five packs**, **seven engines**, and **twenty-nine shipped requirements**. The machine-readable source and every destination are listed in [`docs/README.md`](docs/README.md).
 
@@ -47,6 +71,10 @@ Install from PyPI:
 ```sh
 pip install reasonsmith
 ```
+
+![Terminal interface preview](artifacts/tui/tui-check/preview.gif)
+
+*The terminal interface is not part of the Python distribution and requires Bun.* [Watch the recording](artifacts/tui/tui-check/demo.mp4) · [View the layout report](docs/tui/layout-report.html)
 
 `--system-module` **imports and executes** the module it names, so point it only at code you trust; `--system` reads a decision log and runs nothing.
 

@@ -8,6 +8,12 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-08-12
+
+### Changed
+
+- Reworked the README organising question, added the terminal preview and links, credited the contributor, and added a mailmap.
+
 ## [0.9.0] - 2026-08-12
 
 ### Changed
