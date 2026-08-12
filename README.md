@@ -22,15 +22,13 @@ flowchart TB
     clause(["A clause of law"]) --> quote(["Its verbatim text — retrieved and recorded"])
     quote --> formula(["A formal property — one recorded judgement per clause"])
 
-    subgraph exposed["What the system exposes"]
-        log["a log of decisions"]
-        callable["a decide() you can re-run"]
-        rules["declared logic()"]
-        artefact["an inference artefact"]
-    end
+    log["a log of decisions"] --> exposed
+    callable["a decide() you can re-run"] --> exposed
+    rules["declared logic()"] --> exposed
+    artefact["an inference artefact"] --> exposed
+    exposed["What the system exposes"] --> reach
 
     formula --> reach{"Does this duty reach this system?"}
-    exposed --> reach
 
     reach -->|"nothing declared to place it in scope"| na{{"not applicable"}}
     reach -->|"cannot emit the evidence the duty needs"| un[/"unattainable"/]
