@@ -9,8 +9,8 @@ Monica, Muñoz-Velasco, Sciavicco & Stan, *Fuzzy Halpern and Shoham's interval t
 $\mathbf{A}$, the language denotes the partial map
 
 $$
-\llbracket\cdot\rrbracket_{\mathcal{M},\mathbf{A}} : \mathsf{Spec} \to
-(\mathcal{P}(\mathrm{Trace}_M) \mathrel{\rightharpoonup} A).
+[\hspace{-0.17em}[\cdot]\hspace{-0.17em}]_{\mathcal{M},\mathbf{A}} : \mathsf{Spec} \to
+(\mathcal{P}(\mathrm{Trace}_{\mathcal{M}}) \mathrel{\rightharpoonup} A).
 $$
 
 The structure supplies meanings for names and the traces over which a formula is evaluated. The
@@ -27,7 +27,7 @@ x \otimes z \le y \quad\Longleftrightarrow\quad z \le x \to y,
 \qquad \neg x = x \to 0.
 $$
 
-The Boolean algebra $\mathbb{B}$ is the degenerate instance with carrier $\{0,1\}$,
+The Boolean algebra $\mathbb{B}$ is the degenerate instance with carrier $\lbrace0,1\rbrace$,
 $\sqcap = \otimes = \wedge$, $\sqcup = \vee$, and material implication. The graded
 fragment instead uses the carrier $[0,1]$ with the declared algebra.
 
@@ -47,7 +47,7 @@ not interpreted, a value has the wrong sort, supplied evidence scores no atom, o
 `undetermined` occurs. Undefinedness is not ordinary strict propagation. The insensitivity rule is:
 
 $$
-\llbracket\varphi\rrbracket \text{ is defined exactly when its value is the same for every
+[\hspace{-0.17em}[\varphi]\hspace{-0.17em}] \text{ is defined exactly when its value is the same for every
 value in } A \text{ that undefined subformulas could take.}
 $$
 
@@ -56,7 +56,7 @@ $0 \otimes x = 0$ for every $x$ in the shipped algebras. The reference interpret
 such a case by short-circuiting; a strict encoding may instead return $\uparrow$.
 
 **Definition 3.5 (state formulas).** At one record, a state formula has value
-$\llbracket\varphi\rrbracket^{\mathrm{rec}}_{\mathcal{M},\mathbf{A}}(r) \in A$. The atom
+$[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{rec}}_{\mathcal{M},\mathbf{A}}(r) \in A$. The atom
 rows are:
 
 | Formula | Value |
@@ -76,11 +76,11 @@ constant for the run and is not read from the record.
 
 | Formula | Denotation |
 |---|---|
-| `not` $\varphi$ | $\neg\llbracket\varphi\rrbracket$ |
-| $\varphi$ `and` $\psi$ | $\llbracket\varphi\rrbracket \otimes \llbracket\psi\rrbracket$ |
-| $\varphi$ `or` $\psi$ | $\llbracket\varphi\rrbracket \oplus \llbracket\psi\rrbracket$ |
-| implication | $\llbracket\varphi\rrbracket \to \llbracket\psi\rrbracket$ |
-| equivalence | $(\llbracket\varphi\rrbracket \to \llbracket\psi\rrbracket) \otimes (\llbracket\psi\rrbracket \to \llbracket\varphi\rrbracket)$ |
+| `not` $\varphi$ | $\neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]$ |
+| $\varphi$ `and` $\psi$ | $[\hspace{-0.17em}[\varphi]\hspace{-0.17em}] \otimes [\hspace{-0.17em}[\psi]\hspace{-0.17em}]$ |
+| $\varphi$ `or` $\psi$ | $[\hspace{-0.17em}[\varphi]\hspace{-0.17em}] \oplus [\hspace{-0.17em}[\psi]\hspace{-0.17em}]$ |
+| implication | $[\hspace{-0.17em}[\varphi]\hspace{-0.17em}] \to [\hspace{-0.17em}[\psi]\hspace{-0.17em}]$ |
+| equivalence | $([\hspace{-0.17em}[\varphi]\hspace{-0.17em}] \to [\hspace{-0.17em}[\psi]\hspace{-0.17em}]) \otimes ([\hspace{-0.17em}[\psi]\hspace{-0.17em}] \to [\hspace{-0.17em}[\varphi]\hspace{-0.17em}])$ |
 
 Here $\oplus$ is the explicit `Algebra.disjunction` component, dual to $\otimes$ under the
 standard negation $1-x$. It is not derived through the algebra's own $\neg$. By contrast,
@@ -92,11 +92,11 @@ $\mathbb{B}$ the distinctions coincide extensionally.
 formula is evaluated by
 
 $$
-\llbracket\varphi\rrbracket^{\mathrm{tr}}(\sigma) =
-\bigwedge_{i < n} \llbracket\varphi\rrbracket^{\mathrm{rec}}(r_i),
+[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{tr}}(\sigma) =
+\bigwedge_{i < n} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{rec}}(r_i),
 \qquad
-\llbracket\varphi\rrbracket^{\mathrm{set}}(T) =
-\bigwedge_{\sigma \in T} \llbracket\varphi\rrbracket^{\mathrm{tr}}(\sigma).
+[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{set}}(T) =
+\bigwedge_{\sigma \in T} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{tr}}(\sigma).
 $$
 
 The aggregation is lattice infimum, that is, $\sqcap$, not $\otimes$. A temporal formula is
@@ -112,14 +112,14 @@ position clauses are:
 
 $$
 \begin{aligned}
-\llbracket\text{always}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \bigwedge_{i \le j < n} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,j), \
-\llbracket\text{eventually}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \bigvee_{i \le j < n} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,j), \
-\llbracket\text{next}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i+1),&i+1<n,\\1,&i=n-1,\end{cases} \
-\llbracket\text{prev}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i-1),&i>0,\\1,&i=0,\end{cases}.
+[\hspace{-0.17em}[\text{always}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+  &= \bigwedge_{i \le j < n} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j), \cr
+[\hspace{-0.17em}[\text{eventually}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+  &= \bigvee_{i \le j < n} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j), \cr
+[\hspace{-0.17em}[\text{next}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+  &= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i+1),&i+1<n,\cr1,&i=n-1,\end{cases} \cr
+[\hspace{-0.17em}[\text{prev}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+  &= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0,\cr1,&i=0,\end{cases}.
 \end{aligned}
 $$
 
@@ -127,31 +127,31 @@ The remaining clauses are
 
 $$
 \begin{aligned}
-\llbracket\text{historically}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \bigwedge_{0 \le j \le i} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,j), \
-\llbracket\text{once}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \bigvee_{0 \le j \le i} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,j), \
-\llbracket\text{rise}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,0),&i=0,\\
-    \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i) \otimes \neg\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i-1),&i>0,\end{cases} \
-\llbracket\text{fall}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}\neg\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,0),&i=0,\\
-    \neg\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i) \otimes \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
+[\hspace{-0.17em}[\text{historically}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+  &= \bigwedge_{0 \le j \le i} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j), \cr
+[\hspace{-0.17em}[\text{once}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+  &= \bigvee_{0 \le j \le i} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j), \cr
+[\hspace{-0.17em}[\text{rise}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+  &= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr
+    [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes \neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0,\end{cases} \cr
+[\hspace{-0.17em}[\text{fall}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+  &= \begin{cases}\neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr
+    \neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
 \end{aligned}
 $$
 
 For the binary operators:
 
 $$
-\llbracket\text{until}(\varphi,\psi)\rrbracket^{\mathrm{pos}}(\sigma,i)
- = \bigvee_{i \le j < n} \left(\llbracket\psi\rrbracket^{\mathrm{pos}}(\sigma,j) \otimes
-   \bigwedge_{i \le k < j} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,k)\right),
+[\hspace{-0.17em}[\text{until}(\varphi,\psi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+ = \bigvee_{i \le j < n} ([\hspace{-0.17em}[\psi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j) \otimes
+   \bigwedge_{i \le k < j} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,k)),
 $$
 
 $$
-\llbracket\text{since}(\varphi,\psi)\rrbracket^{\mathrm{pos}}(\sigma,i)
- = \bigvee_{0 \le j \le i} \left(\llbracket\psi\rrbracket^{\mathrm{pos}}(\sigma,j) \otimes
-   \bigwedge_{j < k \le i} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,k)\right).
+[\hspace{-0.17em}[\text{since}(\varphi,\psi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+ = \bigvee_{0 \le j \le i} ([\hspace{-0.17em}[\psi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j) \otimes
+   \bigwedge_{j < k \le i} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,k)).
 $$
 
 The trace value of a temporal formula is its position-zero value. The strong and weak boundary distinction is the standard distinction for previous operators `[@manna-1992]`. The runtime interpreter uses the
@@ -169,9 +169,7 @@ records arising from admissible inputs, agreeing on every input except $p$, has 
 $o$:
 
 $$
-\llbracket\text{counterfactually\_invariant}(o,p)\rrbracket^{\mathrm{set}}_{D(L)}(T)=1
-\quad\text{exactly when}
-\quad r(o)=r'(o)
+r(o)=r'(o)
 $$
 
 for every such pair $r,r'$ in traces of $T$. This is a 2-safety property. On an observation model
@@ -188,9 +186,9 @@ not satisfied.
 when an infimum ranges over no elements. This package deliberately narrows that point:
 
 $$
-\llbracket\varphi\rrbracket^{\mathrm{set}}(\emptyset)=\uparrow,
+[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{set}}(\emptyset)=\uparrow,
 \qquad
-\llbracket\varphi\rrbracket^{\mathrm{tr}}(\varepsilon)=\uparrow.
+[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{tr}}(\varepsilon)=\uparrow.
 $$
 
 An empty log is not evaluated, and combining zero verdicts is `inconclusive`, not vacuously
@@ -234,7 +232,7 @@ infimum of the per-record degrees:
 
 $$
 \mathrm{degree}(\sigma,\varphi) =
-\bigwedge_{i < n} \llbracket\varphi\rrbracket^{\mathrm{rec}}(r_i).
+\bigwedge_{i < n} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{rec}}(r_i).
 $$
 
 An empty trace has no degree. A degree is a measurement, not a verdict or a fraction of a proof;

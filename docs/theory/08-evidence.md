@@ -48,7 +48,7 @@ rung on the `artifact` row, not a fifth basis.
 Let `EvidenceBasis` and `Strength` be the two sets named above. The admissibility relation is
 
 $$
-\sqsubseteq \;\subseteq\; \mathrm{EvidenceBasis} \times \mathrm{Strength},
+\sqsubseteq \thickspace\subseteq\thickspace \mathrm{EvidenceBasis} \times \mathrm{Strength},
 $$
 
 and `verdict.BASIS_RUNGS` is its executable registry. A pair belongs to the relation exactly when its basis admits its strength:
