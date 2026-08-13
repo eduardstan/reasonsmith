@@ -169,7 +169,7 @@ records arising from admissible inputs, agreeing on every input except $p$, has 
 $o$:
 
 $$
-[\![\text{counterfactually\_invariant}(o,p)]\!]^{\mathrm{set}}_{D(L)}(T)=1
+[\![\text{counterfactually\textunderscore invariant}(o,p)]\!]^{\mathrm{set}}_{D(L)}(T)=1
 \quad\text{exactly when}
 \quad r(o)=r'(o)
 $$
