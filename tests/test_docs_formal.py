@@ -46,6 +46,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = REPO_ROOT / "tests"
 DOCS_DIR = REPO_ROOT / "docs"
 FORMAL = DOCS_DIR / "formal.md"
+THEORY = DOCS_DIR / "theory"
 MODELS = DOCS_DIR / "theory" / "01-models.md"
 SYNTAX = DOCS_DIR / "theory" / "02-syntax.md"
 SEMANTICS = DOCS_DIR / "theory" / "03-semantics.md"
@@ -111,6 +112,10 @@ _NUMBER_WORDS = (
 )
 
 
+def _theory_documents() -> list[Path]:
+    return [FORMAL, *sorted(THEORY.glob("*.md"))]
+
+
 def _document() -> str:
     assert FORMAL.is_file(), f"{FORMAL} does not exist"
     return FORMAL.read_text(encoding="utf-8")
@@ -163,12 +168,20 @@ def _section(title: str, path: Path = FORMAL) -> str:
 def test_the_formal_doc_is_linked_from_the_docs_index():
     """A document nobody can find answers nobody's question."""
     assert FORMAL.is_file()
-    assert "formal.md" in (DOCS_DIR / "README.md").read_text(encoding="utf-8")
+    index = (DOCS_DIR / "README.md").read_text(encoding="utf-8")
+    assert "formal.md" in index
+    assert "theory/06-formalisation.md" in index
+    assert "theory/07-explanation.md" in index
+    assert "theory/08-evidence.md" in index
 
 
 def test_every_test_named_in_the_formal_doc_exists():
     """The claim-to-test map is the document's warrant; a dangling name voids it."""
-    named = set(_TEST_NAME.findall(_document()))
+    named = {
+        key
+        for path in _theory_documents()
+        for key in _TEST_NAME.findall(path.read_text(encoding="utf-8"))
+    }
     assert named, "the document names no test, so nothing in it is enforced"
 
     missing = sorted(named - _defined_test_names())

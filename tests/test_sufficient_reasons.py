@@ -1,7 +1,8 @@
 """Subset-minimal sufficient reasons, and the over-report they remove.
 
 What this module is for:
-  `docs/sufficient-reasons.md` defines what a reason the engine's answer depends on *is*, over the
+  `docs/theory/07-explanation.md` defines what a reason the engine's answer depends on *is*,
+  over the
   deletions `artifacts.InferenceArtifact` admits, and these tests hold the measurement to it. The
   defect being repaired is one of definition: the certificate switched each reason off **alone**, so
   two reasons jointly necessary and individually removable were both reported `deleted` and a
@@ -302,7 +303,7 @@ def test_the_joint_search_budget_travels_into_the_verdict():
 
 
 def test_deleting_everything_without_moving_the_engine_settles_the_lattice_in_one_probe():
-    """`docs/sufficient-reasons.md` §4, Corollary 3, and the reason the demonstration costs one
+    """`docs/theory/07-explanation.md`, Corollary 7.12, and the reason the demonstration costs one
     extra probe rather than an enumeration."""
     search = contrastive_sets(lambda deleted: False, ("a", "b", "c", "d"))
 
@@ -381,7 +382,7 @@ def test_a_reason_the_probe_cannot_separate_is_never_promoted_to_deleted():
     The fixture's `{a, b}` reason shares every fact with a sibling — no private fact — so it is
     `unseparable`. The engine answers a constant, so deleting anything at all leaves its answer
     where it is and the joint search is exhaustive in one probe: exactly the *complete enumeration*
-    on which `docs/sufficient-reasons.md` §5 Definition 8 would license reporting such a reason
+    on which `docs/theory/07-explanation.md`, Definition 7.14 would license reporting such a reason
     `deleted` ("was not needed"). It must not be. The licence is deliberately unused, because its
     completeness rests on the artefact's self-declared monotonicity — a declaration nothing here
     confirms (`docs/semantics.md` §3, *The inference artefact*) — so promotion would mint an

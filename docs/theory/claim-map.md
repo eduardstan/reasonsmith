@@ -46,3 +46,20 @@ claim is paired with the test that enforces it; chapter prose remains mathematic
 | The monitor reads the spec as written, so implication is spelled with an arrow | `test_the_monitor_reads_the_spec_as_written_so_implication_is_spelled_with_an_arrow` |
 | Pack text is data and is never executed as Python | `test_pack_text_is_never_executed_as_python` |
 | Every test this document names exists | `test_every_test_named_in_the_language_doc_exists` |
+
+## Chapter 6 — Formalisation
+
+| Claim | Test or operational warrant |
+|---|---|
+| A statutory reading is recorded as clause, quotation, formula, gates, classifications, and explicit limits rather than as a legal verdict | `docs/refinement.md`; `tests/test_docs_refinement.py` |
+| Open-textured predicates are not silently settled by presence, and the refinement records what remains outside the formula | `test_no_shipped_pack_uses_either_open_texture_construct`; `docs/semantics.md` §9 |
+| A refinement's legal adequacy is an assumption, not a theorem of conformance | `docs/refinement.md`, *How to read column four* |
+
+## Chapter 7 — Explanation
+
+| Claim | Test |
+|---|---|
+| Jointly necessary reasons are not reported deleted by singleton probing | `test_the_per_fact_probe_alone_still_cannot_tell_them_apart`, `test_two_jointly_necessary_reasons_are_no_longer_reported_deleted` |
+| An ignored reason is deleted only when the measured explanation is complete, while shared or unresolved facts remain non-deleted | `test_the_reason_the_engine_really_ignores_is_still_reported_deleted`, `test_a_reason_the_probe_cannot_separate_is_never_promoted_to_deleted` |
+| The deletion probe carries its budget and does not reach the widened perturbation surface | `test_the_certificate_verdict_carries_its_probe_budget`, `test_the_deletion_probe_never_reaches_the_widened_perturbation` |
+| Claimed semantics laws are measurements that can refute but cannot certify the claim | `test_the_battery_refutes_every_deviating_provenance_and_never_the_exact_one`, `test_neither_one_directional_variant_refutes_a_top_k_engine` |

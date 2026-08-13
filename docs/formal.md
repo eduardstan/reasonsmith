@@ -7,275 +7,25 @@ The gathered mathematics is now organized as numbered theory chapters. Read:
   [03-semantics](theory/03-semantics.md) for the objects, grammar, and denotation;
 - [04-decision-problems](theory/04-decision-problems.md) for the six questions this tool asks;
 - [05-decision-procedures](theory/05-decision-procedures.md) for their procedures and soundness;
-- [07-explanation](theory/07-explanation.md) and [08-evidence](theory/08-evidence.md), forthcoming,
-  for the remaining explanation, certificate, and evidence mathematics; and
+- [06-formalisation](theory/06-formalisation.md) and [07-explanation](theory/07-explanation.md) for
+  refinement and explanation mathematics; and
+- [08-evidence](theory/08-evidence.md), forthcoming, for the remaining evidence mathematics;
 - [bibliography](theory/bibliography.md) for the repository-wide citation registry.
 
 Chapters 04–05 replace the migrated language and engine material formerly in this file. This file
-remains present until the later migration PRs land. The pending material below is intentionally
-retained verbatim so its source claims and executable bindings remain reachable.
+remains as a redirect while the evidence and graded-reading material below awaits its migration.
 
 ---
 
-## Pending migration: reasons, evidence, and graded readings
+## Pending migration: evidence and graded readings
 
 ## 3. Reasons
 
-Fix one decision and its artefact `𝒜 = (F, β, q, R, without, …)` as in §1.3, and a tolerance `tol`
-(`1e-9` by default). This section is [`sufficient-reasons.md`](sufficient-reasons.md) in the
-notation of §1.3, with that document's `A` written `F`.
-
-### 3.1 The deletion lattice
-
-> **Definition 1 (deletion lattice).** For `D ⊆ F_q`, write `β[D↦0]` for `β` with every fact in `D`
-> set to probability zero. The **deletion lattice** is `L(β) = { β[D↦0] : D ⊆ F_q }`, ordered by `⊆`
-> on `D`, with `β` as its top element.
-
-`L(β)` is the whole of what **this section** quantifies over, because `without` is the only
-perturbation the certificate and the CXp enumeration call. It is no longer all the protocol can
-reach — §3.6 records that reversal — and nothing below reads the wider surface. Giving a fact
-probability zero deletes exactly the worlds in which it holds:
-
-```
-V(β[D↦0])  =  Pr_β[ φ_q ∧ ⋀_{a∈D} ¬a ]
-```
-
-> **Definition 2 (moved).** `MOVED(D) ⟺ |E(β) − E(β[D↦0])| > tol`.
->
-> One evaluation of `MOVED` is one **engine probe**, which is the cost unit the budget counts.
-
-This is not a classifier over a feature space, which is the setting the published definitions are
-stated in. Two things differ and both matter: the decision is a **probability, not a label**, so
-what is preserved is the engine's answer up to `tol` rather than an `f(v) = c`; and the perturbation
-space these definitions range over is **not a product of feature domains**, so the interpretations
-they reach are exactly those below `β` in the deletion order. Both differences make the definitions
-below **weaker** than their counterparts, never stronger.
-
-### 3.2 Sufficiency, AXp, CXp, relevance
-
-The shape is the abductive explanation of `[@ignatiev-2019]` and its contrastive dual, with the
-feature space replaced by `L(β)` and "same prediction" by "same answer within `tol`"; the
-vocabulary of sufficient reasons is `[@darwiche-2020]` and its prime-implicant reading
-`[@shih-2018]`.
-
-> **Definition 3 (deletion-sufficient set).** `S ⊆ F_q` is **sufficient** for the engine's answer at
-> `β` iff for every `D ⊆ F_q \ S`, `¬MOVED(D)`.
-
-> **Definition 4 (AXp).** `S ⊆ F_q` is an **abductive explanation** iff it is sufficient and no
-> proper subset of it is.
-
-> **Definition 5 (CXp).** `C ⊆ F_q` is **contrastive** iff `MOVED(C)`, and a **CXp** iff it is
-> contrastive and no proper subset of it is.
-
-> **Definition 6 (relevance).** `a ∈ F_q` is **relevant** iff it belongs to some AXp, and
-> **irrelevant** otherwise.
-
-A CXp of size 1 is exactly what a per-fact probe can see. Every CXp of size ≥ 2 is a joint necessity
-such a probe is blind to, and reading its absence as irrelevance was this instrument's sharpest
-defect: two reasons jointly necessary and individually removable were both reported `deleted`, so
-the tool accused a system of omitting two reasons its inference demonstrably used
-(`test_two_jointly_necessary_reasons_are_no_longer_reported_deleted`).
-
-### 3.3 Duality, and the declaration it rests on
-
-Everything below needs `monotone = True`, and nothing below holds without it. That declaration was
-added for a *soundness* reason — so that a lawfully retracted reason is not read as a dropped one —
-and turns out to be exactly the precondition this theory needs. It is one premise, not two.
-
-> **Lemma 1 (upward closure).** If `MOVED(D)` and `D ⊆ D'` then `MOVED(D')`.
->
-> Under the declaration `E` is non-decreasing in `β`, so
-> `E(β[D'↦0]) ≤ E(β[D↦0]) ≤ E(β)`, and `MOVED(D)` puts the middle term more than `tol` below the
-> right one.
-
-> **Lemma 2 (sufficiency is a hitting-set condition).** `S` is sufficient ⟺ `F_q \ S` is not moved
-> ⟺ `F_q \ S` contains no CXp ⟺ `S` intersects every CXp.
-
-> **Theorem (minimal-hitting-set duality).** The AXps are exactly the minimal hitting sets of the
-> CXps, and the CXps exactly the minimal hitting sets of the AXps.
->
-> This is the conflict/diagnosis duality of `[@reiter-1987]`, related to abductive and contrastive
-> explanations by `[@ignatiev-2020]`. Lemma 2 is the only thing specialising it to `L(β)`.
-
-> **Corollary 1.** `⋃ AXps = ⋃ CXps`; a fact is relevant iff it belongs to some CXp.
-
-> **Corollary 2 (pruning).** A fact `a` with `MOVED({a})` belongs to no CXp of size > 1.
-
-> **Corollary 3 (short circuit).** If `¬MOVED(F_q)` there is no CXp at all, every fact is
-> irrelevant, and `∅` is the unique AXp — one probe settles the decision.
-
-### 3.4 Reasons, not facts
-
-The duty is about reasons, so the fact-level notion is lifted, and the lift is where a reason all of
-whose facts are shared with another is answered as well as it can be.
-
-> **Definition 7 (live).** `r ∈ R` is **live** iff some fact of `r` that no other reason in `R` uses
-> is relevant.
->
-> The privacy condition is what makes the conclusion *about `r`*: a shared relevant fact establishes
-> that the engine depends on **that fact** and cannot say through which of the reasons carrying it.
-
-> **Definition 8 (deleted).** `r ∈ R` is **deleted** iff **no** fact of `r` — private or shared — is
-> relevant.
->
-> No attribution problem arises, which is why the quantifier is over all facts. If no fact of `r` is
-> relevant then by Corollary 1 no CXp meets `r`, so by Lemma 2 `F_q \ r` is sufficient: the answer
-> survives the removal of the whole of `r` in every context `L(β)` reaches
-> (`test_the_reason_the_engine_really_ignores_is_still_reported_deleted`).
-
-> **Definition 9 (undetermined).** `r ∈ R` is **undetermined** iff it is neither live nor shown
-> deleted: the CXp enumeration did not terminate within budget, or the only relevant facts of `r`
-> are shared.
-
-**The two claims have different quantifiers, and only one of them survives a partial search.** Live
-is existential over CXps and one witness establishes it. Deleted is universal and is established
-only by an enumeration that **terminated**. So a shorter search reports **fewer** missing reasons,
-never more, and there is no setting of the budget at which this instrument accuses a system it would
-otherwise have cleared. The cap, the probes spent and whether the enumeration terminated travel in
-`details[PROBE_BUDGET_KEY]` exactly as `PROBE_BUDGET_FIELDS` forces, because how far it got is the
-bound on every `deleted` (`test_the_certificate_verdict_carries_its_probe_budget`).
-
-**The measurement.** Deciding relevance is hard, and the honest statement of how hard is the
-`NP^PP`-completeness of `[@waldchen-2021]`, whose probabilistic setting is this one's shape. Here the
-engine is a black box, so the only oracle is a probe. `explanations.contrastive_sets` enumerates
-CXps with the seed/shrink/grow MARCO loop of `[@liffiton-2016]`, Z3 as the oracle over the subset
-lattice — one Boolean per searchable fact, blocking clauses recording what is covered — and the
-system's own engine as the membership oracle. Corollary 2 prunes the space and Corollary 3 is the
-common case for a truncating engine.
-
-### 3.5 The certificate, and the value gap
-
-`Certificate.uncertified` is the union of three separately reported states — `unseparable` (no
-private fact to attribute a movement to), `inconclusive` (the probe carried no exact signal at all)
-and `undetermined` (Definition 9) — because each means the same thing to a verdict (*not counted
-deleted, not counted live*) and different things to a reader.
-
-The certificate runs a **second, independent** check on a different axis, and neither implies the
-other. The **value gap** is `V(β) − E(β)`: both terms at the same `β`, nothing switched off. For a
-top-`k` engine reporting `Pr_β[φ_kept]` it is `Pr_β[φ_q ∧ ¬φ_kept]` — the probability of exactly
-those worlds in which the decision holds only by way of a proof the engine discarded. Write
-`Δ(D) = V(β) − V(β[D↦0])`; then
-
-```
-Δ(D) = Pr_β[ φ_q ∧ ⋁_{a∈D} a ]
-```
-
-which is the measure of a union of events, hence **monotone and submodular** in `D`. `MOVED` is
-merely **upward-closed** (Lemma 1) and is submodular in no sense — joint necessity *is* the
-statement `MOVED({a,b}) ∧ ¬MOVED({a}) ∧ ¬MOVED({b})`, which no submodular indicator admits.
-
-That asymmetry is the old defect in two lines: the old rule read the exact side one fact at a time,
-where submodularity means single probes **over**-state what a fact exclusively carries, and read the
-engine side one fact at a time, where mere upward-closure means single probes **under**-state what
-the engine depends on. Both errors push toward `deleted` and they compose. A mass therefore licenses
-a claim that the engine's *value* is wrong and **not** a claim that any particular reason is
-irrelevant, and `Σ_r Δ(private facts of r)` is not the gap in either direction. No rendering adds
-per-reason drops up, and none may start.
-
-### 3.6 What is out of reach — and one reversal, recorded
-
-- **The perturbation space *of §3* is not widened, and the protocol's is.** An AXp here is an AXp
-  *relative to `L(β)`*, which is a weaker object than an AXp over a full feature space, and that
-  has not changed. What has changed is the sentence this bullet used to carry, which said the
-  protocol admits no perturbation but deletion. **That is a reversal and this is the record of it**,
-  in the shape [`ROADMAP.md`](../ROADMAP.md) §2 records the `since` reversal, because a document
-  that quietly drops a refusal it published is worse than one that never published it.
-
-  **What was refused.** `artifacts.InferenceArtifact` stated that there is a `without(fact)` and
-  deliberately no `with_(fact)`, and that adding one was work no verdict here is authorised to rest
-  on. The ground for the refusal was the soundness of `deleted`: §3.1–§3.4 are stated over `L(β)`,
-  Lemma 1 needs the deletion order, and a reason measured over a wider space would be a different
-  object wearing the same name.
-
-  **What changed.** A measurement was designed that never touches `deleted` and needs the width:
-  §3.7. Its discrimination was measured to live in the *width* of the perturbation and in nothing
-  cheaper — over the 16 generated instances of `docs/build_nesyarena_report.py`, a triple that only
-  lowers a fact's probability and a triple that only raises it each refute a top-`k` engine on
-  **none** of them, while the triple spanning `[0,1]` refutes `top-1-proofs` on 8 and `top-3-proofs`
-  on 4 (`test_neither_one_directional_variant_refutes_a_top_k_engine`). A top-`k` engine's
-  kept-proof set is locally constant, so `E` is locally multilinear and the kink appears only where
-  the ranking changes. So `at : F × [0,1] → 𝒜` is admitted, **optionally**, by the captain's
-  explicit decision of 2026-08-11.
-
-  **What is still refused, and it is the whole of what the old refusal was protecting.** No
-  definition in §3 quantifies over anything but `L(β)`; `certificate.py` and `explanations.py` call
-  `without` and nothing else, which is checked rather than asserted
-  (`test_the_deletion_probe_never_reaches_the_widened_perturbation`); every one of Lemma 1,
-  Lemma 2, the duality theorem and Definitions 3–9 is unchanged and rests on the same one premise;
-  and a family offering no `at` loses no verdict, because no requirement in this repository reads
-  the wider surface at all. `reason_trace` deliberately offers none: a rationale the system
-  recounted has no interpretation to move.
-- **Defeat is not detected.** A defeater holding no fact of any enumerated reason is never switched
-  off, leaves no fingerprint, and is refused at the declaration instead (§6.7).
-- **A shared fact is not attributed.** Splitting a reason from its sharers is a question about the
-  *program*, not about the probe.
-- **The pass only ever moves a reason out of `deleted`.** Definition 8 would license promoting an
-  `unseparable` or `inconclusive` reason into it, and the implementation deliberately does not:
-  minting accusations out of a search whose completeness rests on a declaration nothing here
-  confirms is a decision to make on purpose, not a corollary to fall into.
-
-### 3.7 The claimed semantics, refuted over the wider surface
-
-This is the one thing `at` is for, and it is not a verdict: `semantic_laws` returns no
-`RequirementResult`, occupies no rung and is read by no requirement, the standing `ltlf.py` has.
-
-An artefact carries a `claimed_semantics`, and §1.3 says what it is worth today — printed on the
-certificate, checked by nothing. Write `S` for the semantics it names and `⟦·⟧_S` for its
-denotation. The claim is
-
-```
-    (C)     ∀ β' ∈ [0,1]^F .  E(β') = ⟦P, β', q⟧_S
-```
-
-— about the black box `E` at *every* interpretation and not only at the `β` the decision was taken
-at. Nothing on this evidence model establishes (C). Its **refutation** needs one witness, and that
-is all this measures.
-
-`claimed_semantics` is a name from `spec.CLAIMED_SEMANTICS`, closed and refused outside itself at
-the artefact and certificate boundaries ([`semantics.md`](semantics.md) §3, *The semantics claim is
-a closed vocabulary*). `semantic_laws.SEMANTICS_WITH_LAWS` is the subset of that vocabulary this
-tool has laws for, and it has one member today. For it, `S` = distribution semantics and
-`⟦P, β', q⟧_S = Pr_{β'}[φ_q]`.
-Two laws are checked at each `a ∈ F_q`, over the three interpretations `β`, `β[a↦0]`, `β[a↦1]`:
-
-```
-    L2 (multilinearity)   E(β) = β(a)·E(β[a↦1]) + (1−β(a))·E(β[a↦0])
-    L3 (monotonicity)     E(β[a↦0]) ≤ E(β) ≤ E(β[a↦1])
-```
-
-> **Proposition (refutation is sound).** If (C) holds then L2 and L3 hold at every `a ∈ F_q`.
-> Hence a measured violation of either refutes (C).
->
-> L2: `Pr_{β'}[ψ]` is affine in `β'(a)` for **every** propositional `ψ` — Shannon expansion,
-> `Pr[ψ] = Pr[a]·Pr[ψ | a] + (1−Pr[a])·Pr[ψ | ¬a]`, with the two conditionals independent of
-> `β'(a)` under the artefact's independent-facts reading of `β`. The step needs no premise about
-> which facts `ψ` mentions, so it needs none about the artefact's enumeration being complete for
-> `q`.
-> L3: `φ_q` is a disjunction of conjunctions of **positive** literals (§1.3), so it is monotone,
-> so `Pr_{β'}[φ_q]` is non-decreasing in each `β'(a)`. This is the same positivity §3.1 already
-> uses and the one premise beyond L2's.
-
-**Three things this deliberately does not claim.** Non-refutation is not agreement: refutation is a
-lower bound on deviation, and on the shipped battery one provenance deviates on 16 instances and is
-refuted on 12 (`test_the_battery_refutes_every_deviating_provenance_and_never_the_exact_one`). The
-laws move one fact at a time, so a disagreement needing two facts moved together is not looked for —
-the same blindness `MOVED` had before §3.2 lifted it, and it is not lifted here. And a claim the
-vocabulary admits but no law here characterises — `weighted sum`, `free-text rationale` — is **not
-evaluated** naming the claim, in the sense [`semantics.md`](semantics.md) §4 gives it: the gap is in
-this tool, and running the laws of one semantics against a claim of another would refute a system
-for implementing exactly what it said. A claim *outside* the vocabulary reaches no law at all,
-because the artefact boundary refuses it first
-(`test_a_claim_outside_the_vocabulary_never_reaches_this_module`); the two must not be collapsed,
-since one says *this tool cannot answer* and the other says *this declaration is not admitted*
-(`test_the_law_sets_name_a_subset_of_the_shipped_vocabulary`).
-
-**Why the third law of the design is absent.** A vertex law — `β'` 0/1-valued ⟹ `E(β') ∈ {0,1}` —
-needs a premise L2 and L3 do not: that `F_q` covers every fact `φ_q` mentions, so that fixing `F_q`
-to a vertex fixes `φ_q`'s truth value. An artefact bounded by its own `exact_depth` cannot establish
-that, and a law whose premise the instrument cannot check is a false-accusation machine. It is left
-out rather than shipped with a caveat.
-
----
+The explanation formalism formerly kept in this section now lives in
+[`theory/07-explanation.md`](theory/07-explanation.md), Definitions 7.1–7.19 and their
+lemmas, theorem, corollaries, remarks, and propositions. That chapter is the authoritative
+location for the deletion lattice, AXp/CXp duality, certificates, value gap, budget, and claimed
+semantics. This stub keeps the evidence and graded-reading material below for the next migration.
 
 ## 4. Evidence: two coordinates
 
@@ -349,7 +99,7 @@ actually reach rather than asserted:
 of the preceding sections rather than policy. `observed ∉ rungs(relational)` because a decision
 record holds one execution and a 2-safety property needs two (§2.7). `proved ∉ rungs(artifact)`
 because the enumeration is exact only on the one ground program and base interpretation it ran over
-(§3.1), and `observed ∉ rungs(artifact)` because no trace holds the artefact. `assessment` admits no
+(theory/07-explanation.md, Definition 7.1), and `observed ∉ rungs(artifact)` because no trace holds the artefact. `assessment` admits no
 rung at all because the chain ranks methods of interrogating a system and no system was interrogated
 (§5.5). `unattainable` is in every row because it is not an engine's answer: the capability gate is
 a set difference over declared signal names, identical for every duty, run before any basis is
