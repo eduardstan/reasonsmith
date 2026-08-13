@@ -106,7 +106,7 @@ every position is stated, including atoms absent from a record; the final-positi
 length exact.
 
 > **Proposition 5.6 (characteristic trace).** Over the procedure's non-empty finite-trace semantics,
-> $L(pin(\sigma)) = \{\sigma\}$.
+> $L(pin(\sigma)) = \lbrace\sigma\rbrace$.
 
 Consequently, for non-empty $\sigma$, `accepts(φ, σ)` agrees with satisfiability of
 `φ ∧ pin(σ)`, and entailment is reduced to unsatisfiability of `left ∧ ¬right` over the same
