@@ -11,7 +11,7 @@ Fix one decision and an artefact with fact set $F$, base interpretation $\beta$,
 family $\mathcal{R}$, and tolerance `tol` (the default is `1e-9`). Write
 
 $$
-\mathcal{R}=\{u_1,\dots,u_n\},\qquad u_i\subseteq F,\qquad
+\mathcal{R}=\lbrace u_1,\dots,u_n\rbrace,\qquad u_i\subseteq F,\qquad
 F_q=\bigcup_i u_i,
 $$
 
@@ -24,7 +24,7 @@ program and interpretation. The engine is a black box here, except for the monot
 `S` assigned probability zero. The deletion lattice is
 
 $$
-\mathbb{L}(\beta)=\{\beta[S\mapsto0]:S\subseteq F_q\},
+\mathbb{L}(\beta)=\lbrace\beta[S\mapsto0]:S\subseteq F_q\rbrace,
 $$
 
 ordered by inclusion of deletion subsets, with $\beta$ at its top. This is the whole perturbation
@@ -100,7 +100,7 @@ $$
 
 A fact is relevant exactly when it belongs to some CXp.
 
-**Corollary 7.11 (singleton pruning).** If $\mathrm{MOVED}(\{a\})$, then $a$ belongs to no CXp of size greater
+**Corollary 7.11 (singleton pruning).** If $\mathrm{MOVED}(\lbrace a\rbrace)$, then $a$ belongs to no CXp of size greater
 than one, because a minimal contrastive set cannot properly contain that singleton.
 
 **Corollary 7.12 (short circuit).** If $\mathrm{MOVED}(F_q)$ does not hold, there is no CXp, every fact is
@@ -185,7 +185,7 @@ no `RequirementResult`, occupies no rung, and is read by no requirement.
 `spec.CLAIMED_SEMANTICS`. The claim made by an artefact is
 
 $$
-(C)\qquad E(\beta')=\llbracket\Pi,\beta',q\rrbracket_S
+(C)\qquad E(\beta')=[\hspace{-0.17em}[\Pi,\beta',q]\hspace{-0.17em}]_S
 $$
 
 for every interpretation `β'` in the product of fact probabilities. The vocabulary admits the

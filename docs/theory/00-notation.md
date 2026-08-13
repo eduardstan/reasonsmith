@@ -26,7 +26,7 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $\setminus$ | `setminus` | binary operation | Set difference in explanation subsets. | 07 Explanation | `explanations.contrastive_sets` |
 | $S \subseteq F$ | `S subset F` | subset | A deletion subset and the AXp/sufficient set. | 07 Explanation | `artifacts.InferenceArtifact.without` |
 | $u_i \subseteq F$ | `u_i subset F` | subset | One reason's facts. | 07 Explanation | `explanations.contrastive_sets` |
-| $\mathcal{R} = \{u_1, \dots, u_n\}$ | `reasons` | family of subsets | Family of reasons. | 07 Explanation | `artifacts.InferenceArtifact.reasons` |
+| $\mathcal{R} = \lbrace u_1, \dots, u_n\rbrace$ | `reasons` | family of subsets | Family of reasons. | 07 Explanation | `artifacts.InferenceArtifact.reasons` |
 | $r_i$ | `r_i` | record | The $i$th decision record. | 01 Models | `rulelang.eval_expression` |
 | $\sigma = r_0 \dots r_{n-1}$ | `sigma` | finite trace | A finite sequence of records. | 01 Models | `rulelang.eval_temporal_trace` |
 | $v, v' \in \mathrm{Var}$ | `v, v_prime in Var` | signal | Signal names supplied by a system. | 02 Syntax | `spec.Requirement.variables` |
@@ -46,7 +46,6 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $\times$ | `product` | operation | Cartesian product in the admissibility relation. | 08 Evidence | `verdict.BASIS_RUNGS` |
 | $w$ | `w` | phrase metavariable | Literal phrase used by `contains`. | 02 Syntax | `rulelang.contains_literal` |
 | $q$ | `q` | query | Query supplied to an inference artefact. | 04 Decision problems | `artifacts.InferenceArtifact.exact_value` |
-| $g$ | `g` | grading-key metavariable | Key naming an open-textured grading predicate. | 03 Semantics | `manyvalued.Grading` |
 | $x, y, z$ | `x, y, z` | element of $A$ | Algebra elements. | 03 Semantics | `manyvalued.Algebra` |
 | $c$ | `c` | class | Regulatory class. | 01 Models | `spec.Requirement.scope` |
 | $k$ | `k` | constant | Comparison constant. | 02 Syntax | `rulelang.parse_property` |
@@ -59,40 +58,28 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $i$ | `i` | index | Record or reason index. | 01 Models | `rulelang.eval_temporal_trace` |
 | $n$ | `n` | natural number | Finite cardinality or final trace index. | 01 Models | `rulelang.eval_temporal_trace` |
 | $\mathsf{Spec}$ | `Spec` | set of formulas | Well-formed formulas of the grammar. | 02 Syntax | `rulelang.parse_property` |
-| $\bowtie$ | `bowtie` | comparison operator | One of the six code comparison operators: `==`, `!=`, `<`, `<=`, `>`, `>=`. | 02 Syntax | `rulelang.parse_property` |
 | $\oplus$ | `or` | binary operation | Explicit `Algebra.disjunction` component, the t-conorm dual to $\otimes$ under standard negation $1-x$; it is not derived through the algebra's own $\neg$. | 03 Semantics | `manyvalued.Algebra.disjunction` |
-
 | $\mathcal{M}$ | `M` | structure | Structure supplying interpretations and traces. | 03 Semantics | `rulelang.eval_expression` |
-| $M$ | `M` | structure metavariable | Structure parameter of the denotation. | 03 Semantics | `rulelang.eval_expression` |
 | $O(\sigma)$ | `O(sigma)` | observation structure | Structure induced by an observed finite log. | 01 Models | `sut.SystemUnderTest.decisions` |
 | $\Sigma$ | `Sigma` | set | Set of signal names. | 01 Models | `spec.Requirement.variables` |
 | $\mathrm{Val}$ | `Val` | set | Set of record values. | 01 Models | `sut.SystemUnderTest` |
-| $\mathrm{Trace}_M$ | `Trace_M` | set | Traces admitted by structure $M$. | 03 Semantics | `rulelang.eval_temporal_trace` |
-| $\mathcal{P}(\mathrm{Trace}_M)$ | `powerset(Trace_M)` | set of sets | Sets of traces in the denotation domain. | 03 Semantics | `rulelang.eval_temporal_trace` |
-| $\llbracket\cdot\rrbracket$ | `denotation` | map | Denotation of a formula. | 03 Semantics | `rulelang.eval_expression` |
+| $\mathrm{Trace}_{\mathcal{M}}$ | `Trace_M` | set | Traces admitted by structure $\mathcal{M}$. | 03 Semantics | `rulelang.eval_temporal_trace` |
+| $[\hspace{-0.17em}[\cdot]\hspace{-0.17em}]$ | `denotation` | map | Denotation of a formula. | 03 Semantics | `rulelang.eval_expression` |
 | $\uparrow$ | `undefined` | value | Undefined value of the partial denotation. | 03 Semantics | `rulelang.UNKNOWN` |
 | $\mathbb{B}$ | `Boolean` | algebra | Two-element Boolean algebra, a degenerate residuated lattice. | 03 Semantics | `manyvalued.ALGEBRAS` |
 | $j$ | `j` | index | Temporal position or quantifier index. | 03 Semantics | `rulelang.eval_temporal_trace` |
 | $\bigwedge$ | `infimum` | aggregation | Finite meet over a family of values. | 03 Semantics | `manyvalued.degree_over_trace` |
 | $\bigvee$ | `supremum` | aggregation | Finite join over a family of values. | 03 Semantics | `manyvalued.degree_over_trace` |
-| $\mathcal{P}$ | `powerset` | operation | Powerset constructor in a trace domain. | 03 Semantics | `rulelang.eval_temporal_trace` |
-| $\llbracket$ | `left_bracket` | delimiter | Left denotation bracket. | 03 Semantics | `rulelang.eval_expression` |
-| $\rrbracket$ | `right_bracket` | delimiter | Right denotation bracket. | 03 Semantics | `rulelang.eval_expression` |
+| $\mathcal{P}$ | `powerset constructor` | operation | Powerset constructor in a trace domain. | 03 Semantics | `rulelang.eval_temporal_trace` |
+| $[\hspace{-0.17em}[$ | `left_bracket` | delimiter | Left denotation bracket. | 03 Semantics | `rulelang.eval_expression` |
+| $]\hspace{-0.17em}]$ | `right_bracket` | delimiter | Right denotation bracket. | 03 Semantics | `rulelang.eval_expression` |
 | $\cdot$ | `dot` | placeholder | Formula placeholder in the denotation map. | 03 Semantics | `rulelang.eval_expression` |
-| $\mathrel$ | `relation` | relation | Relation marker in a partial-map type. | 03 Semantics | `rulelang.eval_expression` |
 | $\rightharpoonup$ | `partial_map` | map | Partial-map arrow. | 03 Semantics | `rulelang.eval_expression` |
 | $\Longleftrightarrow$ | `iff` | relation | Logical equivalence in residuation. | 03 Semantics | `manyvalued.Algebra.residuum` |
 | $\models$ | `models` | relation | Satisfaction of a formula by a trace or structure. | 04 Decision problems | `rulelang.eval_temporal_trace` |
 | $\le$ | `le` | relation | Non-strict order on algebra elements and indices. | 03 Semantics | `manyvalued.Algebra` |
 | $\emptyset$ | `emptyset` | set | Empty trace set. | 03 Semantics | `manyvalued.degree_over_trace` |
 | $\varepsilon$ | `epsilon` | trace | Empty log. | 01 Models | `rulelang.eval_temporal_trace` |
-| $\text$ | `text` | annotation | Text annotation in a displayed semantic equation. | 03 Semantics | `rulelang.eval_expression` |
-| $\left$ | `left` | delimiter | Left scalable delimiter. | 03 Semantics | `rulelang.eval_temporal_trace` |
-| $\right$ | `right` | delimiter | Right scalable delimiter. | 03 Semantics | `rulelang.eval_temporal_trace` |
-| $\begin$ | `begin` | delimiter | Start of a displayed cases/aligned environment. | 03 Semantics | `rulelang.eval_temporal_trace` |
-| $\end$ | `end` | delimiter | End of a displayed cases/aligned environment. | 03 Semantics | `rulelang.eval_temporal_trace` |
-| $\quad$ | `quad` | spacing | Display spacing. | 03 Semantics | `rulelang.eval_temporal_trace` |
-| $\qquad$ | `qquad` | spacing | Extended display spacing. | 03 Semantics | `rulelang.eval_temporal_trace` |
 | $\max$ | `max` | operation | Maximum operation in the Łukasiewicz t-norm. | 03 Semantics | `manyvalued.ALGEBRAS` |
 | $\min$ | `min` | operation | Minimum operation in shipped algebras. | 03 Semantics | `manyvalued.ALGEBRAS` |
 | $\wedge$ | `wedge` | binary operation | Boolean conjunction in $\mathbb{B}$. | 03 Semantics | `manyvalued.ALGEBRAS` |

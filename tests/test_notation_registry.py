@@ -22,6 +22,15 @@ _CONTROL = re.compile(r"\\[a-zA-Z]+")
 _SINGLE_LETTER = re.compile(r"(?<![A-Za-z])[A-Za-z](?![A-Za-z])")
 _CODE_SPAN = re.compile(r"`[^`]*`")
 
+# These commands only lay out or annotate a formula; they are not mathematical notation.
+_LAYOUT_CONTROLS = {
+    "\\begin", "\\end", "\\left", "\\right", "\\text", "\\quad", "\\qquad",
+    "\\hspace", "\\mkern", "\\thinspace", "\\thickspace", "\\medspace", "\\mathrel",
+    "\\cr", "\\lbrace", "\\rbrace",
+}
+# Environment names are arguments to layout commands, not notation declarations.
+_LAYOUT_ENVIRONMENTS = {"aligned", "cases"}
+
 
 def _table_rows() -> list[tuple[str, str]]:
     rows: list[tuple[str, str]] = []
@@ -39,8 +48,10 @@ def _math_spans(text: str) -> list[str]:
 
 
 def _tokens(text: str) -> set[str]:
-    controls = set(_CONTROL.findall(text))
+    controls = set(_CONTROL.findall(text)) - _LAYOUT_CONTROLS
     without_controls = _CONTROL.sub("", text)
+    for environment in _LAYOUT_ENVIRONMENTS:
+        without_controls = without_controls.replace(environment, "")
     return controls | set(_SINGLE_LETTER.findall(without_controls))
 
 
@@ -51,6 +62,8 @@ def _declared_tokens() -> set[str]:
 def _used_tokens() -> set[str]:
     spans: list[str] = []
     for path in sorted(THEORY_DIR.glob("*.md")):
+        if path == NOTATION:
+            continue
         spans.extend(_math_spans(path.read_text(encoding="utf-8")))
     return _tokens(" ".join(spans))
 
@@ -74,3 +87,16 @@ def test_every_notation_entry_is_used():
     """Every declared control sequence or bare letter occurs in the theory math corpus."""
     unused = sorted(_declared_tokens() - _used_tokens())
     assert not unused, "notation entry token(s) are unused: " + ", ".join(unused)
+
+
+def test_math_spans_are_commonmark_escape_safe():
+    """CommonMark strips backslashes before ASCII punctuation before math rendering."""
+    ascii_punctuation = r'!"#$%&\'()*+,-./:;<=>?@[\]^_`{|}~'
+    unsafe: list[tuple[Path, str]] = []
+    paths = sorted(THEORY_DIR.glob("*.md")) + [REPO_ROOT / "docs" / "semantics.md"]
+    for path in paths:
+        for span in _math_spans(path.read_text(encoding="utf-8")):
+            if any(span[index] == "\\" and span[index + 1] in ascii_punctuation
+                   for index in range(len(span) - 1)):
+                unsafe.append((path, span))
+    assert not unsafe, "math span contains a CommonMark-unsafe backslash escape: " + repr(unsafe)
