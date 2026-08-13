@@ -86,7 +86,6 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $\emptyset$ | `emptyset` | set | Empty trace set. | 03 Semantics | `manyvalued.degree_over_trace` |
 | $\varepsilon$ | `epsilon` | trace | Empty log. | 01 Models | `rulelang.eval_temporal_trace` |
 | $\text{}$ | `text` | annotation | Text annotation in a displayed semantic equation. | 03 Semantics | `rulelang.eval_expression` |
-| $\text{\textunderscore}$ | `textunderscore` | text character | Portable underscore in a text-mode identifier. | 03 Semantics | `rulelang.eval_expression` |
 | $\begin{aligned}x&=x\end{aligned}$ | `begin` | delimiter | Start of a displayed cases/aligned environment. | 03 Semantics | `rulelang.eval_temporal_trace` |
 | $\begin{cases}x&=x\end{cases}$ | `end` | delimiter | End of a displayed cases/aligned environment. | 03 Semantics | `rulelang.eval_temporal_trace` |
 | $\quad$ | `quad` | spacing | Display spacing. | 03 Semantics | `rulelang.eval_temporal_trace` |

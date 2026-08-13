@@ -169,9 +169,7 @@ records arising from admissible inputs, agreeing on every input except $p$, has 
 $o$:
 
 $$
-[\![\text{counterfactually\textunderscore invariant}(o,p)]\!]^{\mathrm{set}}_{D(L)}(T)=1
-\quad\text{exactly when}
-\quad r(o)=r'(o)
+r(o)=r'(o)
 $$
 
 for every such pair $r,r'$ in traces of $T$. This is a 2-safety property. On an observation model
