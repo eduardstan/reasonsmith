@@ -61,7 +61,6 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $\mathsf{Spec}$ | `Spec` | set of formulas | Well-formed formulas of the grammar. | 02 Syntax | `rulelang.parse_property` |
 | $\bowtie$ | `bowtie` | comparison operator | One of the six code comparison operators: `==`, `!=`, `<`, `<=`, `>`, `>=`. | 02 Syntax | `rulelang.parse_property` |
 | $\oplus$ | `or` | binary operation | Explicit `Algebra.disjunction` component, the t-conorm dual to $\otimes$ under standard negation $1-x$; it is not derived through the algebra's own $\neg$. | 03 Semantics | `manyvalued.Algebra.disjunction` |
-
 | $\mathcal{M}$ | `M` | structure | Structure supplying interpretations and traces. | 03 Semantics | `rulelang.eval_expression` |
 | $M$ | `M` | structure metavariable | Structure parameter of the denotation. | 03 Semantics | `rulelang.eval_expression` |
 | $O(\sigma)$ | `O(sigma)` | observation structure | Structure induced by an observed finite log. | 01 Models | `sut.SystemUnderTest.decisions` |
