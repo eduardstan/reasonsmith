@@ -50,7 +50,7 @@ What a reader must not break:
     *declared input space*, the replay runs the *implementation* on the *logged* cases — so a
     disagreement eliminates a disjunction rather than impeaching a rung. `cross_rung_signal` is
     the whole of it, and the relation it rests on is stated in
-    `theory/04-decision-problems.md` §4.4.
+    `docs/theory/04-decision-problems.md` §4.4.
     Why this matters: "the two rungs disagree" tells an adopter nothing it can act on. Which
     disjunct failed tells it either to widen its log or to fix a declaration its own procedure
     does not implement, and those are opposite instructions.

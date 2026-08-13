@@ -1,6 +1,7 @@
 """The third value is Kleene's, and it is read off a truth value rather than off an identity.
 
-`docs/theory/03-semantics.md` §2.12 writes out the tables and states which three-valuedness
+`docs/theory/03-semantics.md` Definition 3.11 writes out the tables and states which
+three-valuedness
 this is. These
 are the tests that claim names, in the discipline `test_language_definition.py` enforces: a table
 written in a document and checked nowhere is a table nothing holds the interpreter to.
@@ -33,7 +34,7 @@ from reasonsmith.rulelang import (
     parse_property,
 )
 
-#: The chain `F < U < T`, as `docs/theory/03-semantics.md` §2.12 writes it.
+#: The chain `F < U < T`, as `docs/theory/03-semantics.md` Definition 3.11 writes it.
 VALUES = (False, UNKNOWN, True)
 
 

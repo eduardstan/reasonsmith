@@ -233,7 +233,7 @@ def test_all_ten_temporal_operators_covered_and_distinguished():
     # `rise` at position 0 takes the strong reading — f(-1) is false — while `prev` is the weak
     # previous. On a trace beginning `b = False` both readings give False at position 0, so the
     # boundary needs a trace beginning `b = True` to be pinned at all. This is the witness
-    # `docs/theory/03-semantics.md` §2.8 states: `rise(b)` and `b and not prev(b)`
+    # `docs/theory/03-semantics.md` Definition 3.8 states: `rise(b)` and `b and not prev(b)`
     # part company at position 0.
     r_rise_at_zero = [{"b": True}, {"b": False}]
     node_rise_spelled_out = parse_property("b and not prev(b)")

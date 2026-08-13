@@ -31,7 +31,7 @@ unchanged and reaches it still; what moved is which engine may answer that duty,
 `engines/certificate.py` makes the same `always(f)` reduction, over the decisions it certifies, so
 one spelling of the operator exists. `test_a_temporal_duty_never_rises_above_observed` was
 replaced by `test_only_always_reaches_the_temporal_proof_rung`, which pins the new ceiling from both
-sides. The soundness paragraph is [`docs/semantics.md`](docs/semantics.md) §3, *`proved`, over a
+sides. The soundness paragraph is [`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) §5.1, *reference interpreter
 trace*.
 
 **What is left, and it is not this objective.** The rung reaches exactly one temporal shape.
@@ -48,7 +48,7 @@ backend decides a duty as a **formula**, for `validate-pack --analyse`; it is ne
 returns no `RequirementResult` and occupies no rung, so it establishes nothing about what any
 system's logic admits. The condition still stands unchanged: a duty using the operator first, and
 then a design answer for what would discharge it, on the same terms as objective 2.
-`docs/semantics.md` §8 states what the backend does answer, and the two limits it arrived with — a
+`docs/theory/05-decision-procedures.md` §5.4 states what the backend does answer, and the two limits it arrived with — a
 propositional reading of every magnitude, and no LTL₃ verdict, because the procedure exposes no
 monitor construction and this repository will not synthesise one.
 
@@ -75,7 +75,7 @@ is exercised only by a test (`test_the_rendered_form_is_rtamt_infix_and_rtamt_mo
 is the whole of what keeps it from rotting unrendered.
 
 **The discipline this section describes still governs every operator after these two.** A pack
-needing one is a finding to record in [`docs/semantics.md`](docs/semantics.md) §2 first, not a
+needing one is a finding to record in [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) first, not a
 reason to widen the language until it fits — widening a property language to accommodate one
 stubborn duty is how it becomes an untyped string again. What changed is that one duty was found
 and one operator was added over the objection; what did not change is the rule, or the standard of
@@ -87,7 +87,7 @@ evidence the next operator has to meet.
 named protected variable, anchored to 12 CFR 1002.4(a), the disparate-*treatment* limb of
 Regulation B. It is the first relational property in this repository: a property of a *pair* of
 executions rather than of one decision record. It has a fragment of its own (`counterfactual`), a
-soundness paragraph of its own (`docs/semantics.md` §3, the seventh), two rungs — self-composition
+soundness paragraph of its own (`docs/theory/04-decision-problems.md` §4.4), two rungs — self-composition
 in Z3 at `proved`, paired replay through `decide()` at `probed` — and deliberately **no trace rung**,
 because a trace holds what a system decided and a counterfactual asks what it would have decided.
 
@@ -184,7 +184,7 @@ Everything else is `unattainable`: a log-only system, the language-model adapter
 trace, and the five `nesyarena` provenances as adapted in `docs/build_nesyarena_report.py`. A duty
 that silently answered only where it could measure, while looking like it answered everywhere, would
 be worse than one that refuses out loud, so the reach is stated in the pack description, in
-[`docs/semantics.md`](docs/semantics.md) §3 and in the fourth column of
+[`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §7.1 and in the fourth column of
 [`docs/refinement.md`](docs/refinement.md) rather than left to be discovered.
 
 **What this cost, stated because it is not nothing.** Two violations went away. `top-1-proofs` and
@@ -213,7 +213,7 @@ found a handle on it. The intake stays the Discussion
 `claimed_semantics` from the system's own answers alone, with no reference implementation anywhere
 in the loop, and does it for every one of the four `nesyarena` provenances that deviates from what
 it claims while refuting the exact one on nothing. It needed a perturbation the artefact protocol
-refused in writing, so [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §3.6 records that reversal and §3.7 states
+refused in writing, so [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §7.1 records that reversal and §7.7 states
 the soundness of what replaced it. This remains a measurement rather than a verdict: no requirement
 reads a semantic-law refutation, and it neither widens the one artefact family the duty above can
 reach nor establishes a semantics claim. `claimed_semantics` is now a name from the closed
@@ -223,11 +223,11 @@ against exact WMC as though it had claimed distribution semantics.
 
 ## 6. The first duty written with an open-textured predicate
 
-**The gap.** [`docs/semantics.md`](docs/semantics.md) §9 opens by stating it: twenty-one of the
+**The gap.** [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §8.4 opens by stating it: twenty-one of the
 twenty-nine shipped requirements are presence checks, and the fourth column of
 [`docs/refinement.md`](docs/refinement.md) says the same thing row after row — *meaningful*,
 *sufficiently detailed*, *adequate*, *appropriate*, *without undue delay* were not modelled. Presence
-is not a bad proxy for those predicates; it is a refusal to model them at all. §9 also states what is
+is not a bad proxy for those predicates; it is a refusal to model them at all. §8.4 also states what is
 now true and what is not: **the machinery exists and no shipped duty uses it**
 (`test_no_shipped_pack_uses_either_open_texture_construct`), because which statutory predicate
 becomes the first `undetermined` or `graded` one is a legal reading and not an engineering decision.
@@ -255,12 +255,12 @@ have to be rewritten, not deleted, when this closes: it is what keeps the machin
 duty by accident.
 
 **Depends on.** A legal reading, which is the captain's, and an assessment for the graded case. It
-deliberately does **not** depend on any further engine work: §9 states that neither fragment reaches
+deliberately does **not** depend on any further engine work: §8.4 states that neither fragment reaches
 an engine and that no rung of the lattice means *graded*, and a duty landing on either construct is
 reported *not evaluated* with its finding beside it. The pressure it put on the evidence scale — a
 graded reading having no place on the strength lattice, alongside the counterfactual fragment's two
 rungs and the certificate engine's single one — **has since been designed**, once, as the evidence
-*basis* dimension of `docs/semantics.md` §10 rather than as more links in the chain. A shipped
+*basis* dimension of `docs/theory/08-evidence.md` §8.2 rather than as more links in the chain. A shipped
 graded duty inherits the `assessment` basis and is counted apart from a duty an engine failed to
 settle; nothing about it now waits on that design.
 

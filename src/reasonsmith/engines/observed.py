@@ -24,7 +24,7 @@ What a reader must not break:
     Why this matters: STL monitors require sufficient trace points to establish time bounds; an
     unsupported formula or insufficient trace length cannot prove a temporal property.
   - A shape rtamt parses and reads under a different semantics from the one
-    `docs/theory/03-semantics.md` §2 defines is refused in the rendering
+    `docs/theory/03-semantics.md`; it is refused in the rendering
     (`_refuse_shapes_the_monitor_misreads`), so the duty is
     reported `NOT EVALUATED` naming the construct, never answered.
     Why this matters: rtamt raises for nearly everything it does not support — `!=`, `min`, `max`,
@@ -248,7 +248,7 @@ def _render_binary_temporal(text: str) -> str:
 
 
 #: The shapes the language admits and rtamt reads differently, each named as the refusal names it.
-#: `docs/theory/03-semantics.md` §4 quotes a witness and a robustness value for every one,
+#: `docs/theory/03-semantics.md` Remark 3.3 quotes a witness and a robustness value for every one,
 #: and says why the
 #: definition is what moves nothing: three other encodings agree with it, so one backend disagreeing
 #: is a defect in that backend. The refusal below is what keeps a duty using one of these *not

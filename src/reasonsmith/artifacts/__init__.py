@@ -64,7 +64,7 @@ What a reader must not break:
     other**, and `at(fact, probability)` is the reversal: a family may now be asked for its
     inference at an arbitrary probability for one fact, not only at zero. What did *not* change is
     the definition of a reason. `certificate.py` and `explanations.py` still call `without` and
-    nothing else, `deleted` is still the one-directional claim in `theory/07-explanation.md`
+    nothing else, `deleted` is still the one-directional claim in `docs/theory/07-explanation.md`
     and its lemmas prove it to be. The deletion lattice `L(β)` is unchanged.
     A family that offers no `at` is not weaker on any duty: no shipped verdict reads the wider
     surface, and `reason_trace` deliberately does not offer one, because a rationale the system
@@ -77,7 +77,7 @@ What a reader must not break:
     perturbing a fact across the whole of `[0,1]` — neither one-directional variant refutes a
     top-`k` engine at all, because a top-`k` engine's kept-proof set is locally constant and the
     kink only shows where the ranking changes. `ROADMAP.md` records the reversal
-    in `theory/07-explanation.md`, with what is still refused.
+    in `docs/theory/07-explanation.md`, with what is still refused.
 """
 
 from __future__ import annotations

@@ -84,8 +84,7 @@ procedure's evidence includes `test_the_ltlf_backend_agrees_with_the_monitor`,
 
 `explanations.contrastive_sets` runs MARCO's seed/shrink/grow loop. Z3 is the oracle over the subset
 lattice, and the system's engine is the membership oracle. This is the deletion-lattice formalism,
-not a proof rung; its definitions and certificate consequences are retained in the theory/07-explanation.md
-of `theory/07-explanation.md`.
+not a proof rung; its definitions and certificate consequences are in [`07-explanation.md`](07-explanation.md).
 
 > **Proposition 5.5 (MARCO enumeration).** Under the declared monotonicity premise, every contrastive
 > set reported by the completed seed/shrink/grow search is minimal, and a completed enumeration

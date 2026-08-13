@@ -30,7 +30,7 @@ releases before it predate the file and are not reconstructed here.
   `spec.CLAIMED_SEMANTICS` has three members — `distribution semantics`, `weighted sum`, `free-text rationale` — and `spec.normalize_claimed_semantics` raises for anything else (`ValueError` outside the vocabulary, `TypeError` for a non-string). Where that fires is not uniform, and the difference is the whole migration story. `artifacts/reason_trace.py` normalizes in `__init__`, so a `ReasonTraceArtifact` with a prose label **stops constructing** — the adopter learns at the call that builds it. `artifacts/ground_program.py` normalizes in the `claimed_semantics` **property**, so an adapter carrying a prose label and the artefact wrapping it both construct, and the refusal fires when the value is *read* — which, in an audit, is inside `certificate.certify_artifact`. A family implementing the `artifacts.InferenceArtifact` protocol directly is normalized at neither: it constructs, and is refused at `Certificate.__post_init__`, i.e. partway through the audit. In every one of those in-audit cases `engines/certificate.py` reports that decision *not evaluated*, naming the exception — the run is not aborted and no verdict is invented — so an out-of-tree family that declared its own prose label learns at audit time rather than at import time unless it uses the reason-trace family. `semantic_laws` consumes and records the canonical member rather than a raw accepted spelling, and an artefact exposing no declaration at all is still told why the laws do not apply rather than raised at. The *reference* side is deliberately not symmetric: `artifacts.reference_semantics` canonicalizes an accepted spelling and **carries** an unrecognised one, because that name is not the audited system's claim but a name for what an artefact family's own `exact_value()` computes, and the outcome owed for one this build cannot compare is the mismatch refusal below — *not evaluated*, naming both names. Nothing shipped here declared a label outside the vocabulary, so no shipped verdict moved. The reason to close it is that a reader comparing two declarations should not have to read an author's prose as a new, interpretable semantics — and the closure is what makes the refusal in the `gdpr_recital71_error_risk_minimised` entry below *not evaluated* rather than an accusation: the vocabulary deliberately has no member for a documented approximation *of* a member, so a system that truncates honestly cannot claim the one semantics this build computes a reference for, and the duty leaves it unjudged. [`docs/semantics.md`](docs/semantics.md) states the vocabulary and `tests/test_claimed_semantics.py` holds it, including that each of the two artefact families shipped here exposes only a canonical member and refuses anything else — a per-family check, not an inventory of the tree. ([#156](https://github.com/eduardstan/reasonsmith/pull/156))
 
 - **The margin question the trace rung left open is settled, and the refusal is pinned to carry no margin.**
-  The refusal itself is 0.8.0's — a duty whose formula rtamt is known to misread is *not evaluated* naming the construct, rather than answered off a misread formula — and this release does not change that behaviour. What it changes is the question [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) §4 filed rather than took: since the verdict is this package's own and only the margin is the monitor's, such a duty *could* instead be answered from `eval_temporal_trace` with `evaluation_scores` suppressed — a verdict without a margin rather than no verdict. That is now settled against, with the reasoning written down: a result carrying no margin still claims the observed rung evaluated the duty while the only monitor margin available was computed for another formula, so the refusal keeps the verdict and the misleading margin out of the record together. `test_a_duty_using_a_misread_shape_is_not_evaluated_and_names_the_construct` now also asserts that no `evaluation_scores` accompanies a refused shape, so the settled answer is pinned rather than only stated. **No engine, verdict, rung, pack or shipped document output moved.** ([#161](https://github.com/eduardstan/reasonsmith/pull/161))
+  The refusal itself is 0.8.0's — a duty whose formula rtamt is known to misread is *not evaluated* naming the construct, rather than answered off a misread formula — and this release does not change that behaviour. The rendering boundary is recorded in [`docs/theory/03-semantics.md`](docs/theory/03-semantics.md), Remark 3.3; since the verdict is this package's own and only the margin is the monitor's, such a duty *could* instead be answered from `eval_temporal_trace` with `evaluation_scores` suppressed — a verdict without a margin rather than no verdict. That is now settled against, with the reasoning written down: a result carrying no margin still claims the observed rung evaluated the duty while the only monitor margin available was computed for another formula, so the refusal keeps the verdict and the misleading margin out of the record together. `test_a_duty_using_a_misread_shape_is_not_evaluated_and_names_the_construct` now also asserts that no `evaluation_scores` accompanies a refused shape, so the settled answer is pinned rather than only stated. **No engine, verdict, rung, pack or shipped document output moved.** ([#161](https://github.com/eduardstan/reasonsmith/pull/161))
 
 - **The README is reorganised around the five audience reading paths, and what it carried moved rather than went.**
   The reorganisation itself took the front page from 578 lines to 195, a net 383 removed — later work in this release adds a couple of lines back, so read those figures as [#160](https://github.com/eduardstan/reasonsmith/pull/160)'s own diff rather than as a measurement of the released tree. The page was ordered by the project's own history; it is now the organising question, one measured run with its transcript, install, the limits, and a reading path per stakeholder — `developer`, `deployer`, `auditor`, `regulator`, `affected-individual` — each a route through the documents that already existed. Nothing was deleted without a destination: [`docs/README.md`](docs/README.md) is rewritten as the one-line-per-document index the routes point into, and the theory, the state-of-the-art comparison and the roadmap summary are read from [`docs/semantics.md`](docs/semantics.md), [`docs/refinement.md`](docs/refinement.md), [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) and [`ROADMAP.md`](ROADMAP.md), which gained the paragraphs that had only existed on the front page. Two pointers this reorganisation stranded are repaired here: the committed agent memory (`AGENTS.md`, with `CLAUDE.md` a symlink to it) named README sections that no longer exist, and now names **Install and run** for the install and the one worked `check` invocation, [`docs/adopting.md`](docs/adopting.md) and [`docs/authoring-packs.md`](docs/authoring-packs.md) for the rest of the user-facing usage, and [`RESULTS.md`](RESULTS.md) for the `torch`-is-not-a-declared-dependency caveat, which is where that caveat's measurements have always lived. `--system-module` **imports and executes** the module it names, and that sentence is now on the front page beside the command rather than only in `--help` and [`docs/three-systems.md`](docs/three-systems.md). The CLI transcripts on the page are still generated by `python docs/build_readme_transcripts.py` and still held to it byte-for-byte. ([#160](https://github.com/eduardstan/reasonsmith/pull/160))
@@ -66,22 +66,22 @@ releases before it predate the file and are not reconstructed here.
   an audience-filtered finding set. ([#155](https://github.com/eduardstan/reasonsmith/pull/155))
 
 - **The inference artefact admits a perturbation beyond deletion, and the refusal that forbade one is reversed on the record.**
-  `artifacts.InferenceArtifact` stated that there is a `without(fact)` and deliberately no `with_(fact)`, and [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §3.6 stated the matching limit; a family may now also offer `at(fact, probability)` and `probability(fact)`, read through `artifacts.admits_interpretation`. **The reversal is recorded rather than performed silently** — in the module docstring, and in §3.6 in that document's own notation — in the shape [`ROADMAP.md`](ROADMAP.md) §2 records the `since` reversal: what was refused, what changed, and what is still refused. What was refused was written for the *deletion* definition of a reason and its ground is the soundness of `deleted`. What changed is that a measurement was designed that never touches `deleted` and does need the width. What is still refused is everything that ground was protecting: no definition in §3 quantifies over anything but the deletion lattice `L(β)`, `certificate.py` and `explanations.py` call `without` and nothing else — checked, not asserted, by `test_the_deletion_probe_never_reaches_the_widened_perturbation` — and a family offering no `at` loses no verdict, because no requirement in this repository reads the wider surface. `artifacts.reason_trace` deliberately offers none: a rationale the system recounted has no interpretation to move. **No shipped verdict moved**, and the deletion probe's own numbers are byte-identical, `without(fact)` now being `at(fact, 0.0)`.
+  `artifacts.InferenceArtifact` stated that there is a `without(fact)` and deliberately no `with_(fact)`, and [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §7.1 stated the matching limit; a family may now also offer `at(fact, probability)` and `probability(fact)`, read through `artifacts.admits_interpretation`. **The reversal is recorded rather than performed silently** — in the module docstring, and in §7.1 in that chapter's own notation — in the shape [`ROADMAP.md`](ROADMAP.md) §2 records the `since` reversal: what was refused, what changed, and what is still refused. What was refused was written for the *deletion* definition of a reason and its ground is the soundness of `deleted`. What changed is that a measurement was designed that never touches `deleted` and does need the width. What is still refused is everything that ground was protecting: no definition in §3 quantifies over anything but the deletion lattice `L(β)`, `certificate.py` and `explanations.py` call `without` and nothing else — checked, not asserted, by `test_the_deletion_probe_never_reaches_the_widened_perturbation` — and a family offering no `at` loses no verdict, because no requirement in this repository reads the wider surface. `artifacts.reason_trace` deliberately offers none: a rationale the system recounted has no interpretation to move. **No shipped verdict moved**, and the deletion probe's own numbers are byte-identical, `without(fact)` now being `at(fact, 0.0)`.
 
   ([#158](https://github.com/eduardstan/reasonsmith/pull/158))
 
 - **`src/reasonsmith/semantic_laws.py`: a false `claimed_semantics` refuted from the system's own answers, with no reference implementation in the loop.**
-  An artefact's `claimed_semantics` is printed on the certificate and checked by nothing. The claim is universally quantified over interpretations, so nothing on this evidence model establishes it — but one witness refutes it, and this measures that. Two laws are checked per fact, both consequences of `⟦P, β, q⟧ = Pr_β[φ_q]`: multilinearity (Shannon expansion, which needs no premise about the enumeration being complete) and monotonicity (which needs only the positivity of the supports §3.1 already uses). [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §3.7 states both with the soundness proposition, the three things it does not claim, and why the design's third law — the vertex law — is deliberately absent: its premise is one a depth-bounded artefact cannot establish, and a law whose premise the instrument cannot check is a false-accusation machine. Over the 16 generated instances `docs/build_nesyarena_report.py` drives, every one of the four `nesyarena` provenances that does not implement the distribution semantics it claims is refuted (4/16, 8/16, 4/16, 12/16) and the one that does implement it is refuted on none; the `nesyarena` oracle is consulted only to populate the column the run is compared against and plays no part in any law. This is a **measurement and not a verdict**: it returns no `RequirementResult`, occupies no rung, is read by no requirement and is deliberately not under `engines/`, the standing `ltlf.py` has. Refutation is a lower bound on deviation and `LIMITS` says so — one provenance deviates on 16 instances and is refuted on 12. Two vocabularies are kept apart: `spec.CLAIMED_SEMANTICS` is what an artefact may claim, closed and refused outside itself at the artefact and certificate boundaries, and `semantic_laws.SEMANTICS_WITH_LAWS` is the one member of it this tool has laws for — derived by intersection rather than retyped. An admitted claim with no law is *not evaluated* naming the claim; a claim outside the vocabulary reaches no law at all, because the boundary refuses it first. The width is what buys the discrimination and it was measured: neither one-directional variant of the triple refutes a top-`k` engine on any of the 16 instances, while the spanning triple refutes `top-1-proofs` on 8 (`test_neither_one_directional_variant_refutes_a_top_k_engine`), which is the evidence the reversal above rests on.
+  An artefact's `claimed_semantics` is printed on the certificate and checked by nothing. The claim is universally quantified over interpretations, so nothing on this evidence model establishes it — but one witness refutes it, and this measures that. Two laws are checked per fact, both consequences of `⟦P, β, q⟧ = Pr_β[φ_q]`: multilinearity (Shannon expansion, which needs no premise about the enumeration being complete) and monotonicity (which needs only the positivity of the supports §3.1 already uses). [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §7.7 states both with the soundness proposition, the three things it does not claim, and why the design's third law — the vertex law — is deliberately absent: its premise is one a depth-bounded artefact cannot establish, and a law whose premise the instrument cannot check is a false-accusation machine. Over the 16 generated instances `docs/build_nesyarena_report.py` drives, every one of the four `nesyarena` provenances that does not implement the distribution semantics it claims is refuted (4/16, 8/16, 4/16, 12/16) and the one that does implement it is refuted on none; the `nesyarena` oracle is consulted only to populate the column the run is compared against and plays no part in any law. This is a **measurement and not a verdict**: it returns no `RequirementResult`, occupies no rung, is read by no requirement and is deliberately not under `engines/`, the standing `ltlf.py` has. Refutation is a lower bound on deviation and `LIMITS` says so — one provenance deviates on 16 instances and is refuted on 12. Two vocabularies are kept apart: `spec.CLAIMED_SEMANTICS` is what an artefact may claim, closed and refused outside itself at the artefact and certificate boundaries, and `semantic_laws.SEMANTICS_WITH_LAWS` is the one member of it this tool has laws for — derived by intersection rather than retyped. An admitted claim with no law is *not evaluated* naming the claim; a claim outside the vocabulary reaches no law at all, because the boundary refuses it first. The width is what buys the discrimination and it was measured: neither one-directional variant of the triple refutes a top-`k` engine on any of the 16 instances, while the spanning triple refutes `top-1-proofs` on 8 (`test_neither_one_directional_variant_refutes_a_top_k_engine`), which is the evidence the reversal above rests on.
 
   ([#158](https://github.com/eduardstan/reasonsmith/pull/158))
 
 - **When the counterfactual duty's two rungs disagree, the report names the cause rather than the symptom.**
-  The `proved` and `probed` rungs of `counterfactually_invariant(o, p)` do not range over the same object: the first asks whether the *declared rules* treat alike every pair the *declared constraints* admit, the second whether the *implementation* treated alike the pairs built from the decisions the system logged. So their disagreement is evidence in its own right, and [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §6.6 now states the relation — `R ⊆ P` and `decide_S` agreeing with the declared logic on the declared space together make `probed = violated` imply `proved = violated` — with the contrapositive that is the whole feature: `proved = satisfied` beside `probed = violated` eliminates one of those two hypotheses. The lower rung is therefore run whenever the higher one reached a verdict, and a disagreement is reported as the **disjunct it eliminates** under `engines.counterfactual.RUNG_DISAGREEMENT_KEY`. `proved = violated` with `probed = satisfied` is the relation holding rather than a defect, and what it names is the log: it does not exercise what the rules permit. The other direction discharges the cheap hypothesis first, by evaluating the declared constraints on the replayed pair — a pair the declared input space does not admit is named as such and the declaration is not impeached, and only a pair *inside* that space leaves the residual finding, that the system's `decide()` does not implement the `logic()` it declared. A record that leaves a declared constraint unsettled eliminates neither and says so. The disagreement annotation itself moves no verdict, strength or witness; the paired-replay completeness change recorded above is separate and can replace a partial `probed` satisfaction with *not evaluated*. No shipped system reaches either rung on the one shipped counterfactual duty, so no shipped verdict moved. `tests/test_counterfactual_invariance.py` carries a witness per direction, including the second one the item allowed might be unreachable — it is reachable, and the fixture is a rule set whose `decide()` deliberately departs from what it declares. No new shipped example system, and no shipped record holding a protected attribute about a natural person.
+  The `proved` and `probed` rungs of `counterfactually_invariant(o, p)` do not range over the same object: the first asks whether the *declared rules* treat alike every pair the *declared constraints* admit, the second whether the *implementation* treated alike the pairs built from the decisions the system logged. So their disagreement is evidence in its own right, and [`docs/theory/04-decision-problems.md`](docs/theory/04-decision-problems.md) §4.4 now states the relation — `R ⊆ P` and `decide_S` agreeing with the declared logic on the declared space together make `probed = violated` imply `proved = violated` — with the contrapositive that is the whole feature: `proved = satisfied` beside `probed = violated` eliminates one of those two hypotheses. The lower rung is therefore run whenever the higher one reached a verdict, and a disagreement is reported as the **disjunct it eliminates** under `engines.counterfactual.RUNG_DISAGREEMENT_KEY`. `proved = violated` with `probed = satisfied` is the relation holding rather than a defect, and what it names is the log: it does not exercise what the rules permit. The other direction discharges the cheap hypothesis first, by evaluating the declared constraints on the replayed pair — a pair the declared input space does not admit is named as such and the declaration is not impeached, and only a pair *inside* that space leaves the residual finding, that the system's `decide()` does not implement the `logic()` it declared. A record that leaves a declared constraint unsettled eliminates neither and says so. The disagreement annotation itself moves no verdict, strength or witness; the paired-replay completeness change recorded above is separate and can replace a partial `probed` satisfaction with *not evaluated*. No shipped system reaches either rung on the one shipped counterfactual duty, so no shipped verdict moved. `tests/test_counterfactual_invariance.py` carries a witness per direction, including the second one the item allowed might be unreachable — it is reachable, and the fixture is a rule set whose `decide()` deliberately departs from what it declares. No new shipped example system, and no shipped record holding a protected attribute about a natural person.
 
   ([#147](https://github.com/eduardstan/reasonsmith/pull/147))
 
 - **The proposition the finite-trace decision procedure rests on is in the mathematics document, with its proof.**
-  0.8.0 re-encoded `ltlf.accepts(φ, σ)` as satisfiability over the characteristic formula `pin(σ)`, and the soundness of that move — `L(pin(σ)) = {σ}`, without which the solver is answering about a set of traces while the tool reports an answer about the one it was given — was stated only in `src/reasonsmith/ltlf.py`'s own docstring. [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §6.11 now states and proves it in the document's notation, with the two corollaries the production surface uses, and records three things the proposition depends on that were previously implicit: why the completeness of each `λᵢ` over `AP` is load-bearing, that the non-emptiness the proof assumes comes from BLACK's own finite-trace semantics rather than from the `NON_EMPTY` guard 0.8.0 deleted (and the one reachable shape — an atom-free formula — where it bites), and that `ATOM_BUDGET` counts *distinct* atoms, which `pin(σ)` adds none of, so the encoding's growth with the trace length is in literal occurrences and not in the count the budget refuses on. `[@biere-1999]` and `[@geatti-2021]` join the bibliography as the bounded-model-checking move and the finite-trace interpretation the section relies on. `test_pin_characteristic_formula_accepts_sigma_and_rejects_neighbors` now asks the solver about **every** trace one Hamming step from σ rather than two of the four, and no verdict, engine or rung moved.
+  0.8.0 re-encoded `ltlf.accepts(φ, σ)` as satisfiability over the characteristic formula `pin(σ)`, and the soundness of that move — `L(pin(σ)) = {σ}`, without which the solver is answering about a set of traces while the tool reports an answer about the one it was given — was stated only in `src/reasonsmith/ltlf.py`'s own docstring. [`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) §5.6 now states and proves it in the document's notation, with the two corollaries the production surface uses, and records three things the proposition depends on that were previously implicit: why the completeness of each `λᵢ` over `AP` is load-bearing, that the non-emptiness the proof assumes comes from BLACK's own finite-trace semantics rather than from the `NON_EMPTY` guard 0.8.0 deleted (and the one reachable shape — an atom-free formula — where it bites), and that `ATOM_BUDGET` counts *distinct* atoms, which `pin(σ)` adds none of, so the encoding's growth with the trace length is in literal occurrences and not in the count the budget refuses on. `[@biere-1999]` and `[@geatti-2021]` join the bibliography as the bounded-model-checking move and the finite-trace interpretation the section relies on. `test_pin_characteristic_formula_accepts_sigma_and_rejects_neighbors` now asks the solver about **every** trace one Hamming step from σ rather than two of the four, and no verdict, engine or rung moved.
 
   ([#144](https://github.com/eduardstan/reasonsmith/pull/144))
 
@@ -127,7 +127,7 @@ releases before it predate the file and are not reconstructed here.
   `ltlf._run_black` raised a bare `RuntimeError` — which nothing catches — for a binary that passes identification and then prints both `SAT` and `UNSAT`, prints nothing, exits nonzero or dies on a signal. The module's docstring described each of these as a refusal; in practice `validate-pack --analyse` exited 1 with a traceback and took down the whole analysis, including the Z3 half that never touched the solver. They now raise `UnsupportedConstructError`, the class the timeout and the atom budget already raise and the one every call site in `analysis.py` turns into a named entry in `PackAnalysis.skipped`.
 
 - **§1.7's exhaustiveness claim is narrowed to the scope its pin has.**
-  [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) §1.7 said one refusal in `rulelang` has no row and cannot have one. At least five have none, and three of them are not defensive branches: `classify_fragment` accepts the specification and assigns it a fragment, and the refusal fires later, at evaluation, for `counterfactually_invariant()`, `undetermined()` and `degree()`. The claim now states what the pin actually holds — the refusals reachable from `classify_fragment`, which is the entry point every witness runs through — names the three evaluation-time refusals as outside the table's scope, and points at `docs/semantics.md` §3 and §9 where each is documented. No row was added for them: a witness for one would have to run through an engine, so a row would be a rule the pin cannot check, which is the hollow-pin failure this release already had to repair once.
+  [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) Definition 2.5 records the grammar refusals. At least five have none, and three of them are not defensive branches: `classify_fragment` accepts the specification and assigns it a fragment, and the refusal fires later, at evaluation, for `counterfactually_invariant()`, `undetermined()` and `degree()`. The claim now states what the pin actually holds — the refusals reachable from `classify_fragment`, which is the entry point every witness runs through — names the three evaluation-time refusals as outside the table's scope, and points at `docs/theory/03-semantics.md` §3.12 and `docs/theory/08-evidence.md` §8.4 where each is documented. No row was added for them: a witness for one would have to run through an engine, so a row would be a rule the pin cannot check, which is the hollow-pin failure this release already had to repair once.
 
 - **§4's `not evaluated` row covers the case an engine uses it for.**
   [`docs/semantics.md`](docs/semantics.md) §4 defined `not evaluated` as evidence of the wrong quality — an empty trace, an unparseable formula, a solver timeout — and told a reader to fix the evidence and re-run. That is the wrong instruction for `engines/counterfactual.py`'s log-only case, where the evidence is of the wrong *kind*: no trace, however long, establishes what a system would have decided, so no better log will ever settle the duty. The row now names both cases and gives the instruction that applies to each.
@@ -159,25 +159,15 @@ releases before it predate the file and are not reconstructed here.
 ### Added
 
 - **The mathematics is stated once, and the repository has a bibliography that the build enforces.**
-  [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) gathers what was scattered across four documents and a dozen
-  module docstrings into one notation: the objects, the denotation `⟦·⟧_{M,A}`, the sufficient-reason
-  definitions and the deletion certificate, the strength chain beside the evidence basis, the
-  residuated lattices and the three t-norms, and one soundness statement per engine. It introduces no
-  construct, engine, rung, basis or verdict, and every claim in it names the test that falsifies it.
-  It also carries the repository's first **bibliography** — 26 entries, every one of them a work the
-  tree already relied on, the densest concentration of which was inside `src/reasonsmith/verdict.py`
-  where nobody looking for references would find them. The bibliography is a **registry**, not a
-  list: a citation is a backticked pandoc key (`` `[@hajek-1998]` ``), and
-  `tests/test_docs_formal.py` fails the build when a key resolves to no entry, when an entry is
-  cited by no claim, or when a paragraph anywhere in `docs/` or `src/reasonsmith/` names a
-  publication venue and carries no key. Every existing citation site was keyed in the same change,
-  and `docs/theory/07-explanation.md` §9 — the one reference list the repository had — now points at
-  the registry instead of carrying its own. The anti-drift mechanism for the definitions is the
-  same one the other documents already use and is why a fourth document is safe: every definition
-  the code also defines is generated from the code in each document that states it, so
-  the numbered theory chapters and `semantics.md` cannot disagree about the chain
-  (`Strength`), the rung table (`BASIS_RUNGS`), the fragments (`rulelang.FRAGMENTS`) or the algebras
-  (`manyvalued.ALGEBRAS`). No verdict, engine, duty, pack or parser changed.
+  The numbered theory chapters now gather the mathematics that was scattered across four documents
+  and a dozen module docstrings into one notation: the objects, denotation, sufficient-reason
+  definitions, deletion certificate, evidence coordinates, residuated lattices, and engine procedures.
+  They introduce no construct, engine, rung, basis or verdict. The repository-wide bibliography lives in
+  `docs/theory/bibliography.md` and remains a registry: a citation is a backticked pandoc key, and
+  `tests/test_docs_formal.py` fails the build when a key resolves to no entry, when an entry is cited by
+  no claim, or when a paragraph anywhere in `docs/` or `src/reasonsmith/` names a publication venue
+  and carries no key. The anti-drift mechanism for definitions is generated from the code in each
+  chapter that states them.
 
 - **The `--json` envelope declares the projection it was asked for, and never applies one.**
   `--audience <reader> --json` still emits the complete machine record with every field — a
@@ -223,7 +213,7 @@ releases before it predate the file and are not reconstructed here.
   as the literature poses it (Jacovi & Goldberg, ACL 2020), measured the way that literature measures
   it — by erasure (DeYoung et al., *ERASER*, ACL 2020) — on evidence a self-report demonstrably fails
   to be (Turpin, Michael, Perez & Bowman, NeurIPS 2023). It is a rung on the `artifact` row and not a
-  fifth basis, by the test [`docs/semantics.md`](docs/semantics.md) §10 now states: evidence about a
+  fifth basis, by the test [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §8.2 now states: evidence about a
   different object is a basis, evidence about the same object less deeply is a rung. The rule that
   gated the widening — a certificate over a reason trace claims strictly less than one over a ground
   program and must not report at the same strength — was previously prose in §3 and is now a refusal
@@ -268,7 +258,7 @@ releases before it predate the file and are not reconstructed here.
   reported violated. The fourth is the known exact-tie boundary. Each is reported rather than fixed
   — which side moves is a decision about an engine's contract — and each is pinned twice, excluded
   by name from the new conformance test and asserted to still diverge, so neither a silent addition
-  nor a landed fix leaves the list stale. See `docs/theory/02-syntax.md` §4.
+  nor a landed fix leaves the list stale. See `docs/theory/02-syntax.md`.
 
 - **Equivalence became a connective the graded fragment can read, instead of a comparison the
   author never wrote.** `preprocess_spec` rewrote `φ <=> ψ` into `(φ) == (ψ)` textually, before the
@@ -298,7 +288,7 @@ releases before it predate the file and are not reconstructed here.
   settle. `verdict.EvidenceBasis` is the dimension beside the chain: `behavioural`, `relational`,
   `artifact`, `assessment` — a trace property, a 2-safety property, an abductive explanation over a
   model encoding, and a truth degree over a residuated lattice, each named after published work
-  rather than after this repository (`docs/semantics.md` §10 carries the citations). Four things are
+  rather than after this repository (`docs/theory/08-evidence.md` §8.2 carries the citations). Four things are
   structural rather than conventional. **A basis is a kind and never a rank**: the members carry no
   order and comparing two of them, or one against a `Strength`, raises rather than answering.
   **A result cannot carry a rung its basis does not admit**, so a counterfactual duty cannot be
@@ -363,7 +353,7 @@ releases before it predate the file and are not reconstructed here.
   `contains()` atom. The backend is an **optional extra** (`pip install reasonsmith[ltlf]`): nothing
   in `check`, in any engine or in any shipped example touches it, `pip install reasonsmith` stays a
   two-command demo, and with it absent the analysis prints that it is absent rather than answering
-  from a weaker substitute. Four costs are stated in `docs/semantics.md` §8 rather than left to be
+  from a weaker substitute. Four costs are stated in `docs/theory/05-decision-procedures.md` §5.4 rather than left to be
   found: the reading is propositional so every magnitude is an opaque atom and satisfiability is
   reported only in the affirmative; it is future-only, so a past operator is skipped by name; every
   question is asked over a non-empty trace, because the logic admits the empty one on which every
@@ -413,7 +403,7 @@ releases before it predate the file and are not reconstructed here.
   the EU AI Act Article 12(1)/12(2) overlap `docs/refinement.md` recorded in prose after a human
   read the TOML is now found by the tool; which are **vacuously discharged**, on the
   Kupferman–Vardi definition restricted to the fragments this repository ships and stated in
-  `docs/semantics.md` §8; and, with `--system-module`, a **mutation score per duty** over
+  `docs/theory/04-decision-problems.md` §4.6; and, with `--system-module`, a **mutation score per duty** over
   single-point mutants of the system's declared rules. Findings do not change the exit code: a pack
   the loader accepts is a valid pack. The vacuity rule coincides with the existing
   `report.not_evaluated_for_unreachable_trigger` on the case that rule already handles — that
@@ -462,7 +452,7 @@ releases before it predate the file and are not reconstructed here.
   graphs, reason traces, extracted rule sets and decision trees of the paper's taxonomy are now
   adapters rather than special cases; none is implemented here, and a family whose reasons are
   extracted rather than enumerated exactly still needs a decision about the strength lattice before
-  it needs an adapter (`docs/semantics.md` §3, *The inference artefact*).
+  it needs an adapter (`docs/theory/07-explanation.md` §7.1, *The inference artefact*).
 
 ### Changed
 
@@ -509,7 +499,7 @@ releases before it predate the file and are not reconstructed here.
   records and the document did not say so.
 
 - **The deletion probe states its direction, and keeps the one fingerprint of an engine that
-  breaks it.** `certificate.LIMITS` and `docs/semantics.md` §3 (*certificate*) now say that the
+  breaks it.** `certificate.LIMITS` and `docs/theory/07-explanation.md` §7.5 (*certificate*) now say that the
   probe only switches facts off, never on: `deleted` means *the answer did not depend on this
   reason under this interpretation*, and on a system whose reasons can be retracted by an added
   fact — a policy exception evaluated after the rules fire — a lawfully withdrawn reason is
@@ -532,7 +522,7 @@ releases before it predate the file and are not reconstructed here.
 - Nothing shipped changes verdict. A log that states no clock is `"ordinal"` and is answered on the
   record index exactly as before, a log that gained event timestamps keeps the verdict it had, and
   a duty asked for on any other domain is reported *not evaluated*, never `satisfied`
-  (`docs/semantics.md` §2, §5; `tests/test_time_domain.py`).
+  (`docs/theory/03-semantics.md` §3.5, `docs/semantics.md` §4; `tests/test_time_domain.py`).
 
 ## [0.7.0] - 2026-08-04
 
@@ -714,7 +704,7 @@ releases before it predate the file and are not reconstructed here.
     trigger that never fired — and a conjunction of implications has a vacuity per conjunct that one
     `strength=None` cannot carry.
 
-  `docs/semantics.md` §3 and §4 state it per rung; `tests/test_vacuous_trigger.py` holds it. The
+  `docs/theory/05-decision-procedures.md` §5.1 and `docs/semantics.md` §1 state it per rung; `tests/test_vacuous_trigger.py` holds it. The
   test that pinned the old behaviour as a known limit
   (`test_a_duty_whose_trigger_never_fires_is_satisfied_vacuously_and_the_report_cannot_say_so`) now
   pins the new one under the name
@@ -782,7 +772,7 @@ releases before it predate the file and are not reconstructed here.
   declaration guard rather than being scoped to logic that declares none — see the fix below, which
   corrects that in the same release.
 
-  `docs/semantics.md` §3.5, *When the magnitudes are not the system's own*, is rewritten around the
+  `docs/theory/05-decision-procedures.md` §5.2, *When the magnitudes are not the system's own*, is rewritten around the
   declaration and names the test behind every claim.
 
 ### Fixed
@@ -816,7 +806,7 @@ releases before it predate the file and are not reconstructed here.
   for it: satisfaction over a subset of the trace is not satisfaction over the trace. Anything
   weaker is defeated by the same move it was written to stop — declare `exact_depth=0` on every
   decision but one genuinely clean one. A system that genuinely enumerates reasons and deletes none
-  still reaches `satisfied` at `probed`. `docs/semantics.md` §3's certificate guarantee now says
+  still reaches `satisfied` at `probed`. `docs/theory/07-explanation.md` §7.5's certificate guarantee now says
   enumeration found *at least one* reason on *every* decision the verdict covers, and states the
   asymmetry in the same words.
 
@@ -830,7 +820,7 @@ releases before it predate the file and are not reconstructed here.
   a score alone, whose table names the two Recital 71 magnitudes, was reported `violated` at
   `proved` on the solver's own choice of `deviation = 1, margin = 0`; add one constraint restating
   the duty and the same system was reported `satisfied` at `proved`, on the strength of an
-  assertion about itself that no rendering names — the self-declaration `docs/semantics.md` §3
+  assertion about itself that no rendering names — the self-declaration `docs/theory/05-decision-procedures.md` §5.2
   refuses everywhere else, arriving at the top rung. Stripping only the `computes` key from either
   system returned `inconclusive`, so both were new.
 
@@ -950,7 +940,7 @@ releases before it predate the file and are not reconstructed here.
   page alone, so a required disclaimer is no longer the largest thing on a page addressed to a
   layperson. `test_the_lay_view_derives_content_no_expert_view_carries` keeps the subset
   measurement as an assertion; the four expert projections are untouched, and every generated
-  document regenerates byte-for-byte. `docs/semantics.md` §7 loses the limit it used to state and
+  document regenerates byte-for-byte. `docs/semantics.md` §3 loses the limit it used to state and
   gains what replaces it.
 
 ### Documentation
@@ -1035,8 +1025,7 @@ releases before it predate the file and are not reconstructed here.
   optional, and there is no optional dependency here. `temporal` joins `BUILTIN_ENGINE_NAMES`, so an
   installed plug-in cannot take the name. `test_a_temporal_duty_never_rises_above_observed` is
   *replaced*, never deleted, by `test_only_always_reaches_the_temporal_proof_rung`, which pins the
-  new ceiling from both sides; the soundness paragraph is `docs/semantics.md` §3, *`proved`, over a
-  trace*. `examples/symbolic_rules.py` gains the notification and margin rules the two shipped
+  new ceiling from both sides; the soundness paragraph is `docs/theory/05-decision-procedures.md` §5.1, *reference interpreter*. `examples/symbolic_rules.py` gains the notification and margin rules the two shipped
   temporal duties read — both duties reported `unattainable` against it before — and its docstring
   names the two of those rules that state a policy commitment rather than measure anything, because
   that is what the proof is worth.
@@ -1151,7 +1140,7 @@ for the log's directory.
   feature's honest limit in the same breath: the affected-individual view carries the duties and the
   verdicts and none of the reasons for the decision. The architecture table gained `render.py`,
   `plugins.py`, `examples/` and `__init__.py`, and `docs/README.md`'s index row for
-  `semantics.md` now names §7 so the audience table is findable from the index. No behaviour
+  `semantics.md` now names §3 so the audience table is findable from the index. No behaviour
   changed; the five audiences and the plug-in surface are unaltered.
 - **The two audience lists are kept apart on purpose**
   ([#78](https://github.com/eduardstan/reasonsmith/pull/78)). `--audience` names five *readers of
@@ -1232,7 +1221,7 @@ for the log's directory.
   search, and the limit is stated in the new
   [`docs/authoring-engines.md`](docs/authoring-engines.md) rather than implied. With nothing
   installed, both groups are empty and the ladder is the built-in ladder, pinned by
-  `test_with_no_plugin_installed_the_ladder_is_the_builtin_ladder`; `docs/semantics.md` §3.5 carries
+  `test_with_no_plugin_installed_the_ladder_is_the_builtin_ladder`; `docs/theory/05-decision-procedures.md` §5.2 carries
   the four claims and names the test that falsifies each.
 - **A language model as a system under test: `docs/adapters/language_model_notices.py` and
   `docs/language-model.md`.** A fourth runnable system beside the three of `docs/three-systems.md`,
@@ -1267,7 +1256,7 @@ for the log's directory.
   projection, by object identity. `--json` is deliberately unprojected: it stays the complete
   machine record, and a display flag must not quietly drop fields from a pipeline's input. The
   table of what each audience is shown, and the reasoning for every row, is authored rather than
-  derived and is written down in `docs/semantics.md` §7, along with two limits — this artefact
+  derived and is written down in `docs/semantics.md` §3, along with two limits — this artefact
   carries no reasons for the decision itself, and `--audience` is presentation, not redaction.
   ([#72](https://github.com/eduardstan/reasonsmith/pull/72))
 - **One differential test holds the two implementations of the property language to one semantics.**
@@ -1353,7 +1342,7 @@ for the log's directory.
   duty, `ecoa_reg_b_1002_9_b_2_principal_reasons_complete`, on the half of 12 CFR 1002.9(b)(2) that
   asks for the principal reason**s**. `reasonsmith check --system-module
   reasonsmith.demo:deployed_credit_system --pack ecoa` now reports that decision violated and exits
-  2. See [docs/semantics.md](docs/semantics.md) §3, *certificate*.
+  2. See [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §7.5, *certificate*.
 
   **What this means for an existing run:** the new duty is domain-limited to `consumer-credit` like
   the rest of the ECOA pack, and it gates on `artifact_logs_deleted_reason_count` — a signal
@@ -1369,7 +1358,7 @@ for the log's directory.
   load time — the fold has to stay reproducible character-for-character by the Z3 encoding, so a
   fold that is not one-to-one would let the solver and the interpreter disagree about the same
   string. It is a substring test and claims to be nothing more: it does not model *specific*. See
-  [docs/semantics.md](docs/semantics.md) §2 and [docs/authoring-packs.md](docs/authoring-packs.md),
+  [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) and [docs/authoring-packs.md](docs/authoring-packs.md),
   *a phrase in a `spec` is the clause's own words*.
   ([#64](https://github.com/eduardstan/reasonsmith/pull/64))
 
@@ -1378,7 +1367,7 @@ for the log's directory.
 - **A `logical` duty is now answered from a decision trace.** A `logical` property is a property of
   one decision record, so a trace of them is evidence about it; the build used to report *not
   evaluated* while that evidence sat in front of it, which was the fragment's label deciding what
-  could be checked. `docs/semantics.md` §3.5 already stated the principle in its first bullet and
+  could be checked. `docs/theory/05-decision-procedures.md` §5.2 already stated the principle in its first bullet and
   contradicted it two bullets later. A presence conjunction still keeps the record engine and its
   per-signal, per-record diagnostics; every other state formula is monitored per record. The
   separate rule that a temporal duty never rises above `observed` is unchanged.
@@ -1401,7 +1390,7 @@ for the log's directory.
   disclosure branch is **no longer reported violated**. The cost is stated rather than hidden:
   where a log carries no statement of reasons at all, the duty is `satisfied` vacuously and no
   report outcome distinguishes that from a trace that was checked and met
-  ([docs/semantics.md](docs/semantics.md) §4).
+  ([docs/semantics.md](docs/semantics.md) §1).
   ([#64](https://github.com/eduardstan/reasonsmith/pull/64))
 
 ### Fixed
@@ -1421,7 +1410,7 @@ for the log's directory.
   records the *kind of decision* a duty is about, from `reasonsmith.spec.DECISION_DOMAINS`, and is
   matched by intersection against what a system declares. See
   [docs/authoring-packs.md](docs/authoring-packs.md) for the vocabulary rules and
-  [docs/semantics.md](docs/semantics.md) §4 for what a not-applicable verdict on it does and does
+  [docs/semantics.md](docs/semantics.md) §1 for what a not-applicable verdict on it does and does
   not say. ([#63](https://github.com/eduardstan/reasonsmith/pull/63))
 - A report whose duties were skipped for a missing declaration says so: `render_text`,
   `render_html` and the CLI's stderr all carry a line naming how many duties were reported not
