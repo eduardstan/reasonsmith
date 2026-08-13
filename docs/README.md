@@ -17,7 +17,7 @@ One line per document, organised around the five stakeholders and the artefact e
 | Document | Use it for |
 |---|---|
 | [`semantics.md`](semantics.md) | Verdict meaning, engine soundness, strength, limits, and the five report projections. |
-| [`formal.md`](formal.md) | The single mathematical notation, definitions, soundness claims, and bibliography. |
+| [`formal.md`](formal.md) | The single mathematical notation, definitions, and soundness claims. |
 | [`language.md`](language.md) | Grammar and denotation of the one property language. |
 | [`sufficient-reasons.md`](sufficient-reasons.md) | `deleted` reasons, AXps/CXps, and their minimal-hitting-set duality. |
 

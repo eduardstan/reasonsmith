@@ -8,7 +8,7 @@ about *reasons*, and the two are not the same question.
 Read [`semantics.md`](semantics.md) §3 (`certificate`, and *The inference artefact*) first — it
 states what the certificate's verdicts mean. This document states what a `deleted` reason **is**,
 and why each choice in the definition was made. [`formal.md`](formal.md) §3 restates the
-definitions in the repository's one notation, and its *Bibliography* is where the sources of §9
+definitions in the repository's one notation, and the repository's [*Bibliography*](theory/bibliography.md) is where the sources of §9
 now live.
 
 ---
@@ -349,7 +349,7 @@ invariant to keep when tuning it.
 Published work only, and every definition above is a specialisation of one of these rather than a
 new one. This section used to carry its own reference list; it was the only one in the repository,
 and a list nothing checked is a list that rots. The references now live in one place —
-[`formal.md`](formal.md), *Bibliography* — as a registry the build enforces: every key cited above
+[`theory/bibliography.md`](theory/bibliography.md), *Bibliography* — as a registry the build enforces: every key cited above
 resolves to an entry there, every entry there is cited by at least one claim, and a source named
 without a key fails the build.
 

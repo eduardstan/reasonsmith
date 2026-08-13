@@ -22,7 +22,7 @@ one exception, §4, which records three places where the code disagrees *with it
 side this document takes.
 
 [`formal.md`](formal.md) §2 states this document's §2 in the notation the rest of the repository's
-mathematics is written in, and carries the **bibliography** every citation here resolves to. The
+mathematics is written in, and points to the repository's **bibliography registry**, where every citation here resolves. The
 grammar, the refusals and the four divergences of §4 live here and nowhere else.
 
 ---

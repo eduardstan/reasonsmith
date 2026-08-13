@@ -1,4 +1,6 @@
-"""Tests holding `docs/formal.md` to the code, to its claim-to-test map, and to the bibliography.
+"""Tests holding `docs/formal.md` to the code and claim-to-test map.
+
+The bibliography registry is in `docs/theory/bibliography.md`.
 
 What this module is for:
   `docs/formal.md` states the mathematics of this tool once, in one notation. Three things have to
@@ -10,7 +12,8 @@ What this module is for:
      document cannot be edited into disagreement with `Strength`, `BASIS_RUNGS`,
      `rulelang.FRAGMENTS` or `manyvalued.ALGEBRAS`. Three documents each held to the code cannot
      drift apart from each other, which is what makes a fourth document safe to add.
-  3. The bibliography is a **registry**: every citation key used anywhere in the scanned corpus
+  3. The bibliography in `docs/theory/bibliography.md` is a **registry**: every citation key used
+     anywhere in the scanned corpus
      resolves to an entry, every entry is cited by at least one claim, and a source named without a
      key fails the build. This is the new part. Before it, the densest concentration of references
      in the tree was inside `src/reasonsmith/verdict.py`, where nobody looking for a bibliography
@@ -43,6 +46,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = REPO_ROOT / "tests"
 DOCS_DIR = REPO_ROOT / "docs"
 FORMAL = DOCS_DIR / "formal.md"
+BIBLIOGRAPHY = DOCS_DIR / "theory" / "bibliography.md"
 ENGINES_DIR = REPO_ROOT / "src" / "reasonsmith" / "engines"
 
 #: A `test_...` identifier as the document writes them. A name followed by `.py` is a module the
@@ -110,7 +114,7 @@ def _document() -> str:
 
 def _scanned_files() -> list[Path]:
     """The corpus the registry is enforced over: documentation prose and package sources."""
-    files = [p for p in sorted(DOCS_DIR.glob("*.md")) if p.name not in SCANNED_EXCLUSIONS]
+    files = [p for p in sorted(DOCS_DIR.rglob("*.md")) if p.name not in SCANNED_EXCLUSIONS]
     files += sorted((REPO_ROOT / "src" / "reasonsmith").rglob("*.py"))
     return files
 
@@ -118,7 +122,7 @@ def _scanned_files() -> list[Path]:
 def _bibliography_keys() -> dict[str, str]:
     """Every key the bibliography defines, mapped to the line that defines it."""
     keys: dict[str, str] = {}
-    for line in _document().splitlines():
+    for line in BIBLIOGRAPHY.read_text(encoding="utf-8").splitlines():
         match = _BIBLIOGRAPHY_ENTRY.match(line)
         if match:
             keys[match.group(1)] = line
@@ -278,9 +282,13 @@ def test_the_formal_doc_states_one_soundness_paragraph_per_engine():
 
 def test_the_bibliography_has_entries_and_they_are_unique():
     """A registry with no entries, or with a key defined twice, enforces nothing."""
-    lines = [line for line in _document().splitlines() if _BIBLIOGRAPHY_ENTRY.match(line)]
+    lines = [
+        line
+        for line in BIBLIOGRAPHY.read_text(encoding="utf-8").splitlines()
+        if _BIBLIOGRAPHY_ENTRY.match(line)
+    ]
     keys = [_BIBLIOGRAPHY_ENTRY.match(line).group(1) for line in lines]
-    assert keys, "docs/formal.md defines no bibliography entry"
+    assert keys, "docs/theory/bibliography.md defines no bibliography entry"
     duplicates = sorted({key for key in keys if keys.count(key) > 1})
     assert not duplicates, "the bibliography defines a key twice: " + ", ".join(duplicates)
 
@@ -294,7 +302,7 @@ def test_every_citation_key_resolves_to_a_bibliography_entry():
             if key not in known:
                 unresolved.append(f"{path.relative_to(REPO_ROOT)}: [{key}]")
     assert not unresolved, (
-        "citation key(s) with no bibliography entry in docs/formal.md: "
+        "citation key(s) with no bibliography entry in docs/theory/bibliography.md: "
         + ", ".join(sorted(unresolved))
         + ". Add the entry, or fix the key."
     )
@@ -322,8 +330,8 @@ def test_a_source_named_without_a_key_is_refused():
     """A paragraph naming a venue and carrying no citation key is an unregistered source.
 
     This is the half of the registry that keeps references from drifting back into docstrings. It
-    is a heuristic over `VENUE_MARKERS` and `docs/formal.md` says so: a venue not on the list is a
-    hole. The other two checks are not heuristics.
+    is a heuristic over `VENUE_MARKERS` and `docs/theory/bibliography.md` says so: a venue not on
+    the list is a hole. The other two checks are not heuristics.
     """
     assert VENUE_MARKERS, "the marker list is empty, so this check passes vacuously"
 
@@ -341,5 +349,5 @@ def test_a_source_named_without_a_key_is_refused():
     assert not offenders, (
         "a source is named without a citation key, so nothing registers it: "
         + "; ".join(sorted(offenders))
-        + ". Add a `[key]` beside it and a bibliography entry in docs/formal.md."
+        + ". Add a `[key]` beside it and a bibliography entry in docs/theory/bibliography.md."
     )

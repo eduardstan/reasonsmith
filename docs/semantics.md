@@ -10,7 +10,7 @@ Where this document and the code disagree, the code is right and this document h
 
 [`formal.md`](formal.md) states the same mathematics once and in one notation — the objects, the
 denotation, the reason definitions, the two coordinates of §4 and §10, the graded readings, and one
-soundness statement per engine — and carries the repository's **bibliography**. This document keeps
+soundness statement per engine — and points to the repository's [**bibliography registry**](theory/bibliography.md). This document keeps
 its own operational phrasing on purpose: it is written for a reader of a report and that one for a
 reader checking the mathematics. They cannot drift apart, because every definition the code also
 defines is generated from the code in both.
