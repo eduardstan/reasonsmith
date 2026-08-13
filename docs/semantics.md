@@ -125,16 +125,16 @@ constructed at all without the search budget that produced it
 
 ## 2. The property language
 
-**The definition lives in [`docs/language.md`](language.md)** — the grammar, checked against the
+**The definition lives in [`docs/theory/02-syntax.md`](theory/02-syntax.md)** — the grammar, checked against the
 parser; the denotation `⟦·⟧_{M,A}`, a partial map from sets of traces to a declared algebra, of
 which every engine below is an implementation; and the four implementations named as such, with
 their differential tests as the conformance evidence. That document also reports four shapes on
-which the trace-rung implementation and the definition disagree (`docs/language.md` §4). This
+which the trace-rung implementation and the definition disagree (`docs/theory/03-semantics.md`, Remark 3.1). This
 section says what the language *is* for a reader of a verdict; go there for what a formula *means*.
 
 There is **one** property language, in `rulelang.py`, and `formalism` names which fragment of it a
 requirement's `spec` belongs to. The six fragments are decided by the shape of the formula, not by
-the word a pack author typed, and the order is `docs/language.md` §1.6's (the definition, not an
+the word a pack author typed, and the order is `docs/theory/02-syntax.md` Definition 2.6's (the definition, not an
 optimisation): `classify_fragment` returns `counterfactual` when the formula is the one relational
 atom, `undetermined` when an `undetermined()` atom occurs, `graded` when a `degree()` atom occurs,
 `temporal` when it uses a temporal operator, `record` when it is a conjunction of `present(signal)`
@@ -482,7 +482,7 @@ observed zero decisions is not evidence that a requirement holds
 
 > **If the observed engine reports `satisfied` at strength `observed`, then:** `req.spec` evaluated
 > *true* over the trace it was given, under the finite-trace clauses and the three-valued chain of
-> [`language.md`](language.md) §2.8 and §2.12, where position *t* is the record at position *t*
+> [`theory/03-semantics.md`](theory/03-semantics.md) Definition 3.8 and Definition 3.11, where position *t* is the record at position *t*
 > (`test_temporal_satisfied`).
 
 The verdict is that evaluation and **not** the sign of a robustness score. rtamt still monitors the
@@ -490,7 +490,7 @@ property, and its score travels beside the verdict in `details['evaluation_score
 quantitative margin; it is a margin and not an answer, because `ρ = 0` decides nothing and `ρ` does
 not represent strictness at all — `ρ(x > c) = ρ(x >= c)`. So a strict comparison is breached at its
 boundary and a non-strict one is not (`test_strict_comparison_boundary_table`), and a shape the
-monitor renders differently is refused rather than answered ([`language.md`](language.md) §4).
+monitor renders differently is refused rather than answered ([`theory/03-semantics.md`](theory/03-semantics.md), Remark 3.1).
 The refusal carries no robustness margin: a result with no observed verdict does not emit
 `evaluation_scores` (`test_a_duty_using_a_misread_shape_is_not_evaluated_and_names_the_construct`).
 
@@ -2144,7 +2144,7 @@ two must not be read as one. `UNKNOWN` is ignorance about a *record* — a signa
 value for — which is the partial-state-space setting of Bruns & Godefroid `[@bruns-1999]`; LTL₃'s
 third value is truncation of the *trace*, a question about extensions this tool asks of nothing.
 Same arity, different question, and only the first is answered.
-[`language.md`](language.md) §2.12 is the definition, including why Kleene is sound for its
+[`theory/03-semantics.md`](theory/03-semantics.md) Definition 3.11 is the definition, including why Kleene is sound for its
 question and not complete for it.
 
 **The backend is an optional extra and its absence is a note.** `pip install reasonsmith` stays a

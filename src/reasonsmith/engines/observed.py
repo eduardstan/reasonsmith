@@ -23,8 +23,9 @@ What a reader must not break:
     `NOT EVALUATED` (`verdict=INCONCLUSIVE`, `strength=None`), NEVER `satisfied`.
     Why this matters: STL monitors require sufficient trace points to establish time bounds; an
     unsupported formula or insufficient trace length cannot prove a temporal property.
-  - A shape rtamt parses and reads under a different semantics from the one `docs/language.md` §2
-    defines is refused in the rendering (`_refuse_shapes_the_monitor_misreads`), so the duty is
+  - A shape rtamt parses and reads under a different semantics from the one
+    `docs/theory/03-semantics.md` §2 defines is refused in the rendering
+    (`_refuse_shapes_the_monitor_misreads`), so the duty is
     reported `NOT EVALUATED` naming the construct, never answered.
     Why this matters: rtamt raises for nearly everything it does not support — `!=`, `min`, `max`,
     `Implies(...)`, `<=>` — so `spec.parse()` raising was this engine's whole protection, and three
@@ -247,7 +248,8 @@ def _render_binary_temporal(text: str) -> str:
 
 
 #: The shapes the language admits and rtamt reads differently, each named as the refusal names it.
-#: `docs/language.md` §4 quotes a witness and a robustness value for every one, and says why the
+#: `docs/theory/03-semantics.md` §4 quotes a witness and a robustness value for every one,
+#: and says why the
 #: definition is what moves nothing: three other encodings agree with it, so one backend disagreeing
 #: is a defect in that backend. The refusal below is what keeps a duty using one of these *not
 #: evaluated* rather than answered off a formula rtamt read differently.

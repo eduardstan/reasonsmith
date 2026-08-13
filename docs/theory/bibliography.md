@@ -26,8 +26,9 @@ addition rather than a rewrite.
   Letters 21(4):181–185, 1985. — the trace property, which the `behavioural` basis is named after
   (§4.2).
 - **`[@terauchi-2005]`** T. Terauchi, A. Aiken. *Secure Information Flow as a Safety Problem.* SAS
-  2005, LNCS 3672, 352–367. — 2-safety: the class `counterfactually_invariant` belongs to (§2.7,
+  2005, LNCS 3672, 352–367. — 2-safety: the class `counterfactually_invariant` belongs to (Definition 3.8,
   §4.2).
+- **`[@conradie-2023]`** W. Conradie, G. Della Monica, A. Muñoz-Velasco, G. Sciavicco, E. Stan. *Fuzzy Halpern and Shoham's interval temporal logics.* Fuzzy Sets and Systems, 2023. — the complete residuated-lattice parent framework for the point-based finite-word fragment (Chapter 3).
 - **`[@clarkson-2010]`** M. R. Clarkson, F. B. Schneider. *Hyperproperties.* Journal of Computer
   Security 18(6):1157–1210, 2010. (Earlier at CSF 2008.) — why the denotation is typed over sets of
   traces (§2.1).
@@ -35,27 +36,27 @@ addition rather than a rewrite.
   Self-Composition.* CSFW 2004, 100–114. — the proof method the counterfactual engine uses (§6.6).
 - **`[@degiacomo-2013]`** G. De Giacomo, M. Y. Vardi. *Linear Temporal Logic and Linear Dynamic Logic
   on Finite Traces.* IJCAI 2013, 854–860. — the finite-trace semantics whose clauses
-  [`language.md`](language.md) §2.8 states and `rulelang.eval_temporal_trace` evaluates (§2.7).
+  [`03-semantics.md`](03-semantics.md) Definition 3.8 states and `rulelang.eval_temporal_trace` evaluates (Definition 3.8).
 - **`[@manna-1992]`** Z. Manna, A. Pnueli. *The Temporal Logic of Reactive and Concurrent Systems:
   Specification.* Springer, 1992. — the strong and weak previous operators of past LTL, whose
   distinction is what separates this language's `prev` from its `rise` and `fall` at position 0
-  ([`language.md`](language.md) §2.8).
+  ([`03-semantics.md`](03-semantics.md) Definition 3.8).
 - **`[@bauer-2011]`** A. Bauer, M. Leucker, C. Schallhart. *Runtime Verification for LTL and TLTL.*
   ACM Transactions on Software Engineering and Methodology 20(4):14, 2011. — the three-valued
   finite-trace distinction this package reports unavailable rather than synthesising (§6.10). Its
   third value is a *truncated trace* and is deliberately not the third value of
-  [`language.md`](language.md) §2.12, which is `[@bruns-1999]`'s.
+  [`03-semantics.md`](03-semantics.md) Definition 3.11, which is `[@bruns-1999]`'s.
 - **`[@bruns-1999]`** G. Bruns, P. Godefroid. *Model Checking Partial State Spaces with 3-Valued
   Temporal Logics.* CAV 1999, LNCS 1633, 274–287. — the source of the third value the reference
   interpreter computes: ignorance about the state, not truncation of the trace
-  ([`language.md`](language.md) §2.12).
+  ([`03-semantics.md`](03-semantics.md) Definition 3.11).
 - **`[@kleene-1952]`** S. C. Kleene. *Introduction to Metamathematics.* North-Holland, 1952, §64.
   — the strong three-valued tables `rulelang`'s Kleene operators implement
-  ([`language.md`](language.md) §2.12).
+  ([`03-semantics.md`](03-semantics.md) Definition 3.11).
 - **`[@vanfraassen-1966]`** B. C. van Fraassen. *Singular Terms, Truth-Value Gaps, and Free Logic.*
   The Journal of Philosophy 63(17):481–495, 1966. — supervaluation, complete for the question
   Kleene is only sound for, and deliberately not implemented
-  ([`language.md`](language.md) §2.12).
+  ([`03-semantics.md`](03-semantics.md) Definition 3.11).
 - **`[@kupferman-2003]`** O. Kupferman, M. Y. Vardi. *Vacuity detection in temporal model checking.*
   International Journal on Software Tools for Technology Transfer 4(2):224–233, 2003. (First at
   CHARME 1999.) — the vacuity question (§6.10).
@@ -64,7 +65,7 @@ addition rather than a rewrite.
   single-occurrence replacement formulation §6.10 implements.
 - **`[@geatti-2019]`** L. Geatti, N. Gigante, A. Montanari. *A SAT-based encoding of the one-pass and
   tree-shaped tableau system for LTL.* TABLEAUX 2019, LNCS 11714, 3–20. — the procedure behind
-  BLACK, the temporal decision procedure behind the `ltlf` extra (§2.7, §4, §6.10, §6.11).
+  BLACK, the temporal decision procedure behind the `ltlf` extra (Definition 3.8, §4, §6.10, §6.11).
 - **`[@geatti-2021]`** L. Geatti, N. Gigante, A. Montanari, G. Venturato. *Past Matters: Supporting
   LTL+Past in the BLACK Satisfiability Checker.* TIME 2021, LIPIcs 206, 8:1–8:17. — the past
   operators and the finite-trace interpretation that mode of BLACK implements; the source of the
@@ -140,7 +141,7 @@ addition rather than a rewrite.
   systems.* Artificial Intelligence and Law 1(1):65–86, 1992. — the isomorphism discipline
   `verbatim_text` and `drift.py` implement (§6.10).
 - **`[@kusner-2017]`** M. J. Kusner, J. R. Loftus, C. Russell, R. Silva. *Counterfactual Fairness.*
-  NeurIPS 2017, 4066–4076. — the property `counterfactually_invariant` is an instance of (§2.7).
+  NeurIPS 2017, 4066–4076. — the property `counterfactually_invariant` is an instance of (Definition 3.8).
 - **`[@stan-2026]`** I. E. Stan, G. Sciavicco, P. Napoletano. *Symbols and Neurons: A Review of
   Symbolic XAI in Deep Learning.* Journal of Artificial Intelligence Research, 2026. — Table 7
   (p. 36:22) is the duty-to-artifact mapping `table7.toml` transcribes; Section 6.3 (p. 36:24) is

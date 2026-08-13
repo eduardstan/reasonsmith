@@ -7,7 +7,7 @@ carries, the graded readings, and one soundness statement per engine. The reposi
 **bibliography** is maintained separately as a registry the build enforces rather than a list.
 
 **Nothing here is new.** Every definition below already exists somewhere in the tree — in
-[`language.md`](language.md), [`semantics.md`](semantics.md),
+[`theory/02-syntax.md`](theory/02-syntax.md), [`semantics.md`](semantics.md),
 [`sufficient-reasons.md`](sufficient-reasons.md), or in the module that implements it. This
 document gathers them into one notation and one place; it derives nothing further, extends nothing,
 and introduces no construct, engine, rung or basis. A reader who finds a definition here that is
@@ -17,7 +17,7 @@ nowhere else has found a defect in this document.
 [`theory/bibliography.md`](theory/bibliography.md): every citation anywhere in this repository
 resolves to an entry there, and the mechanism that enforces that is stated there. This document
 owns the gathered notation and formal claims; it does not own the operational documents. [`semantics.md`](semantics.md) states
-what a verdict means to a reader of a report; [`language.md`](language.md) states the grammar and
+what a verdict means to a reader of a report; [`theory/02-syntax.md`](theory/02-syntax.md) states the grammar and
 the refusals a pack author meets; [`sufficient-reasons.md`](sufficient-reasons.md) states the
 argument that led to the reason definitions and the cost of each choice. Those documents keep their
 own phrasing on purpose, and drift between them and this one is prevented mechanically rather than
@@ -37,7 +37,7 @@ witness by running.
 
 **One notation collision is resolved here, and it is the only renaming.**
 [`sufficient-reasons.md`](sufficient-reasons.md) writes `A` for an artefact's fact set and
-[`language.md`](language.md) writes `A` for the algebra a formula is read over. In one document
+[`theory/02-syntax.md`](theory/02-syntax.md) writes `A` for the algebra a formula is read over. In one document
 they cannot both be `A`. The algebra keeps `A` and the fact set becomes `F`; §3 is written in `F`
 throughout and is otherwise word-for-word the same mathematics.
 
@@ -176,7 +176,7 @@ a result claiming more than it has cannot be constructed
 
 ## 2. The language
 
-[`language.md`](language.md) §1 defines the **grammar**, the kind discipline, the side conditions
+[`theory/02-syntax.md`](theory/02-syntax.md) Definition 2.2 defines the **grammar**, the kind discipline, the side conditions
 and the twenty-eight named refusals; that is syntax and is not restated here. This section is the
 **denotation**, in the notation of that document's §2, which it is a compression of and not a second
 statement.
@@ -392,13 +392,13 @@ two components; named as what they are, those tests are this document's conforma
 
 | Implementation | `M` | `A` | Conformance evidence |
 |---|---|---|---|
-| `rulelang.eval_expression` | `O(σ)`, one record | the Kleene chain `F < U < T` ([`language.md`](language.md) §2.12) | it *is* the reference |
+| `rulelang.eval_expression` | `O(σ)`, one record | the Kleene chain `F < U < T` ([`theory/03-semantics.md`](theory/03-semantics.md) Definition 3.11) | it *is* the reference |
 | `engines/proved._ast_to_z3` | `D(L)` | `𝔹` | `test_the_encoder_and_the_interpreter_answer_the_same` |
 | `engines/observed.to_stl` + rtamt | `O(σ)` | `𝔹` via robustness sign — the margin the rung reports, not its verdict (§6.2) | `test_the_monitor_agrees_with_the_reference_reading` |
 | `ltlf.to_ltlf` + BLACK `[@geatti-2019]` | a propositional abstraction of `O(σ)` | `𝔹` | `test_the_ltlf_backend_agrees_with_the_monitor` |
 
 `manyvalued.degree_of` is not a fifth implementation but the reference interpreter at a different
-`A` (§5.3). [`language.md`](language.md) §4 reports four shapes on which the rtamt rendering and
+`A` (§5.3). [`theory/03-semantics.md`](theory/03-semantics.md) Remark 3.1 reports four shapes on which the rtamt rendering and
 this denotation part company; three are refused in the rendering and the fourth is a boundary
 convention.
 
@@ -877,7 +877,7 @@ present, and a duty wanting more than presence has to say so with `contains()`.
 ### 6.2 `observed`
 
 > **satisfied at `observed`:** `⟦spec⟧^tr(σ)` is `T` over the trace it was given — the finite-trace
-> clauses of [`language.md`](language.md) §2.8, evaluated in the Kleene chain that document's §2.12
+> clauses of [`theory/03-semantics.md`](theory/03-semantics.md) Definition 3.8, evaluated in the Kleene chain that document's Definition 3.11
 > defines — where position *t* is the record at index *t* (`test_temporal_satisfied`).
 >
 > **violated at `observed`:** `⟦spec⟧` is `F` at at least one position, and the result names
@@ -1144,7 +1144,7 @@ installed procedure answers a satisfiability question and exposes no monitor con
 distinction `[@bauer-2011]` draws between *satisfied on this prefix* and *satisfied on every
 extension* is reported unavailable rather than synthesised. That is a different third value from the
 `U` of the Kleene chain the reference interpreter evaluates in — ignorance about a *record*, not
-truncation of a *trace* — and [`language.md`](language.md) §2.12 states why the two must not be read
+truncation of a *trace* — and [`theory/03-semantics.md`](theory/03-semantics.md) Definition 3.11 states why the two must not be read
 as one. BLACK was priced
 against `flloat` `[@flloat]`, the previous backend, which is pure Python on PyPI but has no past
 operators and an exponential powerset DFA construction; BLACK publishes no wheel, so the extra is a

@@ -1,7 +1,7 @@
-"""Conformance tests for `docs/language.md`: the grammar, and the monitor's reading of it.
+"""Conformance tests for `docs/theory/02-syntax.md`: the grammar, and the monitor's reading of it.
 
 What this module is for:
-  `docs/language.md` defines the property language — a grammar, a denotation, and four
+  `docs/theory/02-syntax.md` defines the property language — a grammar, a denotation, and four
   implementations of that denotation. A grammar nothing generates from is a comment, and a
   denotation nothing executes is prose with notation in it. This module is what makes both
   checkable:
@@ -30,8 +30,8 @@ What a reader must not break:
     `test_rtamt_still_behaves_the_way_the_refusals_assume` measures that rather than trusting it.
     Why this matters: the `%` defect existed because rtamt error-recovered instead of raising, and a
     version bump could do the same for another construct with nothing to notice it.
-  - The refusal table is keyed by the ids `docs/language.md` §1.7 uses. Renaming one there without
-    renaming it here fails, which is the point.
+  - The refusal table is keyed by the ids `docs/theory/02-syntax.md` Definition 2.5 uses.
+    Renaming one there without renaming it here fails, which is the point.
 """
 
 from __future__ import annotations
@@ -74,7 +74,9 @@ from reasonsmith.verdict import Verdict
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = REPO_ROOT / "tests"
-LANGUAGE_DOC = REPO_ROOT / "docs" / "language.md"
+SYNTAX_DOC = REPO_ROOT / "docs" / "theory" / "02-syntax.md"
+SEMANTICS_DOC = REPO_ROOT / "docs" / "theory" / "03-semantics.md"
+CLAIM_MAP_DOC = REPO_ROOT / "docs" / "theory" / "claim-map.md"
 
 #: A `test_...` identifier as the document writes them. A name followed by `.py` is a module the
 #: document points at, not a claim's enforcing test. Same convention as `test_docs_semantics.py`.
@@ -85,8 +87,18 @@ _GRAMMAR_KEYWORDS = frozenset({"not", "and", "or", "True", "False", "None"})
 
 
 def _document() -> str:
-    assert LANGUAGE_DOC.is_file(), f"{LANGUAGE_DOC} does not exist"
-    return LANGUAGE_DOC.read_text(encoding="utf-8")
+    assert SYNTAX_DOC.is_file(), f"{SYNTAX_DOC} does not exist"
+    return SYNTAX_DOC.read_text(encoding="utf-8")
+
+
+def _semantics_document() -> str:
+    assert SEMANTICS_DOC.is_file(), f"{SEMANTICS_DOC} does not exist"
+    return SEMANTICS_DOC.read_text(encoding="utf-8")
+
+
+def _claim_map() -> str:
+    assert CLAIM_MAP_DOC.is_file(), f"{CLAIM_MAP_DOC} does not exist"
+    return CLAIM_MAP_DOC.read_text(encoding="utf-8")
 
 
 def _ebnf_block() -> str:
@@ -122,7 +134,7 @@ def test_the_grammar_names_exactly_the_calls_the_language_defines():
 
     defined = _language_call_names()
     assert named == defined, (
-        "docs/language.md §1.2 and rulelang disagree about the call set. "
+        "docs/theory/02-syntax.md Definition 2.2 and rulelang disagree about the call set. "
         f"only in the grammar: {sorted(named - defined)}; "
         f"only in the language: {sorted(defined - named)}"
     )
@@ -267,7 +279,8 @@ def test_every_spec_the_grammar_generates_is_accepted(production: str, data) -> 
 
 # --- the refusals ------------------------------------------------------------------------------
 
-#: One witness per row of `docs/language.md` §1.7, keyed by the id that table uses.
+#: One witness per row of `docs/theory/02-syntax.md` Definition 2.5, keyed by the id
+#: that table uses.
 #:
 #: `classify_fragment` is the entry point for every row rather than `parse_property`, because it
 #: runs the whole gate: the rewriter, the parse, the whitelist walk, and — for a formula reaching
@@ -462,7 +475,8 @@ MONITOR_CORPUS = (
 
 MONITOR_VALUES = (-2.0, 0.0, 0.5, 1.0, 2.0, 3.0)
 
-#: The four shapes `docs/language.md` §4 names, with the witness it quotes for each and what the
+#: The four shapes `docs/theory/03-semantics.md` Remark 3.1 names, with the witness it quotes
+#: for each and what the
 #: `observed` implementation now does with it. Rows 1-3 are shapes rtamt reads under a different
 #: semantics from §2's, and are *refused in the rendering*, so a duty using one is reported not
 #: evaluated rather than answered; row 4 is the boundary convention, which is not a defect and was
@@ -561,7 +575,7 @@ def test_the_four_named_shapes_are_still_what_the_document_records(
 
 def test_the_divergences_are_the_ones_the_document_reports():
     """§4 quotes a witness per row; a divergence found here and not reported there is hidden."""
-    document = _document()
+    document = _semantics_document()
     assert len(MONITOR_DIVERGENCES) == 4
     for _, spec, _, _ in MONITOR_DIVERGENCES[:3]:
         assert spec in document, spec
@@ -786,7 +800,11 @@ def test_every_test_named_in_the_language_doc_exists():
     for the same reason: a claim whose enforcing test has been renamed away is a claim nothing
     checks.
     """
-    named = set(_TEST_NAME.findall(_document()))
+    named = set(
+        _TEST_NAME.findall(_document())
+        + _TEST_NAME.findall(_semantics_document())
+        + _TEST_NAME.findall(_claim_map())
+    )
     assert named, "the document names no test, so nothing in it is enforced"
 
     defined: set[str] = set()
@@ -800,7 +818,7 @@ def test_every_test_named_in_the_language_doc_exists():
 
     missing = sorted(named - defined)
     assert not missing, (
-        "docs/language.md names test(s) that do not exist in tests/: "
+        "theory chapters name test(s) that do not exist in tests/: "
         + ", ".join(missing)
         + ". Rename the claim's test back, or cut the claim."
     )
@@ -808,5 +826,7 @@ def test_every_test_named_in_the_language_doc_exists():
 
 def test_the_language_doc_is_linked_from_the_documentation_index():
     """A definition nobody can find is a definition nobody checks against."""
-    assert "language.md" in (REPO_ROOT / "docs" / "README.md").read_text(encoding="utf-8")
-    assert "language.md" in (REPO_ROOT / "docs" / "semantics.md").read_text(encoding="utf-8")
+    assert "theory/02-syntax.md" in (REPO_ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "theory/02-syntax.md" in (
+        REPO_ROOT / "docs" / "semantics.md"
+    ).read_text(encoding="utf-8")
