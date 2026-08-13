@@ -2,7 +2,9 @@ version: 2
 updates:
   # One pull request a week per ecosystem for everything below a major, rather than one per
   # dependency: a solo maintainer reviews the batch, and a major still arrives on its own.
-  - package-ecosystem: uv
+  # `pip`, not `uv`: .gitignore excludes uv.lock, so pyproject.toml is the only Python manifest in
+  # the tree — and it is the one `pip install -e ".[dev]"` resolves from in ci.yml and publish.yml.
+  - package-ecosystem: pip
     directory: /
     schedule:
       interval: weekly
