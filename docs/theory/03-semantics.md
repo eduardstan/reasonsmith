@@ -9,7 +9,7 @@ Monica, Muñoz-Velasco, Sciavicco & Stan, *Fuzzy Halpern and Shoham's interval t
 $\mathbf{A}$, the language denotes the partial map
 
 $$
-\llbracket\cdot\rrbracket_{\mathcal{M},\mathbf{A}} : \mathsf{Spec} \to
+[\![\cdot]\!]_{\mathcal{M},\mathbf{A}} : \mathsf{Spec} \to
 (\mathcal{P}(\mathrm{Trace}_M) \mathrel{\rightharpoonup} A).
 $$
 
@@ -47,7 +47,7 @@ not interpreted, a value has the wrong sort, supplied evidence scores no atom, o
 `undetermined` occurs. Undefinedness is not ordinary strict propagation. The insensitivity rule is:
 
 $$
-\llbracket\varphi\rrbracket \text{ is defined exactly when its value is the same for every
+[\![\varphi]\!] \text{ is defined exactly when its value is the same for every
 value in } A \text{ that undefined subformulas could take.}
 $$
 
@@ -56,7 +56,7 @@ $0 \otimes x = 0$ for every $x$ in the shipped algebras. The reference interpret
 such a case by short-circuiting; a strict encoding may instead return $\uparrow$.
 
 **Definition 3.5 (state formulas).** At one record, a state formula has value
-$\llbracket\varphi\rrbracket^{\mathrm{rec}}_{\mathcal{M},\mathbf{A}}(r) \in A$. The atom
+$[\![\varphi]\!]^{\mathrm{rec}}_{\mathcal{M},\mathbf{A}}(r) \in A$. The atom
 rows are:
 
 | Formula | Value |
@@ -76,11 +76,11 @@ constant for the run and is not read from the record.
 
 | Formula | Denotation |
 |---|---|
-| `not` $\varphi$ | $\neg\llbracket\varphi\rrbracket$ |
-| $\varphi$ `and` $\psi$ | $\llbracket\varphi\rrbracket \otimes \llbracket\psi\rrbracket$ |
-| $\varphi$ `or` $\psi$ | $\llbracket\varphi\rrbracket \oplus \llbracket\psi\rrbracket$ |
-| implication | $\llbracket\varphi\rrbracket \to \llbracket\psi\rrbracket$ |
-| equivalence | $(\llbracket\varphi\rrbracket \to \llbracket\psi\rrbracket) \otimes (\llbracket\psi\rrbracket \to \llbracket\varphi\rrbracket)$ |
+| `not` $\varphi$ | $\neg[\![\varphi]\!]$ |
+| $\varphi$ `and` $\psi$ | $[\![\varphi]\!] \otimes [\![\psi]\!]$ |
+| $\varphi$ `or` $\psi$ | $[\![\varphi]\!] \oplus [\![\psi]\!]$ |
+| implication | $[\![\varphi]\!] \to [\![\psi]\!]$ |
+| equivalence | $([\![\varphi]\!] \to [\![\psi]\!]) \otimes ([\![\psi]\!] \to [\![\varphi]\!])$ |
 
 Here $\oplus$ is the explicit `Algebra.disjunction` component, dual to $\otimes$ under the
 standard negation $1-x$. It is not derived through the algebra's own $\neg$. By contrast,
@@ -92,11 +92,11 @@ $\mathbb{B}$ the distinctions coincide extensionally.
 formula is evaluated by
 
 $$
-\llbracket\varphi\rrbracket^{\mathrm{tr}}(\sigma) =
-\bigwedge_{i < n} \llbracket\varphi\rrbracket^{\mathrm{rec}}(r_i),
+[\![\varphi]\!]^{\mathrm{tr}}(\sigma) =
+\bigwedge_{i < n} [\![\varphi]\!]^{\mathrm{rec}}(r_i),
 \qquad
-\llbracket\varphi\rrbracket^{\mathrm{set}}(T) =
-\bigwedge_{\sigma \in T} \llbracket\varphi\rrbracket^{\mathrm{tr}}(\sigma).
+[\![\varphi]\!]^{\mathrm{set}}(T) =
+\bigwedge_{\sigma \in T} [\![\varphi]\!]^{\mathrm{tr}}(\sigma).
 $$
 
 The aggregation is lattice infimum, that is, $\sqcap$, not $\otimes$. A temporal formula is
@@ -112,14 +112,14 @@ position clauses are:
 
 $$
 \begin{aligned}
-\llbracket\text{always}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \bigwedge_{i \le j < n} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,j), \
-\llbracket\text{eventually}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \bigvee_{i \le j < n} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,j), \
-\llbracket\text{next}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i+1),&i+1<n,\\1,&i=n-1,\end{cases} \
-\llbracket\text{prev}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i-1),&i>0,\\1,&i=0,\end{cases}.
+[\![\text{always}(\varphi)]\!]^{\mathrm{pos}}(\sigma,i)
+  &= \bigwedge_{i \le j < n} [\![\varphi]\!]^{\mathrm{pos}}(\sigma,j), \
+[\![\text{eventually}(\varphi)]\!]^{\mathrm{pos}}(\sigma,i)
+  &= \bigvee_{i \le j < n} [\![\varphi]\!]^{\mathrm{pos}}(\sigma,j), \
+[\![\text{next}(\varphi)]\!]^{\mathrm{pos}}(\sigma,i)
+  &= \begin{cases}[\![\varphi]\!]^{\mathrm{pos}}(\sigma,i+1),&i+1<n,\\1,&i=n-1,\end{cases} \
+[\![\text{prev}(\varphi)]\!]^{\mathrm{pos}}(\sigma,i)
+  &= \begin{cases}[\![\varphi]\!]^{\mathrm{pos}}(\sigma,i-1),&i>0,\\1,&i=0,\end{cases}.
 \end{aligned}
 $$
 
@@ -127,31 +127,31 @@ The remaining clauses are
 
 $$
 \begin{aligned}
-\llbracket\text{historically}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \bigwedge_{0 \le j \le i} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,j), \
-\llbracket\text{once}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \bigvee_{0 \le j \le i} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,j), \
-\llbracket\text{rise}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,0),&i=0,\\
-    \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i) \otimes \neg\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i-1),&i>0,\end{cases} \
-\llbracket\text{fall}(\varphi)\rrbracket^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}\neg\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,0),&i=0,\\
-    \neg\llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i) \otimes \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
+[\![\text{historically}(\varphi)]\!]^{\mathrm{pos}}(\sigma,i)
+  &= \bigwedge_{0 \le j \le i} [\![\varphi]\!]^{\mathrm{pos}}(\sigma,j), \
+[\![\text{once}(\varphi)]\!]^{\mathrm{pos}}(\sigma,i)
+  &= \bigvee_{0 \le j \le i} [\![\varphi]\!]^{\mathrm{pos}}(\sigma,j), \
+[\![\text{rise}(\varphi)]\!]^{\mathrm{pos}}(\sigma,i)
+  &= \begin{cases}[\![\varphi]\!]^{\mathrm{pos}}(\sigma,0),&i=0,\\
+    [\![\varphi]\!]^{\mathrm{pos}}(\sigma,i) \otimes \neg[\![\varphi]\!]^{\mathrm{pos}}(\sigma,i-1),&i>0,\end{cases} \
+[\![\text{fall}(\varphi)]\!]^{\mathrm{pos}}(\sigma,i)
+  &= \begin{cases}\neg[\![\varphi]\!]^{\mathrm{pos}}(\sigma,0),&i=0,\\
+    \neg[\![\varphi]\!]^{\mathrm{pos}}(\sigma,i) \otimes [\![\varphi]\!]^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
 \end{aligned}
 $$
 
 For the binary operators:
 
 $$
-\llbracket\text{until}(\varphi,\psi)\rrbracket^{\mathrm{pos}}(\sigma,i)
- = \bigvee_{i \le j < n} \left(\llbracket\psi\rrbracket^{\mathrm{pos}}(\sigma,j) \otimes
-   \bigwedge_{i \le k < j} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,k)\right),
+[\![\text{until}(\varphi,\psi)]\!]^{\mathrm{pos}}(\sigma,i)
+ = \bigvee_{i \le j < n} ([\![\psi]\!]^{\mathrm{pos}}(\sigma,j) \otimes
+   \bigwedge_{i \le k < j} [\![\varphi]\!]^{\mathrm{pos}}(\sigma,k)),
 $$
 
 $$
-\llbracket\text{since}(\varphi,\psi)\rrbracket^{\mathrm{pos}}(\sigma,i)
- = \bigvee_{0 \le j \le i} \left(\llbracket\psi\rrbracket^{\mathrm{pos}}(\sigma,j) \otimes
-   \bigwedge_{j < k \le i} \llbracket\varphi\rrbracket^{\mathrm{pos}}(\sigma,k)\right).
+[\![\text{since}(\varphi,\psi)]\!]^{\mathrm{pos}}(\sigma,i)
+ = \bigvee_{0 \le j \le i} ([\![\psi]\!]^{\mathrm{pos}}(\sigma,j) \otimes
+   \bigwedge_{j < k \le i} [\![\varphi]\!]^{\mathrm{pos}}(\sigma,k)).
 $$
 
 The trace value of a temporal formula is its position-zero value. The strong and weak boundary distinction is the standard distinction for previous operators `[@manna-1992]`. The runtime interpreter uses the
@@ -169,7 +169,7 @@ records arising from admissible inputs, agreeing on every input except $p$, has 
 $o$:
 
 $$
-\llbracket\text{counterfactually\_invariant}(o,p)\rrbracket^{\mathrm{set}}_{D(L)}(T)=1
+[\![\text{counterfactually\_invariant}(o,p)]\!]^{\mathrm{set}}_{D(L)}(T)=1
 \quad\text{exactly when}
 \quad r(o)=r'(o)
 $$
@@ -188,9 +188,9 @@ not satisfied.
 when an infimum ranges over no elements. This package deliberately narrows that point:
 
 $$
-\llbracket\varphi\rrbracket^{\mathrm{set}}(\emptyset)=\uparrow,
+[\![\varphi]\!]^{\mathrm{set}}(\emptyset)=\uparrow,
 \qquad
-\llbracket\varphi\rrbracket^{\mathrm{tr}}(\varepsilon)=\uparrow.
+[\![\varphi]\!]^{\mathrm{tr}}(\varepsilon)=\uparrow.
 $$
 
 An empty log is not evaluated, and combining zero verdicts is `inconclusive`, not vacuously
@@ -234,7 +234,7 @@ infimum of the per-record degrees:
 
 $$
 \mathrm{degree}(\sigma,\varphi) =
-\bigwedge_{i < n} \llbracket\varphi\rrbracket^{\mathrm{rec}}(r_i).
+\bigwedge_{i < n} [\![\varphi]\!]^{\mathrm{rec}}(r_i).
 $$
 
 An empty trace has no degree. A degree is a measurement, not a verdict or a fraction of a proof;

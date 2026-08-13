@@ -185,7 +185,7 @@ no `RequirementResult`, occupies no rung, and is read by no requirement.
 `spec.CLAIMED_SEMANTICS`. The claim made by an artefact is
 
 $$
-(C)\qquad E(\beta')=\llbracket\Pi,\beta',q\rrbracket_S
+(C)\qquad E(\beta')=[\![\Pi,\beta',q]\!]_S
 $$
 
 for every interpretation `β'` in the product of fact probabilities. The vocabulary admits the
