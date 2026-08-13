@@ -7,27 +7,27 @@ system's own engine, and its exact side is the artefact's exact inference.
 
 ## 7.1 Setting and perturbations
 
-Fix one decision and an artefact with fact set `F`, base interpretation `β`, query `q`, reason
-family `\mathcal{R}`, and tolerance `tol` (the default is `1e-9`). Write
+Fix one decision and an artefact with fact set $F$, base interpretation $\beta$, query $q$, reason
+family $\mathcal{R}$, and tolerance `tol` (the default is `1e-9`). Write
 
 $$
 \mathcal{R}=\{u_1,\dots,u_n\},\qquad u_i\subseteq F,\qquad
 F_q=\bigcup_i u_i,
 $$
 
-and let `φ_q` be the disjunction of conjunctions whose supports are the `u_i`. The artefact's
-exact inference is `V(β)`; the audited engine's answer is `E(β)`. Both are evaluated on the same
+and let $\varphi_q$ be the disjunction of conjunctions whose supports are the `u_i`. The artefact's
+exact inference is $V(\beta)$; the audited engine's answer is $E(\beta)$. Both are evaluated on the same
 program and interpretation. The engine is a black box here, except for the monotonicity
  declaration required by Definition 7.7.
 
-**Definition 7.1 (deletion lattice).** For `S\subseteq F_q`, let `β[S↦0]` be `β` with every fact in
+**Definition 7.1 (deletion lattice).** For $S\subseteq F_q$, let $\beta[S\mapsto0]$ be $\beta$ with every fact in
 `S` assigned probability zero. The deletion lattice is
 
 $$
 \mathbb{L}(\beta)=\{\beta[S\mapsto0]:S\subseteq F_q\},
 $$
 
-ordered by inclusion of deletion subsets, with `β` at its top. This is the whole perturbation
+ordered by inclusion of deletion subsets, with $\beta$ at its top. This is the whole perturbation
 space used by this chapter. The optional `at(fact, probability)` surface is not read by any
 statement below.
 
@@ -50,24 +50,24 @@ One evaluation of `MOVED` is one engine probe and is the unit counted by the bud
 
 ## 7.2 Sufficiency and the two explanation families
 
-**Definition 7.3 (deletion-sufficient set).** A set `S\subseteq F_q` is sufficient for the engine's
-answer at `β` when every deletion subset contained in `F_q\setminus S` is not moved. Holding `S`
+**Definition 7.3 (deletion-sufficient set).** A set $S\subseteq F_q$ is sufficient for the engine's
+answer at $\beta$ when every deletion subset contained in $F_q\setminus S$ is not moved. Holding $S$
 on, nothing outside `S` can be deleted without changing the answer.
 
 **Definition 7.4 (AXp).** An abductive explanation (AXp) is a sufficient set with no proper
 sufficient subset.
 
-**Definition 7.5 (CXp).** A set `C\subseteq F_q` is contrastive when `MOVED(C)` holds. A CXp is a
+**Definition 7.5 (CXp).** A set $C\subseteq F_q$ is contrastive when `MOVED(C)` holds. A CXp is a
 contrastive set with no proper contrastive subset. A singleton CXp is exactly what a per-fact probe
 can see; a larger CXp is a joint necessity that such a probe can miss.
 
-**Definition 7.6 (relevance).** A fact `a\in F_q` is relevant when it belongs to some AXp, and is
+**Definition 7.6 (relevance).** A fact $a\in F_q$ is relevant when it belongs to some AXp, and is
 irrelevant otherwise.
 
 These definitions specialise the abductive/contrastive explanation vocabulary to the deletion
 lattice and replace preservation of a classifier label with preservation of the engine's answer
 within `tol` (`[@ignatiev-2019]`, `[@darwiche-2020]`, `[@shih-2018]`). They are weaker than a
-feature-space definition: this chapter quantifies only over `\mathbb{L}(\beta)`.
+feature-space definition: this chapter quantifies only over $\mathbb{L}(\beta)$.
 
 ## 7.3 Monotonicity and duality
 
@@ -75,22 +75,22 @@ The artefact declares whether its inference is monotone in its facts. This is on
 without it, a retracted reason and a deleted reason are indistinguishable to the one-directional
 probe.
 
-**Lemma 7.7 (upward closure).** If `MOVED(S)` and `S\subseteq T`, then `MOVED(T)`.
+**Lemma 7.7 (upward closure).** If $\mathrm{MOVED}(S)$ and $S\subseteq T$, then $\mathrm{MOVED}(T)$.
 
 Under the declaration, deletion cannot increase the engine's answer:
-`E(β[T↦0])\le E(β[S↦0])\le E(β)`. The definition of `MOVED(S)` therefore gives `MOVED(T)`.
+$E(\beta[T\mapsto0])\le E(\beta[S\mapsto0])\le E(\beta)$. The definition of $\mathrm{MOVED}(S)$ therefore gives $\mathrm{MOVED}(T)$.
 
-**Lemma 7.8 (hitting-set condition).** A set `S` is sufficient if and only if `F_q\setminus S` is
-not moved, if and only if it contains no CXp, if and only if `S` intersects every CXp.
+**Lemma 7.8 (hitting-set condition).** A set $S$ is sufficient if and only if $F_q\setminus S$ is
+not moved, if and only if it contains no CXp, if and only if $S$ intersects every CXp.
 
-The first equivalence is Definition 7.3 at `F_q\setminus S`; the remaining equivalence uses
+The first equivalence is Definition 7.3 at $F_q\setminus S$; the remaining equivalence uses
 Lemma 7.7.
 
 **Theorem 7.9 (minimal-hitting-set duality).** The AXps are exactly the minimal hitting sets of the
 CXps, and the CXps are exactly the minimal hitting sets of the AXps.
 
 This is Reiter's minimal-hitting-set duality between conflicts and diagnoses, specialised here by
-Lemma 7.8 to `\mathbb{L}(\beta)` (`[@reiter-1987]`, `[@ignatiev-2020]`).
+Lemma 7.8 to $\mathbb{L}(\beta)$ (`[@reiter-1987]`, `[@ignatiev-2020]`).
 
 **Corollary 7.10 (union).**
 
@@ -100,21 +100,21 @@ $$
 
 A fact is relevant exactly when it belongs to some CXp.
 
-**Corollary 7.11 (singleton pruning).** If `MOVED(\{a\})`, then `a` belongs to no CXp of size greater
+**Corollary 7.11 (singleton pruning).** If $\mathrm{MOVED}(\{a\})$, then $a$ belongs to no CXp of size greater
 than one, because a minimal contrastive set cannot properly contain that singleton.
 
-**Corollary 7.12 (short circuit).** If `MOVED(F_q)` does not hold, there is no CXp, every fact is
+**Corollary 7.12 (short circuit).** If $\mathrm{MOVED}(F_q)$ does not hold, there is no CXp, every fact is
 irrelevant, and the empty set is the unique AXp. One probe settles the decision.
 
 ## 7.4 Reasons rather than facts
 
-**Definition 7.13 (live reason).** A reason `u_i\in\mathcal{R}` is live when some fact of `u_i` that
-no other member of `\mathcal{R}` uses is relevant. A shared relevant fact establishes dependence on
+**Definition 7.13 (live reason).** A reason $u_i\in\mathcal{R}$ is live when some fact of `u_i` that
+no other member of $\mathcal{R}$ uses is relevant. A shared relevant fact establishes dependence on
 the fact but cannot attribute that dependence to one of the reasons that carries it.
 
-**Definition 7.14 (deleted reason).** A reason `u_i\in\mathcal{R}` is deleted when no fact of `u_i`,
+**Definition 7.14 (deleted reason).** A reason $u_i\in\mathcal{R}$ is deleted when no fact of $u_i$,
 private or shared, is relevant. In that case no CXp meets `u_i`, so Lemma 7.8 makes
-`F_q\setminus u_i` sufficient throughout `\mathbb{L}(\beta)` (`test_the_reason_the_engine_really_ignores_is_still_reported_deleted`).
+$F_q\setminus u_i$ sufficient throughout $\mathbb{L}(\beta)$ (`test_the_reason_the_engine_really_ignores_is_still_reported_deleted`).
 
 **Definition 7.15 (undetermined reason).** A reason is undetermined when it is neither live nor shown
 deleted: the CXp enumeration did not terminate within budget, or its only relevant facts are shared.
@@ -181,7 +181,7 @@ undetermined. Thus a partial enumeration reports fewer missing reasons, never mo
 The explanation certificate and the semantic-law measurement are distinct. `semantic_laws` returns
 no `RequirementResult`, occupies no rung, and is read by no requirement.
 
-**Definition 7.18 (claimed semantics).** Let `S` be a member of the closed vocabulary
+**Definition 7.18 (claimed semantics).** Let $S$ be a member of the closed vocabulary
 `spec.CLAIMED_SEMANTICS`. The claim made by an artefact is
 
 $$
@@ -192,7 +192,7 @@ for every interpretation `β'` in the product of fact probabilities. The vocabul
 claim; this tool does not establish it.
 
 For the one semantics with laws, the right side is the distribution-semantics exact probability.
-For each `a\in F_q`, the measured laws are
+For each $a\in F_q$, the measured laws are
 
 $$
 \mathrm{L2}\qquad E(\beta)=\beta(a)E(\beta[a\mapsto1])+(1-\beta(a))E(\beta[a\mapsto0]),
@@ -202,9 +202,9 @@ $$
 \mathrm{L3}\qquad E(\beta[a\mapsto0])\le E(\beta)\le E(\beta[a\mapsto1]).
 $$
 
-**Proposition 7.19 (law refutation).** If (C) holds, L2 and L3 hold at every fact `a\in F_q`.
+**Proposition 7.19 (law refutation).** If (C) holds, L2 and L3 hold at every fact $a\in F_q$.
 Therefore a measured violation of either law refutes (C). L2 follows from the affine decomposition of
-an independent fact probability; L3 follows from the positive-literal formula `φ_q`.
+an independent fact probability; L3 follows from the positive-literal formula $\varphi_q$.
 
 Non-refutation is not agreement. The laws move one fact at a time, so they do not find a disagreement
 requiring two facts to move together. A vocabulary member for which this tool has no law is not

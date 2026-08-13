@@ -23,6 +23,7 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $\mathbb{L}(\beta)$ | `L(beta)` | deletion lattice | Lattice of deletions of the fact set for interpretation $\beta$. | 07 Explanation | `explanations.contrastive_sets` |
 | $D(L)$ | `D(L)` | input space | Declaration model and its input space. | 01 Models | `engines.proved.encode_logic_domain` |
 | $\mathrm{Dom}$ | `Dom` | set | Declared decision-domain set. | 01 Models | `report._inapplicability` |
+| $\setminus$ | `setminus` | binary operation | Set difference in explanation subsets. | 07 Explanation | `explanations.contrastive_sets` |
 | $S \subseteq F$ | `S subset F` | subset | A deletion subset and the AXp/sufficient set. | 07 Explanation | `artifacts.InferenceArtifact.without` |
 | $u_i \subseteq F$ | `u_i subset F` | subset | One reason's facts. | 07 Explanation | `explanations.contrastive_sets` |
 | $\mathcal{R} = \{u_1, \dots, u_n\}$ | `reasons` | family of subsets | Family of reasons. | 07 Explanation | `artifacts.InferenceArtifact.reasons` |
