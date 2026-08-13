@@ -209,3 +209,33 @@ warrants are `test_the_four_named_shapes_are_still_what_the_document_records` an
 the strong Kleene chain $\mathsf{f} < \mathsf{u} < \mathsf{t}$ `[@kleene-1952]`. The unknown value is
 ignorance about a record, not truncation of a trace; supervaluation over completions is not part of
 this language `[@vanfraassen-1966]`.
+
+
+## 3.12 Graded state and trace readings
+
+A `degree(signal, predicate)` atom receives its value from the `manyvalued.Grading` supplied to
+`check_conformance`, not from the audited system or its trace. The grading names the authority,
+scale, and method that fixed the values. A missing score is $\uparrow$, not degree zero.
+
+Above a graded atom, conjunction, disjunction, implication, and equivalence use the declared
+residuated algebra. Equivalence is the derived biresiduum
+
+$$
+(\varphi \to \psi) \otimes (\psi \to \varphi).
+$$
+
+A graded atom under a comparison, arithmetic, or a temporal operator is refused at load: those
+shapes would introduce a threshold or a temporal many-valued semantics that this package does not
+claim. A formula with no graded atom remains two-valued, and the algebra parameter applies only to
+graded requirements.
+
+**Definition 3.12 (degree over a trace).** For a non-empty finite trace, the degree is the lattice
+infimum of the per-record degrees:
+
+$$
+\mathrm{degree}(\sigma,\varphi) =
+\bigwedge_{i < n} \llbracket\varphi\rrbracket^{\mathrm{rec}}(r_i).
+$$
+
+An empty trace has no degree. A degree is a measurement, not a verdict or a fraction of a proof;
+the result carries no `Strength`, and no threshold turns it into `satisfied`.

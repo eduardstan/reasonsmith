@@ -1,7 +1,7 @@
 """Subset-minimal sufficient reasons, over the deletions an inference artefact admits.
 
 What this module is for:
-  `docs/sufficient-reasons.md` is the definition and this is the measurement of it. The reason-
+  `theory/07-explanation.md` is the definition and this is the measurement of it. The reason-
   deletion certificate used to switch each reason off *alone*, which answers a question about single
   facts and reports an answer about reasons. Two reasons that are jointly necessary and individually
   removable defeat that: removing either alone leaves the engine's answer where it was, so both were
@@ -12,14 +12,14 @@ What this module is for:
   (AXp — `[@ignatiev-2019]`) and its
   contrastive dual (CXp), specialised to the one perturbation space this search ranges over — the
   *deletion lattice*, since it calls `without(fact)` and nothing else. That is a property of this
-  module and not a limit of the protocol any more; `docs/formal.md` §3.6 records the wider
+  module and not a limit of the protocol any more; `theory/07-explanation.md` §7.1 records the wider
   perturbation a family may offer and the fact that no definition here reads it.
   A **CXp** is a subset-minimal set of facts whose joint removal moves the engine's
   answer; an **AXp** is a subset-minimal set of facts whose retention holds it, and the two are
   minimal hitting sets of each other (Reiter 1987 — `[@reiter-1987]`; Ignatiev, Narodytska, Asher
   and Marques-Silva 2020 — `[@ignatiev-2020]`). A fact is **relevant** iff it lies in some CXp,
-  which is the same as lying in some AXp. `docs/sufficient-reasons.md` §4 carries the lemmas and
-  `docs/formal.md` §3 states them in the repository's one notation, with the bibliography.
+  which is the same as lying in some AXp. `theory/07-explanation.md` §4 carries the lemmas and
+  `theory/07-explanation.md` states them in the repository's one notation, with the bibliography.
 
   The enumeration is the seed/shrink/grow MARCO loop of Liffiton, Previti, Malik and
   Marques-Silva (`[@liffiton-2016]`),
@@ -62,7 +62,7 @@ from typing import Any, Callable
 __all__ = ["DEFAULT_PROBE_BUDGET", "DeletionSearch", "contrastive_sets"]
 
 #: Engine re-runs one decision's joint search may spend before it gives up and reports a partial
-#: enumeration. A whole-space probe settles a truncating engine in one (`docs/sufficient-reasons.md`
+#: enumeration. A whole-space probe settles a truncating engine in one (`theory/07-explanation.md`
 #: §4, Corollary 3), and the loop below costs on the order of `|space|` per contrastive set found,
 #: so this is generous for the artefacts this package ships and finite for the ones it does not.
 DEFAULT_PROBE_BUDGET = 256
@@ -133,7 +133,7 @@ def contrastive_sets(
     exhaustive = True
     if space:
         try:
-            # `docs/sufficient-reasons.md` §4, Corollary 3: if deleting everything does not move the
+            # `theory/07-explanation.md` §4, Corollary 3: if deleting everything does not move the
             # engine, upward closure says nothing does, so the enumeration is complete and empty.
             # This is the ordinary shape of a truncating engine and it costs one probe.
             if probe(space):

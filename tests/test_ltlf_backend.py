@@ -172,7 +172,7 @@ def test_black_non_empty_semantics_g_false_is_unsat():
 def test_pin_characteristic_formula_accepts_sigma_and_rejects_neighbors():
     """`L(pin(σ)) = {σ}`, asked of the solver rather than read off the formula's shape.
 
-    This is the behavioural half of `docs/formal.md` §6.11's proposition; the structural half —
+    This is the behavioural half of the LTLf proposition; the structural half —
     that each `λᵢ` is complete over `AP` — is
     `test_the_pinning_formula_states_every_atom_at_every_position`, which needs no solver and so
     runs on a machine without the extra. **Every** trace one Hamming step from σ is asked, not a

@@ -63,3 +63,15 @@ claim is paired with the test that enforces it; chapter prose remains mathematic
 | An ignored reason is deleted only when the measured explanation is complete, while shared or unresolved facts remain non-deleted | `test_the_reason_the_engine_really_ignores_is_still_reported_deleted`, `test_a_reason_the_probe_cannot_separate_is_never_promoted_to_deleted` |
 | The deletion probe carries its budget and does not reach the widened perturbation surface | `test_the_certificate_verdict_carries_its_probe_budget`, `test_the_deletion_probe_never_reaches_the_widened_perturbation` |
 | Claimed semantics laws are measurements that can refute but cannot certify the claim | `test_the_battery_refutes_every_deviating_provenance_and_never_the_exact_one`, `test_neither_one_directional_variant_refutes_a_top_k_engine` |
+
+
+## Chapter 8 — Evidence
+
+| Claim | Test |
+|---|---|
+| Strength is the strict chain defined by `Strength`, and `None` is not a rung | `test_strength_lattice_ordering`, `test_strength_comparison_rejects_foreign_types`, `test_result_cannot_claim_more_than_its_evidence` |
+| Evidence basis is unordered, derived from the duty, and cannot carry a disallowed rung | `test_the_evidence_bases_are_not_ordered`, `test_a_basis_is_never_compared_against_a_strength`, `test_the_basis_is_derived_from_the_duty_and_never_declared`, `test_a_result_cannot_carry_a_rung_its_basis_does_not_admit` |
+| `BASIS_RUNGS` is the admissibility relation and its rows agree with the engine ladders | `test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach`, `test_every_basis_admits_unattainable_so_the_capability_gate_is_never_bypassed` |
+| Recounted evidence is an artifact rung, not a fifth basis | `test_a_recounted_reason_set_reports_one_rung_below_an_enumerated_one`, `test_a_recounted_reason_set_cannot_be_reported_at_the_enumerated_rung` |
+| Grading is third-party evidence, uses the trace infimum, and does not become a verdict | `test_each_algebra_is_a_residuated_lattice_on_the_grid`, `test_the_three_algebras_disagree_about_a_conjunction_of_two_halves`, `test_the_degree_of_a_trace_is_the_infimum_of_its_records`, `test_a_grading_must_state_who_fixed_the_scale`, `test_a_result_carrying_a_degree_cannot_carry_a_strength` |
+| Open-texture and graded shapes refuse unsupported readings rather than guessing | `test_an_ungraded_atom_is_not_evaluated_and_never_a_degree_of_zero`, `test_a_graded_atom_under_a_temporal_operator_is_refused_at_load`, `test_a_graded_atom_under_arithmetic_or_a_comparison_is_refused`, `test_an_assessment_duty_reaches_no_engine_at_all` |

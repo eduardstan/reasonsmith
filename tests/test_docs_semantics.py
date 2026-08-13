@@ -28,6 +28,8 @@ from reasonsmith.verdict import Strength
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = REPO_ROOT / "tests"
 SEMANTICS = REPO_ROOT / "docs" / "semantics.md"
+THEORY_DIR = REPO_ROOT / "docs" / "theory"
+EVIDENCE = THEORY_DIR / "08-evidence.md"
 
 #: A `test_...` identifier as the document writes them, in backticks or bare. A name followed by
 #: `.py` is a module the document is pointing at, not a claim's enforcing test.
@@ -37,6 +39,10 @@ _TEST_NAME = re.compile(r"\btest_[a-z0-9_]+\b(?!\.py)")
 def _document() -> str:
     assert SEMANTICS.is_file(), f"{SEMANTICS} does not exist"
     return SEMANTICS.read_text(encoding="utf-8")
+
+
+def _theory_documents() -> list[Path]:
+    return [SEMANTICS, *sorted(THEORY_DIR.glob("*.md"))]
 
 
 def _defined_test_names() -> set[str]:
@@ -66,7 +72,11 @@ def test_semantics_doc_is_linked_from_the_readmes():
 
 def test_every_test_named_in_the_semantics_doc_exists():
     """The claim-to-test map is the document's warrant; a dangling name voids it."""
-    named = set(_TEST_NAME.findall(_document()))
+    named = {
+        name
+        for path in _theory_documents()
+        for name in _TEST_NAME.findall(path.read_text(encoding="utf-8"))
+    }
     assert named, "the document names no test, so nothing in it is enforced"
 
     defined = _defined_test_names()
@@ -82,7 +92,7 @@ def test_semantics_doc_states_the_lattice_the_code_defines():
     """The document's ordering sentence is generated from `Strength`, not written from memory."""
     ladder = " < ".join(s.value for s in sorted(Strength))
     assert ladder == "unattainable < observed < recounted < probed < proved"
-    assert ladder in _document()
+    assert ladder in EVIDENCE.read_text(encoding="utf-8")
 
 
 def test_the_four_unresolved_outcomes_are_four_distinct_report_categories():

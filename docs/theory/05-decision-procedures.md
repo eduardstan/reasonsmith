@@ -84,7 +84,7 @@ procedure's evidence includes `test_the_ltlf_backend_agrees_with_the_monitor`,
 
 `explanations.contrastive_sets` runs MARCO's seed/shrink/grow loop. Z3 is the oracle over the subset
 lattice, and the system's engine is the membership oracle. This is the deletion-lattice formalism,
-not a proof rung; its definitions and certificate consequences are retained in the pending section
+not a proof rung; its definitions and certificate consequences are retained in the theory/07-explanation.md
 of `theory/07-explanation.md`.
 
 > **Proposition 5.5 (MARCO enumeration).** Under the declared monotonicity premise, every contrastive
@@ -120,3 +120,5 @@ conformance evidence is `test_the_pinning_formula_states_every_atom_at_every_pos
 The proposition concerns the formula built by `ltlf.py`, not a monitor. BLACK uses non-empty traces;
 the empty trace is refused before the solver is asked, so the construction does not restore the
 empty-trace top value excluded by Definition 3.10.
+
+The optional finite-trace analysis keeps the three-valued runtime-verification distinction unavailable rather than synthesising it `[@bauer-2011]`.

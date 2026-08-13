@@ -213,7 +213,7 @@ found a handle on it. The intake stays the Discussion
 `claimed_semantics` from the system's own answers alone, with no reference implementation anywhere
 in the loop, and does it for every one of the four `nesyarena` provenances that deviates from what
 it claims while refuting the exact one on nothing. It needed a perturbation the artefact protocol
-refused in writing, so [`docs/formal.md`](docs/formal.md) §3.6 records that reversal and §3.7 states
+refused in writing, so [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §3.6 records that reversal and §3.7 states
 the soundness of what replaced it. This remains a measurement rather than a verdict: no requirement
 reads a semantic-law refutation, and it neither widens the one artefact family the duty above can
 reach nor establishes a semantics claim. `claimed_semantics` is now a name from the closed

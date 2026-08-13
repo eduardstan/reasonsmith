@@ -557,8 +557,9 @@ def test_a_replay_that_did_exhaust_the_admitted_values_says_so():
 #
 # The two rungs do not range over the same object — the proof quantifies over the declared rules on
 # the declared input space, the replay runs the implementation on the logged cases — so a
-# disagreement eliminates a disjunction rather than impeaching a rung. `docs/formal.md` §6.6 states
-# the claim and its contrapositive; these are its witnesses, one per direction.
+# disagreement eliminates a disjunction rather than impeaching a rung. The
+# counterfactual decision-problem chapter states the claim and its
+# contrapositive; these are its witnesses, one per direction.
 
 #: Rules that are invariant on every input the declared constraints admit and discriminate only
 #: below the band. The witness for the first disjunct of the contrapositive: a logged decision the

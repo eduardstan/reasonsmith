@@ -99,7 +99,7 @@ engine answer.
 
 **OBJECT.** The deletion lattice $\mathbb{L}(\beta)$ of interpretations obtained by switching
 facts off, and the artefact's reason family $\mathcal{R}$. The exact definitions of sufficient,
-AXp, CXp, live, deleted, and undetermined are retained in the pending-migration material below
+AXp, CXp, live, deleted, and undetermined are retained in the theory/07-explanation.md
 and will move to chapter 07.
 
 **PROCEDURE.** `explanations.contrastive_sets` uses MARCO seed/shrink/grow, Z3 as a subset-lattice
@@ -112,7 +112,7 @@ minimal sets; one contrastive witness is enough for `live`.
 **KNOWN INCOMPLETENESS.** The search is budgeted: incomplete enumeration yields `undetermined`, not
 more deleted reasons. It probes only the deletion lattice and therefore does not answer questions
 about arbitrary interpretations. This is a different formalism—weighted model counting and
-abductive explanation—and its full definitions are forthcoming in chapter 07.
+abductive explanation—and its full definitions are defined in theory/07-explanation.md.
 
 ## 4.6 Requirement-level questions
 

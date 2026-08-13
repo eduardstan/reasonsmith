@@ -64,8 +64,8 @@ What a reader must not break:
     other**, and `at(fact, probability)` is the reversal: a family may now be asked for its
     inference at an arbitrary probability for one fact, not only at zero. What did *not* change is
     the definition of a reason. `certificate.py` and `explanations.py` still call `without` and
-    nothing else, `deleted` is still the one-directional claim §3 of `docs/formal.md` proves it to
-    be, and the deletion lattice `L(β)` those lemmas quantify over is the same lattice it was.
+    nothing else, `deleted` is still the one-directional claim in `theory/07-explanation.md`
+    and its lemmas prove it to be. The deletion lattice `L(β)` is unchanged.
     A family that offers no `at` is not weaker on any duty: no shipped verdict reads the wider
     surface, and `reason_trace` deliberately does not offer one, because a rationale the system
     recounted has no interpretation to move.
@@ -76,8 +76,8 @@ What a reader must not break:
     no reference implementation anywhere in the loop, and the measured discrimination lives in
     perturbing a fact across the whole of `[0,1]` — neither one-directional variant refutes a
     top-`k` engine at all, because a top-`k` engine's kept-proof set is locally constant and the
-    kink only shows where the ranking changes. `docs/formal.md` §3.6 records the reversal in that
-    document's notation, with what is still refused.
+    kink only shows where the ranking changes. `ROADMAP.md` records the reversal
+    in `theory/07-explanation.md`, with what is still refused.
 """
 
 from __future__ import annotations

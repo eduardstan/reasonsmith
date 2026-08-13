@@ -139,7 +139,8 @@ class EvidenceBasis(Enum):
         decided: the reasons the decision's own inference used, enumerated exactly from an
         inference artefact and each switched off in turn. This is the abductive-explanation reading
         (A. Ignatiev, N. Narodytska, J. Marques-Silva, *Abduction-Based Explanations for Machine
-        Learning Models*, AAAI 2019, 1511–1519 — `[@ignatiev-2019]`; see `docs/formal.md` §3 for
+        Learning Models*, AAAI 2019, 1511–1519 — `[@ignatiev-2019]`; see
+        `theory/07-explanation.md` for
         the rest),
         and the model-precise rather than behaviour-sampled side of the distinction formal XAI
         draws (J. Marques-Silva, A. Ignatiev, *Delivering Trustworthy AI through Formal XAI*,

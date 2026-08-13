@@ -89,7 +89,7 @@ enumerated from a model encoding (`reasons_are_exact = True`, so `probed`), and
 (`recounted`). Silence claims the weaker rung. The artefact must also declare whether its inference
 is monotone; one that does not is reported *not evaluated* and never downgraded to the presence
 check sharing its clause ([`semantics.md`](semantics.md) §3, *The inference artefact*;
-[`sufficient-reasons.md`](sufficient-reasons.md) for what a `deleted` reason is). The semantics duty
+[`theory/07-explanation.md`](theory/07-explanation.md) for what a `deleted` reason is). The semantics duty
 needs one thing more of the family and nothing more of you: the artefact's own `exact_value()` must
 compute the semantics your adapter claims, which the ground-program family does for `distribution
 semantics` and the recounted family does for none — so a reason trace is reported *unattainable*

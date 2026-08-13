@@ -90,3 +90,5 @@ The map therefore has a deliberately one-way use: a statutory quotation and its 
 produce a checkable requirement tuple, and the conformance machinery evaluates that tuple against
 the evidence surface a system exposes. Nothing in this relation licenses a claim beyond the
 assumptions written in the operational record.
+
+The clause record and its verbatim quotation preserve the isomorphism discipline used by the legal knowledge representation `[@benchcapon-1992]`.

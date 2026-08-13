@@ -119,6 +119,8 @@ identifier is part of the language contract and is preserved verbatim.
 | `R-CONFLICTING-ROLES` | one signal in both the bare-Boolean and the measured-magnitude role |
 | `R-TEMPORAL-BOOLEAN-COMPARISON` | `== `/`!=` against a Boolean literal inside the temporal fragment |
 
+The six fragments are decided by the shape of the formula, not by the word a pack author typed.
+
 **Definition 2.6 (fragment assignment).** Fragment assignment is the following function on
 formulas. The order is narrowest-first and is the definition, not an optimisation.
 

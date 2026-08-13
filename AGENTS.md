@@ -40,14 +40,14 @@ Release Note", records how that was verified; the repo publishes no tag).
 - No check asserts branding or presentation. Limits tests pin semantic boundary clauses, not full
   prose.
 
-What a `deleted` reason **is** is written down in `docs/sufficient-reasons.md` — read it before
+What a `deleted` reason **is** is written down in `docs/theory/07-explanation.md` — read it before
 touching `certificate.py` or `explanations.py`. The probe used to switch each reason off *alone*,
 which answers a question about single facts and reports about reasons: two reasons jointly necessary
 and individually removable each leave the engine's answer where it was, so both were reported
 `deleted` and the tool accused a system of omitting reasons its inference demonstrably used. The
 definition is Ignatiev/Narodytska/Marques-Silva's abductive explanation and its contrastive dual,
 specialised to the deletions `artifacts.InferenceArtifact` admits, resting on Reiter's minimal-
-hitting-set duality; published sources only, registered in `docs/formal.md`'s bibliography.
+hitting-set duality; published sources only, registered in `docs/theory/08-evidence.md`'s bibliography.
 `explanations.contrastive_sets` measures it with the MARCO seed/shrink/grow loop, Z3 as the oracle over the subset lattice and the system's
 own engine as the membership oracle. Four things must not be undone: the monotonicity declaration is
 what every lemma rests on, so this is one premise with the artefact protocol and not two; `live` is
@@ -86,10 +86,10 @@ is the contract and `tests/test_artifact_protocol.py` holds it.
 The **probe** is one-directional; the **protocol** is not, since 2026-08-11. `at(fact, probability)`
 and `probability(fact)` are optional members (read through `artifacts.admits_interpretation`,
 implemented by the ground-program family and deliberately not by `reason_trace`), and admitting them
-reversed a refusal this repository had published in `artifacts/__init__.py` and `docs/formal.md`
+reversed a refusal this repository had published in `artifacts/__init__.py` and `docs/theory/08-evidence.md`
 §3.6. Both now **record** the reversal in the shape `ROADMAP.md` §2 records the `since` one, and the
 record is not a postscript: what was refused, what changed, what is *still* refused. Four things must
-not be undone. Nothing in §3 of `docs/formal.md` quantifies over anything but the deletion lattice
+not be undone. Nothing in §3 of `docs/theory/08-evidence.md` quantifies over anything but the deletion lattice
 `L(β)`, and `certificate.py`/`explanations.py` call `without` and nothing else — checked by
 `test_the_deletion_probe_never_reaches_the_widened_perturbation`, not asserted in prose. `deleted`,
 its lemmas and its one premise did not move, and `without(fact)` is now literally `at(fact, 0.0)`.
@@ -105,7 +105,7 @@ standing `ltlf.py` has. It keeps two vocabularies apart and must go on doing so:
 `normalize_claimed_semantics` at the artefact and certificate boundaries) and
 `SEMANTICS_WITH_LAWS` is the one member of it this tool can *refute*, derived by intersection so a
 rename there cannot leave a dangling member here. An admitted claim with no law is *not evaluated*
-naming it; an unadmitted one never arrives. `docs/formal.md` §3.6 (the reversal) and §3.7 (the soundness proposition,
+naming it; an unadmitted one never arrives. `docs/theory/08-evidence.md` §3.6 (the reversal) and §3.7 (the soundness proposition,
 and why the design's vertex law is absent) are the contract; `tests/test_semantic_laws.py` holds it.
 
 `engines/certificate.py` asks the declaration before it certifies and again of the
@@ -193,7 +193,7 @@ it reads the `spec` as written, so implication in a pack must be spelled `->` an
 `rulelang.eval_temporal_trace` over the finite-trace clauses, and rtamt's robustness is the *margin*
 reported beside it — `ρ = 0` decides nothing and `ρ(x > c) = ρ(x >= c)`, so any Boolean question
 answered by comparing a score is a defect. The interpreter evaluates in the Kleene chain `F < U < T`
-and `U` is ignorance about a record, never truncation of a trace; `docs/language.md` §2.12 is the
+and `U` is ignorance about a record, never truncation of a trace; `docs/theory/02-syntax.md` §2.12 is the
 definition and the only place the tables belong.
 Read `docs/semantics.md` §2 and §3.5 before editing any of it — they state the rule,
 the atom encodings, and the one case the ladder does not resolve (exposed logic disagreeing with the
@@ -263,7 +263,7 @@ satisfied is the relation holding and names the log, while the other direction d
 first, by evaluating the declared constraints on the replayed pair, so a pair the declared space
 does not admit is named as such and only a pair inside it leaves the residual finding that
 `decide()` does not implement the declared `logic()`. It moves no verdict, no strength and no
-witness; `docs/formal.md` §6.6 is the claim and its contrapositive, and
+witness; `docs/theory/08-evidence.md` §6.6 is the claim and its contrapositive, and
 `tests/test_counterfactual_invariance.py` carries a witness per direction.
 `applicant_prohibited_basis` is the first shipped signal outside the paper's four Section 6.3
 categories; `test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy` keeps it the only one.
@@ -655,19 +655,19 @@ census or the document, never from a duty reclassification; and historical claim
 run's 11 requirements and 8 signals, the pre-domain-gate ECOA column of 8 satisfied / 2 violated
 / 5 unattainable) are not derivable and are verified against git history instead.
 
-`docs/formal.md` is the mathematics stated **once, in one notation**, and it is the one place the
+`docs/theory/08-evidence.md` is the mathematics stated **once, in one notation**, and it is the one place the
 repository has a **bibliography**. Two things to know before editing it or adding a citation
 anywhere. A citation is a backticked pandoc key — `` `[@hajek-1998]` `` — and
 `tests/test_docs_formal.py` enforces it as a *registry*: every key used in `docs/*.md` or
 `src/reasonsmith/**/*.py` resolves to an entry, every entry is cited by a claim, and a paragraph
 naming a publication venue (`VENUE_MARKERS`) with no key **fails the build**, which is what stops
 references drifting back into docstrings the way twelve of them had into `verdict.py`. And the
-document does not replace `semantics.md`, `language.md` or `sufficient-reasons.md`: those keep
-their own operational phrasing, and the anti-drift mechanism is that **every definition the code
+document does not replace `semantics.md`: it keeps its own operational phrasing, while the numbered
+theory chapters own the mathematics. The anti-drift mechanism is that **every definition the code
 also defines is generated from the code in each document that states it** — the chain from
 `Strength`, the rung table from `BASIS_RUNGS`, the fragments from `rulelang.FRAGMENTS`, the
 algebras from `manyvalued.ALGEBRAS` — so documents held to the code cannot disagree with each
-other. `sufficient-reasons.md` §9 no longer carries its own reference list; it points at the
+other. `theory/07-explanation.md` no longer carries its own reference list; it points at the
 registry. Widening the scanned corpus is a one-line change to `SCANNED_EXCLUSIONS`; the venue-marker
 check is a heuristic and the document says so rather than being trusted further than it is.
 
@@ -677,7 +677,7 @@ so **renaming or deleting a test breaks the build if that test is named there** 
 document in the same commit. It is also where a claim the code cannot support belongs: report the
 gap in the document rather than describing a tool that does not exist.
 
-`docs/language.md` is the **definition of the property language** — the grammar, and the denotation
+`docs/theory/02-syntax.md` is the **definition of the property language** — the grammar, and the denotation
 `⟦·⟧_{M,A} : Spec → (𝒫(Trace_M) ⇀ A)` over a structure (a finite trace, or an input space) and a
 declared algebra (`𝔹` as a degenerate residuated lattice, not a separate system), typed over sets
 of traces uniformly so the counterfactual atom is the 2-safety property it is. It is a *description*
@@ -793,7 +793,7 @@ because there is no wall clock anywhere in this package, and "no pair entails an
 render for "no pair was decided"; and **no LTL₃ verdict is computed** — the
 tool exposes no monitor construction, so the Bauer/Leucker/Schallhart distinction is reported
 unavailable rather than synthesised, and the strength lattice did not move. That is not the `U` of
-the Kleene chain `rulelang` evaluates in (`docs/language.md` §2.12): ignorance about a record is a
+the Kleene chain `rulelang` evaluates in (`docs/theory/02-syntax.md` §2.12): ignorance about a record is a
 different question from truncation of a trace, and the two must not be conflated in prose or in a
 value. The acceptance test is
 `test_the_ltlf_backend_agrees_with_the_monitor`: the two backends may not disagree about any shipped

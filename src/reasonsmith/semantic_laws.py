@@ -1,7 +1,8 @@
 """Laws that refute a false `claimed_semantics`, from the system's own answers and nothing else.
 
 What this module is for:
-  An artefact carries a `claimed_semantics` string, and `docs/formal.md` §1.3 says what it is worth
+  An artefact carries a `claimed_semantics` string; `theory/07-explanation.md`
+  states what it is worth
   today: it is printed on the certificate and it is not checked. The claim it makes is universally
   quantified — that the black box `E` *is* the function that semantics names, at every
   interpretation and not only at the one the decision was taken at — so nothing on this evidence
@@ -23,7 +24,7 @@ What this module is for:
   this repository already has: the supports are positive, so `φ_q` is monotone and `Pr_β[φ_q]` is
   non-decreasing in each fact.
 
-  `docs/formal.md` §3.7 is the soundness statement in the repository's one notation.
+  `theory/07-explanation.md` §7.7 is the soundness statement in the repository's one notation.
 
 What a reader must not break:
   - **Nothing here is a verdict, a rung or a duty.** This module returns no `RequirementResult`,
@@ -38,7 +39,8 @@ What a reader must not break:
     were not violated over the probes the report counts, and `LIMITS` says exactly that. It is not
     agreement: refutation is a lower bound on deviation, and the battery measures the gap — one
     provenance deviates on 16 instances and is refuted on 12.
-    Why this matters: this is the same asymmetry `docs/formal.md` §6.4 states for the certificate,
+    Why this matters: this is the same asymmetry `theory/07-explanation.md`
+    states for the certificate,
     and it is the whole reason a measurement this cheap is allowed to exist at all.
   - **Two vocabularies, and they are not the same set.** `spec.CLAIMED_SEMANTICS` is what an
     artefact may *claim* — closed, and refused at the artefact and certificate boundaries by

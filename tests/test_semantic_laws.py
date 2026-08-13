@@ -11,7 +11,8 @@ What this module is for:
   every comparison is the system's own answer at another interpretation.
 
   `test_neither_one_directional_variant_refutes_a_top_k_engine` is the measured ground of the
-  reversal recorded in `artifacts/__init__.py` and `docs/formal.md` §3.6. The protocol used to state
+  reversal recorded in `artifacts/__init__.py` and `theory/07-explanation.md`.
+  The protocol used to state
   that there is no `with_(fact)`; a perturbation that only lowers a fact's probability, or only
   raises it, refutes a top-`k` engine on **none** of the 16 instances, while the triple spanning
   `[0, 1]` refutes it on 8. Delete that test and the widening loses the evidence that it buys

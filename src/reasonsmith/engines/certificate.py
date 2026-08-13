@@ -68,7 +68,7 @@ What a reader must not break:
   - The joint-deletion search's probes are counted into `trials` and whether it *finished* is
     carried in `input_space`, beside the reasons it left `undetermined`.
     Why this matters: a reason is `deleted` only where that enumeration ran to exhaustion
-    (`docs/sufficient-reasons.md` §7), so how far it got is not a curiosity about performance — it
+    (`theory/07-explanation.md` §7), so how far it got is not a curiosity about performance — it
     is the bound on what every `deleted` here claims, and `PROBE_BUDGET_FIELDS` exists so a bound
     a reader cannot see cannot be relied on.
   - A certificate whose enumeration found *no* reason measures nothing for the deleted-reason
@@ -689,7 +689,7 @@ class CertificateEngine:
                 "facts switched off": sum(
                     len(v.probe_facts) for _, cert, _ in certified for v in cert.verdicts
                 ),
-                # The joint search's own two numbers. `docs/sufficient-reasons.md` §7: a partial
+                # The joint search's own two numbers. `theory/07-explanation.md` §7: a partial
                 # enumeration may still report a reason live and may never report one deleted, so
                 # whether it finished is the field carrying the whole of what `deleted` claims.
                 "joint deletion patterns tried": sum(s.probes for s in searches),

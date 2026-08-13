@@ -42,6 +42,8 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $\bigcup$ | `bigcup` | operation | Union of reasons or explanation families. | 07 Explanation | `explanations.contrastive_sets` |
 | $\mapsto$ | `mapsto` | assignment | Assignment of zero probability in a deletion. | 07 Explanation | `artifacts.InferenceArtifact.without` |
 | $\rightsquigarrow$ | `refinement` | relation | Refinement from a clause record to a requirement tuple. | 06 Formalisation | `spec.Requirement` |
+| $\sqsubseteq$ | `admissibility` | relation | Evidence-basis/strength admissibility relation. | 08 Evidence | `verdict.BASIS_RUNGS` |
+| $\times$ | `product` | operation | Cartesian product in the admissibility relation. | 08 Evidence | `verdict.BASIS_RUNGS` |
 | $w$ | `w` | phrase metavariable | Literal phrase used by `contains`. | 02 Syntax | `rulelang.contains_literal` |
 | $q$ | `q` | query | Query supplied to an inference artefact. | 04 Decision problems | `artifacts.InferenceArtifact.exact_value` |
 | $g$ | `g` | grading-key metavariable | Key naming an open-textured grading predicate. | 03 Semantics | `manyvalued.Grading` |

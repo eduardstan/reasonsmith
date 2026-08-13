@@ -187,7 +187,7 @@ _SHIPPED_INVENTORY = re.compile(
     re.IGNORECASE,
 )
 
-#: A shipped-set requirement total as `docs/refinement.md` and `docs/semantics.md` write it:
+#: A shipped-set requirement total as `docs/refinement.md` writes it:
 #: "the 29 shipped requirements", "over all twenty-nine shipped requirements", and — in
 #: refinement.md, whose count prose counts the set as duties — "the twenty-nine shipped duties".
 #: The number is captured whatever it is and compared to the derived total, so a drift like the
@@ -195,13 +195,6 @@ _SHIPPED_INVENTORY = re.compile(
 #: `\s+` spans a line wrap, because refinement.md breaks "29 shipped" from "requirements".
 _SHIPPED_TOTAL = re.compile(
     rf"\b(?:all\s+)?(?P<number>{_CARDINAL_ALT}|\d+)\s+shipped\s+(?:requirements|duties)\b",
-    re.IGNORECASE,
-)
-#: `docs/semantics.md` also says "Two shipped duties are not on the behavioural basis" — a
-#: specific census, not the shipped set — so semantics.md's requirement total is matched on the
-#: "requirements" spelling only.
-_SHIPPED_REQUIREMENTS = re.compile(
-    rf"\b(?:all\s+)?(?P<number>{_CARDINAL_ALT}|\d+)\s+shipped\s+requirements\b",
     re.IGNORECASE,
 )
 #: The two sentence halves in `docs/refinement.md` that state how many shipped duties carry a
@@ -213,7 +206,7 @@ _USED_BY_PAREN = re.compile(
 _DUTIES_IN_ALL = re.compile(
     rf"(?P<number>{_CARDINAL_ALT}|\d+) duties in all", re.IGNORECASE
 )
-#: A fragment-vocabulary size claim: "The six fragments are decided…" in `docs/semantics.md` §2.
+#: A fragment-vocabulary size claim: "The six fragments are decided…" in `docs/theory/02-syntax.md`.
 _FRAGMENT_COUNT = re.compile(
     rf"\b(?P<number>{_CARDINAL_ALT}|\d+) fragments\b", re.IGNORECASE
 )
@@ -277,7 +270,7 @@ def _shipped_counts() -> dict[str, tuple[int, str]]:
 
 
 def _shipped_census() -> dict[str, int]:
-    """The shipped-set totals `docs/refinement.md` and `docs/semantics.md` state in prose,
+    """The shipped-set totals `docs/refinement.md` states in prose,
     re-derived at test time and never restated here: the requirement total (from the packs),
     the total of requirements carrying a decision domain (from the packs), and the size of the
     fragment vocabulary (from `rulelang.FRAGMENTS`)."""
@@ -480,20 +473,16 @@ def test_refinement_doc_shipped_totals_match_the_tree():
     )
 
 
-def test_semantics_doc_shipped_totals_match_the_tree():
-    """`docs/semantics.md` states the shipped-set totals — "twenty-nine shipped requirements"
-    in §9's census, "The six fragments are decided" in §2 — that drifted out of agreement with
-    the tree and with each other when the fragment vocabulary and the duty set grew. Both are
-    held to the packs and to `rulelang.FRAGMENTS` at test time."""
-    expected = _shipped_census()
-    totals = {
-        "requirements": [_SHIPPED_REQUIREMENTS],
-        "fragments": [_FRAGMENT_COUNT],
-    }
-    offenders = _doc_total_offenders(REPO_ROOT / "docs" / "semantics.md", totals, expected)
+def test_theory_fragment_total_matches_the_tree():
+    """The syntax chapter owns the fragment-vocabulary count."""
+    expected = {"fragments": _shipped_census()["fragments"]}
+    offenders = _doc_total_offenders(
+        REPO_ROOT / "docs" / "theory" / "02-syntax.md",
+        {"fragments": [_FRAGMENT_COUNT]},
+        expected,
+    )
     assert not offenders, (
-        "docs/semantics.md states a shipped-set total that disagrees with what ships — the "
-        "counts are derived from the packs and rulelang.FRAGMENTS at test time, never restated:\n"
+        "theory/02-syntax.md states a fragment count that disagrees with the tree:\n"
         + "\n".join(offenders)
     )
 

@@ -347,7 +347,8 @@ def vacuous_subformulas(
 ) -> tuple[str, ...]:
     """The subformula occurrences any other formula could replace without changing the verdict.
 
-    The definition is `docs/semantics.md` §8 and `docs/formal.md` §6.10, which is Kupferman and
+    The definition is `docs/semantics.md` §4 and `theory/04-decision-problems.md`,
+    which is Kupferman and
     Vardi's (`[@kupferman-2003]`) restricted to the
     fragments this repository ships: a requirement is **vacuously discharged** on an evidence
     domain when some subformula of its `spec` can be replaced by *any* well-formed formula of the

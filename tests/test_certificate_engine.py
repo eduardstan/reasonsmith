@@ -249,7 +249,7 @@ def test_the_certificate_verdict_carries_its_probe_budget():
     # One baseline inference, plus one replay per *fact* the probe switched off — every private
     # fact of every reason, not one per reason — plus the joint-deletion search's own probes. Here
     # that search is one probe: deleting every remaining fact together leaves this truncating
-    # engine where it was, which settles the whole lattice (`docs/sufficient-reasons.md` §4,
+    # engine where it was, which settles the whole lattice (`theory/07-explanation.md` §4,
     # Corollary 3).
     assert budget["trials"] == 10
     assert budget["input_space"] == {

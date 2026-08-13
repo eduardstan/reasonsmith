@@ -49,7 +49,8 @@ What a reader must not break:
     do not range over the same object — the proof quantifies over the *declared rules* on the
     *declared input space*, the replay runs the *implementation* on the *logged* cases — so a
     disagreement eliminates a disjunction rather than impeaching a rung. `cross_rung_signal` is
-    the whole of it, and the relation it rests on is stated in `docs/formal.md` §6.6.
+    the whole of it, and the relation it rests on is stated in
+    `theory/04-decision-problems.md` §4.4.
     Why this matters: "the two rungs disagree" tells an adopter nothing it can act on. Which
     disjunct failed tells it either to widen its log or to fix a declaration its own procedure
     does not implement, and those are opposite instructions.
@@ -149,7 +150,8 @@ RUNG_DISAGREEMENT_KEY = "rung_disagreement"
 #: The fields that key carries, named here for the reason `report.PROBE_BUDGET_FIELDS` is: a
 #: rendering asks the result rather than parsing a sentence that is free to be reworded. `cause`
 #: is one of `RUNG_DISAGREEMENT_CAUSES` and is the whole point of the signal — which disjunct of
-#: the claim in `docs/formal.md` §6.6 failed, rather than the bare fact that two rungs differ.
+#: the claim in the counterfactual decision-problem chapter failed, rather
+#: than the bare fact that two rungs differ.
 RUNG_DISAGREEMENT_FIELDS = (
     "reported_rung",
     "reported_verdict",
@@ -1175,8 +1177,8 @@ def cross_rung_signal(
     treat alike every pair the *declared constraints* admit; the replay asks whether the
     *implementation* treated alike the pairs built from the decisions the system *logged*. So a
     disagreement is not a contradiction to be resolved by trusting a rung: it eliminates a
-    disjunction, and which disjunct failed is what an adopter can act on. `docs/formal.md` §6.6
-    states the claim and its contrapositive.
+    disjunction, and which disjunct failed is what an adopter can act on. The
+    counterfactual decision-problem chapter states the claim and its contrapositive.
 
     Nothing here moves a verdict, a strength or a witness: the reported rung's own result comes
     back with one key added. A rung that established nothing, and two rungs that agree, are

@@ -22,7 +22,7 @@ What this module is for:
     of omitting two reasons its inference demonstrably used. So a second pass asks the question the
     first one cannot: `explanations.contrastive_sets` enumerates the subset-minimal *joint*
     deletions the engine notices, and a reason is deleted only where that enumeration **terminated**
-    and met no fact of it. `docs/sufficient-reasons.md` is the definition, with the lemmas and the
+    and met no fact of it. `theory/07-explanation.md` is the definition, with the lemmas and the
     published sources; this module is its measurement.
 
 What a reader must not break:
@@ -184,7 +184,7 @@ class Certificate:
     #: `certify(...)` measurement, which reaches no duty and therefore no verdict about a system.
     monotone: bool | None = None
     #: The joint-deletion search, or None where no reason survived the per-fact pass as a candidate
-    #: for deletion and there was nothing for it to resolve. `docs/sufficient-reasons.md` §7.
+    #: for deletion and there was nothing for it to resolve. `theory/07-explanation.md` §7.
     search: DeletionSearch | None = None
     #: Which semantics `exact_value` above *is* — the artefact family's own
     #: `artifacts.reference_semantics`, carried so a reader of a value gap can see what the engine
@@ -475,7 +475,7 @@ def _resolve_jointly(
 ) -> tuple[list[ReasonVerdict], DeletionSearch]:
     """Re-decide every candidate-`deleted` reason against the *joint* deletions the engine notices.
 
-    Three outcomes per candidate, and `docs/sufficient-reasons.md` §5 is the definition of each:
+    Three outcomes per candidate, and `theory/07-explanation.md` §5 is the definition of each:
     a reason holding a **private** relevant fact is `live` — the movement is attributable to it and
     to nothing else; a reason **no** fact of which is relevant is `deleted`, which needs no
     attribution because there is nothing to attribute and is claimed only on an exhausted
@@ -486,7 +486,7 @@ def _resolve_jointly(
     accusations out of a search whose completeness rests on a declaration nothing here confirms.
     """
     # A fact whose deletion alone already moves the engine lies in no contrastive set of size
-    # greater than one (`docs/sufficient-reasons.md` §4, Corollary 2), so it is not searched over.
+    # greater than one (`theory/07-explanation.md` §4, Corollary 2), so it is not searched over.
     space = tuple(sorted((f for f in facts if f not in singleton_moved), key=repr))
     search = contrastive_sets(
         lambda deleted: abs(engine_value - _delete(artifact, deleted).engine_value()) > tol,
