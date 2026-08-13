@@ -8,12 +8,11 @@ exist in the suite fails the build.
 
 Where this document and the code disagree, the code is right and this document has a defect.
 
-[`formal.md`](formal.md) states the same mathematics once and in one notation — the objects, the
-denotation, the reason definitions, the two coordinates of §4 and §10, the graded readings, and one
-soundness statement per engine — and points to the repository's [**bibliography registry**](theory/bibliography.md). This document keeps
-its own operational phrasing on purpose: it is written for a reader of a report and that one for a
-reader checking the mathematics. They cannot drift apart, because every definition the code also
-defines is generated from the code in both.
+The numbered theory chapters state the mathematics: [00–03](theory/00-notation.md),
+[04–05](theory/04-decision-problems.md), and the forthcoming [07 explanation](theory/07-explanation.md),
+with the [bibliography registry](theory/bibliography.md). [`formal.md`](formal.md) remains a migration
+stub while the later chapters land. This document keeps its own operational phrasing on purpose.
+
 
 ---
 

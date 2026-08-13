@@ -46,6 +46,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = REPO_ROOT / "tests"
 DOCS_DIR = REPO_ROOT / "docs"
 FORMAL = DOCS_DIR / "formal.md"
+MODELS = DOCS_DIR / "theory" / "01-models.md"
+SYNTAX = DOCS_DIR / "theory" / "02-syntax.md"
+SEMANTICS = DOCS_DIR / "theory" / "03-semantics.md"
+PROCEDURES = DOCS_DIR / "theory" / "05-decision-procedures.md"
 BIBLIOGRAPHY = DOCS_DIR / "theory" / "bibliography.md"
 ENGINES_DIR = REPO_ROOT / "src" / "reasonsmith" / "engines"
 
@@ -142,9 +146,9 @@ def _defined_test_names() -> set[str]:
     return names
 
 
-def _section(title: str) -> str:
-    """The text of one `##` section of the document, up to the next `##` heading."""
-    document = _document()
+def _section(title: str, path: Path = FORMAL) -> str:
+    """The text of one heading in a document, up to the next heading of equal level."""
+    document = path.read_text(encoding="utf-8")
     start = document.index(title)
     rest = document[start + len(title) :]
     end = rest.find("\n## ")
@@ -218,8 +222,10 @@ def test_the_formal_doc_states_the_requirement_field_count_the_code_defines():
     """
     count = len(dataclasses.fields(Requirement))
     word = _NUMBER_WORDS[count]
-    assert f"carries exactly {word} fields" in _document(), (
-        "docs/formal.md §1.4 does not state the field count `Requirement` defines; "
+    field_sentence = f"carries exactly {word} fields"
+    assert field_sentence in _document() or field_sentence in MODELS.read_text(encoding="utf-8"), (
+        "the models chapter or pending migration does not state the field count `Requirement` "
+        "defines; "
         f"it must read: carries exactly {word} fields"
     )
 
@@ -242,18 +248,18 @@ def test_the_formal_doc_states_the_basis_rungs_the_code_defines():
 
 def test_the_formal_doc_names_the_fragments_the_classifier_defines():
     """§2.9's classification order names exactly the fragments `rulelang` has, and no others."""
-    section = _section("## 2. The language")
-    line = next(line for line in section.splitlines() if "▸" in line)
-    named = tuple(part.strip() for part in line.split("▸"))
-    assert set(named) == set(FRAGMENTS), (
-        "docs/formal.md §2.9 names fragments the classifier does not have, or omits ones it does: "
+    section = _section("**Definition 2.6 (fragment assignment).**", SYNTAX)
+    code = section[section.index("```") : section.index("```", section.index("```") + 3)]
+    named = set(re.findall(r'"([a-z]+)"', code))
+    assert named == set(FRAGMENTS), (
+        "the syntax chapter names fragments the classifier does not have, or omits ones it does: "
         f"document {sorted(named)} vs code {sorted(FRAGMENTS)}"
     )
 
 
 def test_the_formal_doc_names_the_algebras_the_code_defines():
     """§5.2's table names exactly `manyvalued.ALGEBRAS`, so a fourth member cannot be silent."""
-    section = _section("## 5. Graded readings")
+    section = _section("**Definition 3.3 (the shipped algebras).**", SEMANTICS)
     rows = re.findall(r"^\| `([a-z]+)` \|", section, flags=re.MULTILINE)
     assert set(rows) == set(ALGEBRAS), (
         "docs/formal.md §5.2 does not name the algebras the code defines: "
@@ -268,10 +274,11 @@ def test_the_formal_doc_states_one_soundness_paragraph_per_engine():
     )
     assert engines, "no engine modules found; the directory this reads has moved"
 
-    section = _section("## 6. Soundness, one engine at a time")
+    section = _document() + "\n" + PROCEDURES.read_text(encoding="utf-8")
     missing = [name for name in engines if f"`{name}`" not in section and name not in section]
     assert not missing, (
-        "docs/formal.md §6 states no soundness paragraph for engine(s): " + ", ".join(missing)
+        "the decision-procedures chapter states no soundness paragraph for engine(s): "
+        + ", ".join(missing)
     )
 
 

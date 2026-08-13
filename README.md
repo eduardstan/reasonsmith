@@ -73,10 +73,10 @@ This tree ships **five packs**, **seven engines**, and **twenty-nine shipped req
 
 The same evidence is projected for different duties:
 
-- **Developer:** [`docs/adopting.md`](docs/adopting.md) → [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/formal.md`](docs/formal.md) → [`docs/refinement.md`](docs/refinement.md) → [`docs/authoring-engines.md`](docs/authoring-engines.md).
+- **Developer:** [`docs/adopting.md`](docs/adopting.md) → [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/theory/04-decision-problems.md`](docs/theory/04-decision-problems.md) → [`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) → [`docs/formal.md`](docs/formal.md) → [`docs/refinement.md`](docs/refinement.md) → [`docs/authoring-engines.md`](docs/authoring-engines.md).
 - **Deployer:** [`docs/adopting.md`](docs/adopting.md) → [`docs/three-systems.md`](docs/three-systems.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/authoring-packs.md`](docs/authoring-packs.md) → [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md).
 - **Auditor:** [`docs/example-output.md`](docs/example-output.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/sufficient-reasons.md`](docs/sufficient-reasons.md) → [`docs/refinement.md`](docs/refinement.md) → [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
-- **Regulator:** [`docs/legal-sources.md`](docs/legal-sources.md) → [`docs/refinement.md`](docs/refinement.md) → [`docs/formal.md`](docs/formal.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
+- **Regulator:** [`docs/legal-sources.md`](docs/legal-sources.md) → [`docs/refinement.md`](docs/refinement.md) → [`docs/theory/04-decision-problems.md`](docs/theory/04-decision-problems.md) → [`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) → [`docs/formal.md`](docs/formal.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
 - **Affected individual:** [`docs/example-output.md`](docs/example-output.md) → [`docs/semantics.md`](docs/semantics.md) §7 → [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md) → [`docs/adopting.md`](docs/adopting.md).
 
 ## Install and run

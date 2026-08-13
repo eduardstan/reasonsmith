@@ -72,6 +72,7 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $\mathrel$ | `relation` | relation | Relation marker in a partial-map type. | 03 Semantics | `rulelang.eval_expression` |
 | $\rightharpoonup$ | `partial_map` | map | Partial-map arrow. | 03 Semantics | `rulelang.eval_expression` |
 | $\Longleftrightarrow$ | `iff` | relation | Logical equivalence in residuation. | 03 Semantics | `manyvalued.Algebra.residuum` |
+| $\models$ | `models` | relation | Satisfaction of a formula by a trace or structure. | 04 Decision problems | `rulelang.eval_temporal_trace` |
 | $\le$ | `le` | relation | Non-strict order on algebra elements and indices. | 03 Semantics | `manyvalued.Algebra` |
 | $\emptyset$ | `emptyset` | set | Empty trace set. | 03 Semantics | `manyvalued.degree_over_trace` |
 | $\varepsilon$ | `epsilon` | trace | Empty log. | 01 Models | `rulelang.eval_temporal_trace` |
