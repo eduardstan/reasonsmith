@@ -1,0 +1,30 @@
+name: codeql
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # The default queries plus the security-focused extras. Neither language gets a build
+          # step: CodeQL extracts Python and TypeScript from source, and `pip install` / `bun
+          # install` would only lengthen a run that reads this repository's own code.
+          queries: security-extended
+      - uses: github/codeql-action/analyze@v3
