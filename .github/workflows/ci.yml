@@ -62,6 +62,9 @@ jobs:
       - name: Verify BLACK solver
         run: black --version
       - run: ruff check .
+      # Scoped by `[tool.mypy]` in pyproject.toml to the two modules whose types are the semantics,
+      # so this is seconds and its output is short enough to read.
+      - run: mypy
       # This floor was lowered once, on 2026-08-04, from 93 to 92.5, by the captain's explicit
       # decision. Until then `--cov-fail-under=93` never failed: it compares
       # `round(total, precision)` and pytest-cov defaults `precision` to 0, so the true 92.79%
