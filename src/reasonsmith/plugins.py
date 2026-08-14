@@ -30,6 +30,9 @@ What a reader must not break:
     engine answering the same duty — the refusal is the point.
   - Every result a plug-in produces carries the plug-in's name, in `details` and in the evidence
     summary.
+  - A violated result with a checkable witness is re-derived by the core; a witness the core
+    refutes demotes the result to not evaluated and records the unverified payload. It must never
+    silently become a trusted-ceiling violation.
     Why this matters: a verdict whose provenance is invisible is what this package refuses
     everywhere else. A reader must be able to see that a third-party engine answered.
 
@@ -123,7 +126,8 @@ def _run(
     from reasonsmith.report import ENGINE_PLUGIN_KEY, RequirementResult
 
     try:
-        result = engine.evaluate(req, sut, trace())
+        records = trace()
+        result = engine.evaluate(req, sut, records)
         if not isinstance(result, RequirementResult):
             raise TypeError(
                 f"evaluate() must return a RequirementResult, got {type(result).__name__}"
@@ -136,11 +140,14 @@ def _run(
         # `replace` re-runs `RequirementResult.__post_init__`, which is where a strength above the
         # declared ceiling is refused. The refusal lands in the `except` below and is reported not
         # evaluated, like every other way a plug-in can misbehave.
-        return replace(
+        stamped = replace(
             result,
             details={**result.details, ENGINE_PLUGIN_KEY: _plugin_details(name, ceiling)},
             evidence_summary=f"[engine plug-in {name!r}] {result.evidence_summary}",
         )
+        from reasonsmith.witness import check_plugin_result
+
+        return check_plugin_result(req, sut, records, stamped)
     except Exception as exc:  # noqa: BLE001 - a broken plug-in must not move a verdict
         return _not_evaluated(req, name, ceiling, f"{type(exc).__name__}: {exc}")
 

@@ -42,7 +42,7 @@ import ast
 import io
 import math
 import tokenize
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 _EQUIVALENCE_TOKENS = ("<=>", "<->")
 _IMPLICATION_TOKENS = ("=>", "->", " implies ")
@@ -284,9 +284,7 @@ def contains_literal(haystack: Any, needle: str) -> bool:
     folded_needle = fold_ascii_case(needle)
     if isinstance(haystack, str):
         return folded_needle in fold_ascii_case(haystack)
-    if isinstance(haystack, (list, tuple)) and all(
-        isinstance(part, str) for part in haystack
-    ):
+    if isinstance(haystack, (list, tuple)) and all(isinstance(part, str) for part in haystack):
         return any(folded_needle in fold_ascii_case(part) for part in haystack)
     raise NotAStatementError(
         f"{CONTAINS_CALL}() reads a recorded statement — text, or a list of text given in parts — "
@@ -422,9 +420,7 @@ def degree_arguments(node: ast.Call) -> tuple[str, str]:
     whole run and it belongs to the `Grading` supplied beside the pack, not to the pack. A pack that
     could name its own degree source would be naming an assessment nobody performed.
     """
-    signal, predicate = _signal_and_literals(
-        node, DEGREE_CALL, ("the open-textured predicate",)
-    )
+    signal, predicate = _signal_and_literals(node, DEGREE_CALL, ("the open-textured predicate",))
     return signal, predicate
 
 
@@ -907,9 +903,7 @@ def validate_property(node: ast.AST) -> None:
             f"Boolean constant(s) {values} cannot stand as bare Boolean atoms. Compare a signal "
             "to a Boolean constant when that is the property being stated"
         )
-    conflicting = sorted(
-        set(bare_boolean_names(node)) & set(measured_magnitude_names(node))
-    )
+    conflicting = sorted(set(bare_boolean_names(node)) & set(measured_magnitude_names(node)))
     if conflicting:
         raise UnsupportedConstructError(
             "Signal(s) used in both a bare Boolean role and a measured magnitude role: "
@@ -921,9 +915,7 @@ def validate_temporal_property(node: ast.AST) -> None:
     """Refuse valid state expressions that the temporal fragment cannot render soundly."""
     for comparison in (item for item in ast.walk(node) if isinstance(item, ast.Compare)):
         left = comparison.left
-        for operator, right in zip(
-            comparison.ops, comparison.comparators, strict=True
-        ):
+        for operator, right in zip(comparison.ops, comparison.comparators, strict=True):
             boolean = None
             operand = None
             if isinstance(left, ast.Constant) and isinstance(left.value, bool):
@@ -933,9 +925,7 @@ def validate_temporal_property(node: ast.AST) -> None:
                 boolean = right.value
                 operand = left
             if boolean is not None and isinstance(operator, (ast.Eq, ast.NotEq)):
-                rendered = ast.unparse(
-                    ast.Compare(left=left, ops=[operator], comparators=[right])
-                )
+                rendered = ast.unparse(ast.Compare(left=left, ops=[operator], comparators=[right]))
                 if isinstance(operand, ast.Name):
                     positive = boolean == isinstance(operator, ast.Eq)
                     atom = operand.id if positive else f"not {operand.id}"
@@ -977,6 +967,22 @@ def presence_atoms(node: ast.AST) -> tuple[str, ...] | None:
             names.extend(part)
         return tuple(names)
     return None
+
+
+def valuations_over(
+    atom_keys: Iterable[str], records: Iterable[Mapping[str, Any]]
+) -> list[dict[str, bool]]:
+    """Evaluate rendered atom expressions over records as Boolean valuations.
+
+    External finite-trace procedures may use a propositional abstraction of this language.
+    Re-parse each atom with the reference interpreter so a plug-in and the witness checker share
+    the same treatment of missing values and Kleene ``UNKNOWN``.
+    """
+    nodes = [(key, parse_expression(key)) for key in atom_keys]
+    return [
+        {key: kleene_value(eval_expression(node, dict(record))) is True for key, node in nodes}
+        for record in records
+    ]
 
 
 def _is_presence_only(node: ast.AST) -> bool:
@@ -1153,9 +1159,7 @@ def measured_magnitude_names(node: ast.AST) -> tuple[str, ...]:
     names: set[str] = set()
     for comparison in (item for item in ast.walk(node) if isinstance(item, ast.Compare)):
         left = comparison.left
-        for operator, right in zip(
-            comparison.ops, comparison.comparators, strict=True
-        ):
+        for operator, right in zip(comparison.ops, comparison.comparators, strict=True):
             if not _flag_comparison(left, operator, right):
                 names.update(_value_signal_names(left))
                 names.update(_value_signal_names(right))
@@ -1478,9 +1482,7 @@ def eval_expression(node: ast.AST, env: dict[str, Any]) -> Any:
 
 def _require_arity(name: str, args: list[Any], expected: int) -> None:
     if len(args) != expected:
-        raise UnsupportedConstructError(
-            f"{name} expects {expected} argument(s), got {len(args)}"
-        )
+        raise UnsupportedConstructError(f"{name} expects {expected} argument(s), got {len(args)}")
 
 
 def assignment_target(stmt: ast.Assign) -> str:
@@ -1570,9 +1572,7 @@ def eval_temporal_trace(node: ast.AST, records: list[dict[str, Any]]) -> list[An
             if name == "rise":
                 sub = eval_temporal_trace(node.args[0], records)
                 return [
-                    sub[0]
-                    if i == 0
-                    else kleene_and_binary(sub[i], kleene_not(sub[i - 1]))
+                    sub[0] if i == 0 else kleene_and_binary(sub[i], kleene_not(sub[i - 1]))
                     for i in range(n)
                 ]
             if name == "fall":
@@ -1587,22 +1587,22 @@ def eval_temporal_trace(node: ast.AST, records: list[dict[str, Any]]) -> list[An
                 left = eval_temporal_trace(node.args[0], records)
                 right = eval_temporal_trace(node.args[1], records)
                 return [
-                    kleene_or([
-                        kleene_and_binary(right[j], kleene_and(left[i:j]))
-                        for j in range(i, n)
-                    ])
+                    kleene_or(
+                        [kleene_and_binary(right[j], kleene_and(left[i:j])) for j in range(i, n)]
+                    )
                     for i in range(n)
                 ]
             if name == "since":
                 left = eval_temporal_trace(node.args[0], records)
                 right = eval_temporal_trace(node.args[1], records)
                 return [
-                    kleene_or([
-                        kleene_and_binary(right[j], kleene_and(left[j + 1 : i + 1]))
-                        for j in range(0, i + 1)
-                    ])
+                    kleene_or(
+                        [
+                            kleene_and_binary(right[j], kleene_and(left[j + 1 : i + 1]))
+                            for j in range(0, i + 1)
+                        ]
+                    )
                     for i in range(n)
                 ]
 
     raise UnsupportedConstructError(f"Unsupported temporal construct: {ast.unparse(node)!r}")
-

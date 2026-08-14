@@ -114,13 +114,15 @@ produce. A verdict whose provenance is invisible is what this project refuses ev
 
 ## What this is worth
 
-**reasonsmith does not audit your plug-in.** It checks that the result is well-formed and that the
-strength is within the ceiling the plug-in itself declared; it does not and cannot check that the
-engine's reasoning is sound. A `proved` from an unfamiliar engine is therefore worth exactly what
-the installer's trust in that package is worth — no more. That is a different kind of claim from a
-`proved` produced by `engines/proved.py`, which this repository's suite is about, and a reader of a
-report that mixes the two should be told which is which. The provenance in every plug-in result is
-what makes that possible; reading it is the installer's job.
+**reasonsmith does not audit your plug-in's whole reasoning.** For a plug-in result that reports
+`violated` on the `record`, `logical`, `temporal` or `counterfactual` fragments, reasonsmith can
+re-derive the violation from the witness the plug-in supplied, using the reference interpreter and
+the system's own replay surface. Such a result is marked `witness-checked`; a witness the core
+refutes is demoted to `not evaluated`, never silently treated as a trusted finding. A plug-in result
+with no checkable witness remains `trusted-ceiling`. In particular, a `satisfied` result at the
+`proved` ceiling (including a counterfactual proof) still rests on the installer's trust: this
+package deliberately does not check a Z3 proof term or invent a correctness certificate. Read the
+per-result provenance in a report that mixes these claims; it is the installer's job to act on it.
 
 ## Installing a pack the same way
 

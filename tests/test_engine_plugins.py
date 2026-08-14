@@ -21,6 +21,7 @@ import pytest
 from reasonsmith.plugins import ENGINE_GROUP, PACK_GROUP, engine_rungs, pack_path
 from reasonsmith.report import (
     ENGINE_PLUGIN_KEY,
+    WITNESS_KEY,
     RequirementResult,
     _engine_ladder,
     _EvaluationResources,
@@ -240,8 +241,14 @@ def test_a_plugin_without_a_declared_ceiling_gets_no_rung(tmp_path, monkeypatch)
 
 def test_a_broken_plugin_cannot_fail_a_duty_the_builtin_satisfies(tmp_path, monkeypatch):
     """A false violation from an unaudited package is as bad as a false pass."""
-    _install(tmp_path, monkeypatch, _engine_source("raise RuntimeError('boom')"), ENGINE_GROUP,
-             "broken", "Engine")
+    _install(
+        tmp_path,
+        monkeypatch,
+        _engine_source("raise RuntimeError('boom')"),
+        ENGINE_GROUP,
+        "broken",
+        "Engine",
+    )
     result = _evaluate()
     assert result.verdict == Verdict.SATISFIED
     assert result.strength == Strength.OBSERVED
@@ -341,7 +348,7 @@ def test_an_installed_pack_may_be_a_callable(tmp_path, monkeypatch):
 
 def test_an_installed_pack_is_held_to_every_rule_an_in_tree_one_is(tmp_path, monkeypatch):
     bad = tmp_path / "bad.toml"
-    bad.write_text(_PACK_BODY.replace('domains = []', 'domains = ["not-a-domain"]'), "utf-8")
+    bad.write_text(_PACK_BODY.replace("domains = []", 'domains = ["not-a-domain"]'), "utf-8")
     _install(tmp_path, monkeypatch, f"PACK = {str(bad)!r}\n", PACK_GROUP, "bad_pack", "PACK")
 
     with pytest.raises(ValueError, match="not a known decision domain"):
@@ -369,3 +376,88 @@ def test_with_no_plugin_installed_the_ladder_is_the_builtin_ladder():
     result = _evaluate()
     assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.OBSERVED)
     assert ENGINE_PLUGIN_KEY not in result.details
+
+
+# --------------------------------------------------------------------------------------
+# Slice 1 — plug-in violation witnesses are independently re-checked
+# --------------------------------------------------------------------------------------
+
+
+def _violation_source(witness: str = "") -> str:
+    details = (
+        '{"probe_budget": {"trials": 1, "strategy": "dummy", "seed": 0, "input_space": "none"}'
+    )
+    if witness:
+        details += ', "witness": ' + witness
+    details += "}"
+    return "\n".join(
+        [
+            "return RequirementResult(",
+            "    requirement_id=req.id,",
+            '    source_clause=f"{req.source_document} {req.article_clause}",',
+            "    verdict=Verdict.VIOLATED,",
+            "    strength=Strength.PROBED,",
+            "    signals_required=tuple(req.requires),",
+            '    evidence_summary="The dummy engine found a violation.",',
+            f"    details={details},",
+            "    binding=req.binding,",
+            "    scope=req.scope,",
+            ")",
+        ]
+    )
+
+
+def test_a_witnessless_plugin_violation_is_trusted_at_its_ceiling(tmp_path, monkeypatch):
+    _install(
+        tmp_path,
+        monkeypatch,
+        _engine_source(_violation_source()),
+        ENGINE_GROUP,
+        "ceiling",
+        "Engine",
+    )
+    result = engine_rungs(_requirement(), _SUT(), lambda: [{"signal_a": "stated"}])[0][1]()
+    assert result.verdict is Verdict.VIOLATED
+    assert result.witness_provenance == "trusted-ceiling"
+    assert result.to_dict()["witness_provenance"] == "trusted-ceiling"
+
+
+def test_a_rechecked_plugin_violation_is_witness_checked(tmp_path, monkeypatch):
+    witness = (
+        '{"kind": "presence_absence", "provenance": "trusted-ceiling", '
+        '"checker": "dummy", "payload": {"indices": [0], '
+        '"signals": ["signal_a"]}}'
+    )
+    _install(
+        tmp_path,
+        monkeypatch,
+        _engine_source(_violation_source(witness)),
+        ENGINE_GROUP,
+        "checker",
+        "Engine",
+    )
+    result = engine_rungs(_requirement(), _SUT(), lambda: [{"signal_a": None}])[0][1]()
+    assert result.verdict is Verdict.VIOLATED
+    assert result.witness_provenance == "witness-checked"
+    assert result.details[WITNESS_KEY]["provenance"] == "witness-checked"
+
+
+def test_a_refuted_plugin_witness_demotes_without_flipping(tmp_path, monkeypatch):
+    witness = (
+        '{"kind": "presence_absence", "provenance": "trusted-ceiling", '
+        '"checker": "dummy", "payload": {"indices": [0], '
+        '"signals": ["signal_a"]}}'
+    )
+    _install(
+        tmp_path,
+        monkeypatch,
+        _engine_source(_violation_source(witness)),
+        ENGINE_GROUP,
+        "liar",
+        "Engine",
+    )
+    result = engine_rungs(_requirement(), _SUT(), lambda: [{"signal_a": "stated"}])[0][1]()
+    assert result.verdict is Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details[WITNESS_KEY]["provenance"] == "refuted"
+    assert "unverified_payload" in result.details[WITNESS_KEY]

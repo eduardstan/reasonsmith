@@ -89,6 +89,7 @@ _RESULT_KEYS = {
     # Additive positive-result boundary and rationale marker. They are null/false or empty
     # outside the positive case, so a consumer can read the keys without a version bump.
     "scope_boundary",
+    "witness_provenance",
     "formalized_subset_only",
     "formalized_subset_note",
 }

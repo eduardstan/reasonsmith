@@ -57,6 +57,15 @@ names missing signals. A result with no strength is not a weak result: it is a d
 state, and its summary says whether the gap was applicability, capability, evidence, or an
 unsupported evidence kind (`test_result_cannot_claim_more_than_its_evidence`).
 
+A violated result from an installed engine plug-in also carries an additive witness provenance.
+`witness-checked` means the core independently re-derived the violation from the plug-in's
+witness using the reference interpreter and the system's own replay surface. `trusted-ceiling`
+means no such witness was checkable, so the plug-in's declared ceiling remains the only bound; a
+witness the core refutes is instead `not evaluated` and records its unverified payload. These
+claims are per result, not per engine (`test_a_rechecked_plugin_violation_is_witness_checked`,
+`test_a_witnessless_plugin_violation_is_trusted_at_its_ceiling`,
+`test_a_refuted_plugin_witness_demotes_without_flipping`).
+
 ## 3. Who the report is for
 
 One conformance run can be rendered for five audiences. `AudienceProjection` changes what is shown,

@@ -345,6 +345,21 @@ def basis_sentence(basis: EvidenceBasis) -> str | None:
     return _BASIS_SENTENCES.get(EvidenceBasis.parse(basis))
 
 
+def witness_sentence(result: Any) -> str | None:
+    """The one wording of plug-in witness provenance on the text surface."""
+    if result.strength is None or "engine_plugin" not in result.details:
+        return None
+    if result.witness_provenance == "witness-checked":
+        return (
+            "Witness provenance: witness-checked — this package re-derived the result from "
+            "the engine plug-in's supplied witness."
+        )
+    return (
+        "Witness provenance: trusted-ceiling — this package did not re-check a witness; "
+        "the plug-in's declared ceiling is the only bound on this result."
+    )
+
+
 #: How each category of `_CATEGORY_LABELS` is drawn in the HTML report: (style class, icon).
 #: Keyed by the same keys, so a category added there and forgotten here raises rather than
 #: silently rendering no pill.
@@ -492,6 +507,10 @@ def render_text(report: ConformanceReport, audience: str | None = None) -> str:
                 lines.append(f"    summary: {r.evidence_summary}")
             if view.evidence_summary and r.scope_boundary:
                 lines.append(f"    {r.scope_boundary}")
+            if view.evidence_summary:
+                witness_note = witness_sentence(r)
+                if witness_note:
+                    lines.append(f"    {witness_note}")
             if (
                 view.evidence_summary
                 and r.verdict == Verdict.SATISFIED
@@ -840,6 +859,13 @@ def render_html(
             )
 
             details_html = ""
+            witness_note = witness_sentence(r) if view.evidence_summary else None
+            if witness_note:
+                details_html += (
+                    '<div class="witness-pill">'
+                    f"{html.escape(witness_note)}"
+                    "</div>"
+                )
             if view.evidence_summary:
                 for finding in certificate_findings(r):
                     details_html += (
@@ -1625,6 +1651,16 @@ def render_html(
       color: var(--ink);
       font-size: var(--step--1);
       max-width: 75ch;
+    }}
+    .witness-pill {{
+      display: inline-block;
+      margin-top: var(--space-xs);
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
     }}
     .subset-marker {{
       margin-top: var(--space-xs);

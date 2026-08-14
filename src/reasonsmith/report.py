@@ -138,6 +138,21 @@ UNDECLARED_DOMAIN_KEY = "skipped_for_undeclared_domain"
 #: `reasonsmith.plugins` and `docs/authoring-engines.md`.
 ENGINE_PLUGIN_KEY = "engine_plugin"
 
+#: Where a plug-in result records the witness provenance established by this package. The
+#: payload is retained for an independently re-checkable witness; a refuted payload is kept under
+#: ``unverified_payload`` instead and never rendered as a finding.
+WITNESS_KEY = "witness"
+WITNESS_FIELDS = ("kind", "provenance", "checker", "payload")
+WITNESS_KINDS = (
+    "trace_position",
+    "presence_absence",
+    "input_valuation",
+    "execution_pair",
+    "position_certificate",
+    "trace_prefix",
+)
+WITNESS_PROVENANCES = ("witness-checked", "trusted-ceiling")
+
 #: Where the certificate engine records one entry per decision it certified. Named here rather
 #: than spelled twice because a rendering reads it: a reader who is shown "the reasons stated were
 #: not all the reasons" is being shown this measurement and nothing else.
@@ -270,8 +285,7 @@ def _probe_scope_line(budget: Mapping[str, Any]) -> str:
     else:
         space_text = str(space) if space is not None else "no field varied"
     return (
-        f"{trials} input(s) replayed, seed {seed}, input space: {space_text}; "
-        f"strategy: {strategy}"
+        f"{trials} input(s) replayed, seed {seed}, input space: {space_text}; strategy: {strategy}"
     )
 
 
@@ -324,6 +338,16 @@ def positive_scope_boundary(result: "RequirementResult") -> str | None:
         # result's own named rung rather than presenting a generic compliance disclaimer.
         evidence = f"the evidence carried by this result at the {rung} evidence rung"
         ending = "this run did not determine legal adequacy or compliance outside that evidence"
+    plugin = result.details.get(ENGINE_PLUGIN_KEY)
+    if (
+        isinstance(plugin, Mapping)
+        and plugin.get("name")
+        and result.witness_provenance == "trusted-ceiling"
+    ):
+        ending += (
+            f"; this verdict rests on the declared ceiling of the engine plug-in "
+            f"{plugin['name']!r}, which this package did not re-check"
+        )
     return (
         "Scope of this positive result: this formal property was satisfied only on "
         f"{evidence}; {ending}."
@@ -405,6 +429,14 @@ class RequirementResult:
         return positive_scope_boundary(self)
 
     @property
+    def witness_provenance(self) -> str:
+        """Return the provenance a reader may attach to this result's evidence."""
+        record = self.details.get(WITNESS_KEY)
+        if isinstance(record, Mapping) and record.get("provenance") == "witness-checked":
+            return "witness-checked"
+        return "trusted-ceiling"
+
+    @property
     def formalized_subset_note(self) -> str | None:
         """A short pointer to the authored rationale's explicit limitation, when present."""
         if self.verdict is Verdict.SATISFIED and self.formalized_subset_only:
@@ -450,6 +482,7 @@ class RequirementResult:
         # and rendered, for the same reason the probe budget is: an installed package this
         # repository never audited must not be able to make the tool claim more than it has.
         self._validate_plugin_claim()
+        self._validate_witness()
 
         # And an artefact whose reason set the system recounted cannot report above `recounted`,
         # for the same reason again: the probe is the same probe, and what it was run against is
@@ -568,9 +601,7 @@ class RequirementResult:
             list(VACUOUS_TRIGGER_FIELDS)
             if not isinstance(vacuous, Mapping)
             else [
-                field
-                for field in VACUOUS_TRIGGER_FIELDS
-                if not str(vacuous.get(field, "")).strip()
+                field for field in VACUOUS_TRIGGER_FIELDS if not str(vacuous.get(field, "")).strip()
             ]
         )
         if missing:
@@ -658,8 +689,7 @@ class RequirementResult:
         degree = reading["degree"]
         if isinstance(degree, bool) or not isinstance(degree, (int, float)):
             raise ValueError(
-                f"{self.requirement_id}: a truth degree must be a number in [0, 1], got "
-                f"{degree!r}"
+                f"{self.requirement_id}: a truth degree must be a number in [0, 1], got {degree!r}"
             )
         if not 0.0 <= float(degree) <= 1.0:
             raise ValueError(
@@ -694,6 +724,48 @@ class RequirementResult:
             "about, so a rung outside the basis is a claim that evidence of a kind nothing here "
             "produces was produced — see docs/semantics.md §10."
         )
+
+    def _validate_witness(self) -> None:
+        """Keep witness provenance a closed, machine-readable result contract."""
+        witness = self.details.get(WITNESS_KEY)
+        if witness is None:
+            return
+        if not isinstance(witness, Mapping):
+            raise ValueError(
+                f"{self.requirement_id}: details[{WITNESS_KEY!r}] must be a mapping; "
+                f"got {witness!r}"
+            )
+        kind = witness.get("kind")
+        if kind not in WITNESS_KINDS:
+            raise ValueError(
+                f"{self.requirement_id}: details[{WITNESS_KEY!r}]['kind'] must be one of "
+                f"{WITNESS_KINDS}; got {kind!r}"
+            )
+        provenance = witness.get("provenance")
+        if provenance == "refuted":
+            missing = [field for field in ("failure", "unverified_payload") if field not in witness]
+            if missing:
+                raise ValueError(
+                    f"{self.requirement_id}: a refuted witness must record {', '.join(missing)}"
+                )
+            if self.strength is not None or self.verdict is not Verdict.INCONCLUSIVE:
+                raise ValueError(
+                    f"{self.requirement_id}: a refuted witness cannot carry a verdict or "
+                    "evidence strength"
+                )
+            return
+        if provenance not in WITNESS_PROVENANCES:
+            raise ValueError(
+                f"{self.requirement_id}: details[{WITNESS_KEY!r}]['provenance'] must be one of "
+                f"{WITNESS_PROVENANCES}; got {provenance!r}"
+            )
+        missing = [
+            field
+            for field in ("checker", "payload")
+            if field not in witness or (field == "checker" and not str(witness[field]).strip())
+        ]
+        if missing:
+            raise ValueError(f"{self.requirement_id}: a witness must name {', '.join(missing)}")
 
     def _validate_plugin_claim(self) -> None:
         """Refuse a plug-in result claiming a strength above the ceiling the plug-in declared."""
@@ -749,6 +821,7 @@ class RequirementResult:
             # Additive machine fields: a consumer can keep reading every existing key while
             # gaining the same point-of-belief boundary shown by text and HTML.
             "scope_boundary": self.scope_boundary,
+            "witness_provenance": self.witness_provenance,
             "formalized_subset_only": self.formalized_subset_only,
             "formalized_subset_note": self.formalized_subset_note,
         }
@@ -977,9 +1050,7 @@ _CATEGORY_LABELS = (
 )
 
 
-def _category_counts(
-    results: list[RequirementResult], prefix: str = ""
-) -> dict[str, int]:
+def _category_counts(results: list[RequirementResult], prefix: str = "") -> dict[str, int]:
     """Count one set of results into the categories of `_CATEGORY_LABELS`.
 
     Binding and interpretive results are counted the same way and reported under different
@@ -987,9 +1058,7 @@ def _category_counts(
     """
 
     def satisfied_at(strength: Strength) -> int:
-        return sum(
-            1 for r in results if r.verdict == Verdict.SATISFIED and r.strength == strength
-        )
+        return sum(1 for r in results if r.verdict == Verdict.SATISFIED and r.strength == strength)
 
     counts = {
         "proved": satisfied_at(Strength.PROVED),
@@ -1176,8 +1245,7 @@ class ConformanceReport:
             )
             if unresolved:
                 details = ", ".join(
-                    f"{count} {outcome.replace('_', ' ')}"
-                    for outcome, count in unresolved.items()
+                    f"{count} {outcome.replace('_', ' ')}" for outcome, count in unresolved.items()
                 )
                 parts.append(f"strict unresolved: {details}")
         return " · ".join(parts)
@@ -1189,9 +1257,7 @@ class ConformanceReport:
         A declared domain that does not meet a duty's is not counted here: that duty was answered,
         not skipped for want of an input.
         """
-        return tuple(
-            r.requirement_id for r in self.results if r.details.get(UNDECLARED_DOMAIN_KEY)
-        )
+        return tuple(r.requirement_id for r in self.results if r.details.get(UNDECLARED_DOMAIN_KEY))
 
     @property
     def undeclared_domain_notice(self) -> str | None:
@@ -1271,7 +1337,6 @@ class ConformanceReport:
             audience=audience,
             provenance_note=provenance_note,
         )
-
 
     def to_dict(self, audience: str | None = None) -> dict:
         return {
@@ -1860,6 +1925,7 @@ def _engine_ladder(
 
     if any(signal in req.requires for signal in MEASURED_SIGNALS):
         from reasonsmith.engines.certificate import CertificateEngine
+
         return [
             (
                 Strength.PROBED,
@@ -1885,9 +1951,7 @@ def _engine_ladder(
             )
 
         def proof() -> RequirementResult:
-            proved = _run_proof_rung(
-                req, sut, records, resources, engine=CounterfactualProofEngine
-            )
+            proved = _run_proof_rung(req, sut, records, resources, engine=CounterfactualProofEngine)
             if proved.verdict not in (Verdict.SATISFIED, Verdict.VIOLATED):
                 return proved
             return cross_rung_signal(req, proved, replay(), resources.logic())
@@ -1896,6 +1960,11 @@ def _engine_ladder(
         if callable(getattr(sut, "logic", None)):
             counterfactual.append((Strength.PROVED, proof))
         counterfactual.append((Strength.PROBED, replay))
+        from reasonsmith.plugins import engine_rungs
+
+        counterfactual.extend(
+            engine_rungs(req, sut, lambda: records if records is not None else resources.trace())
+        )
         return counterfactual
 
     ladder: list[tuple[Strength, Any]] = []
@@ -1905,6 +1974,7 @@ def _engine_ladder(
             TemporalProofEngine,
             state_property_under_always,
         )
+
         if state_property_under_always(req.spec) is not None:
             ladder.append(
                 (
@@ -1920,6 +1990,7 @@ def _engine_ladder(
             ladder.append((Strength.PROVED, lambda: _run_proof_rung(req, sut, records, resources)))
         if callable(getattr(sut, "decide", None)):
             from reasonsmith.engines.probed import ProbedEngine
+
             ladder.append(
                 (
                     Strength.PROBED,
@@ -1939,6 +2010,7 @@ def _engine_ladder(
     # look alike would trade that diagnostic away for nothing.
     if req.formalism == "record":
         from reasonsmith.engines.record import RecordEngine
+
         ladder.append(
             (
                 Strength.OBSERVED,
@@ -1949,6 +2021,7 @@ def _engine_ladder(
         )
     elif req.formalism in ("temporal", "logical"):
         from reasonsmith.engines.observed import ObservedEngine
+
         ladder.append(
             (
                 Strength.OBSERVED,
@@ -1963,10 +2036,9 @@ def _engine_ladder(
     # un-established. Nothing else about the ladder changes: with no plug-in installed this is the
     # empty list, and `_engine_ladder` returns exactly what it returned before.
     from reasonsmith.plugins import engine_rungs
+
     ladder.extend(
-        engine_rungs(
-            req, sut, lambda: records if records is not None else resources.trace()
-        )
+        engine_rungs(req, sut, lambda: records if records is not None else resources.trace())
     )
 
     return ladder
