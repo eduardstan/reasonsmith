@@ -17,7 +17,7 @@ import hashlib
 import math
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
 
@@ -104,7 +104,7 @@ class InputSlot:
     lower: int | float | None = None
     upper: int | float | None = None
     values: tuple[Any, ...] = ()
-    value_to_token: Mapping[Any, str] = MappingProxyType({})
+    value_to_token: Mapping[Any, str] = field(default_factory=lambda: MappingProxyType({}))
 
     @property
     def type(self) -> str:
@@ -129,8 +129,10 @@ class InputSlot:
         raw_values = value.get("values", value.get("codes", value.get("categories")))
         values: tuple[Any, ...] = ()
         if raw_values is not None:
-            values = _unique(_as_sequence(raw_values, f"slot {signal!r} values"),
-                             f"slot {signal!r} categorical values")
+            values = _unique(
+                _as_sequence(raw_values, f"slot {signal!r} values"),
+                f"slot {signal!r} categorical values",
+            )
 
         if kind in ("real", "integer"):
             if not has_lower or not has_upper:
@@ -221,7 +223,9 @@ class TemplateSpec:
             _fail("template cannot provide both text and identifier")
 
         parsed = [match.group(1) for match in _PLACEHOLDER.finditer(text or "")]
-        repetitions_raw = raw.get("repetitions", raw.get("repeat", {})) or {}
+        repetitions_raw = raw.get("repetitions", raw.get("repeat", {}))
+        if repetitions_raw is None:
+            repetitions_raw = {}
         if not isinstance(repetitions_raw, Mapping):
             _fail("template repetitions must be a mapping")
         repetitions: dict[str, int] = {}
@@ -289,13 +293,19 @@ class DeclaredInputSpace:
     template: TemplateSpec | None
     outcomes: Mapping[str, str]
 
-    def __init__(self, slots: Sequence[Any], *, schema_version: int = SUPPORTED_SCHEMA_VERSION,
-                 constraints: Sequence[Any] = (), template: Any = None,
-                 outcomes: Mapping[str, str] | None = None):
+    def __init__(
+        self,
+        slots: Sequence[Any],
+        *,
+        schema_version: int = SUPPORTED_SCHEMA_VERSION,
+        constraints: Sequence[Any] = (),
+        template: Any = None,
+        outcomes: Mapping[str, str] | None = None,
+    ):
         _schema_version(schema_version, "DeclaredInputSpace schema version")
         raw_slots = _as_sequence(slots, "input-space slots")
-        normalized = tuple(InputSlot.from_value(slot) for slot in raw_slots)
-        names = [slot.signal for slot in normalized]
+        normalized_slots = tuple(InputSlot.from_value(slot) for slot in raw_slots)
+        names = [slot.signal for slot in normalized_slots]
         if len(set(names)) != len(names):
             _fail("input-space slots contain duplicate signal names")
         signal_names = set(names)
@@ -327,7 +337,7 @@ class DeclaredInputSpace:
             None if template is None else TemplateSpec.from_value(template, signal_names)
         )
         if parsed_template is not None:
-            for slot in normalized:
+            for slot in normalized_slots:
                 if (
                     slot.kind in ("categorical", "boolean", "string-enum")
                     and not slot.value_to_token
@@ -344,7 +354,7 @@ class DeclaredInputSpace:
             _nonempty_string(signal, "outcome signal")
             normalized_outcomes[signal] = _nonempty_string(record_field, "outcome record field")
         object.__setattr__(self, "schema_version", schema_version)
-        object.__setattr__(self, "slots", normalized)
+        object.__setattr__(self, "slots", normalized_slots)
         object.__setattr__(self, "constraints", tuple(normalized_constraints))
         object.__setattr__(self, "template", parsed_template)
         object.__setattr__(self, "outcomes", MappingProxyType(normalized_outcomes))
@@ -390,11 +400,19 @@ class OutputDecoder:
                 if key not in value:
                     _fail(f"threshold decoder for {signal!r} is missing {key!r}")
             threshold = _finite_number(value["threshold"], f"decoder {signal!r} threshold")
-            return cls(kind, float(threshold), _freeze(value["low"]), _freeze(value["high"]),
-                       _freeze(value["tie"]), ())
+            return cls(
+                kind,
+                float(threshold),
+                _freeze(value["low"]),
+                _freeze(value["high"]),
+                _freeze(value["tie"]),
+                (),
+            )
         if kind == "argmax":
-            classes = _unique(_as_sequence(value.get("classes"), f"decoder {signal!r} classes"),
-                              f"decoder {signal!r} classes")
+            classes = _unique(
+                _as_sequence(value.get("classes"), f"decoder {signal!r} classes"),
+                f"decoder {signal!r} classes",
+            )
             if not classes or "tie" not in value:
                 _fail(f"argmax decoder for {signal!r} must declare classes and tie behavior")
             return cls(kind, None, None, None, _freeze(value["tie"]), _freeze(classes))
@@ -405,8 +423,15 @@ def _dtype_name(elem_type: int) -> str:
     if TensorProto is None:
         return str(elem_type)
     name = TensorProto.DataType.Name(elem_type).lower()
-    aliases = {"float": "float32", "double": "float64", "int32": "int32", "int64": "int64",
-               "uint32": "uint32", "uint64": "uint64", "bool": "bool"}
+    aliases = {
+        "float": "float32",
+        "double": "float64",
+        "int32": "int32",
+        "int64": "int64",
+        "uint32": "uint32",
+        "uint64": "uint64",
+        "bool": "bool",
+    }
     return aliases.get(name, name)
 
 
@@ -528,11 +553,11 @@ class OnnxArtifact:
             parsed = onnx.load_model_from_string(model_data)
         except Exception as exc:
             _fail(f"malformed ONNX model: {exc}")
+
         def reject_external(tensor: Any) -> None:
             if tensor.data_location == TensorProto.EXTERNAL or tensor.external_data:
                 _fail(
-                    "external ONNX tensor data is refused; embed every initializer "
-                    "in model bytes"
+                    "external ONNX tensor data is refused; embed every initializer in model bytes"
                 )
 
         for initializer in parsed.graph.initializer:
@@ -609,8 +634,7 @@ class OnnxArtifact:
                 for index, dim in enumerate(tensor_type.shape.dim):
                     if dim.dim_value <= 0:
                         _fail(
-                            f"{label} tensor {name!r} has dynamic query dimension "
-                            f"at index {index}"
+                            f"{label} tensor {name!r} has dynamic query dimension at index {index}"
                         )
                     actual_shape.append(int(dim.dim_value))
                 shape = tuple(actual_shape)
@@ -708,6 +732,12 @@ class OnnxArtifact:
 
 
 __all__ = [
-    "SUPPORTED_SCHEMA_VERSION", "SUPPORTED_VNNLIB_VERSIONS", "InputSlot", "TemplateSpec",
-    "DeclaredInputSpace", "OutputDecoder", "TensorBinding", "OnnxArtifact",
+    "SUPPORTED_SCHEMA_VERSION",
+    "SUPPORTED_VNNLIB_VERSIONS",
+    "InputSlot",
+    "TemplateSpec",
+    "DeclaredInputSpace",
+    "OutputDecoder",
+    "TensorBinding",
+    "OnnxArtifact",
 ]

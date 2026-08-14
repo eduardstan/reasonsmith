@@ -110,6 +110,15 @@ files = ["src/reasonsmith/verdict.py", "src/reasonsmith/spec.py"]
 python_version = "3.11"
 strict = true
 
+# ONNX's numpy dependency currently ships stubs containing a Python 3.12-only `type` statement.
+# The checked modules do not use numpy's API; skip that third-party import rather than moving this
+# project's supported mypy target past Python 3.11.
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true
+ignore_missing_imports = true
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
