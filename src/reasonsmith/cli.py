@@ -111,12 +111,12 @@ What a reader must not break:
 from __future__ import annotations
 
 import argparse
-from dataclasses import replace
 import importlib
 import json
 import os
 import shlex
 import sys
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 

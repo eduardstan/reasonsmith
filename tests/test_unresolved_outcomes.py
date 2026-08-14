@@ -43,7 +43,14 @@ def test_outcome_field_uses_the_semantics_operational_vocabulary():
     assert all(result.to_dict()["outcome"] in expected for result in results)
 
 
-def _pack(tmp_path, *, domains=(), formalism="record", spec="present(signal)", requires=("signal",)):
+def _pack(
+    tmp_path,
+    *,
+    domains=(),
+    formalism="record",
+    spec="present(signal)",
+    requires=("signal",),
+):
     path = tmp_path / f"pack_{formalism}_{len(domains)}_{requires[0]}.toml"
     domains_toml = "[" + ", ".join(repr(value) for value in domains) + "]"
     requires_toml = "[" + ", ".join(repr(value) for value in requires) + "]"
@@ -80,22 +87,34 @@ defeasibility = "strict"
 
 def _log(tmp_path, fields=("signal",)):
     path = tmp_path / "decisions.jsonl"
-    path.write_text("{" + ", ".join(f'"{field}": true' for field in fields) + "}\n", encoding="utf-8")
+    content = "{" + ", ".join(f'"{field}": true' for field in fields) + "}\n"
+    path.write_text(content, encoding="utf-8")
     return path
 
 
 def test_strict_mode_fails_for_each_unresolved_outcome(tmp_path, capsys):
     cases = (
-        ("unattainable", _pack(tmp_path, spec="present(missing)", requires=("missing",)), _log(tmp_path)),
+        (
+            "unattainable",
+            _pack(tmp_path, spec="present(missing)", requires=("missing",)),
+            _log(tmp_path),
+        ),
         (
             "not_evaluated",
-            _pack(tmp_path, formalism="undetermined", spec='undetermined(signal, "predicate", "authority")'),
+            _pack(
+                tmp_path,
+                formalism="undetermined",
+                spec='undetermined(signal, "predicate", "authority")',
+            ),
             _log(tmp_path),
         ),
         ("not_applicable", _pack(tmp_path, domains=("consumer-credit",)), _log(tmp_path)),
     )
     for outcome, pack, log in cases:
-        assert main(["check", "--system", str(log), "--pack", str(pack), "--strict-unresolved"]) == 3
+        assert (
+            main(["check", "--system", str(log), "--pack", str(pack), "--strict-unresolved"])
+            == 3
+        )
         captured = capsys.readouterr()
         assert f"strict unresolved: 1 {outcome.replace('_', ' ')}" in captured.out
 

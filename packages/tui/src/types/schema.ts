@@ -28,7 +28,16 @@
  */
 
 import { checkAudienceBlock, type AudienceBlock } from "./audiences.ts"
-import { isBasis, isStrength, isVerdict, type EvidenceBasis, type StrengthOrNull, type Verdict } from "./verdict.ts"
+import {
+  isBasis,
+  isOperationalOutcome,
+  isStrength,
+  isVerdict,
+  type EvidenceBasis,
+  type OperationalOutcome,
+  type StrengthOrNull,
+  type Verdict,
+} from "./verdict.ts"
 
 /**
  * `JSON_SCHEMA_VERSION` from `src/reasonsmith/report.py`. Bump on the Python side, then here.
