@@ -99,45 +99,67 @@ $$
 \bigwedge_{\sigma \in T} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{tr}}(\sigma).
 $$
 
-The aggregation is lattice infimum, that is, $\sqcap$, not $\otimes$. A temporal formula is
+The aggregation is lattice infimum, that is, $\sqcap$, not $\otimes$. The runtime computes this aggregation with `manyvalued.degree_over_trace` and its lattice `min`. A temporal formula is
 instead evaluated at a position and its trace value is the position-zero value.
 
 **Proposition 3.1 (factoring).** For every fragment except `counterfactual`, set evaluation factors
 through individual traces: evaluate each trace and take the lattice meet. Thus the uniform
-set-of-traces typing does not require a cross-trace operation for those fragments.
+set-of-traces typing does not require a cross-trace operation for those fragments. [definition consequence]
 
 **Definition 3.8 (finite-trace temporal semantics).** Let $\sigma$ have length $n > 0$ and let
 $i$ be a position. A state subformula is evaluated at each position by its record value. The
 position clauses are:
 
 $$
-\begin{aligned}
-[\hspace{-0.17em}[\text{always}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-  &= \bigwedge_{i \le j < n} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j), \cr
-[\hspace{-0.17em}[\text{eventually}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-  &= \bigvee_{i \le j < n} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j), \cr
-[\hspace{-0.17em}[\text{next}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i+1),&i+1<n,\cr1,&i=n-1,\end{cases} \cr
-[\hspace{-0.17em}[\text{prev}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0,\cr1,&i=0,\end{cases}.
-\end{aligned}
+\text{always}(\varphi):
+\quad [\hspace{-0.17em}[\text{always}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+= \bigwedge_{i \le j < n} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j).
+$$
+
+$$
+\text{eventually}(\varphi):
+\quad [\hspace{-0.17em}[\text{eventually}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+= \bigvee_{i \le j < n} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j).
+$$
+
+$$
+\text{next}(\varphi):
+\quad [\hspace{-0.17em}[\text{next}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i+1),&i+1<n,\cr1,&i=n-1,\end{cases}
+$$
+
+$$
+\text{prev}(\varphi):
+\quad [\hspace{-0.17em}[\text{prev}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0,\cr1,&i=0.\end{cases}
 $$
 
 The remaining clauses are
 
 $$
-\begin{aligned}
-[\hspace{-0.17em}[\text{historically}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-  &= \bigwedge_{0 \le j \le i} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j), \cr
-[\hspace{-0.17em}[\text{once}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-  &= \bigvee_{0 \le j \le i} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j), \cr
-[\hspace{-0.17em}[\text{rise}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr
-    [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes \neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0,\end{cases} \cr
-[\hspace{-0.17em}[\text{fall}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-  &= \begin{cases}\neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr
-    \neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
-\end{aligned}
+\text{historically}(\varphi):
+\quad [\hspace{-0.17em}[\text{historically}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+= \bigwedge_{0 \le j \le i} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j).
+$$
+
+$$
+\text{once}(\varphi):
+\quad [\hspace{-0.17em}[\text{once}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+= \bigvee_{0 \le j \le i} [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,j).
+$$
+
+$$
+\text{rise}(\varphi):
+\quad [\hspace{-0.17em}[\text{rise}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr
+[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes \neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
+$$
+
+$$
+\text{fall}(\varphi):
+\quad [\hspace{-0.17em}[\text{fall}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
+= \begin{cases}\neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr
+\neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
 $$
 
 For the binary operators:

@@ -65,7 +65,7 @@ The budget records its cap, seed, strategy, candidate counts, and errors.
 
 **KNOWN INCOMPLETENESS.** Finding no counterexample refutes nothing outside the plan and never
 establishes the universal question. Any planned input that errors makes the result not evaluated;
-`probed` cannot round up to `proved` (Definition 4.4 and the strength chain).
+`probed` cannot round up to `proved` (Definition 8.1 and the strength chain).
 
 ## 4.4 2-safety
 

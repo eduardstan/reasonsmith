@@ -21,6 +21,15 @@ _MATH = re.compile(r"\$\$(.*?)\$\$|\$(?!\$)(.*?)(?<!\\)\$(?!\$)", re.DOTALL)
 _CONTROL = re.compile(r"\\[a-zA-Z]+")
 _SINGLE_LETTER = re.compile(r"(?<![A-Za-z])[A-Za-z](?![A-Za-z])")
 _CODE_SPAN = re.compile(r"`[^`]*`")
+_CROSS_REFERENCE = re.compile(
+    r"\b(?P<kind>Definition|Definitions|Lemma|Lemmas|Theorem|Theorems|"
+    r"Remark|Remarks|Proposition|Propositions|Corollary|Corollaries)\s+"
+    r"(?P<first>\d+\.\d+)(?:\s*[–-]\s*(?P<last>\d+\.\d+))?"
+)
+_DECLARATION = re.compile(
+    r"\*\*(?P<kind>Definition|Lemma|Theorem|Remark|Proposition|Corollary)"
+    r"\s+(?P<number>\d+\.\d+)\b"
+)
 
 # These commands only lay out or annotate a formula; they are not mathematical notation.
 _LAYOUT_CONTROLS = {
@@ -39,6 +48,46 @@ def _table_rows() -> list[tuple[str, str]]:
         if match and match.group(1).strip() != "LaTeX form":
             rows.append((match.group(1).strip(), line))
     return rows
+
+
+def _ascii_spellings() -> list[str]:
+    """Return the ASCII column, keeping the registry injective in plain text."""
+    spellings: list[str] = []
+    for _, line in _table_rows():
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) >= 2:
+            spellings.append(cells[1])
+    return spellings
+
+
+def _theory_declarations() -> dict[tuple[str, str], Path]:
+    declarations: dict[tuple[str, str], Path] = {}
+    for path in sorted(THEORY_DIR.glob("*.md")):
+        for match in _DECLARATION.finditer(path.read_text(encoding="utf-8")):
+            key = (match.group("kind"), match.group("number"))
+            assert key not in declarations, f"duplicate theory declaration: {key}"
+            declarations[key] = path
+    return declarations
+
+
+def _cross_reference_targets() -> list[tuple[str, str, str, Path]]:
+    targets: list[tuple[str, str, str, Path]] = []
+    for path in sorted(THEORY_DIR.glob("*.md")):
+        for match in _CROSS_REFERENCE.finditer(path.read_text(encoding="utf-8")):
+            kind = match.group("kind").rstrip("s")
+            first = match.group("first")
+            last = match.group("last")
+            if last is None:
+                numbers = [first]
+            else:
+                chapter, start = first.split(".")
+                end_chapter, end = last.split(".")
+                assert chapter == end_chapter, (
+                    "cross-reference range crosses chapters: " + match.group(0)
+                )
+                numbers = [f"{chapter}.{number}" for number in range(int(start), int(end) + 1)]
+            targets.extend((kind, number, match.group(0), path) for number in numbers)
+    return targets
 
 
 def _math_spans(text: str) -> list[str]:
@@ -100,3 +149,23 @@ def test_math_spans_are_commonmark_escape_safe():
                    for index in range(len(span) - 1)):
                 unsafe.append((path, span))
     assert not unsafe, "math span contains a CommonMark-unsafe backslash escape: " + repr(unsafe)
+
+
+def test_ascii_spellings_are_injective():
+    """Plain-text spellings distinguish every registered mathematical symbol."""
+    spellings = _ascii_spellings()
+    duplicates = sorted({spelling for spelling in spellings if spellings.count(spelling) > 1})
+    assert not duplicates, (
+        "the notation register reuses ASCII spelling(s): " + ", ".join(duplicates)
+    )
+
+
+def test_theory_cross_references_resolve_to_the_declared_kind():
+    """Every numbered Definition/Lemma/etc. citation names an existing declaration of that kind."""
+    declarations = _theory_declarations()
+    missing = [
+        f"{path}:{reference} -> {kind} {number}"
+        for kind, number, reference, path in _cross_reference_targets()
+        if (kind, number) not in declarations
+    ]
+    assert not missing, "unresolved or wrong-kind theory cross-reference(s): " + "; ".join(missing)

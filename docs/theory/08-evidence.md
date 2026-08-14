@@ -69,7 +69,7 @@ by this system.
 
 **Proposition 8.1 (result invariant).** A `RequirementResult` may carry a basis and strength pair only when that pair belongs to $\sqsubseteq$. `RequirementResult.__post_init__` enforces this relation after parsing the
 `Verdict`, `Strength`, and `EvidenceBasis` values. The basis is derived from the requirement by
-`report.evidence_basis`, stamped by `evaluate_requirement`, and is never a pack or adapter claim.
+`report.evidence_basis`, stamped by `evaluate_requirement`, and is never a pack or adapter claim. [test-backed implementation invariant: test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach]
 
 Consequently, no engine ladder can publish a rung its basis refuses, and no rendering can turn a
 basis into an extra rung. The relation changes neither verdicts nor strengths; it records the

@@ -40,7 +40,7 @@ $$
 and let $\varphi_q$ be the disjunction of conjunctions whose supports are the `u_i`. The artefact's
 exact inference is $V(\beta)$; the audited engine's answer is $E(\beta)$. Both are evaluated on the same
 program and interpretation. The engine is a black box here, except for the monotonicity
- declaration required by Definition 7.7.
+ declaration required by Lemma 7.7.
 
 **Protocol surface admitted by the reversal.** For a fact $a$ and a probability $\lambda$ between zero
 and one, $\beta[a\mapsto\lambda]$ is the interpretation that agrees with $\beta$ except that the
@@ -117,7 +117,7 @@ The first equivalence is Definition 7.3 at $F_q\setminus S$; the remaining equiv
 Lemma 7.7.
 
 **Theorem 7.9 (minimal-hitting-set duality).** The AXps are exactly the minimal hitting sets of the
-CXps, and the CXps are exactly the minimal hitting sets of the AXps.
+CXps, and the CXps are exactly the minimal hitting sets of the AXps. [external theorem instantiated: `[@reiter-1987]`]
 
 This is Reiter's minimal-hitting-set duality between conflicts and diagnoses, specialised here by
 Lemma 7.8 to $\mathbb{L}(\beta)$ (`[@reiter-1987]`, `[@ignatiev-2020]`).
@@ -128,13 +128,15 @@ $$
 \bigcup \mathrm{AXp}=\bigcup \mathrm{CXp}.
 $$
 
+[definition consequence]
+
 A fact is relevant exactly when it belongs to some CXp.
 
 **Corollary 7.11 (singleton pruning).** If $\mathrm{MOVED}(\lbrace a\rbrace)$, then $a$ belongs to no CXp of size greater
-than one, because a minimal contrastive set cannot properly contain that singleton.
+than one, because a minimal contrastive set cannot properly contain that singleton. [definition consequence]
 
 **Corollary 7.12 (short circuit).** If $\mathrm{MOVED}(F_q)$ does not hold, there is no CXp, every fact is
-irrelevant, and the empty set is the unique AXp. One probe settles the decision.
+irrelevant, and the empty set is the unique AXp. One probe settles the decision. [definition consequence]
 
 ## 7.4 Reasons rather than facts
 
@@ -238,7 +240,7 @@ answers appearing in L2 and L3; an artefact that does not is not evaluated for t
 
 **Proposition 7.19 (law refutation).** If (C) holds, L2 and L3 hold at every fact $a\in F_q$.
 Therefore a measured violation of either law refutes (C). L2 follows from the affine decomposition of
-an independent fact probability; L3 follows from the positive-literal formula $\varphi_q$.
+an independent fact probability; L3 follows from the positive-literal formula $\varphi_q$. [proof: sketch above]
 
 Non-refutation is not agreement. The laws move one fact at a time, so they do not find a disagreement
 requiring two facts to move together. A vocabulary member for which this tool has no law is not
