@@ -537,6 +537,21 @@
       max-width: 75ch;
       text-wrap: pretty;
     }
+    .scope-boundary {
+      margin-top: var(--space-xs);
+      padding: var(--space-xs);
+      border-left: 3px solid var(--warn);
+      background: var(--warn-soft);
+      color: var(--ink);
+      font-size: var(--step--1);
+      max-width: 75ch;
+    }
+    .subset-marker {
+      margin-top: var(--space-xs);
+      color: var(--ink-muted);
+      font-size: var(--step--1);
+      font-style: italic;
+    }
     .callout-box {
       margin-top: var(--space-s);
       padding: var(--space-s);
@@ -720,7 +735,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>auditor</span>
-            <span>43,144 characters</span>
+            <span>44,802 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: nothing. This is the full report.</p>
           <iframe title="The auditor rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -1262,6 +1277,21 @@
       max-width: 75ch;
       text-wrap: pretty;
     }
+    .scope-boundary {
+      margin-top: var(--space-xs);
+      padding: var(--space-xs);
+      border-left: 3px solid var(--warn);
+      background: var(--warn-soft);
+      color: var(--ink);
+      font-size: var(--step--1);
+      max-width: 75ch;
+    }
+    .subset-marker {
+      margin-top: var(--space-xs);
+      color: var(--ink-muted);
+      font-size: var(--step--1);
+      font-style: italic;
+    }
     .callout-box {
       margin-top: var(--space-s);
       padding: var(--space-s);
@@ -1464,6 +1494,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_decision_record&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_notification_latency_days&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_counteroffer_not_accepted&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Temporal duty &amp;#x27;always(present(artifact_logs_decision_record) -&amp;gt; ((artifact_logs_notification_latency_days &amp;lt;= 30) or ((artifact_logs_counteroffer_not_accepted &amp;gt;= 0.5) and (artifact_logs_notification_latency_days &amp;lt;= 90))))&amp;#x27;, reduced to the state property under its `always` and put to the solver. Proved for all inputs: formal solver verified requirement &amp;#x27;Implies(present(artifact_logs_decision_record), artifact_logs_notification_latency_days &amp;lt;= 30 or (artifact_logs_counteroffer_not_accepted &amp;gt;= 0.5 and artifact_logs_notification_latency_days &amp;lt;= 90))&amp;#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution. Trace semantics of this verdict: over a finite decision trace, `always(f)` holds exactly when `f` holds at every position, and every position of every trace this system can emit is a decision its exposed logic produces from an input its own constraints admit. A satisfied verdict is therefore universal — it covers every such trace, including the one this run read. A violated verdict is existential and weaker: it names an admissible input whose decision breaches the property, so some trace the system admits breaches the duty, which is not a finding about the trace supplied here.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&amp;#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.&lt;/div&gt;
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -1490,6 +1522,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_decision_record&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;provenance_model_version&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Observed over 2 decision(s): temporal monitor for &amp;#x27;always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))&amp;#x27; satisfied at every decision step.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.&lt;/div&gt;
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -1516,6 +1550,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_reason_explanation&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;provenance_model_version&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;scope_statements_local_vs_global&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Proved for all inputs: formal solver verified requirement &amp;#x27;present(artifact_logs_reason_explanation) -&amp;gt; ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, &amp;quot;internal standards&amp;quot;) and not contains(artifact_logs_reason_explanation, &amp;quot;internal policies&amp;quot;) and not contains(artifact_logs_reason_explanation, &amp;quot;failed to achieve a qualifying score&amp;quot;))&amp;#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&amp;#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.&lt;/div&gt;
+            &lt;div class=&quot;subset-marker&quot;&gt;Formalized subset only — see explain ecoa_reg_b_1002_9_b_2_specific_reasons rationale.&lt;/div&gt;
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -1542,6 +1578,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_reason_explanation&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_deleted_reason_count&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the system declares no capability to emit artifact_logs_deleted_reason_count, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.&lt;/div&gt;
+
+
             &lt;div class=&quot;callout-box callout-unattainable&quot;&gt;&lt;strong&gt;UNATTAINABLE AS BUILT — Missing Capability Signals:&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;signal-tag missing&quot;&gt;artifact_logs_deleted_reason_count&lt;/span&gt;&lt;div class=&quot;callout-note&quot;&gt;The system declares no capability to emit these signals. No testing trace can satisfy this requirement.&lt;/div&gt;&lt;/div&gt;
           &lt;/div&gt;
         &lt;/article&gt;
@@ -1568,6 +1606,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_incompleteness_notice_sent&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the system declares no capability to emit artifact_logs_incompleteness_notice_sent, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.&lt;/div&gt;
+
+
             &lt;div class=&quot;callout-box callout-unattainable&quot;&gt;&lt;strong&gt;UNATTAINABLE AS BUILT — Missing Capability Signals:&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;signal-tag missing&quot;&gt;artifact_logs_incompleteness_notice_sent&lt;/span&gt;&lt;div class=&quot;callout-note&quot;&gt;The system declares no capability to emit these signals. No testing trace can satisfy this requirement.&lt;/div&gt;&lt;/div&gt;
           &lt;/div&gt;
         &lt;/article&gt;
@@ -1594,6 +1634,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_decision_record&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;applicant_prohibited_basis&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the declared logic gives this system no notion of &amp;#x27;applicant_prohibited_basis&amp;#x27; — neither an input it accepts nor a value it computes — so there is no variable here to hold everything else fixed and move. Not knowing a protected variable is not evidence of not using one: a decision procedure that never reads it can still track it exactly through a proxy, and this duty would report that system satisfied if it were answered from the absence. Limit of this duty: it is invariance under one named variable holding all others fixed, so it is a property of treatment and says nothing about effects. A proxy is invisible to it — a rule set that never reads the protected variable and decides by postcode is satisfied here — and a disparate impact is not a thing it can find. It also reaches exactly one variable: a system answerable on several prohibited bases is answered here about the one this duty names.&lt;/div&gt;
+
+
             &lt;div class=&quot;callout-box callout-unattainable&quot;&gt;&lt;strong&gt;UNATTAINABLE AS BUILT — Missing Capability Signals:&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;signal-tag missing&quot;&gt;applicant_prohibited_basis&lt;/span&gt;&lt;div class=&quot;callout-note&quot;&gt;The system declares no capability to emit these signals. No testing trace can satisfy this requirement.&lt;/div&gt;&lt;/div&gt;
           &lt;/div&gt;
         &lt;/article&gt;
@@ -1653,7 +1695,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>developer</span>
-            <span>42,484 characters</span>
+            <span>44,142 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">legal_metadata</span></p>
           <iframe title="The developer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -2195,6 +2237,21 @@
       max-width: 75ch;
       text-wrap: pretty;
     }
+    .scope-boundary {
+      margin-top: var(--space-xs);
+      padding: var(--space-xs);
+      border-left: 3px solid var(--warn);
+      background: var(--warn-soft);
+      color: var(--ink);
+      font-size: var(--step--1);
+      max-width: 75ch;
+    }
+    .subset-marker {
+      margin-top: var(--space-xs);
+      color: var(--ink-muted);
+      font-size: var(--step--1);
+      font-style: italic;
+    }
     .callout-box {
       margin-top: var(--space-s);
       padding: var(--space-s);
@@ -2397,6 +2454,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_decision_record&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_notification_latency_days&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_counteroffer_not_accepted&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Temporal duty &amp;#x27;always(present(artifact_logs_decision_record) -&amp;gt; ((artifact_logs_notification_latency_days &amp;lt;= 30) or ((artifact_logs_counteroffer_not_accepted &amp;gt;= 0.5) and (artifact_logs_notification_latency_days &amp;lt;= 90))))&amp;#x27;, reduced to the state property under its `always` and put to the solver. Proved for all inputs: formal solver verified requirement &amp;#x27;Implies(present(artifact_logs_decision_record), artifact_logs_notification_latency_days &amp;lt;= 30 or (artifact_logs_counteroffer_not_accepted &amp;gt;= 0.5 and artifact_logs_notification_latency_days &amp;lt;= 90))&amp;#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution. Trace semantics of this verdict: over a finite decision trace, `always(f)` holds exactly when `f` holds at every position, and every position of every trace this system can emit is a decision its exposed logic produces from an input its own constraints admit. A satisfied verdict is therefore universal — it covers every such trace, including the one this run read. A violated verdict is existential and weaker: it names an admissible input whose decision breaches the property, so some trace the system admits breaches the duty, which is not a finding about the trace supplied here.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&amp;#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.&lt;/div&gt;
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -2423,6 +2482,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_decision_record&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;provenance_model_version&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Observed over 2 decision(s): temporal monitor for &amp;#x27;always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))&amp;#x27; satisfied at every decision step.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.&lt;/div&gt;
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -2449,6 +2510,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_reason_explanation&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;provenance_model_version&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;scope_statements_local_vs_global&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Proved for all inputs: formal solver verified requirement &amp;#x27;present(artifact_logs_reason_explanation) -&amp;gt; ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, &amp;quot;internal standards&amp;quot;) and not contains(artifact_logs_reason_explanation, &amp;quot;internal policies&amp;quot;) and not contains(artifact_logs_reason_explanation, &amp;quot;failed to achieve a qualifying score&amp;quot;))&amp;#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&amp;#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.&lt;/div&gt;
+            &lt;div class=&quot;subset-marker&quot;&gt;Formalized subset only — see explain ecoa_reg_b_1002_9_b_2_specific_reasons rationale.&lt;/div&gt;
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -2475,6 +2538,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_reason_explanation&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_deleted_reason_count&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the system declares no capability to emit artifact_logs_deleted_reason_count, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.&lt;/div&gt;
+
+
             &lt;div class=&quot;callout-box callout-unattainable&quot;&gt;&lt;strong&gt;UNATTAINABLE AS BUILT — Missing Capability Signals:&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;signal-tag missing&quot;&gt;artifact_logs_deleted_reason_count&lt;/span&gt;&lt;div class=&quot;callout-note&quot;&gt;The system declares no capability to emit these signals. No testing trace can satisfy this requirement.&lt;/div&gt;&lt;/div&gt;
           &lt;/div&gt;
         &lt;/article&gt;
@@ -2501,6 +2566,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_incompleteness_notice_sent&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the system declares no capability to emit artifact_logs_incompleteness_notice_sent, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.&lt;/div&gt;
+
+
             &lt;div class=&quot;callout-box callout-unattainable&quot;&gt;&lt;strong&gt;UNATTAINABLE AS BUILT — Missing Capability Signals:&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;signal-tag missing&quot;&gt;artifact_logs_incompleteness_notice_sent&lt;/span&gt;&lt;div class=&quot;callout-note&quot;&gt;The system declares no capability to emit these signals. No testing trace can satisfy this requirement.&lt;/div&gt;&lt;/div&gt;
           &lt;/div&gt;
         &lt;/article&gt;
@@ -2527,6 +2594,8 @@
               &lt;strong&gt;Requires Signals:&lt;/strong&gt; &lt;span class=&quot;signal-tag&quot;&gt;artifact_logs_decision_record&lt;/span&gt;&lt;span class=&quot;signal-tag&quot;&gt;applicant_prohibited_basis&lt;/span&gt;
             &lt;/div&gt;
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the declared logic gives this system no notion of &amp;#x27;applicant_prohibited_basis&amp;#x27; — neither an input it accepts nor a value it computes — so there is no variable here to hold everything else fixed and move. Not knowing a protected variable is not evidence of not using one: a decision procedure that never reads it can still track it exactly through a proxy, and this duty would report that system satisfied if it were answered from the absence. Limit of this duty: it is invariance under one named variable holding all others fixed, so it is a property of treatment and says nothing about effects. A proxy is invisible to it — a rule set that never reads the protected variable and decides by postcode is satisfied here — and a disparate impact is not a thing it can find. It also reaches exactly one variable: a system answerable on several prohibited bases is answered here about the one this duty names.&lt;/div&gt;
+
+
             &lt;div class=&quot;callout-box callout-unattainable&quot;&gt;&lt;strong&gt;UNATTAINABLE AS BUILT — Missing Capability Signals:&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;signal-tag missing&quot;&gt;applicant_prohibited_basis&lt;/span&gt;&lt;div class=&quot;callout-note&quot;&gt;The system declares no capability to emit these signals. No testing trace can satisfy this requirement.&lt;/div&gt;&lt;/div&gt;
           &lt;/div&gt;
         &lt;/article&gt;
@@ -2586,7 +2655,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>deployer</span>
-            <span>41,683 characters</span>
+            <span>43,341 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">witnesses</span></p>
           <iframe title="The deployer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -3128,6 +3197,21 @@
       max-width: 75ch;
       text-wrap: pretty;
     }
+    .scope-boundary {
+      margin-top: var(--space-xs);
+      padding: var(--space-xs);
+      border-left: 3px solid var(--warn);
+      background: var(--warn-soft);
+      color: var(--ink);
+      font-size: var(--step--1);
+      max-width: 75ch;
+    }
+    .subset-marker {
+      margin-top: var(--space-xs);
+      color: var(--ink-muted);
+      font-size: var(--step--1);
+      font-style: italic;
+    }
     .callout-box {
       margin-top: var(--space-s);
       padding: var(--space-s);
@@ -3328,6 +3412,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Temporal duty &amp;#x27;always(present(artifact_logs_decision_record) -&amp;gt; ((artifact_logs_notification_latency_days &amp;lt;= 30) or ((artifact_logs_counteroffer_not_accepted &amp;gt;= 0.5) and (artifact_logs_notification_latency_days &amp;lt;= 90))))&amp;#x27;, reduced to the state property under its `always` and put to the solver. Proved for all inputs: formal solver verified requirement &amp;#x27;Implies(present(artifact_logs_decision_record), artifact_logs_notification_latency_days &amp;lt;= 30 or (artifact_logs_counteroffer_not_accepted &amp;gt;= 0.5 and artifact_logs_notification_latency_days &amp;lt;= 90))&amp;#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution. Trace semantics of this verdict: over a finite decision trace, `always(f)` holds exactly when `f` holds at every position, and every position of every trace this system can emit is a decision its exposed logic produces from an input its own constraints admit. A satisfied verdict is therefore universal — it covers every such trace, including the one this run read. A violated verdict is existential and weaker: it names an admissible input whose decision breaches the property, so some trace the system admits breaches the duty, which is not a finding about the trace supplied here.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&amp;#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.&lt;/div&gt;
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -3352,6 +3438,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Observed over 2 decision(s): temporal monitor for &amp;#x27;always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))&amp;#x27; satisfied at every decision step.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.&lt;/div&gt;
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -3376,6 +3464,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Proved for all inputs: formal solver verified requirement &amp;#x27;present(artifact_logs_reason_explanation) -&amp;gt; ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, &amp;quot;internal standards&amp;quot;) and not contains(artifact_logs_reason_explanation, &amp;quot;internal policies&amp;quot;) and not contains(artifact_logs_reason_explanation, &amp;quot;failed to achieve a qualifying score&amp;quot;))&amp;#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&amp;#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.&lt;/div&gt;
+            &lt;div class=&quot;subset-marker&quot;&gt;Formalized subset only — see explain ecoa_reg_b_1002_9_b_2_specific_reasons rationale.&lt;/div&gt;
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -3400,6 +3490,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the system declares no capability to emit artifact_logs_deleted_reason_count, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.&lt;/div&gt;
+
+
             &lt;div class=&quot;callout-box callout-unattainable&quot;&gt;&lt;strong&gt;UNATTAINABLE AS BUILT — Missing Capability Signals:&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;signal-tag missing&quot;&gt;artifact_logs_deleted_reason_count&lt;/span&gt;&lt;div class=&quot;callout-note&quot;&gt;The system declares no capability to emit these signals. No testing trace can satisfy this requirement.&lt;/div&gt;&lt;/div&gt;
           &lt;/div&gt;
         &lt;/article&gt;
@@ -3424,6 +3516,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the system declares no capability to emit artifact_logs_incompleteness_notice_sent, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.&lt;/div&gt;
+
+
             &lt;div class=&quot;callout-box callout-unattainable&quot;&gt;&lt;strong&gt;UNATTAINABLE AS BUILT — Missing Capability Signals:&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;signal-tag missing&quot;&gt;artifact_logs_incompleteness_notice_sent&lt;/span&gt;&lt;div class=&quot;callout-note&quot;&gt;The system declares no capability to emit these signals. No testing trace can satisfy this requirement.&lt;/div&gt;&lt;/div&gt;
           &lt;/div&gt;
         &lt;/article&gt;
@@ -3448,6 +3542,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the declared logic gives this system no notion of &amp;#x27;applicant_prohibited_basis&amp;#x27; — neither an input it accepts nor a value it computes — so there is no variable here to hold everything else fixed and move. Not knowing a protected variable is not evidence of not using one: a decision procedure that never reads it can still track it exactly through a proxy, and this duty would report that system satisfied if it were answered from the absence. Limit of this duty: it is invariance under one named variable holding all others fixed, so it is a property of treatment and says nothing about effects. A proxy is invisible to it — a rule set that never reads the protected variable and decides by postcode is satisfied here — and a disparate impact is not a thing it can find. It also reaches exactly one variable: a system answerable on several prohibited bases is answered here about the one this duty names.&lt;/div&gt;
+
+
             &lt;div class=&quot;callout-box callout-unattainable&quot;&gt;&lt;strong&gt;UNATTAINABLE AS BUILT — Missing Capability Signals:&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;signal-tag missing&quot;&gt;applicant_prohibited_basis&lt;/span&gt;&lt;div class=&quot;callout-note&quot;&gt;The system declares no capability to emit these signals. No testing trace can satisfy this requirement.&lt;/div&gt;&lt;/div&gt;
           &lt;/div&gt;
         &lt;/article&gt;
@@ -3507,7 +3603,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>regulator</span>
-            <span>40,686 characters</span>
+            <span>42,344 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">witnesses</span></p>
           <iframe title="The regulator rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -4049,6 +4145,21 @@
       max-width: 75ch;
       text-wrap: pretty;
     }
+    .scope-boundary {
+      margin-top: var(--space-xs);
+      padding: var(--space-xs);
+      border-left: 3px solid var(--warn);
+      background: var(--warn-soft);
+      color: var(--ink);
+      font-size: var(--step--1);
+      max-width: 75ch;
+    }
+    .subset-marker {
+      margin-top: var(--space-xs);
+      color: var(--ink-muted);
+      font-size: var(--step--1);
+      font-style: italic;
+    }
     .callout-box {
       margin-top: var(--space-s);
       padding: var(--space-s);
@@ -4249,6 +4360,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Temporal duty &amp;#x27;always(present(artifact_logs_decision_record) -&amp;gt; ((artifact_logs_notification_latency_days &amp;lt;= 30) or ((artifact_logs_counteroffer_not_accepted &amp;gt;= 0.5) and (artifact_logs_notification_latency_days &amp;lt;= 90))))&amp;#x27;, reduced to the state property under its `always` and put to the solver. Proved for all inputs: formal solver verified requirement &amp;#x27;Implies(present(artifact_logs_decision_record), artifact_logs_notification_latency_days &amp;lt;= 30 or (artifact_logs_counteroffer_not_accepted &amp;gt;= 0.5 and artifact_logs_notification_latency_days &amp;lt;= 90))&amp;#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution. Trace semantics of this verdict: over a finite decision trace, `always(f)` holds exactly when `f` holds at every position, and every position of every trace this system can emit is a decision its exposed logic produces from an input its own constraints admit. A satisfied verdict is therefore universal — it covers every such trace, including the one this run read. A violated verdict is existential and weaker: it names an admissible input whose decision breaches the property, so some trace the system admits breaches the duty, which is not a finding about the trace supplied here.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&amp;#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.&lt;/div&gt;
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -4273,6 +4386,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Observed over 2 decision(s): temporal monitor for &amp;#x27;always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))&amp;#x27; satisfied at every decision step.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.&lt;/div&gt;
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -4297,6 +4412,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Proved for all inputs: formal solver verified requirement &amp;#x27;present(artifact_logs_reason_explanation) -&amp;gt; ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, &amp;quot;internal standards&amp;quot;) and not contains(artifact_logs_reason_explanation, &amp;quot;internal policies&amp;quot;) and not contains(artifact_logs_reason_explanation, &amp;quot;failed to achieve a qualifying score&amp;quot;))&amp;#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution.&lt;/div&gt;
+            &lt;div class=&quot;scope-boundary&quot;&gt;Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&amp;#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.&lt;/div&gt;
+            &lt;div class=&quot;subset-marker&quot;&gt;Formalized subset only — see explain ecoa_reg_b_1002_9_b_2_specific_reasons rationale.&lt;/div&gt;
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -4321,6 +4438,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the system declares no capability to emit artifact_logs_deleted_reason_count, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.&lt;/div&gt;
+
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -4345,6 +4464,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the system declares no capability to emit artifact_logs_incompleteness_notice_sent, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.&lt;/div&gt;
+
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -4369,6 +4490,8 @@
           &lt;div class=&quot;req-card-body&quot;&gt;
 
             &lt;div class=&quot;evidence-summary&quot;&gt;Unattainable as built: the declared logic gives this system no notion of &amp;#x27;applicant_prohibited_basis&amp;#x27; — neither an input it accepts nor a value it computes — so there is no variable here to hold everything else fixed and move. Not knowing a protected variable is not evidence of not using one: a decision procedure that never reads it can still track it exactly through a proxy, and this duty would report that system satisfied if it were answered from the absence. Limit of this duty: it is invariance under one named variable holding all others fixed, so it is a property of treatment and says nothing about effects. A proxy is invisible to it — a rule set that never reads the protected variable and decides by postcode is satisfied here — and a disparate impact is not a thing it can find. It also reaches exactly one variable: a system answerable on several prohibited bases is answered here about the one this duty names.&lt;/div&gt;
+
+
             
           &lt;/div&gt;
         &lt;/article&gt;
@@ -4428,7 +4551,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>affected-individual</span>
-            <span>30,255 characters</span>
+            <span>30,661 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">overview</span><span class="signal-tag">strength</span><span class="signal-tag">legal_metadata</span><span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">evidence_summary</span><span class="signal-tag">probe_budget</span><span class="signal-tag">witnesses</span></p><p class="text-muted">Drawn only for this reader: <span class="signal-tag">plain_account</span></p>
           <iframe title="The affected-individual rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -4970,6 +5093,21 @@
       max-width: 75ch;
       text-wrap: pretty;
     }
+    .scope-boundary {
+      margin-top: var(--space-xs);
+      padding: var(--space-xs);
+      border-left: 3px solid var(--warn);
+      background: var(--warn-soft);
+      color: var(--ink);
+      font-size: var(--step--1);
+      max-width: 75ch;
+    }
+    .subset-marker {
+      margin-top: var(--space-xs);
+      color: var(--ink-muted);
+      font-size: var(--step--1);
+      font-style: italic;
+    }
     .callout-box {
       margin-top: var(--space-s);
       padding: var(--space-s);
@@ -5323,6 +5461,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_decision_record</span><span class="signal-tag">artifact_logs_notification_latency_days</span><span class="signal-tag">artifact_logs_counteroffer_not_accepted</span>
             </div>
             <div class="evidence-summary">Temporal duty &#x27;always(present(artifact_logs_decision_record) -&gt; ((artifact_logs_notification_latency_days &lt;= 30) or ((artifact_logs_counteroffer_not_accepted &gt;= 0.5) and (artifact_logs_notification_latency_days &lt;= 90))))&#x27;, reduced to the state property under its `always` and put to the solver. Proved for all inputs: formal solver verified requirement &#x27;Implies(present(artifact_logs_decision_record), artifact_logs_notification_latency_days &lt;= 30 or (artifact_logs_counteroffer_not_accepted &gt;= 0.5 and artifact_logs_notification_latency_days &lt;= 90))&#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution. Trace semantics of this verdict: over a finite decision trace, `always(f)` holds exactly when `f` holds at every position, and every position of every trace this system can emit is a decision its exposed logic produces from an input its own constraints admit. A satisfied verdict is therefore universal — it covers every such trace, including the one this run read. A violated verdict is existential and weaker: it names an admissible input whose decision breaches the property, so some trace the system admits breaches the duty, which is not a finding about the trace supplied here.</div>
+            <div class="scope-boundary">Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.</div>
+
             
           </div>
         </article>
@@ -5349,6 +5489,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_decision_record</span><span class="signal-tag">provenance_model_version</span>
             </div>
             <div class="evidence-summary">Observed over 2 decision(s): temporal monitor for &#x27;always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))&#x27; satisfied at every decision step.</div>
+            <div class="scope-boundary">Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.</div>
+
             
           </div>
         </article>
@@ -5375,6 +5517,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_reason_explanation</span><span class="signal-tag">provenance_model_version</span><span class="signal-tag">scope_statements_local_vs_global</span>
             </div>
             <div class="evidence-summary">Proved for all inputs: formal solver verified requirement &#x27;present(artifact_logs_reason_explanation) -&gt; ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, &quot;internal standards&quot;) and not contains(artifact_logs_reason_explanation, &quot;internal policies&quot;) and not contains(artifact_logs_reason_explanation, &quot;failed to achieve a qualifying score&quot;))&#x27; holds across all valid inputs under system constraints. Limit of this proof: `real` is the exact rationals to the solver and IEEE-754 float64 to the system, so this holds over the rationals and not over the arithmetic the system runs. A property that depends on rounding can be proved here and still fail in execution.</div>
+            <div class="scope-boundary">Scope of this positive result: this formal property was satisfied only on all inputs admitted by the system&#x27;s declared logic and constraints at the proved evidence rung; this run did not establish that those assumptions match production or the world, and it did not determine legal adequacy or compliance outside those assumptions.</div>
+            <div class="subset-marker">Formalized subset only — see explain ecoa_reg_b_1002_9_b_2_specific_reasons rationale.</div>
             
           </div>
         </article>
@@ -5401,6 +5545,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_reason_explanation</span><span class="signal-tag">artifact_logs_deleted_reason_count</span>
             </div>
             <div class="evidence-summary">Unattainable as built: the system declares no capability to emit artifact_logs_deleted_reason_count, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.</div>
+
+
             <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">artifact_logs_deleted_reason_count</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
           </div>
         </article>
@@ -5427,6 +5573,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_incompleteness_notice_sent</span>
             </div>
             <div class="evidence-summary">Unattainable as built: the system declares no capability to emit artifact_logs_incompleteness_notice_sent, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.</div>
+
+
             <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">artifact_logs_incompleteness_notice_sent</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
           </div>
         </article>
@@ -5453,6 +5601,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_decision_record</span><span class="signal-tag">applicant_prohibited_basis</span>
             </div>
             <div class="evidence-summary">Unattainable as built: the declared logic gives this system no notion of &#x27;applicant_prohibited_basis&#x27; — neither an input it accepts nor a value it computes — so there is no variable here to hold everything else fixed and move. Not knowing a protected variable is not evidence of not using one: a decision procedure that never reads it can still track it exactly through a proxy, and this duty would report that system satisfied if it were answered from the absence. Limit of this duty: it is invariance under one named variable holding all others fixed, so it is a property of treatment and says nothing about effects. A proxy is invisible to it — a rule set that never reads the protected variable and decides by postcode is satisfied here — and a disparate impact is not a thing it can find. It also reaches exactly one variable: a system answerable on several prohibited bases is answered here about the one this duty names.</div>
+
+
             <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">applicant_prohibited_basis</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
           </div>
         </article>

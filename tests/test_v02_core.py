@@ -548,7 +548,8 @@ def test_no_reasons_system_against_the_whole_table7_pack():
     report = check_conformance(sut, load_pack("table7"), system_name="BlackBoxNeuralModel")
 
     assert report.headline == (
-        "6 requirements · 4 binding: 2 observed, 2 unattainable · 2 interpretive: 2 observed"
+        "6 requirements · 4 binding: 2 observed, 2 unattainable · 2 interpretive: 2 observed "
+        "· all positives observed-only"
     )
     assert sut.was_executed is True
 
@@ -589,7 +590,10 @@ def test_full_conformance_report():
         assert res.verdict == Verdict.SATISFIED
         assert res.signals_missing == ()
 
-    expected_headline = "6 requirements · 4 binding: 4 observed · 2 interpretive: 2 observed"
+    expected_headline = (
+        "6 requirements · 4 binding: 4 observed · 2 interpretive: 2 observed "
+        "· all positives observed-only"
+    )
     assert report.headline == expected_headline
 
     # Serialization tests (house pattern)
@@ -903,7 +907,8 @@ def test_headline_and_counts_never_disagree():
     assert counts["observed"] == 2
     assert counts["interpretive_observed"] == 2
     assert report.headline == (
-        "6 requirements · 4 binding: 2 observed, 2 unattainable · 2 interpretive: 2 observed"
+        "6 requirements · 4 binding: 2 observed, 2 unattainable · 2 interpretive: 2 observed "
+        "· all positives observed-only"
     )
     assert json.loads(report.to_json())["counts"] == counts
 

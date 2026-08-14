@@ -69,6 +69,91 @@ constructed at all without the search budget that produced it — trials, seed, 
 [`language-model.md`](language-model.md) is the same rung reached by a language model behind one
 `complete(prompt) -> str`: a model you can call adds no rung.
 
+### A callable with an input space (and a fairness duty)
+
+`CallableAdapter` is enough when the question is about the records your callable emits. Its public
+constructor is exactly `CallableAdapter(target, declared_capabilities, test_inputs)`: the first
+argument is the callable (or an object with `decide()`/`predict()`), the second is the set of
+signals it emits, and the third is the finite set of cases to replay. This small, runnable example
+shows the extra surface a counterfactual duty needs. Save it as a module and run it through
+`--system-module`, or execute it directly.
+
+    from dataclasses import replace
+
+    from reasonsmith.adapters.callable import CallableAdapter
+    from reasonsmith.report import check_conformance
+    from reasonsmith.spec import load_pack
+
+
+    class FairCallable(CallableAdapter):
+        # CallableAdapter still supplies target, declared_capabilities and test_inputs.  This method
+        # adds the declared input space that a counterfactual proof/replay needs.
+        def logic(self):
+            return {
+                "variables": {
+                    "income": "int",
+                    "applicant_prohibited_basis": "int",
+                    "artifact_logs_decision_record": "bool",
+                },
+                "constraints": [
+                    "income >= 0",
+                    "income <= 200000",
+                    "applicant_prohibited_basis >= 0",
+                    "applicant_prohibited_basis <= 1",
+                ],
+                "rules": [
+                    "artifact_logs_decision_record = income >= 30000",
+                ],
+                "computes": ["artifact_logs_decision_record"],
+            }
+
+
+    def target(case):
+        return {"artifact_logs_decision_record": case["income"] >= 30000}
+
+
+    def system_under_test():
+        sut = FairCallable(
+            target,
+            declared_capabilities={"artifact_logs_decision_record"},
+            test_inputs=[{"income": 25000}, {"income": 50000}],
+        )
+        sut.system_domains = ("consumer-credit",)
+        return sut
+
+
+    def main():
+        sut = system_under_test()
+        pack = load_pack("ecoa")
+        req = pack.get_requirement("ecoa_reg_b_1002_4_a_no_disparate_treatment")
+        report = check_conformance(
+            sut,
+            replace(pack, id="one-duty", requirements=(req,)),
+            system_name="fair-callable",
+        )
+        print(report.render_text())
+
+
+    if __name__ == "__main__":
+        main()
+
+
+With the file saved as `fair_callable.py`, either run `python fair_callable.py` or let the CLI
+import its factory (the module is imported and executed):
+
+    python -m reasonsmith.cli check \
+      --system-module fair_callable:system_under_test \
+      --pack ecoa --system-domain consumer-credit
+
+The `applicant_prohibited_basis` values `0` and `1` are admissible because `logic()` declares
+that variable and constrains its input domain. They are **not** in `test_inputs`, in the returned
+records, or in `declared_capabilities`: admissible protected values are part of the declared input
+space, not production logging. The fairness duty additionally needs `logic()` to expose the rules,
+the `variables`/`constraints` input space, and `computes` to identify the outcome. A plain
+`CallableAdapter(target, declared_capabilities, test_inputs)` with no such `logic()` remains a
+replayable callable and can reach `probed`, but is correctly not evaluated for this
+counterfactual question. Declaring a protected variable is not a claim that a log contains it.
+
 **Declared rules.** [`RulesAdapter`](../src/reasonsmith/adapters/rules.py) executes your rules in
 `decide()` and exposes the same statements from `logic()`, so a proof and a replay cannot be about
 different programs. This is the only route to a claim over every input your constraints admit. What
@@ -213,7 +298,7 @@ system: notice-service
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 6 requirements · 6 binding: 1 observed, 1 not evaluated, 4 unattainable
+headline: 6 requirements · 6 binding: 1 observed, 1 not evaluated, 4 unattainable · all positives observed-only
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): inconclusive
@@ -225,6 +310,7 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_decision_record, provenance_model_version
     domain limit: consumer-credit
     summary: Observed over 2 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied at every decision step.
+    Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [UNATTAINABLE] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): inconclusive
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
     domain limit: consumer-credit
@@ -281,7 +367,7 @@ system: notice-service
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 6 requirements · 6 binding: 1 observed, 1 violated, 1 not evaluated, 3 unattainable
+headline: 6 requirements · 6 binding: 1 observed, 1 violated, 1 not evaluated, 3 unattainable · all positives observed-only
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): inconclusive
@@ -293,6 +379,7 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_decision_record, provenance_model_version
     domain limit: consumer-credit
     summary: Observed over 2 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied at every decision step.
+    Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
     domain limit: consumer-credit

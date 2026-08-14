@@ -480,6 +480,14 @@ def render_text(report: ConformanceReport, audience: str | None = None) -> str:
                 lines.append(f"    ABSENT FROM TRACE: {', '.join(absent)}")
             if view.evidence_summary and r.evidence_summary:
                 lines.append(f"    summary: {r.evidence_summary}")
+            if view.evidence_summary and r.scope_boundary:
+                lines.append(f"    {r.scope_boundary}")
+            if (
+                view.evidence_summary
+                and r.verdict == Verdict.SATISFIED
+                and r.formalized_subset_only
+            ):
+                lines.append(f"    {r.formalized_subset_note}")
             if view.evidence_summary:
                 for finding in certificate_findings(r):
                     lines.append(
@@ -800,6 +808,18 @@ def render_html(
                 if view.evidence_summary
                 else ""
             )
+            scope_boundary = r.scope_boundary
+            scope_block = (
+                f'            <div class="scope-boundary">{html.escape(scope_boundary)}</div>'
+                if view.evidence_summary and scope_boundary
+                else ""
+            )
+            subset_note = r.formalized_subset_note
+            subset_block = (
+                f'            <div class="subset-marker">{html.escape(subset_note)}</div>'
+                if view.evidence_summary and subset_note
+                else ""
+            )
 
             details_html = ""
             if view.evidence_summary:
@@ -952,7 +972,10 @@ def render_html(
             # only when something goes in it. Every audience that shows an evidence summary
             # always fills it, so this changes no page that carries one — including the byte-
             # pinned `docs/report.html`.
-            body_inner = f"{signal_block}\n{summary_block}\n            {details_html}"
+            body_inner = (
+                f"{signal_block}\n{summary_block}\n{scope_block}\n{subset_block}\n"
+                f"            {details_html}"
+            )
             body_block = (
                 '          <div class="req-card-body">\n'
                 f"{body_inner}\n"
@@ -1551,6 +1574,21 @@ def render_html(
       line-height: 1.6;
       max-width: 75ch;
       text-wrap: pretty;
+    }}
+    .scope-boundary {{
+      margin-top: var(--space-xs);
+      padding: var(--space-xs);
+      border-left: 3px solid var(--warn);
+      background: var(--warn-soft);
+      color: var(--ink);
+      font-size: var(--step--1);
+      max-width: 75ch;
+    }}
+    .subset-marker {{
+      margin-top: var(--space-xs);
+      color: var(--ink-muted);
+      font-size: var(--step--1);
+      font-style: italic;
     }}
     .callout-box {{
       margin-top: var(--space-s);

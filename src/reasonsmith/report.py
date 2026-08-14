@@ -217,6 +217,118 @@ def certificate_findings(result: "RequirementResult") -> list[dict[str, Any]]:
     ]
 
 
+_FORMALIZED_SUBSET_MARKERS = (
+    "nothing here decides",
+    "nothing here says",
+    "nothing here measures",
+    "nothing here captures",
+    "cannot see",
+    "does not see",
+    "does not measure",
+    "does not capture",
+    "does not determine",
+    "not formalised",
+    "not formalized",
+    "unformalised",
+    "unformalized",
+    "presence cannot",
+    "never read",
+    "never measures",
+    "outside every engine",
+    "not a determination",
+    "omission is deliberate",
+    "does not test",
+    "cannot test",
+    "does not fix",
+    "not that ",
+    "no engine here",
+    "not a proxy",
+)
+
+
+def rationale_names_formalized_subset(rationale: str) -> bool:
+    """Whether the authored explanation explicitly names a boundary of its formula.
+
+    This is a presentation annotation only. It deliberately recognises conservative, explicit
+    limitation language rather than treating every ``not`` in legal prose as a scope claim. The
+    rationale is the pack author's explanation surfaced by ``explain``; no verdict is inferred
+    from this flag.
+    """
+    text = rationale.casefold()
+    return any(marker in text for marker in _FORMALIZED_SUBSET_MARKERS)
+
+
+def _probe_scope_line(budget: Mapping[str, Any]) -> str:
+    """Compactly carry the search budget into a positive-result boundary sentence."""
+    trials = budget.get("trials", "unknown")
+    seed = budget.get("seed", "unknown")
+    strategy = budget.get("strategy", "unknown")
+    space = budget.get("input_space")
+    if isinstance(space, Mapping):
+        space_text = ", ".join(f"{name} ({count} values)" for name, count in sorted(space.items()))
+    else:
+        space_text = str(space) if space is not None else "no field varied"
+    return (
+        f"{trials} input(s) replayed, seed {seed}, input space: {space_text}; "
+        f"strategy: {strategy}"
+    )
+
+
+def positive_scope_boundary(result: "RequirementResult") -> str | None:
+    """Return the run-specific boundary a satisfied result must carry on every surface."""
+    if result.verdict is not Verdict.SATISFIED or result.strength is None:
+        return None
+    rung = result.strength.value
+    if result.strength is Strength.OBSERVED:
+        count = result.details.get("records_observed")
+        supplied = (
+            f"the supplied {count} decision records"
+            if count is not None
+            else "the supplied records"
+        )
+        evidence = f"{supplied} at the observed evidence rung"
+        ending = (
+            "this run did not establish that the trace is complete, representative, or unfiltered, "
+            "and it did not determine legal adequacy or compliance outside those records"
+        )
+    elif result.strength in (Strength.RECOUNTED, Strength.PROBED):
+        budget = result.details.get(PROBE_BUDGET_KEY)
+        search = (
+            _probe_scope_line(budget)
+            if isinstance(budget, Mapping)
+            else "a bounded search whose budget is not recorded"
+        )
+        evidence = f"the bounded search ({search}) at the {rung} evidence rung"
+        ending = (
+            "this run did not establish that the searched inputs are complete, representative, or "
+            "unfiltered, and it did not determine legal adequacy or compliance outside that search"
+        )
+    elif result.strength is Strength.PROVED:
+        assumptions = result.details.get("assumptions") or result.details.get("assumption_set")
+        if isinstance(assumptions, (list, tuple, set)):
+            assumption_text = ", ".join(str(item) for item in assumptions)
+        elif assumptions:
+            assumption_text = str(assumptions)
+        elif result.details.get("solver") == "z3":
+            assumption_text = "the system's declared logic and constraints"
+        else:
+            assumption_text = "the assumptions carried by this result"
+        evidence = f"all inputs admitted by {assumption_text} at the proved evidence rung"
+        ending = (
+            "this run did not establish that those assumptions match production or the world, and "
+            "it did not determine legal adequacy or compliance outside those assumptions"
+        )
+    else:
+        # A future positive rung must not silently lose the boundary. Keep the wording tied to the
+        # result's own named rung rather than presenting a generic compliance disclaimer.
+        evidence = f"the evidence carried by this result at the {rung} evidence rung"
+        ending = "this run did not determine legal adequacy or compliance outside that evidence"
+    return (
+        "Scope of this positive result: this formal property was satisfied only on "
+        f"{evidence}; {ending}."
+    )
+
+
 @dataclass(frozen=True)
 class RequirementResult:
     """The conformance result for a single requirement.
@@ -264,6 +376,19 @@ class RequirementResult:
     domains: tuple[str, ...] = ()
     basis: EvidenceBasis = EvidenceBasis.BEHAVIOURAL
     verbatim_text: str = ""
+    formalized_subset_only: bool = False
+
+    @property
+    def scope_boundary(self) -> str | None:
+        """The positive-result boundary derived from this result's own evidence."""
+        return positive_scope_boundary(self)
+
+    @property
+    def formalized_subset_note(self) -> str | None:
+        """A short pointer to the authored rationale's explicit limitation, when present."""
+        if self.verdict is Verdict.SATISFIED and self.formalized_subset_only:
+            return f"Formalized subset only — see explain {self.requirement_id} rationale."
+        return None
 
     def __post_init__(self) -> None:
         # Every invariant below compares against the enum members, so a raw string would
@@ -597,6 +722,11 @@ class RequirementResult:
             "scope": self.scope,
             "domains": list(self.domains),
             "basis": self.basis.value,
+            # Additive machine fields: a consumer can keep reading every existing key while
+            # gaining the same point-of-belief boundary shown by text and HTML.
+            "scope_boundary": self.scope_boundary,
+            "formalized_subset_only": self.formalized_subset_only,
+            "formalized_subset_note": self.formalized_subset_note,
         }
 
 
@@ -1010,6 +1140,9 @@ class ConformanceReport:
             ]
             detail = f": {', '.join(categories)}" if categories else ""
             parts.append(f"{counts[total_key]} {noun}{detail}")
+        positives = [r for r in self.results if r.verdict is Verdict.SATISFIED]
+        if positives and all(r.strength is Strength.OBSERVED for r in positives):
+            parts.append("all positives observed-only")
         return " · ".join(parts)
 
     @property
@@ -1463,6 +1596,7 @@ def evaluate_requirement(
         # than threaded through four engines: it is the pack's copy, unchanged, and an engine
         # has nothing to say about the words of the clause it was checked against.
         verbatim_text=req.verbatim_text,
+        formalized_subset_only=rationale_names_formalized_subset(req.rationale),
     )
 
 

@@ -14,7 +14,7 @@ This is the evidence artifact for `reasonsmith`'s own claims: an environment was
 | | `test_e6_findings.py` | 4 errors | Error fixture requires `ltn.fuzzy_ops` |
 | | `test_oracle.py` | 1 failed | Failed test requires `problog` (`oracles` extra) |
 | | Uncollected modules | 3 skipped | `deeplog`, `deepproblog`, `problog_kbest` |
-| **Demo Execution** | Determinism (2 runs) | **Byte-identical** (0 diff lines) | `md5sum`: `c5976971e24a86886f1e0ad54f0b9ce9` (561 lines) — the transcript as it stood at the measured commit; the demo has since grown four sections, see the Contributor Demos Note |
+| **Demo Execution** | Determinism (2 runs) | **Byte-identical** (0 diff lines) | `md5sum`: `259fb66c4ebe4ce5c4b136c0e947f4cb` (909 lines) — the transcript as it stood at the measured commit; the demo has since grown four sections, see the Contributor Demos Note |
 | | ECOA Credit (`APP-1042`) | Record: **`COMPLETE`** (5/5 fields)<br>Certificate: **`FAIL`** (gap -0.225799) | 5 reasons found by exact WMC, 1 used by top-1 engine, 4 deleted by truncation |
 | | GDPR Clinical (`PT-0731`) | Record: **`COMPLETE`** (3/3 fields)<br>Certificate: **`FAIL`** (gap -0.260424) | 5 reasons found by exact WMC, 1 used by top-1 engine, 4 deleted by truncation |
 | **Table 19 Conformance** | Design A (Confidence Varies) | Coverage gap: **0.0000**<br>Fidelity gap: **+0.0535**<br>Retained share gap: **+0.2802** | Typical: cov 0.3333, fid 0.7807, ret 0.7731<br>Atypical: cov 0.3333, fid 0.7272, ret 0.4929 |

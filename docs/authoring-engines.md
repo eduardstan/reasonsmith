@@ -10,6 +10,29 @@ are, written in the one language of `rulelang.py` ([`authoring-packs.md`](author
 and answers it or does not. What becomes open is the set of engines that may discharge a duty, and
 nothing else.
 
+## Where the implementation contract lives
+
+The numbered theory chapters are **conceptual and non-implementational**: they define the language,
+denotation, and evidence model, but they are not a standalone constructor or dispatch
+specification. For an executable extension, use these authoritative modules and their tests:
+
+- `spec.py` defines `Requirement`/`Pack` loading and the closed vocabularies
+  `DEONTIC_TYPES = {obligation, permission, prohibition, reparation}` and
+  `DEFEASIBILITY_CLASSES = {strict, defeasible-modelled, defeasible-unmodelled, trigger-unmodelled}`;
+- `sut.py` defines the required `capabilities()`, `decisions()`, and `logic()` protocol, while
+  `adapters/callable.py` (`CallableAdapter(target, declared_capabilities, test_inputs=None, decisions=None)`)
+  and `adapters/rules.py` are the reference constructors;
+- `report.py` defines `RequirementResult` and refuses a result whose verdict/strength, evidence
+  basis, probe budget, or applicability fields are inconsistent. In particular, an engine must
+  return the requested `requirement_id`, must not claim above its `max_strength`, and must return
+  `strength=None` with an inconclusive verdict when it cannot answer;
+- `plugins.py` defines entry-point discovery and `report.py`'s `_engine_ladder` defines dispatch:
+  installed engines are offered reached requirements at their declared ceiling, the strongest
+  valid evidence wins, and import/call/type/ceiling failures are `not evaluated`, never a verdict.
+
+This page is the public extension guide; the modules above, not a theory chapter or an inferred
+vocabulary, are the authority when the two descriptions need a detail.
+
 ## What a plug-in must supply
 
 An entry point in the group `reasonsmith.engines`, resolving to any object with two attributes:

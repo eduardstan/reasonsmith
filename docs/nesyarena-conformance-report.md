@@ -168,7 +168,7 @@ system: nesyarena:exact-wmc
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable · all positives observed-only
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -182,9 +182,11 @@ REQUIREMENT FINDINGS:
   [OBSERVED] gdpr_art22_3_safeguards_human_intervention (GDPR (Regulation (EU) 2016/679) Article 22(3)): satisfied
     requires: artifact_logs_decision_record, scope_statements_local_vs_global
     summary: Observed over 16 decision(s): every required signal (artifact_logs_decision_record, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    Scope of this positive result: this formal property was satisfied only on the supplied 16 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_meaningful_explanation (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    Scope of this positive result: this formal property was satisfied only on the supplied 16 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [UNATTAINABLE] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): inconclusive
     evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
     requires: artifact_logs_semantics_value_gap, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
@@ -278,7 +280,7 @@ system: nesyarena:add-mult(clamped)
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 violated, 1 unattainable
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 violated, 1 unattainable · all positives observed-only
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -292,6 +294,7 @@ REQUIREMENT FINDINGS:
   [OBSERVED] gdpr_art22_3_safeguards_human_intervention (GDPR (Regulation (EU) 2016/679) Article 22(3)): satisfied
     requires: artifact_logs_decision_record, scope_statements_local_vs_global
     summary: Observed over 16 decision(s): every required signal (artifact_logs_decision_record, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    Scope of this positive result: this formal property was satisfied only on the supplied 16 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_meaningful_explanation (GDPR (Regulation (EU) 2016/679) Recital 71): violated
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     ABSENT FROM TRACE: artifact_logs_reason_explanation
@@ -390,7 +393,7 @@ system: nesyarena:top-1-proofs
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable · all positives observed-only
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -404,9 +407,11 @@ REQUIREMENT FINDINGS:
   [OBSERVED] gdpr_art22_3_safeguards_human_intervention (GDPR (Regulation (EU) 2016/679) Article 22(3)): satisfied
     requires: artifact_logs_decision_record, scope_statements_local_vs_global
     summary: Observed over 16 decision(s): every required signal (artifact_logs_decision_record, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    Scope of this positive result: this formal property was satisfied only on the supplied 16 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_meaningful_explanation (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    Scope of this positive result: this formal property was satisfied only on the supplied 16 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [UNATTAINABLE] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): inconclusive
     evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
     requires: artifact_logs_semantics_value_gap, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
@@ -500,7 +505,7 @@ system: nesyarena:top-3-proofs
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable · all positives observed-only
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -514,9 +519,11 @@ REQUIREMENT FINDINGS:
   [OBSERVED] gdpr_art22_3_safeguards_human_intervention (GDPR (Regulation (EU) 2016/679) Article 22(3)): satisfied
     requires: artifact_logs_decision_record, scope_statements_local_vs_global
     summary: Observed over 16 decision(s): every required signal (artifact_logs_decision_record, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    Scope of this positive result: this formal property was satisfied only on the supplied 16 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_meaningful_explanation (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    Scope of this positive result: this formal property was satisfied only on the supplied 16 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [UNATTAINABLE] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): inconclusive
     evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
     requires: artifact_logs_semantics_value_gap, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
@@ -610,7 +617,7 @@ system: nesyarena:min-max-prob
 declared scope: undeclared
 declared domains: undeclared
 pack: gdpr
-headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable
+headline: 5 requirements · 3 binding: 1 observed, 2 unattainable · 2 interpretive: 1 observed, 1 unattainable · all positives observed-only
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] gdpr_art22_1_automated_decision_prohibition (GDPR (Regulation (EU) 2016/679) Article 22(1)): inconclusive
@@ -624,9 +631,11 @@ REQUIREMENT FINDINGS:
   [OBSERVED] gdpr_art22_3_safeguards_human_intervention (GDPR (Regulation (EU) 2016/679) Article 22(3)): satisfied
     requires: artifact_logs_decision_record, scope_statements_local_vs_global
     summary: Observed over 16 decision(s): every required signal (artifact_logs_decision_record, scope_statements_local_vs_global) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    Scope of this positive result: this formal property was satisfied only on the supplied 16 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [OBSERVED] [INTERPRETIVE] gdpr_recital71_meaningful_explanation (GDPR (Regulation (EU) 2016/679) Recital 71): satisfied
     requires: artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version
     summary: Observed over 16 decision(s): every required signal (artifact_logs_reason_explanation, scope_statements_explanation_scope, provenance_model_version) carries a value in every record. Holds on the trace supplied; nothing here extends the claim to decisions not in it.
+    Scope of this positive result: this formal property was satisfied only on the supplied 16 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [UNATTAINABLE] [INTERPRETIVE] gdpr_recital71_error_risk_minimised (GDPR (Regulation (EU) 2016/679) Recital 71): inconclusive
     evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
     requires: artifact_logs_semantics_value_gap, scope_statements_approximation_vs_guarantee, artifact_logs_decision_margin
