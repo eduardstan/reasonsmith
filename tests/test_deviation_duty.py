@@ -31,8 +31,10 @@ What a reader must not break:
 
 from __future__ import annotations
 
+import math
 from dataclasses import replace
 
+import pytest
 from nesyarena.adapters.base import ReferenceAdapter
 from nesyarena.suts import ExactWMC, TopK
 
@@ -94,9 +96,18 @@ class _Pipeline:
         "scope_statements_approximation_vs_guarantee",
     })
 
-    def __init__(self, engine, claimed_gap: float | None = None):
+    def __init__(
+        self,
+        engine,
+        claimed_gap: float | None = None,
+        *,
+        declared_margin: float | None = None,
+        decision_threshold: object = None,
+    ):
         self.engine = engine
         self.claimed_gap = claimed_gap
+        self.declared_margin = declared_margin
+        self.decision_threshold = decision_threshold
 
     def capabilities(self) -> set[str]:
         return set(self.CAPABILITIES)
@@ -108,7 +119,11 @@ class _Pipeline:
             record = {
                 "decision_id": case.case_id,
                 "artifact_logs_decision_record": f"adverse action on {case.case_id}",
-                "artifact_logs_decision_margin": abs(cert.engine_value - THRESHOLD),
+                "artifact_logs_decision_margin": (
+                    self.declared_margin
+                    if self.declared_margin is not None
+                    else abs(cert.engine_value - THRESHOLD)
+                ),
                 "scope_statements_approximation_vs_guarantee": "approximation",
             }
             if self.claimed_gap is not None:
@@ -122,7 +137,7 @@ class _Pipeline:
     def artifact(self, decision: dict) -> dict | None:
         for case in DEPLOYED_CASES:
             if case.case_id == decision.get("decision_id"):
-                return {
+                artifact = {
                     "program": case.program,
                     "base": case.base,
                     "query": case.query,
@@ -131,7 +146,109 @@ class _Pipeline:
                     "monotone": True,
                     "labels": case.labels,
                 }
+                if self.decision_threshold is not None:
+                    artifact["decision_threshold"] = self.decision_threshold
+                return artifact
         return None
+
+
+class _ObjectThresholdPipeline(_Pipeline):
+    """The same artefact exposed as an object rather than the ground-program mapping."""
+
+    def artifact(self, decision: dict):
+        supplied = super().artifact(decision)
+        if supplied is None:
+            return None
+        return GroundProgramArtifact(
+            supplied["program"],
+            supplied["base"],
+            supplied["query"],
+            supplied["adapter"],
+            supplied["exact_depth"],
+            supplied["labels"],
+            supplied["monotone"],
+            decision_threshold=self.decision_threshold,
+        )
+
+
+class _BooleanAdapter(SilentDropAdapter):
+    """A boolean answer must not be coerced to the real number one."""
+
+    def infer(self, program, base, queries):
+        return {query: True for query in queries}
+
+
+class _FixedArtifact:
+    """Small object-family fixture for finite-value and accessor refusals."""
+
+    reasons_are_exact = True
+    exact_semantics = "distribution semantics"
+    monotone = True
+    query = "q"
+    engine_name = "fixed"
+    claimed_semantics = "distribution semantics"
+    exact_inference = "one fixed reason"
+    exact_depth = 1
+
+    def __init__(
+        self, exact_value, engine_value, threshold=0.5, *, raising=False, threshold_error=None
+    ):
+        self._exact_value = exact_value
+        self._engine_value = engine_value
+        self._threshold = threshold
+        self._raising = raising
+        self._threshold_error = threshold_error
+
+    def reasons(self):
+        return (frozenset({"a"}),)
+
+    def label(self, reason):
+        return "a"
+
+    def score(self, reason):
+        return 1.0
+
+    def exact_value(self):
+        return self._exact_value
+
+    def engine_value(self):
+        return self._engine_value
+
+    @property
+    def decision_threshold(self):
+        if self._raising:
+            error = self._threshold_error or RuntimeError("threshold accessor failed")
+            raise error("threshold accessor failed")
+        return self._threshold
+
+    def without(self, fact):
+        return self
+
+
+class _ObjectArtifactSystem:
+    def __init__(self, artifact):
+        self._artifact = artifact
+
+    def capabilities(self):
+        return {
+            "decision_id",
+            SEMANTICS_VALUE_GAP,
+            "artifact_logs_decision_margin",
+            "scope_statements_approximation_vs_guarantee",
+        }
+
+    def decisions(self):
+        return [{
+            "decision_id": "FIXED-1",
+            "artifact_logs_decision_margin": 1.0,
+            "scope_statements_approximation_vs_guarantee": "approximation",
+        }]
+
+    def logic(self):
+        return None
+
+    def artifact(self, decision):
+        return self._artifact
 
 
 class _RecountingPipeline(_Pipeline):
@@ -221,6 +338,154 @@ def test_two_systems_differing_only_in_their_inference_get_different_verdicts():
     assert verdicts(exact) != verdicts(deviating)
     assert verdicts(exact)[REQUIREMENT_ID] == (Verdict.SATISFIED, Strength.PROBED)
     assert verdicts(deviating)[REQUIREMENT_ID] == (Verdict.VIOLATED, Strength.PROBED)
+
+
+def test_an_exposed_threshold_replaces_a_generous_declared_margin():
+    """The generated demonstration case separates only when A2 measures its margin.
+
+    With a deliberately generous record margin, exact and silently dropping engines both satisfy
+    the old reading. Exposing θ = 0.5 makes reasonsmith measure the dropping engine's distance from
+    that threshold instead, and its measured gap then breaches the duty. The exact engine remains
+    satisfied, so the change is the principled A2 finding rather than a new default accusation.
+    """
+    exact = _Pipeline(
+        ReferenceAdapter(ExactWMC()),
+        declared_margin=1.0,
+    )
+    miscalibrated = _Pipeline(
+        SilentDropAdapter(),
+        declared_margin=1.0,
+    )
+    assert _result(exact).verdict == Verdict.SATISFIED
+    assert _result(miscalibrated).verdict == Verdict.SATISFIED
+
+    measured_exact = _result(
+        _Pipeline(ReferenceAdapter(ExactWMC()), declared_margin=1.0, decision_threshold=THRESHOLD)
+    )
+    measured_miscalibrated = _result(
+        _Pipeline(SilentDropAdapter(), declared_margin=1.0, decision_threshold=THRESHOLD)
+    )
+    assert measured_exact.verdict == Verdict.SATISFIED
+    assert measured_miscalibrated.verdict == Verdict.VIOLATED
+    margins = measured_miscalibrated.details["decision_margins"]
+    assert margins[0]["source"] == "artifact_threshold"
+    assert margins[0]["decision_threshold"] == THRESHOLD
+    assert margins[0]["margin"] == 0.5
+    assert "measured distance" in measured_miscalibrated.evidence_summary
+
+    object_result = _result(
+        _ObjectThresholdPipeline(
+            SilentDropAdapter(), declared_margin=1.0, decision_threshold=THRESHOLD
+        )
+    )
+    assert object_result.verdict == Verdict.VIOLATED
+    assert object_result.details["decision_margins"][0]["source"] == "artifact_threshold"
+    assert object_result.details["decision_margins"][0]["margin"] == 0.5
+
+
+def test_an_unexposed_threshold_retains_the_declared_margin_source():
+    result = _result(_Pipeline(ReferenceAdapter(ExactWMC()), declared_margin=1.0))
+    assert result.verdict == Verdict.SATISFIED
+    assert all(
+        item["source"] == "decision_record" and item["margin"] == 1.0
+        for item in result.details["decision_margins"]
+    )
+
+
+def test_a_malformed_exposed_threshold_is_not_evaluated_or_fallen_back():
+    """An exposed field is validated; malformed θ cannot silently restore the log margin."""
+    result = _result(
+        _Pipeline(SilentDropAdapter(), declared_margin=1.0, decision_threshold="0.5")
+    )
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "malformed_decision_threshold"
+    assert "falling back" in result.evidence_summary
+
+
+@pytest.mark.parametrize("threshold", [0.0, -1.0])
+def test_finite_zero_and_negative_thresholds_are_measured(threshold):
+    result = _result(
+        _Pipeline(ReferenceAdapter(ExactWMC()), declared_margin=1.0, decision_threshold=threshold)
+    )
+    assert result.verdict == Verdict.SATISFIED
+    assert all(
+        item["source"] == "artifact_threshold"
+        for item in result.details["decision_margins"]
+    )
+
+
+@pytest.mark.parametrize(
+    "threshold",
+    [True, "0.5", [], math.nan, math.inf, -math.inf, 10**1000],
+    ids=["bool", "string", "list", "nan", "positive-infinity", "negative-infinity", "overflow"],
+)
+def test_every_malformed_threshold_is_refused_without_a_record_fallback(threshold):
+    result = _result(
+        _Pipeline(SilentDropAdapter(), declared_margin=1.0, decision_threshold=threshold)
+    )
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "malformed_decision_threshold"
+
+
+def test_an_malformed_threshold_on_an_artifact_object_is_not_evaluated():
+    result = _result(
+        _ObjectThresholdPipeline(
+            SilentDropAdapter(), declared_margin=1.0, decision_threshold=math.nan
+        )
+    )
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "malformed_decision_threshold"
+
+
+def test_a_boolean_engine_answer_is_not_evaluated():
+    result = _result(
+        _Pipeline(_BooleanAdapter(), declared_margin=1.0, decision_threshold=THRESHOLD)
+    )
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "malformed_decision_answer"
+
+
+def test_a_non_finite_engine_answer_is_not_evaluated():
+    result = _result(_ObjectArtifactSystem(_FixedArtifact(0.0, math.nan)))
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "malformed_decision_answer"
+
+
+def test_an_attribute_error_from_threshold_accessor_is_not_evaluated():
+    result = _result(
+        _ObjectArtifactSystem(
+            _FixedArtifact(0.0, 0.0, raising=True, threshold_error=AttributeError)
+        )
+    )
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "malformed_decision_threshold"
+
+
+def test_a_non_finite_exact_inference_value_is_not_evaluated():
+    result = _result(_ObjectArtifactSystem(_FixedArtifact(math.nan, 0.0)))
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "malformed_exact_inference"
+
+
+def test_an_overflowed_measured_margin_is_not_evaluated():
+    result = _result(_ObjectArtifactSystem(_FixedArtifact(0.0, 1e308, -1e308)))
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "malformed_decision_margin"
+
+
+def test_a_threshold_accessor_exception_is_not_evaluated():
+    result = _result(_ObjectArtifactSystem(_FixedArtifact(0.0, 0.0, raising=True)))
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert result.details["reason"] == "malformed_decision_threshold"
 
 
 def test_the_violation_names_the_two_answers_it_compared():

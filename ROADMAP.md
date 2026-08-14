@@ -166,17 +166,23 @@ satisfy are in [`docs/authoring-packs.md`](docs/authoring-packs.md).
 *measures* instead of one the system declares. Its left-hand side is
 `engines.certificate.SEMANTICS_VALUE_GAP` — the distance between the system's own engine's answer
 and exact inference's answer to the same query on the same interpretation, both computed from the
-inference artefact the system exposes — and the certificate engine is the only engine that may
-settle it. This is the repair of an existing duty and not a new clause: the same Recital, the same
-quotation, the same property shape, with the self-declaration overwritten by a measurement, exactly
-as `engines/certificate.py` already did for `artifact_logs_deleted_reason_count`.
+inference artefact the system exposes. Its right-hand margin is measured too where that artefact
+exposes a finite `decision_threshold`: reasonsmith uses the distance between the engine's answer and
+that threshold, ignores the record's declared margin for that decision, and records the source. If
+no threshold is exposed, the declared record margin remains the compatibility fallback; malformed
+thresholds and non-finite answers are refused, never guessed. This is the A2 threshold-derived
+margin reading of the existing `gap <= margin` property, not a separate sign-flip verdict. The
+certificate engine is the only engine that may settle it. This is the repair of an existing duty and
+not a new clause: the same Recital, the same quotation and the same property shape, with both
+self-declared numerical sides made measurement-aware where the artefact exposes what is needed.
 
-**The measurable outcome now passes.** `test_two_systems_differing_only_in_their_inference_get_
-different_verdicts` drives two systems identical in every respect a report can see — same pack, same
-decisions, same capability set, same records, same declared semantics — differing only in whether
-the engine behind `artifact()` implements what it declares, and the two reports disagree on this
-requirement: `satisfied` at `probed` against `violated` at `probed`. Finding 1 of
-[`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) has gained its *What changed* row.
+**The measurable outcome passes.** `test_two_systems_differing_only_in_their_inference_get_
+different_verdicts` drives the A1 pair, while
+`test_an_exposed_threshold_replaces_a_generous_declared_margin` drives the A2 falsifying case:
+identical generated decisions and a flattering declared margin both pass on the fallback, but the
+miscalibrated engine is violated when its exposed threshold yields the smaller measured margin; the
+exact engine remains satisfied. The result records `details[decision_margins]` with the source and
+reason for each certified decision.
 
 **What it reaches, and it is one artefact family.** The measurement needs a declarative model
 encoding exposed through `artifact()` whose own exact side computes the semantics the system claims.
@@ -185,41 +191,46 @@ trace, and the five `nesyarena` provenances as adapted in `docs/build_nesyarena_
 that silently answered only where it could measure, while looking like it answered everywhere, would
 be worse than one that refuses out loud, so the reach is stated in the pack description, in
 [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §7.1 and in the fourth column of
-[`docs/refinement.md`](docs/refinement.md) rather than left to be discovered.
+[`docs/refinement.md`](docs/refinement.md). The existing `artifact_logs_decision_margin` capability
+remains a conjunctive reach gate; threshold exposure is not an alternative declaration.
 
-**What this cost, stated because it is not nothing.** Two violations went away. `top-1-proofs` and
-`min-max-prob` were reported *violated* on this duty in the nesyarena run and are now
-*unattainable*, because the verdicts they earned rested on a deviation that harness computes with
-an exact oracle and writes into its own log — the property finding 5 of the same document says a
-deployed system does not have. The duty stopped being gameable and stopped reaching them in the same
-change. `reasonsmith.examples.symbolic_rules` lost a `proved` verdict here for the same reason, and
-objective 1 above records it.
+**What this cost, stated because it is not nothing.** The previous self-declared gap and margin are
+no longer trusted where the artefact supplies their measurements. A system exposing no model
+encoding remains unattainable, and a system exposing no threshold keeps the old record-margin
+behavior exactly. The threshold field adds no perturbation to the deletion lattice and no new rung:
+the duty remains `probed` on the `artifact` basis, bounded by the artefact and trace it actually
+opens up. `top-1-proofs` and `min-max-prob` remain unattainable in the nesyarena conformance report,
+because its adapter still does not hand their ground programs to reasonsmith.
 
-**What is left, and it is the part of finding 1 still open.** The two provenances whose decisions
-disagree with the semantics they claim are no longer *falsely cleared* on this duty, and they are
-not yet *caught* by it: they hold a ground program and the adapter in
-`docs/build_nesyarena_report.py` does not hand it over. Closing that is an adapter change and no
-engine work — the reference reasonsmith computes is derived from the encoding the system exposes and
-needs no oracle shipped beside it. Two of the three self-declarations this objective named are
-untouched: the deviation is now measured, the **semantics claim itself** is checked only in the weak
-sense that a claim outside `spec.CLAIMED_SEMANTICS` is refused and one this build computes no
-reference for is *not evaluated*, and the **decision domain** (finding 3) is reached by nothing here
-and is recorded in *Two axes of reach are modelled* in
-[`docs/refinement.md`](docs/refinement.md) rather than as an objective, because no design answer
-found a handle on it. The intake stays the Discussion
+**What is left, and it is outside this objective's artefact reading.** The semantics claim is bound
+only to the closed vocabulary and one reference this build computes; a claim this tool cannot
+reference remains *not evaluated*. The decision-domain self-declaration (finding 3) is reached by
+nothing here and remains recorded in *Two axes of reach are modelled* in
+[`docs/refinement.md`](docs/refinement.md), because no design answer found an artefact-side handle.
+Candidate B remains a separate instrument rather than a requirement verdict. Its design answer is
+recorded in [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §§7.1 and 7.7: the
+reversal of the old perturbation refusal made `semantic_laws.py` able to refute a false
+`claimed_semantics` from the system's own answers alone, without a reference implementation, for
+each deviating nesyarena provenance while refuting the exact one on none. It deliberately returns no
+`RequirementResult`; laws over the system's own answers need a perturbation surface spanning
+interpretations. This A2 field only measures a threshold already exposed by the artefact; no
+additional semantics reference or law set is smuggled into the duty. The remaining adapter gap is
+unchanged: the two nesyarena provenances whose decisions disagree with their claimed semantics still
+do not hand their ground programs to `artifact()`, so this duty cannot catch them. That is an
+adapter change rather than more certificate-engine work. The intake remains the Discussion
 [*reasonsmith cleared two systems whose decisions are wrong — what should a pack do about it?*](https://github.com/eduardstan/reasonsmith/discussions/59).
 
 **A companion measurement, and what it does not close.** `semantic_laws.py` refutes a false
 `claimed_semantics` from the system's own answers alone, with no reference implementation anywhere
 in the loop, and does it for every one of the four `nesyarena` provenances that deviates from what
 it claims while refuting the exact one on nothing. It needed a perturbation the artefact protocol
-refused in writing, so [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §7.1 records that reversal and §7.7 states
-the soundness of what replaced it. This remains a measurement rather than a verdict: no requirement
-reads a semantic-law refutation, and it neither widens the one artefact family the duty above can
-reach nor establishes a semantics claim. `claimed_semantics` is now a name from the closed
-`spec.CLAIMED_SEMANTICS` vocabulary, but the certificate's reference side computes only exact WMC;
-an admitted claim for which this build has no matching reference is *not evaluated*, never compared
-against exact WMC as though it had claimed distribution semantics.
+refused in writing, so [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §7.1 records
+that reversal and §7.7 states the soundness of what replaced it. This remains a measurement rather
+than a verdict: no requirement reads a semantic-law refutation, and it neither widens the one
+artefact family the duty above can reach nor establishes a semantics claim. `claimed_semantics` is
+now a name from the closed `spec.CLAIMED_SEMANTICS` vocabulary, but the certificate's reference side
+computes only exact WMC; an admitted claim for which this build has no matching reference is *not
+evaluated*, never compared against exact WMC as though it had claimed distribution semantics.
 
 ## 6. The first duty written with an open-textured predicate
 

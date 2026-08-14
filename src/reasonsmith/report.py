@@ -150,6 +150,11 @@ CERTIFICATES_KEY = "certificates"
 #: this is the full record that summary was condensed from.
 CERTIFICATE_KEY = "certificate"
 
+#: Where the semantics-agreement certificate records the margin used for each decision. The
+#: distinction is part of the evidence: an exposed threshold yields a reasonsmith measurement,
+#: while silence retains the decision record's declared margin rather than guessing one.
+DECISION_MARGINS_KEY = "decision_margins"
+
 #: Where a result measured against an inference artefact records whether the reason set it was
 #: measured against was *enumerated* from a model encoding or *recounted* by the system. False caps
 #: the result at `Strength.RECOUNTED`, and `__post_init__` refuses one that claims higher — the

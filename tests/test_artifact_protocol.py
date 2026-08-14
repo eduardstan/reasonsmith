@@ -485,3 +485,24 @@ def test_switching_a_fact_off_does_not_re_enumerate_the_reasons():
     assert artifact.without(fact).reasons() == artifact.reasons()
     assert artifact.without(fact).base[fact] == 0.0
     assert artifact.base[fact] != 0.0     # the parent is untouched
+
+
+def test_an_exposed_decision_threshold_is_optional_and_survives_perturbation():
+    """The threshold is metadata for the margin measurement, not a deletion perturbation."""
+    case = demo.build_case("APP-1042", "typical", demo.CREDIT_QUERY, demo.CREDIT_REASONS, 0.88)
+    artifact = GroundProgramArtifact(
+        case.program,
+        case.base,
+        case.query,
+        ReferenceAdapter(ExactWMC()),
+        1,
+        case.labels,
+        monotone=True,
+        decision_threshold=0.5,
+    )
+
+    fact = next(iter(next(iter(artifact.reasons()))))
+    assert artifacts.decision_threshold(artifact) == 0.5
+    assert artifacts.decision_threshold(artifact.without(fact)) == 0.5
+    assert artifacts.decision_threshold(artifact.at(fact, 0.25)) == 0.5
+    assert artifacts.decision_threshold(_RuleTraceArtifact()) is None

@@ -342,8 +342,12 @@ the spec repeats it. Where it does not, the threshold is the pack author's, and 
 requirement quoting a statute presents an invented figure as the regulation's. Prefer a bound the
 record itself supplies: `gdpr_recital71_error_risk_minimised` compares the deviation reasonsmith
 measures against the decision's own margin (`always(artifact_logs_semantics_value_gap <=
-artifact_logs_decision_margin)`), so the duty needs no invented number at all. If a constant is
-unavoidable, say in the pack description what it is, what its default is, and why it was chosen.
+artifact_logs_decision_margin)`), so the duty needs no invented number at all. Where an artefact
+exposes a finite `decision_threshold`, the certificate engine measures that margin as the distance
+between the system's answer and the threshold and ignores the record's value; when it does not,
+the record margin remains the fallback. The threshold is an artefact field, not an alternative to
+the duty's existing `artifact_logs_decision_margin` capability gate. If a constant is unavoidable,
+say in the pack description what it is, what its default is, and why it was chosen.
 
 ## A group rate is not a fact about a decision, and nothing here checks one
 

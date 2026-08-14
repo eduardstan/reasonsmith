@@ -58,6 +58,12 @@ What a reader must not break:
     package is allowed to fail in.
     Why this matters: the cheap version of this module would take any object that can list something
     reason-shaped and hand its output the rung exact inference earned.
+  - **A decision threshold is optional and never guessed.** An artefact may expose a finite
+    `decision_threshold`. The semantics-agreement duty measures the distance from the system's
+    answer to that threshold and ignores the record's declared margin on that decision. Silence
+    preserves the old record-margin reading; a malformed exposed value refuses the duty rather than
+    silently falling back. This field is independent of the deletion probe and is not a reason
+    perturbation.
   - **The perturbation surface is wider than the deletion probe, and the deletion probe did not
     move.** This module used to state that there is no `with_(fact)` and that adding one was work no
     verdict here is authorised to rest on. That refusal is **reversed, in one direction and no
@@ -82,6 +88,9 @@ What a reader must not break:
 
 from __future__ import annotations
 
+import inspect
+import math
+from collections.abc import Mapping
 from typing import Any, Protocol, runtime_checkable
 
 from reasonsmith.spec import normalize_claimed_semantics
@@ -91,6 +100,7 @@ __all__ = [
     "DECLARED_NON_MONOTONE",
     "EXACT_REASONS_KEY",
     "EXACT_SEMANTICS_KEY",
+    "DECISION_THRESHOLD_KEY",
     "MONOTONE_KEY",
     "NO_INTERPRETATION",
     "NO_SEMANTICS_REFERENCE",
@@ -100,6 +110,7 @@ __all__ = [
     "admits_interpretation",
     "default_label",
     "deletion_semantics_refusal",
+    "decision_threshold",
     "reason_set_is_exact",
     "reference_semantics",
     "semantics_reference_refusal",
@@ -110,6 +121,11 @@ MONOTONE_KEY = "monotone"
 
 #: The name of the exactness declaration, on an artefact object and in the mapping form.
 EXACT_REASONS_KEY = "reasons_are_exact"
+
+#: The optional decision threshold exposed by an artefact, on an artefact object and in the
+#: mapping form of `artifact()`. It is deliberately not a signal: it is read only by the
+#: semantics-agreement measurement, never from a decision record.
+DECISION_THRESHOLD_KEY = "decision_threshold"
 
 #: The name of the reference declaration: which semantics this family's own `exact_value()`
 #: *computes*, as a member of `spec.CLAIMED_SEMANTICS`. It is a fact about the adapter, not about
@@ -152,6 +168,48 @@ def admits_interpretation(artifact: object) -> bool:
     return callable(getattr(artifact, "at", None)) and callable(
         getattr(artifact, "probability", None)
     )
+
+def decision_threshold(artifact: object) -> float | None:
+    """Read an artefact's optional finite decision threshold, or ``None`` when it exposes none.
+
+    The threshold is an optional *field*, not a guess from the record or from the engine's value.
+    A present non-numeric, Boolean, or non-finite value is malformed and raises so the certificate
+    engine can refuse the measurement rather than silently fall back to a self-declared margin.
+    ``None`` means that the optional field is not exposed and preserves the pre-threshold behavior.
+    """
+    missing = object()
+    if isinstance(artifact, Mapping):
+        value = artifact.get(DECISION_THRESHOLD_KEY, missing)
+    else:
+        try:
+            value = getattr(artifact, DECISION_THRESHOLD_KEY)
+        except AttributeError:
+            # A genuinely absent optional member is silence. An AttributeError raised from a
+            # defined property is malformed exposure and must not be mistaken for silence.
+            try:
+                inspect.getattr_static(artifact, DECISION_THRESHOLD_KEY)
+            except AttributeError:
+                value = missing
+            else:
+                raise
+    if value is missing or value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(
+            f"{DECISION_THRESHOLD_KEY} must be a finite real number when exposed, "
+            f"got {type(value).__name__}"
+        )
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(
+            f"{DECISION_THRESHOLD_KEY} must be a finite real number when exposed, got {value!r}"
+        ) from exc
+    if not math.isfinite(number):
+        raise ValueError(
+            f"{DECISION_THRESHOLD_KEY} must be finite when exposed, got {value!r}"
+        )
+    return number
 
 
 def reason_set_is_exact(artifact: object) -> bool:
@@ -305,6 +363,11 @@ class InferenceArtifact(Protocol):
       system's claim about its own inference, this one is what the adapter beside it can compute. A
       duty asking whether an inference *is* the semantics it claims needs both, and needs them to be
       the same member before it may compare two numbers at all.
+    - `decision_threshold: float | None` — the optional threshold θ at which this decision's
+      engine changes sides. Read through `decision_threshold`; silence or None preserves the
+      declared-margin fallback, while a malformed exposed value is refused. It is used only to
+      measure the semantics duty's margin as the distance between `engine_value()` and θ, never
+      guessed from a record.
     - `at(fact, probability) -> InferenceArtifact` and `probability(fact) -> float` — the widened
       perturbation and the reading of the base interpretation it moves from. A family offering both
       can be asked for its inference at an interpretation the *caller* chose, which is strictly more
@@ -317,6 +380,9 @@ class InferenceArtifact(Protocol):
     #: reason that held without it. None where the family cannot say — refused rather than assumed.
     monotone: bool | None
 
+
+    #: The decision threshold is optional and deliberately not declared on this runtime-checkable
+    #: protocol; read it through `decision_threshold` so absence keeps the narrower behavior.
 
     #: The decision this artefact is the inference behind, named on the certificate.
     query: Any

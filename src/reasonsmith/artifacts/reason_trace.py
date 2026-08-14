@@ -74,6 +74,8 @@ class ReasonTraceArtifact:
     `monotone` is the declaration every artefact owes (`artifacts.InferenceArtifact`), with no
     default here for the reason the ground-program family has none: a decoder that consults a policy
     after generating a rationale is exactly the retracting engine the declaration exists to catch.
+    An optional `decision_threshold` is carried when supplied, but this family still cannot ground
+    a semantics-agreement duty because its exact side is a recounted rationale.
     """
 
     #: See the module docstring. Not a per-instance choice.
@@ -92,6 +94,7 @@ class ReasonTraceArtifact:
         recounted_by: str = "the system's own reason trace",
         _suppressed: frozenset = frozenset(),
         _baseline: float | None = None,
+        decision_threshold: float | None = None,
     ):
         self.query = query
         self.engine_name = engine_name
@@ -101,6 +104,7 @@ class ReasonTraceArtifact:
         self._reasons = {name: frozenset(facts) for name, facts in reasons.items()}
         self._weights = dict(weights or {})
         self._answer = answer
+        self.decision_threshold = decision_threshold
         self._suppressed = _suppressed
         #: The unperturbed answer, read once and carried into every perturbed copy: the equal split
         #: below must be a split of the answer this trace is about, not of the answer under whatever
@@ -181,4 +185,5 @@ class ReasonTraceArtifact:
             recounted_by=self.recounted_by,
             _suppressed=self._suppressed | {fact},
             _baseline=self._baseline,
+            decision_threshold=self.decision_threshold,
         )

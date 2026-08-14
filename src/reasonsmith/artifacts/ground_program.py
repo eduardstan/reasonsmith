@@ -45,7 +45,8 @@ class GroundProgramArtifact:
     `program`, `base` and `query` are exactly what the system's own adapter and the oracle both
     consume — that shared input is the invariant nesyarena's adapter protocol exists to hold.
     `exact_depth` bounds proof enumeration; `labels` maps a reason's fact set to a human name, such
-    as a reason code.
+    as a reason code; `decision_threshold` is an optional finite threshold exposed for the
+    semantics-agreement margin measurement and is not inferred here.
     """
 
     #: This family enumerates its reasons, so it reaches `Strength.PROBED`. Bounded by `exact_depth`
@@ -69,6 +70,8 @@ class GroundProgramArtifact:
         labels: dict | None = None,
         monotone: bool | None = None,
         _reasons: tuple[frozenset, ...] | None = None,
+        *,
+        decision_threshold: float | None = None,
     ):
         self.program = program
         self.base = base
@@ -77,6 +80,9 @@ class GroundProgramArtifact:
         self.exact_depth = exact_depth
         self.labels = labels or {}
         self.monotone = monotone
+        # Optional and intentionally not inferred from the query or the record. The protocol
+        # reader validates it only when a semantics-agreement duty consumes the field.
+        self.decision_threshold = decision_threshold
         self._reasons = (
             tuple(program.proof_supports(query, exact_depth)) if _reasons is None else _reasons
         )
@@ -109,7 +115,16 @@ class GroundProgramArtifact:
         return wmc(self._reasons, self.base)
 
     def engine_value(self) -> float:
-        return float(self.adapter.infer(self.program, self.base, [self.query])[self.query])
+        # Preserve malformed answers until the certificate engine validates them. Valid numeric
+        # values retain the old float-normalising API, while a caller assembling its decision trace
+        # can still hand bools, non-finite values or other malformed scalars to that refusal path.
+        raw = self.adapter.infer(self.program, self.base, [self.query])[self.query]
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+            return raw
+        try:
+            return float(raw)
+        except (TypeError, ValueError, OverflowError):
+            return raw
 
     def probability(self, fact: Atom) -> float:
         """This fact's probability under the base interpretation — half of the wider surface."""
@@ -133,6 +148,7 @@ class GroundProgramArtifact:
             self.labels,
             self.monotone,
             _reasons=self._reasons,
+            decision_threshold=self.decision_threshold,
         )
 
     def without(self, fact: Atom) -> "GroundProgramArtifact":

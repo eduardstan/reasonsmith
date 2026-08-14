@@ -7,8 +7,10 @@ What this module is for:
   reasons a decision states are all the reasons its own inference had — reads
   `artifact_logs_deleted_reason_count`, from the deletion probe. A *semantics agreement* duty —
   whether the system's answer is the semantics it claims — reads
-  `artifact_logs_semantics_value_gap`, from the certificate's own `value_gap`. Both are measured
-  here and read from no record.
+  `artifact_logs_semantics_value_gap`, from the certificate's own `value_gap`, and compares it
+  against a margin measured from an artefact-exposed `decision_threshold` where one exists. If no
+  threshold is exposed, the decision record's declared margin remains the compatibility fallback;
+  neither value is guessed or silently replaced after malformed exposure.
 
   This is the bridge between the two halves of this package. The certificate could compare an
   engine's answer against exact inference and name the reasons the engine stopped depending on,
@@ -100,6 +102,14 @@ What a reader must not break:
     closed vocabulary (`spec.CLAIMED_SEMANTICS`) has no member for a documented approximation of
     another member, which is why that case must be refused rather than answered, and why the
     vocabulary had to close before any verdict read a gap.
+  - A semantics-agreement duty may read an optional `decision_threshold` from the artefact. Where
+    it is finite, the engine overwrites the record margin with `abs(engine_value - threshold)` and
+    records the source and reason in `details[DECISION_MARGINS_KEY]`; where it is absent or None,
+    the record margin is retained exactly as before. A malformed threshold, malformed inference
+    value, or non-finite derived margin is NOT EVALUATED, never treated as a missing threshold. The
+    existing
+    `artifact_logs_decision_margin` capability remains the duty's conjunctive reach gate; exposing
+    a threshold does not silently turn it into an alternative capability declaration.
   - The two monotonicity refusals above are asked **only** of a duty reading the deleted count.
     Why this matters: the declaration is the premise `deleted` rests on and no other. The value gap
     is read at the unperturbed interpretation, where nothing has been switched off and no definition
@@ -133,13 +143,16 @@ What a reader must not break:
 from __future__ import annotations
 
 import ast
+import math
 from collections.abc import Mapping
 from typing import Any
 
 from reasonsmith.artifacts import (
+    DECISION_THRESHOLD_KEY,
     MONOTONE_KEY,
     RECOUNTED_REASONS,
     InferenceArtifact,
+    decision_threshold,
     deletion_semantics_refusal,
     reason_set_is_exact,
     semantics_reference_refusal,
@@ -149,6 +162,7 @@ from reasonsmith.conformance import measured
 from reasonsmith.report import (
     CERTIFICATE_KEY,
     CERTIFICATES_KEY,
+    DECISION_MARGINS_KEY,
     EXACT_REASON_SET_KEY,
     PROBE_BUDGET_KEY,
     RequirementResult,
@@ -170,6 +184,7 @@ from reasonsmith.verdict import Strength, Verdict
 
 __all__ = [
     "ARTIFACT_METHOD",
+    "DECISION_MARGIN_SIGNAL",
     "DELETED_REASON_COUNT",
     "MEASURED_SIGNALS",
     "SEED",
@@ -182,6 +197,10 @@ __all__ = [
 #: duty only this engine may settle (`report._engine_ladder`), and a system declaring it is
 #: claiming it can expose the inference artefact below — not that it writes the number into a log.
 DELETED_REASON_COUNT = "artifact_logs_deleted_reason_count"
+
+#: The record signal that supplies the decision's own margin when its artefact exposes no threshold.
+#: It is retained for backwards compatibility, never overwritten by a guessed value.
+DECISION_MARGIN_SIGNAL = "artifact_logs_decision_margin"
 
 #: The second, and the same discipline: the distance between the system's own engine's answer and
 #: exact inference's answer to the same query on the same interpretation, as an absolute value.
@@ -207,6 +226,7 @@ ARTIFACT_METHOD = "artifact"
 #: an `artifacts.InferenceArtifact` instead, which is the whole of what a second family costs.
 ARTIFACT_KEYS = (
     "program", "base", "query", "adapter", "exact_depth", "monotone", "tol", "labels", "budget",
+    DECISION_THRESHOLD_KEY,
 )
 
 #: What the search does, named on every result it produces.
@@ -294,13 +314,30 @@ def _refused(
     )
 
 
-def _env(record: Mapping[str, Any], cert: Certificate) -> dict[str, Any]:
-    """The record, with both measurements written over anything the record claimed for them."""
-    return {
+_UNSET_MARGIN = object()
+
+
+def _env(
+    record: Mapping[str, Any],
+    cert: Certificate,
+    *,
+    decision_margin: float | object = _UNSET_MARGIN,
+) -> dict[str, Any]:
+    """Build the property environment, replacing measurements and an exposed threshold's margin.
+
+    The record's margin remains the compatibility fallback. The sentinel is needed because a
+    missing threshold and a malformed/absent record value are different: only an exposed threshold
+    may replace the record field, and the normal expression evaluator must retain its old refusal
+    for a missing declared margin otherwise.
+    """
+    env = {
         **record,
         DELETED_REASON_COUNT: len(cert.deleted),
         SEMANTICS_VALUE_GAP: abs(cert.value_gap),
     }
+    if decision_margin is not _UNSET_MARGIN:
+        env[DECISION_MARGIN_SIGNAL] = decision_margin
+    return env
 
 
 def _unattainable(req: Requirement, index: int, refusal: str) -> RequirementResult:
@@ -356,6 +393,110 @@ def _mismatched_claim(
             "claimed_semantics": claimed,
             "reference_semantics": reference,
         },
+    )
+
+
+def _finite_value(value: object) -> float:
+    """Return a finite real measurement, refusing booleans and non-numeric values."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"expected a finite real number, got {type(value).__name__}")
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"expected a finite real number, got {value!r}") from exc
+    if not math.isfinite(number):
+        raise ValueError(f"expected a finite real number, got {value!r}")
+    return number
+
+
+def _malformed_value(
+    req: Requirement, index: int, field: str, value: object, error: Exception
+) -> RequirementResult:
+    """Refuse a non-finite inference value rather than making a comparison from NaN."""
+    return _result(
+        req,
+        Verdict.INCONCLUSIVE,
+        None,
+        (
+            f"Not evaluated: on decision #{index}, the artefact produced a malformed {field}: "
+            f"{error}. The semantics-agreement measurement requires finite real values and "
+            "refuses this decision rather than reading a comparison from it."
+        ),
+        details={
+            "engine": "certificate",
+            "reason": (
+                "malformed_decision_answer"
+                if field == "engine answer"
+                else (
+                    "malformed_exact_inference"
+                    if field == "exact inference answer"
+                    else (
+                        "malformed_semantics_value_gap"
+                        if field == "semantics value gap"
+                        else "malformed_decision_margin"
+                    )
+                )
+            ),
+            "decision_index": index,
+            "field": field,
+            "value": repr(value),
+        },
+    )
+
+
+def _malformed_threshold(
+    req: Requirement, index: int, error: Exception
+) -> RequirementResult:
+    """Refuse a malformed exposed threshold rather than silently using the record margin."""
+    return _result(
+        req,
+        Verdict.INCONCLUSIVE,
+        None,
+        (
+            f"Not evaluated: on decision #{index}, the artefact exposed a malformed "
+            f"{DECISION_THRESHOLD_KEY}: {error}. The semantics-agreement measurement refuses "
+            "this decision rather than guessing a threshold or falling back to the decision "
+            "record's declared margin."
+        ),
+        details={
+            "engine": "certificate",
+            "reason": "malformed_decision_threshold",
+            "decision_index": index,
+            "field": DECISION_THRESHOLD_KEY,
+            "error": str(error),
+        },
+    )
+
+
+def _margin_basis_sentence(sources: set[str]) -> str:
+    """Explain which margin source the semantics comparison used on the certified decisions."""
+    if not sources:
+        raise ValueError("a semantics margin source is required")
+    if sources == {"artifact_threshold"}:
+        return (
+            "The comparison used reasonsmith-measured distances from the decision thresholds "
+            "exposed by the artefacts"
+        )
+    if sources == {"decision_record"}:
+        return (
+            "No certified artefact exposed a decision threshold, so the comparison retained each "
+            "decision record's declared margin"
+        )
+    return (
+        "The comparison used a measured distance from each exposed threshold and retained the "
+        "decision record's declared margin where no threshold was exposed"
+    )
+
+
+def _margin_reason(source: str) -> str:
+    if source == "artifact_threshold":
+        return (
+            "distance between the system engine's answer and the artefact-exposed decision "
+            "threshold"
+        )
+    return (
+        "threshold was not exposed by the artefact, so the decision record's declared margin "
+        "was retained"
     )
 
 
@@ -487,6 +628,9 @@ class CertificateEngine:
         triggered_at: set[int] = set()
 
         certified: list[tuple[int, Certificate, bool]] = []
+        margin_values: dict[int, Any] = {}
+        margin_sources: dict[int, str] = {}
+        margin_thresholds: dict[int, float] = {}
         # The decisions whose reason set the system *recounted* rather than enumerated. One of them
         # among the certified caps the whole verdict at `recounted`: a run is only as exact as its
         # weakest artefact, exactly as a satisfaction is only as complete as its weakest decision.
@@ -527,6 +671,12 @@ class CertificateEngine:
             # rung (`artifacts.reason_set_is_exact`).
             if not (isinstance(supplied, Mapping) or reason_set_is_exact(supplied)):
                 recounted_at.add(index)
+            threshold = None
+            if SEMANTICS_VALUE_GAP in measures:
+                try:
+                    threshold = decision_threshold(supplied)
+                except Exception as exc:  # noqa: BLE001 — malformed optional exposure is a refusal
+                    return _malformed_threshold(req, index, exc)
             # Asked of the declaration before anything is measured: an artefact this definition of
             # a reason does not apply to must not be probed and then explained away. Asked only of
             # a duty that reads the *deleted count*, because the monotonicity declaration is the
@@ -563,6 +713,23 @@ class CertificateEngine:
                         f"arguments of certificate.certify ({', '.join(ARTIFACT_KEYS)})."
                     ),
                 )
+            if SEMANTICS_VALUE_GAP in measures:
+                for field in (
+                    "engine answer",
+                    "exact inference answer",
+                    "semantics value gap",
+                ):
+                    value = None
+                    try:
+                        if field == "engine answer":
+                            value = cert.engine_value
+                        elif field == "exact inference answer":
+                            value = cert.exact_value
+                        else:
+                            value = cert.value_gap
+                        _finite_value(value)
+                    except Exception as exc:  # noqa: BLE001 — malformed measurements are refusals
+                        return _malformed_value(req, index, field, value, exc)
             # And asked again of the measurement: the declaration is a claim the system makes about
             # itself, and a deletion that moved its answer *up* is the one thing that refutes it.
             refusal = (
@@ -593,8 +760,26 @@ class CertificateEngine:
                             cert.exact_semantics,
                         )
                     )
+            decision_margin: float | object = _UNSET_MARGIN
+            margin_source = None
+            if SEMANTICS_VALUE_GAP in measures:
+                if threshold is None:
+                    margin_source = "decision_record"
+                else:
+                    try:
+                        decision_margin = _finite_value(abs(cert.engine_value - threshold))
+                    except Exception as exc:  # noqa: BLE001 — derived margin is a refusal
+                        return _malformed_value(
+                            req,
+                            index,
+                            "measured decision margin",
+                            (cert.engine_value, threshold),
+                            exc,
+                        )
+                    margin_source = "artifact_threshold"
+                    margin_thresholds[index] = threshold
             try:
-                env = _env(record, cert)
+                env = _env(record, cert, decision_margin=decision_margin)
                 val = eval_expression(node, env)
                 if is_unknown(val):
                     absent = sorted([v for v in spec_vars if env.get(v) is None])
@@ -635,6 +820,9 @@ class CertificateEngine:
                     ),
                 )
             certified.append((index, cert, held))
+            if margin_source is not None:
+                margin_sources[index] = margin_source
+                margin_values[index] = env.get(DECISION_MARGIN_SIGNAL)
 
         if not certified:
             return _result(
@@ -733,6 +921,21 @@ class CertificateEngine:
             # means "no certificate exists", never an empty record.
             CERTIFICATE_KEY: [_certificate_record(index, cert) for index, cert, _ in certified],
         }
+        if SEMANTICS_VALUE_GAP in measures:
+            details[DECISION_MARGINS_KEY] = [
+                {
+                    "decision_index": index,
+                    "margin": margin_values[index],
+                    "source": margin_sources[index],
+                    "reason": _margin_reason(margin_sources[index]),
+                    **(
+                        {"decision_threshold": margin_thresholds[index]}
+                        if index in margin_thresholds
+                        else {}
+                    ),
+                }
+                for index, _, _ in certified
+            ]
         # A reason no probe could isolate is not a reason shown deleted, so it never turns the
         # verdict — but a reader must be told the certified set was not complete.
         caveat = (
@@ -786,14 +989,27 @@ class CertificateEngine:
                 # The other measured signal: the finding is about the *value*, so the decision the
                 # summary names is the one furthest from exact inference rather than the one
                 # missing the most reasons.
-                worst_index, worst = max(breached, key=lambda item: abs(item[1].value_gap))
+                worst_index, worst = max(
+                    breached, key=lambda item: abs(item[1].value_gap)
+                )
+                margin = margin_values[worst_index]
+                source = margin_sources[worst_index]
+                if source == "artifact_threshold":
+                    margin_explanation = (
+                        f"the measured margin {float(margin):.6f}, the distance from its exposed "
+                        f"decision threshold {margin_thresholds[worst_index]:.6f}"
+                    )
+                else:
+                    margin_explanation = (
+                        f"the decision record's declared margin {float(margin):.6f}, retained "
+                        "because its artefact exposed no decision threshold"
+                    )
                 finding = (
                     f"the system's inference is not the semantics it claims. On decision "
                     f"#{worst_index} the engine answered {worst.engine_value:.6f} where exact "
                     f"{worst.exact_semantics} over the same model encoding and the same "
                     f"interpretation answers {worst.exact_value:.6f} — a gap of "
-                    f"{abs(worst.value_gap):.6f}, larger than the margin that decision's own "
-                    "record states for itself."
+                    f"{abs(worst.value_gap):.6f}, larger than {margin_explanation}."
                 )
             return _result(
                 req,
@@ -803,7 +1019,13 @@ class CertificateEngine:
                     f"Violated on {len(breached)} of {len(certified)} certified decision(s): "
                     f"{finding} Attribution: {worst.attribution}"
                     f"{caveat}{skipped}{unmeasured} Measured against the inference "
-                    f"artefact the system exposed, not read from its decision log.{recounted_note}"
+                    f"artefact the system exposed, not read from its decision log."
+                    + (
+                        f" {_margin_basis_sentence(set(margin_sources.values()))}."
+                        if SEMANTICS_VALUE_GAP in measures
+                        else ""
+                    )
+                    + f"{recounted_note}"
                 ),
                 details=details,
             )
@@ -881,9 +1103,10 @@ class CertificateEngine:
                     if DELETED_REASON_COUNT in measures
                     else (
                         ": on every one of them the system's own engine answered within the "
-                        "margin that decision's record states for itself of exact "
+                        "applicable decision margin of exact "
                         f"{certified[0][1].exact_semantics} over the same model encoding, so the "
-                        "inference was not shown to depart from the semantics it claims"
+                        "inference was not shown to depart from the semantics it claims. "
+                        + _margin_basis_sentence(set(margin_sources.values()))
                     )
                 )
                 + (" on those." if untriggered else ".")

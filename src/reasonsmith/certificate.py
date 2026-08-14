@@ -434,7 +434,8 @@ def _attribute(verdicts, value_gap: float, tol: float) -> str:
 def certify(program, base: dict, query, adapter, exact_depth: int,
             tol: float = 1e-9, labels: dict | None = None,
             monotone: bool | None = None,
-            budget: int = DEFAULT_PROBE_BUDGET) -> Certificate:
+            budget: int = DEFAULT_PROBE_BUDGET,
+            decision_threshold: float | None = None) -> Certificate:
     """Certify one nesyarena ground program: the artefact family this package ships an adapter for.
 
     A thin front door onto `certify_artifact`, kept because these keyword names are the shape
@@ -445,13 +446,23 @@ def certify(program, base: dict, query, adapter, exact_depth: int,
     and falls back to the facts themselves; `monotone` is the declaration
     `artifacts.InferenceArtifact` requires, and defaults to *undeclared* rather than to True — a
     direct call here is a measurement, and a verdict about a system is read off one only where the
-    duty's engine has already been told. `budget` caps the engine re-runs the joint-deletion search
-    may spend on this decision.
+    duty's engine has already been told. `decision_threshold` is optional and is carried onto the
+    artefact for the semantics-agreement duty; it is never inferred from a record. `budget` caps
+    the engine re-runs the joint-deletion search may spend on this decision.
     """
     from reasonsmith.artifacts.ground_program import GroundProgramArtifact
 
     return certify_artifact(
-        GroundProgramArtifact(program, base, query, adapter, exact_depth, labels, monotone),
+        GroundProgramArtifact(
+            program,
+            base,
+            query,
+            adapter,
+            exact_depth,
+            labels,
+            monotone,
+            decision_threshold=decision_threshold,
+        ),
         tol,
         budget=budget,
     )

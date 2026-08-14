@@ -132,11 +132,15 @@ that decision's own margin from its threshold: an error big enough to have moved
 has been minimised. The error is the absolute distance between the system's own engine's answer and exact \
 inference's answer to the same query on the same interpretation, both computed from the inference artefact the \
 system exposes, and it is never read from the record — a system that could discharge this duty by writing a small \
-number about itself into its own log would be grading its own homework. The reference is only ever computed where \
-the artefact's family computes one *for the semantics the system claims*: a system whose declared semantics this \
-build cannot compute is reported not evaluated naming the claim, and is never accused of departing from a \
-semantics it never claimed. The bound is still the system's own margin, deliberately, so no number in this duty is \
-an invented threshold presented as the Recital's."""
+number about itself into its own log would be grading its own homework. Where the artefact exposes a finite \
+decision threshold, reasonsmith measures the bound as the distance between that threshold and the system's answer, \
+ignoring the record's declared margin for that decision; where no threshold is exposed, the record's declared margin \
+remains the compatibility fallback. A malformed exposed threshold is refused rather than guessed. The existing \
+`artifact_logs_decision_margin` capability remains a reach gate, so exposing a threshold does not itself replace \
+that declaration. The reference is only ever computed where the artefact's family computes one *for the semantics the \
+system claims*: a system whose declared semantics this build cannot compute is reported not evaluated naming the \
+claim, and is never accused of departing from a semantics it never claimed. No number in this duty is an invented \
+threshold presented as the Recital's."""
 requires = [
     "artifact_logs_semantics_value_gap",
     "scope_statements_approximation_vs_guarantee",

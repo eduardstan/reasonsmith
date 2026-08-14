@@ -14,8 +14,9 @@ engine at a time.
 ## 1. It takes the system's word about what it is
 
 A system declares the semantics its inference implements, the deviation it reports from that
-semantics, and the decision domain it operates in. **No engine here measures any of those against
-the system's behaviour.**
+semantics, and the decision domain it operates in. The certificate engine now measures the
+semantics deviation, and measures the decision margin from an artefact-exposed threshold where one
+exists; **no engine here measures the system's declared decision domain against the world.**
 
 This is measured, not feared. The run in
 [`docs/findings-nesyarena.md`](findings-nesyarena.md) drove five real `nesyarena` provenances
@@ -31,7 +32,9 @@ computes*.
 **What has changed since that finding, and what has not.** One duty now reads an approximation
 error reasonsmith *measures* rather than one a system declares:
 `gdpr_recital71_error_risk_minimised` runs exact inference over the model encoding behind a decision
-and compares it against the answer the system's own engine gave, against that decision's own margin.
+and compares it against the answer the system's own engine gave. Where the artefact exposes a
+finite decision threshold, the margin is measured from that threshold; otherwise the decision
+record's declared margin is retained as the fallback.
 Two systems differing only in whether their inference implements the semantics they declare now get
 different reports, which is the measurable outcome of [`ROADMAP.md`](../ROADMAP.md) §5. What it does
 **not** close is the run above: measuring needs a declarative model encoding exposed through

@@ -10,7 +10,10 @@ What a reader must not break:
   - `artifact(decision)` is the second optional hook, and it returns an
     `artifacts.InferenceArtifact` — or, for the one family this package ships an adapter for, the
     *inputs* to `certificate.certify`: `program`, `base`, `query`, `adapter`, `exact_depth`,
-    `monotone`, and optionally `tol` and `labels` — never a verdict. A decision this system cannot
+    `monotone`, and optionally `tol`, `labels`, `budget` and `decision_threshold` — never a verdict.
+    `decision_threshold` is optional; when present it must be a finite real number and is measured
+    into the semantics-agreement margin, while absence preserves the decision record's declared
+    margin. A decision this system cannot
     open up returns None.
     Why this matters: an adapter that returned its own certificate, or a `reasons_are_complete`
     flag, would be a system grading its own homework, and `docs/semantics.md` §3 refuses exactly

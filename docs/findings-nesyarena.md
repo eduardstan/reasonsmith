@@ -167,8 +167,11 @@ always(artifact_logs_semantics_value_gap <= artifact_logs_decision_margin)
 
 — the distance between the system's own engine's answer and exact inference's answer to the same
 query on the same interpretation, against the distance between that decision and its own threshold.
-No number in it is invented: the bound is the system's own margin, so the duty fails exactly when
-the error reasonsmith *measured* is larger than the margin.
+Where an exposed artefact supplies a finite threshold, reasonsmith measures that margin from the
+system's answer and ignores the record's declared value; where no threshold is exposed, the record
+margin remains the fallback. No number in it is invented: the bound is either this measured
+threshold distance or the system's declared margin, so the duty fails exactly when the error
+reasonsmith *measured* is larger than the applicable margin.
 
 For one release the left-hand side was `scope_statements_declared_deviation` — the deviation a
 system declared about itself — and this section reported `top-1-proofs` and `min-max-prob` violated
