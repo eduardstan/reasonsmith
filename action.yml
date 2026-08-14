@@ -16,6 +16,10 @@ inputs:
     description: Directory in the workspace in which to write JSON and HTML reports
     required: false
     default: reasonsmith-reports
+  artifact-name:
+    description: Name of the uploaded workflow artifact
+    required: false
+    default: reasonsmith-reports
 
 runs:
   using: composite
@@ -70,7 +74,7 @@ runs:
       if: ${{ always() }}
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: reasonsmith-reports
+        name: ${{ inputs.artifact-name }}
         path: ${{ inputs.report-artifact-path }}
         if-no-files-found: warn
     - name: Return reasonsmith exit code
