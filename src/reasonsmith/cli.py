@@ -8,17 +8,20 @@ What this module is for:
   Usage:
       reasonsmith check --system <decisions.jsonl> --pack <pack_name>
           [--system-name <name>] [--system-scope <class>] [--system-domain <domain>]...
-          [--capabilities <file>] [--audience <reader>] [--json]
+          [--capabilities <file>] [--audience <reader>] [--strict-unresolved] [--json]
       reasonsmith check --system-module <module>:<attribute> --pack <pack_name> [...]
       reasonsmith validate-pack <pack_name_or_file> [...]
       reasonsmith explain <requirement_id> [--pack <pack_name_or_file>]...
 
 What a reader must not break:
-  - Exit code contract for `check`: 2 when at least one requirement is VIOLATED, 0 otherwise,
-    and 1 on a usage or input error.
+  - Exit code contract for `check`: by default, 2 when at least one requirement is VIOLATED,
+    0 otherwise, and 1 on a usage or input error. With `--strict-unresolved`, an otherwise
+    non-violating run containing an unresolved outcome returns 3.
     Why this matters: Automation pipelines rely on exit code 2 to distinguish a breach from a
-    clean run (0) or a CLI syntax/file error (1).
-  - Only a violation is a breach, so only a violation is non-zero. Unattainable, not applicable
+    clean run (0) or a CLI syntax/file error (1); strict adopters can separately gate on 3.
+  - In the default mode, only a violation is a breach, so only a violation is non-zero.
+    `--strict-unresolved` is the explicit opt-in for making unresolved outcomes non-zero.
+    Unattainable, not applicable
     and not evaluated are findings to read in the report, not verdicts against the system: an
     unattainable requirement says the system as built cannot discharge the duty on the evidence
     supplied, a not-applicable one says the duty is limited to a regulatory class or a decision
@@ -108,6 +111,7 @@ What a reader must not break:
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import importlib
 import json
 import os
@@ -254,6 +258,8 @@ def main(args: list[str] | None = None) -> int:
             "     requirements are reported but are not breaches, so they exit 0 too — read\n"
             "     the report for them.\n"
             "  2  at least one requirement is violated.\n"
+            "  3  --strict-unresolved found an unattainable, not applicable or not evaluated\n"
+            "     requirement and no requirement was violated.\n"
             "  1  usage or input error (unknown pack, unreadable system log, unreadable or\n"
             "     malformed capability declaration, a --system-scope that is not a known\n"
             "     regulatory class, a --system-domain that is not a known decision domain,\n"
@@ -389,6 +395,15 @@ def main(args: list[str] | None = None) -> int:
             "a field to this flag; it only *names* the projection asked for, in its `audience` "
             "block, so a machine consumer can tell the record from the display it was built for. "
             "docs/semantics.md names what each shows"
+        ),
+    )
+    check_parser.add_argument(
+        "--strict-unresolved",
+        action="store_true",
+        help=(
+            "Fail with exit code 3 when any requirement is unattainable, not applicable or "
+            "not evaluated; the headline names the unresolved outcomes. Default exit behavior "
+            "is unchanged"
         ),
     )
     check_parser.add_argument(
@@ -619,6 +634,11 @@ def main(args: list[str] | None = None) -> int:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
 
+        if parsed.strict_unresolved:
+            # Keep strictness out of the verdict model and JSON shape: it is an exit policy, but
+            # carry it into the report headline so a non-zero automation result says why.
+            report = replace(report, strict_unresolved=True)
+
         notice = report.undeclared_domain_notice
         if notice:
             print(f"Warning: {notice}", file=sys.stderr)
@@ -658,7 +678,13 @@ def main(args: list[str] | None = None) -> int:
             print(report.render_text(audience=parsed.audience))
 
         violations = [r for r in report.results if r.verdict == Verdict.VIOLATED]
-        return 2 if violations else 0
+        if violations:
+            return 2
+        if parsed.strict_unresolved and any(
+            r.outcome not in ("satisfied", "violated") for r in report.results
+        ):
+            return 3
+        return 0
 
     parser.print_help()
     return 1

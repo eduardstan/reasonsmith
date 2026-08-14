@@ -14,6 +14,14 @@
 /** The four values a JSON `verdict` field can carry. */
 export type Verdict = "satisfied" | "violated" | "inconclusive" | "not_applicable"
 
+/** The operational outcome carried additively beside the compatibility verdict and strength. */
+export type OperationalOutcome =
+  | "satisfied"
+  | "violated"
+  | "not_applicable"
+  | "not_evaluated"
+  | "unattainable"
+
 /** The five values a JSON `strength` field can carry, plus `null` for `not evaluated`. */
 export type Strength = "unattainable" | "observed" | "recounted" | "probed" | "proved"
 
@@ -21,6 +29,16 @@ export type StrengthOrNull = Strength | null
 
 /** The four evidence bases `docs/semantics.md` §10 names — a *kind*, never a rank. */
 export type EvidenceBasis = "behavioural" | "relational" | "artifact" | "assessment"
+
+export function isOperationalOutcome(value: string): value is OperationalOutcome {
+  return (
+    value === "satisfied" ||
+    value === "violated" ||
+    value === "not_applicable" ||
+    value === "not_evaluated" ||
+    value === "unattainable"
+  )
+}
 
 export const VERDICTS: readonly Verdict[] = [
   "satisfied",

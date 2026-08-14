@@ -72,6 +72,7 @@ function makeReport(
     requirement_id: string
     source_clause: string
     verdict: "satisfied" | "violated" | "inconclusive" | "not_applicable"
+    outcome?: "satisfied" | "violated" | "not_applicable" | "not_evaluated" | "unattainable"
     strength: "unattainable" | "observed" | "recounted" | "probed" | "proved" | null
     basis: "behavioural" | "relational" | "artifact" | "assessment"
     evidence_summary: string
@@ -117,6 +118,17 @@ function makeReport(
       source_clause: r.source_clause,
       verbatim_text: "",
       verdict: r.verdict,
+      outcome:
+        r.outcome ??
+        (r.verdict === "not_applicable"
+          ? "not_applicable"
+          : r.strength === "unattainable"
+            ? "unattainable"
+            : r.verdict === "satisfied"
+              ? "satisfied"
+              : r.verdict === "violated"
+                ? "violated"
+                : "not_evaluated"),
       strength: r.strength,
       signals_required: [],
       signals_missing: [],

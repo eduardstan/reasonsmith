@@ -33,6 +33,7 @@ What a reader must not break:
 from __future__ import annotations
 
 import json
+from collections import Counter
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, fields, replace
 from typing import Any, cast
@@ -379,6 +380,26 @@ class RequirementResult:
     formalized_subset_only: bool = False
 
     @property
+    def outcome(self) -> str:
+        """Return the operational outcome a machine consumer should act on.
+
+        ``verdict`` remains the compatibility field for the formal result model, while this
+        field carries the reader-facing outcome vocabulary from ``docs/semantics.md``.  The
+        derivation is deliberately structural rather than another outcome registry: applicability
+        and the missing-capability rung take precedence, then the two terminal verdicts leave the
+        remaining strength-less result as *not evaluated*.
+        """
+        if self.verdict is Verdict.NOT_APPLICABLE:
+            return "not_applicable"
+        if self.strength is Strength.UNATTAINABLE:
+            return "unattainable"
+        if self.verdict is Verdict.SATISFIED:
+            return "satisfied"
+        if self.verdict is Verdict.VIOLATED:
+            return "violated"
+        return "not_evaluated"
+
+    @property
     def scope_boundary(self) -> str | None:
         """The positive-result boundary derived from this result's own evidence."""
         return positive_scope_boundary(self)
@@ -713,6 +734,9 @@ class RequirementResult:
             "verbatim_text": self.verbatim_text,
             "verdict": self.verdict.value,
             "strength": self.strength.value if self.strength else None,
+            # Additive operational outcome: unlike the compatibility verdict/rung pair, this
+            # names not_applicable, not_evaluated and unattainable distinctly for JSON readers.
+            "outcome": self.outcome,
             "signals_required": list(self.signals_required),
             "signals_missing": list(self.signals_missing),
             "evidence_summary": self.evidence_summary,
@@ -1081,6 +1105,9 @@ class ConformanceReport:
     limits: str = LIMITS
     time_domain: str = ORDINAL_TIME
     decisions: tuple[DecisionAccount, ...] = ()
+    # CLI strict mode is a presentation/exit-policy choice, not a new verdict. It is kept out
+    # of the JSON envelope so default and strict consumers retain the same additive schema.
+    strict_unresolved: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "system_domains", normalize_domains(self.system_domains))
@@ -1143,6 +1170,16 @@ class ConformanceReport:
         positives = [r for r in self.results if r.verdict is Verdict.SATISFIED]
         if positives and all(r.strength is Strength.OBSERVED for r in positives):
             parts.append("all positives observed-only")
+        if self.strict_unresolved:
+            unresolved = Counter(
+                r.outcome for r in self.results if r.outcome not in ("satisfied", "violated")
+            )
+            if unresolved:
+                details = ", ".join(
+                    f"{count} {outcome.replace('_', ' ')}"
+                    for outcome, count in unresolved.items()
+                )
+                parts.append(f"strict unresolved: {details}")
         return " · ".join(parts)
 
     @property
@@ -1161,8 +1198,10 @@ class ConformanceReport:
         """The one sentence every rendering owes a reader when duties went unchecked, or None.
 
         A run that skipped duties for a missing declaration exits exactly as a run that checked
-        them does — only a violation exits non-zero, and that is deliberate (`docs/semantics.md`
-        §4). So the report itself has to carry what the exit code cannot, in the place a reader
+        them does in the default mode — only a violation exits non-zero, and that is deliberate
+        (`docs/semantics.md` §4). The CLI's opt-in `--strict-unresolved` policy can make the
+        unresolved outcomes non-zero, but the report itself still carries what the default exit
+        code cannot, in the place a reader
         cannot miss and in every format, or a compliance gate goes green and stays green over
         duties nothing here looked at.
         """

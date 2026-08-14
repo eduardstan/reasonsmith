@@ -19,22 +19,25 @@ This page is for the reader of a report: what category appeared, what to do next
 projection is intended. Where this page and the implementation disagree, the implementation is
 right and this page has a defect.
 
-## 1. The report's four outcomes
+## 1. The report's five operational outcomes
 
-The four report outcomes below must not be collapsed. The evidence chapter defines
+The five report outcomes below must not be collapsed. The evidence chapter defines
 strength and basis; this table gives the operational instruction attached to each outcome.
 
 | Outcome | What the report says | What a reader should do |
 |---|---|---|
+| **satisfied** | An engine established the formal property at the named evidence strength and basis. | Read the property, evidence boundary and limits; this is not a legal-compliance guarantee outside that evidence. |
+| **violated** | An engine produced a witness: a record, trace step, input, or other counterexample to the property. | Fix the system. In the default mode, this is the only one of these five outcomes that fails a `check` run; `--strict-unresolved` can also fail on unresolved outcomes. |
 | **not applicable** | The duty's declared regulatory class or decision-domain gate did not reach this system. Nothing about the system was checked; reasonsmith never infers the missing declaration. | Declare the class/domain and re-run, or establish that the duty genuinely does not reach the system. This is not clearance. |
 | **unattainable** | The system cannot supply a signal required by the duty according to the capability basis used by the run. No engine evaluated the duty. | Change the system, or—when the basis is only the supplied trace—supply a longer trace or explicit capability declaration. |
 | **not evaluated** | The duty reached the system, but no engine established a result: for example, evidence was empty, a construct was refused, a trigger never fired, or the required evidence kind was unavailable. | Read the summary. Improve the evidence or expose the capability the question needs. This is neither a finding nor compliance. |
-| **violated** | An engine produced a witness: a record, trace step, input, or other counterexample to the property. | Fix the system. This is the only one of these four outcomes that fails a `check` run. |
 
 `inconclusive` is the result-model spelling used for the `not evaluated` outcome. It is not the
 same as `not_applicable`: the former says a duty that reached the system was not settled, while the
-latter says the duty's reach was not established. `satisfied` is reserved for an engine-established
-positive result, and `violated` carries a witness. The distinctions are enforced by
+latter says the duty's reach was not established. JSON result objects carry an additive `outcome`
+field using the five table names above; the compatibility `verdict` and `strength` fields remain
+unchanged. `satisfied` is reserved for an engine-established positive result, and `violated` carries
+a witness. The distinctions are enforced by
 `RequirementResult.__post_init__` and by the report category table
 (`test_the_four_unresolved_outcomes_are_four_distinct_report_categories`).
 

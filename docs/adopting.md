@@ -413,8 +413,10 @@ was missing from the log.
 
 That is the shape of an adoption. The first report was not a clean bill of health; it was mostly a
 list of questions the evidence could not answer, and the exit code — 0 — said only that nothing
-was *proved* wrong. Only a violation fails a `check` run (`cli.main`); unattainable, not applicable
-and not evaluated all exit 0 and are findings to read, never verdicts against the system.
+was *proved* wrong. In the default mode, only a violation fails a `check` run (`cli.main`); unattainable, not
+applicable and not evaluated all exit 0 and are findings to read, never verdicts against the
+system. CI that must answer every duty can add `--strict-unresolved`, which returns exit 3 for
+those unresolved outcomes and names them in the headline.
 
 ## 4. The four outcomes, and which one you are looking at
 

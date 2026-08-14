@@ -68,6 +68,9 @@ _RESULT_KEYS = {
     "verbatim_text",
     "verdict",
     "strength",
+    # Additive operational outcome. It distinguishes not_applicable, not_evaluated and
+    # unattainable without changing the compatibility verdict/rung pair.
+    "outcome",
     "signals_required",
     "signals_missing",
     "evidence_summary",
