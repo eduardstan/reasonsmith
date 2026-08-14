@@ -111,6 +111,12 @@ other, and comparing two of them raises rather than answering
 duty, and a report that showed it as an unfinished ladder was telling a reader to expose more of a
 system that could expose nothing further.
 
+This limit has a deliberately deferred path, and still stands until it lands. [`ROADMAP.md`](../ROADMAP.md)
+§10 records the reversal of the earlier disparate-impact refusal: a future `statistical` basis must
+carry its sampling assumption, confidence level and authority-named threshold, while a measurement
+without that authority remains *not evaluated*. It is second-wave work after objectives 7–9; no
+current result has acquired a population claim.
+
 ## 4. The strongest results need a system that exposes its inference, and most do not
 
 `probed` needs a system that can be re-run on an input it has not seen. `proved` needs one that
@@ -123,6 +129,13 @@ is served behind an inference API and exports a log, and
 `test_the_neural_system_cannot_be_raised_above_observed` in
 `tests/test_docs_three_systems.py` fails if any change raises that ceiling. Raising a rung means
 changing the *system*, never the adapter.
+
+There is now a path and the limit remains. [`ROADMAP.md`](../ROADMAP.md) §8 requires the neural
+system itself to expose a checkable ONNX or VNN-LIB artefact to an external verifier, and the
+language-model system to declare the bounded input space its counterfactual replay ranges over.
+Objective 7 first requires plug-in evidence to be witness-checked by the core. Until both objectives
+close, the neural example stays pinned at `observed` and the language-model transcript's
+counterfactual row stays *not evaluated*.
 
 It shows up on real systems too. In the `nesyarena` run, **zero results landed at `probed` and zero
 at `proved`** across five systems and three packs — the Z3 engine and the replay engine never ran
