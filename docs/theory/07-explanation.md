@@ -2,8 +2,30 @@
 
 This chapter is a distinct formalism from Chapters 1–5. It concerns an inference artefact and the
 reasons it exposes for one decision, not the denotation of a property over a trace or input space.
-Its perturbations are the deletions admitted by `artifacts.InferenceArtifact`; its oracle is the
-system's own engine, and its exact side is the artefact's exact inference.
+Its explanation and certificate perturbations are the deletions admitted by
+`artifacts.InferenceArtifact`; its oracle is the system's own engine, and its exact side is the
+artefact's exact inference. The protocol now also admits a wider one-fact interpretation surface,
+but that surface belongs to the semantic-law measurement in §7.7 and is not a new perturbation in
+any definition of a reason.
+
+**Reversal recorded (2026-08-11).** The former position refused any perturbation beyond deletion:
+there was no `with_(fact)`, and the refusal was justified by the soundness premise of the
+one-directional deletion definition. The changed protocol admits the optional pair
+`at(fact, probability)` and `probability(fact)`, so a family can be asked for its engine answer after
+one fact is assigned any probability in `[0, 1]`. The candidate-B law battery is the measured basis
+for this reversal: over the 16 generated instances, it refutes all four deviating `nesyarena`
+provenances and never `exact-wmc`; the two one-directional variants refute neither top-k provenance,
+while the full-range variant refutes `top-1-proofs` on 8 instances and `top-3-proofs` on 4.
+Candidate A has since shipped as `gdpr_recital71_error_risk_minimised`, the value-gap duty in the
+`gdpr` pack; this widening is the candidate-B enabler in the design's stated sequence, not a
+replacement for that duty.
+
+What remains refused is as important as what changed. The deletion lattice below is still the whole
+space quantified over by the explanation definitions; `certificate.py` and `explanations.py` call
+`without` and nothing else, and `without(fact)` is the zero endpoint of `at`. A family offering no
+`at` surface loses no shipped verdict, and `ReasonTraceArtifact` deliberately offers none. The
+semantic-law measurement is refutation-only, occupies no rung, and does not turn this wider surface
+into a claim that a system is correct.
 
 ## 7.1 Setting and perturbations
 
@@ -20,6 +42,13 @@ exact inference is $V(\beta)$; the audited engine's answer is $E(\beta)$. Both a
 program and interpretation. The engine is a black box here, except for the monotonicity
  declaration required by Definition 7.7.
 
+**Protocol surface admitted by the reversal.** For a fact $a$ and a probability $\lambda$ between zero
+and one, $\beta[a\mapsto\lambda]$ is the interpretation that agrees with $\beta$ except that the
+probability of $a$ is $\lambda$. An artefact admits this interpretation when it exposes both
+`probability(a)` and `at(a, probability)`, and `at` returns the same inference with the same reason
+family at $\beta[a\mapsto\lambda]$. This is the newly admitted surface; it is the surface used by
+§7.7's law measurement.
+
 **Definition 7.1 (deletion lattice).** For $S\subseteq F_q$, let $\beta[S\mapsto0]$ be $\beta$ with every fact in
 `S` assigned probability zero. The deletion lattice is
 
@@ -28,8 +57,9 @@ $$
 $$
 
 ordered by inclusion of deletion subsets, with $\beta$ at its top. This is the whole perturbation
-space used by this chapter. The optional `at(fact, probability)` surface is not read by any
-statement below.
+space used by the explanation definitions and the certificate. It is a subspace of the protocol's
+wider surface: for a family that exposes it, `without(a)` is exactly `at(a, 0)`, but no definition
+below quantifies over a positive or otherwise arbitrary $\lambda$.
 
 The exact side obeys
 
@@ -201,6 +231,10 @@ $$
 $$
 \mathrm{L3}\qquad E(\beta[a\mapsto0])\le E(\beta)\le E(\beta[a\mapsto1]).
 $$
+
+The measurement obtains $\beta(a)$ through `probability(a)` and each endpoint through `at(a,
+probability)`. Thus an artefact that admits the widened surface supplies exactly the three engine
+answers appearing in L2 and L3; an artefact that does not is not evaluated for these laws.
 
 **Proposition 7.19 (law refutation).** If (C) holds, L2 and L3 hold at every fact $a\in F_q$.
 Therefore a measured violation of either law refutes (C). L2 follows from the affine decomposition of

@@ -55,6 +55,7 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $\varphi$ | `phi` | formula metavariable | Formula metavariable. | 02 Syntax | `rulelang.parse_property` |
 | $\psi$ | `psi` | formula metavariable | Formula metavariable. | 02 Syntax | `rulelang.parse_property` |
 | $\beta$ | `beta` | interpretation | Interpretation of an artefact. | 07 Explanation | `artifacts.admits_interpretation` |
+| $\lambda$ | `lambda` | probability | Probability assigned to one fact by an interpretation. | 07 Explanation | `artifacts.InferenceArtifact.at` |
 | $i$ | `i` | index | Record or reason index. | 01 Models | `rulelang.eval_temporal_trace` |
 | $n$ | `n` | natural number | Finite cardinality or final trace index. | 01 Models | `rulelang.eval_temporal_trace` |
 | $\mathsf{Spec}$ | `Spec` | set of formulas | Well-formed formulas of the grammar. | 02 Syntax | `rulelang.parse_property` |
