@@ -20,6 +20,8 @@ what the tool would print. Regenerate any block by running the command shown abo
   hash [RESULTS.md](../RESULTS.md) reports, which is what lets the two files be checked against
   each other
 
+> **Demonstration only:** This is a demonstration on frozen synthetic data — not evidence about any real decision.
+
 What a transcript is not: a compliance result. Each block carries its own LIMITS paragraph, and
 those limits travel with the numbers above them.
 

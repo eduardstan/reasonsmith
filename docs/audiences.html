@@ -262,6 +262,30 @@
       max-width: 65ch;
       text-wrap: pretty;
     }
+    .affected-person-card {
+      margin: var(--space-l);
+      padding: var(--space-m) var(--space-l);
+      background: var(--warn-soft);
+      border: 1px solid var(--warn-line);
+      border-left: 4px solid var(--warn);
+      border-radius: var(--radius);
+    }
+    .affected-person-card-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--warn);
+      margin-bottom: var(--space-2xs);
+    }
+    .affected-person-card p {
+      margin: 0;
+      max-width: 75ch;
+      font-size: var(--step-0);
+      line-height: 1.45;
+      color: var(--ink);
+    }
     .provenance-bar {
       font-size: 0.8rem;
       color: var(--ink-muted);
@@ -673,7 +697,7 @@
           <h1 class="main-title">Conformance Report</h1>
         </div>
         <span class="header-corner">
-          <a href="index.html">&larr; landing</a> &middot; audit dossier
+          <a href="https://reasonsmith.dev/">&larr; landing</a> &middot; audit dossier
         </span>
       </div>
       <div class="meta-grid">
@@ -702,10 +726,17 @@
       <div class="provenance-bar"><strong>Report Provenance:</strong> Generated without an identified source commit. Command: <code>python docs/build_audiences.py</code>. Re-running that command in any checkout of this repository rewrites this page identically; test_docs_audiences_html_matches_the_builder fails if it does not. No commit hash is named because a page committed into the repository it describes cannot name the commit that carries it: that commit does not exist while the page is being rendered.</div>
     </div>
 
+    <aside class="affected-person-card" aria-label="For a person affected by a decision">
+      <div class="affected-person-card-title">For a person affected by a decision</div>
+      <p>This checks a formal test chosen by people; it does not decide whether that test is the correct legal interpretation or whether the decision-maker complied. A sample report is not evidence about your decision. Ask for the exact per-decision report and every item marked not evaluated, unattainable, or not applicable.</p>
+    </aside>
+
     
 
     
     <section class="limits-card">
+      <h3 class="limits-header">Demonstration only</h3>
+      <p class="limits-text">This is a demonstration on frozen synthetic data &mdash; not evidence about any real decision.</p>
       <h3 class="limits-header">One run, five readers</h3>
       <p class="limits-text">Each frame below holds a complete conformance report — the whole
       document <code>reasonsmith check --audience &lt;name&gt;</code> writes, embedded as it was
@@ -735,7 +766,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>auditor</span>
-            <span>44,802 characters</span>
+            <span>46,032 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: nothing. This is the full report.</p>
           <iframe title="The auditor rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -1002,6 +1033,30 @@
       max-width: 65ch;
       text-wrap: pretty;
     }
+    .affected-person-card {
+      margin: var(--space-l);
+      padding: var(--space-m) var(--space-l);
+      background: var(--warn-soft);
+      border: 1px solid var(--warn-line);
+      border-left: 4px solid var(--warn);
+      border-radius: var(--radius);
+    }
+    .affected-person-card-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--warn);
+      margin-bottom: var(--space-2xs);
+    }
+    .affected-person-card p {
+      margin: 0;
+      max-width: 75ch;
+      font-size: var(--step-0);
+      line-height: 1.45;
+      color: var(--ink);
+    }
     .provenance-bar {
       font-size: 0.8rem;
       color: var(--ink-muted);
@@ -1413,7 +1468,7 @@
           &lt;h1 class=&quot;main-title&quot;&gt;Conformance Report&lt;/h1&gt;
         &lt;/div&gt;
         &lt;span class=&quot;header-corner&quot;&gt;
-          &lt;a href=&quot;index.html&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
+          &lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
         &lt;/span&gt;
       &lt;/div&gt;
       &lt;div class=&quot;meta-grid&quot;&gt;
@@ -1441,6 +1496,11 @@
       &lt;div class=&quot;headline-text&quot;&gt;6 requirements · 6 binding: 2 proved, 1 observed, 3 unattainable&lt;/div&gt;
       &lt;div class=&quot;provenance-bar&quot;&gt;&lt;strong&gt;Report Provenance:&lt;/strong&gt; Generated without an identified source commit. Command: &lt;code&gt;python docs/build_audiences.py&lt;/code&gt;.&lt;/div&gt;
     &lt;/div&gt;
+
+    &lt;aside class=&quot;affected-person-card&quot; aria-label=&quot;For a person affected by a decision&quot;&gt;
+      &lt;div class=&quot;affected-person-card-title&quot;&gt;For a person affected by a decision&lt;/div&gt;
+      &lt;p&gt;This checks a formal test chosen by people; it does not decide whether that test is the correct legal interpretation or whether the decision-maker complied. A sample report is not evidence about your decision. Ask for the exact per-decision report and every item marked not evaluated, unattainable, or not applicable.&lt;/p&gt;
+    &lt;/aside&gt;
 
     
 
@@ -1647,7 +1707,7 @@
     &lt;/section&gt;
     &lt;footer class=&quot;dossier-foot&quot;&gt;
       &lt;span&gt;reasonsmith &amp;middot; audit-grade explanations&lt;/span&gt;
-      &lt;span&gt;&lt;a href=&quot;index.html&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
+      &lt;span&gt;&lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
     &lt;/footer&gt;
   &lt;/div&gt;
   &lt;script&gt;
@@ -1695,7 +1755,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>developer</span>
-            <span>44,142 characters</span>
+            <span>45,372 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">legal_metadata</span></p>
           <iframe title="The developer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -1962,6 +2022,30 @@
       max-width: 65ch;
       text-wrap: pretty;
     }
+    .affected-person-card {
+      margin: var(--space-l);
+      padding: var(--space-m) var(--space-l);
+      background: var(--warn-soft);
+      border: 1px solid var(--warn-line);
+      border-left: 4px solid var(--warn);
+      border-radius: var(--radius);
+    }
+    .affected-person-card-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--warn);
+      margin-bottom: var(--space-2xs);
+    }
+    .affected-person-card p {
+      margin: 0;
+      max-width: 75ch;
+      font-size: var(--step-0);
+      line-height: 1.45;
+      color: var(--ink);
+    }
     .provenance-bar {
       font-size: 0.8rem;
       color: var(--ink-muted);
@@ -2373,7 +2457,7 @@
           &lt;h1 class=&quot;main-title&quot;&gt;Conformance Report&lt;/h1&gt;
         &lt;/div&gt;
         &lt;span class=&quot;header-corner&quot;&gt;
-          &lt;a href=&quot;index.html&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
+          &lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
         &lt;/span&gt;
       &lt;/div&gt;
       &lt;div class=&quot;meta-grid&quot;&gt;
@@ -2401,6 +2485,11 @@
       &lt;div class=&quot;headline-text&quot;&gt;6 requirements · 6 binding: 2 proved, 1 observed, 3 unattainable&lt;/div&gt;
       &lt;div class=&quot;provenance-bar&quot;&gt;&lt;strong&gt;Report Provenance:&lt;/strong&gt; Generated without an identified source commit. Command: &lt;code&gt;python docs/build_audiences.py&lt;/code&gt;.&lt;/div&gt;
     &lt;/div&gt;
+
+    &lt;aside class=&quot;affected-person-card&quot; aria-label=&quot;For a person affected by a decision&quot;&gt;
+      &lt;div class=&quot;affected-person-card-title&quot;&gt;For a person affected by a decision&lt;/div&gt;
+      &lt;p&gt;This checks a formal test chosen by people; it does not decide whether that test is the correct legal interpretation or whether the decision-maker complied. A sample report is not evidence about your decision. Ask for the exact per-decision report and every item marked not evaluated, unattainable, or not applicable.&lt;/p&gt;
+    &lt;/aside&gt;
 
     
 
@@ -2607,7 +2696,7 @@
     &lt;/section&gt;
     &lt;footer class=&quot;dossier-foot&quot;&gt;
       &lt;span&gt;reasonsmith &amp;middot; audit-grade explanations&lt;/span&gt;
-      &lt;span&gt;&lt;a href=&quot;index.html&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
+      &lt;span&gt;&lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
     &lt;/footer&gt;
   &lt;/div&gt;
   &lt;script&gt;
@@ -2655,7 +2744,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>deployer</span>
-            <span>43,341 characters</span>
+            <span>44,571 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">witnesses</span></p>
           <iframe title="The deployer rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -2922,6 +3011,30 @@
       max-width: 65ch;
       text-wrap: pretty;
     }
+    .affected-person-card {
+      margin: var(--space-l);
+      padding: var(--space-m) var(--space-l);
+      background: var(--warn-soft);
+      border: 1px solid var(--warn-line);
+      border-left: 4px solid var(--warn);
+      border-radius: var(--radius);
+    }
+    .affected-person-card-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--warn);
+      margin-bottom: var(--space-2xs);
+    }
+    .affected-person-card p {
+      margin: 0;
+      max-width: 75ch;
+      font-size: var(--step-0);
+      line-height: 1.45;
+      color: var(--ink);
+    }
     .provenance-bar {
       font-size: 0.8rem;
       color: var(--ink-muted);
@@ -3333,7 +3446,7 @@
           &lt;h1 class=&quot;main-title&quot;&gt;Conformance Report&lt;/h1&gt;
         &lt;/div&gt;
         &lt;span class=&quot;header-corner&quot;&gt;
-          &lt;a href=&quot;index.html&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
+          &lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
         &lt;/span&gt;
       &lt;/div&gt;
       &lt;div class=&quot;meta-grid&quot;&gt;
@@ -3361,6 +3474,11 @@
       &lt;div class=&quot;headline-text&quot;&gt;6 requirements · 6 binding: 2 proved, 1 observed, 3 unattainable&lt;/div&gt;
       &lt;div class=&quot;provenance-bar&quot;&gt;&lt;strong&gt;Report Provenance:&lt;/strong&gt; Generated without an identified source commit. Command: &lt;code&gt;python docs/build_audiences.py&lt;/code&gt;.&lt;/div&gt;
     &lt;/div&gt;
+
+    &lt;aside class=&quot;affected-person-card&quot; aria-label=&quot;For a person affected by a decision&quot;&gt;
+      &lt;div class=&quot;affected-person-card-title&quot;&gt;For a person affected by a decision&lt;/div&gt;
+      &lt;p&gt;This checks a formal test chosen by people; it does not decide whether that test is the correct legal interpretation or whether the decision-maker complied. A sample report is not evidence about your decision. Ask for the exact per-decision report and every item marked not evaluated, unattainable, or not applicable.&lt;/p&gt;
+    &lt;/aside&gt;
 
     
 
@@ -3555,7 +3673,7 @@
     &lt;/section&gt;
     &lt;footer class=&quot;dossier-foot&quot;&gt;
       &lt;span&gt;reasonsmith &amp;middot; audit-grade explanations&lt;/span&gt;
-      &lt;span&gt;&lt;a href=&quot;index.html&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
+      &lt;span&gt;&lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
     &lt;/footer&gt;
   &lt;/div&gt;
   &lt;script&gt;
@@ -3603,7 +3721,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>regulator</span>
-            <span>42,344 characters</span>
+            <span>43,574 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">witnesses</span></p>
           <iframe title="The regulator rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -3870,6 +3988,30 @@
       max-width: 65ch;
       text-wrap: pretty;
     }
+    .affected-person-card {
+      margin: var(--space-l);
+      padding: var(--space-m) var(--space-l);
+      background: var(--warn-soft);
+      border: 1px solid var(--warn-line);
+      border-left: 4px solid var(--warn);
+      border-radius: var(--radius);
+    }
+    .affected-person-card-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--warn);
+      margin-bottom: var(--space-2xs);
+    }
+    .affected-person-card p {
+      margin: 0;
+      max-width: 75ch;
+      font-size: var(--step-0);
+      line-height: 1.45;
+      color: var(--ink);
+    }
     .provenance-bar {
       font-size: 0.8rem;
       color: var(--ink-muted);
@@ -4281,7 +4423,7 @@
           &lt;h1 class=&quot;main-title&quot;&gt;Conformance Report&lt;/h1&gt;
         &lt;/div&gt;
         &lt;span class=&quot;header-corner&quot;&gt;
-          &lt;a href=&quot;index.html&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
+          &lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
         &lt;/span&gt;
       &lt;/div&gt;
       &lt;div class=&quot;meta-grid&quot;&gt;
@@ -4309,6 +4451,11 @@
       &lt;div class=&quot;headline-text&quot;&gt;6 requirements · 6 binding: 2 proved, 1 observed, 3 unattainable&lt;/div&gt;
       &lt;div class=&quot;provenance-bar&quot;&gt;&lt;strong&gt;Report Provenance:&lt;/strong&gt; Generated without an identified source commit. Command: &lt;code&gt;python docs/build_audiences.py&lt;/code&gt;.&lt;/div&gt;
     &lt;/div&gt;
+
+    &lt;aside class=&quot;affected-person-card&quot; aria-label=&quot;For a person affected by a decision&quot;&gt;
+      &lt;div class=&quot;affected-person-card-title&quot;&gt;For a person affected by a decision&lt;/div&gt;
+      &lt;p&gt;This checks a formal test chosen by people; it does not decide whether that test is the correct legal interpretation or whether the decision-maker complied. A sample report is not evidence about your decision. Ask for the exact per-decision report and every item marked not evaluated, unattainable, or not applicable.&lt;/p&gt;
+    &lt;/aside&gt;
 
     
 
@@ -4503,7 +4650,7 @@
     &lt;/section&gt;
     &lt;footer class=&quot;dossier-foot&quot;&gt;
       &lt;span&gt;reasonsmith &amp;middot; audit-grade explanations&lt;/span&gt;
-      &lt;span&gt;&lt;a href=&quot;index.html&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
+      &lt;span&gt;&lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
     &lt;/footer&gt;
   &lt;/div&gt;
   &lt;script&gt;
@@ -4551,7 +4698,7 @@
         <div class="split-card">
           <div class="split-card-header">
             <span>affected-individual</span>
-            <span>30,661 characters</span>
+            <span>31,891 characters</span>
           </div>
           <p class="text-muted">Not drawn for this reader: <span class="signal-tag">overview</span><span class="signal-tag">strength</span><span class="signal-tag">legal_metadata</span><span class="signal-tag">signals</span><span class="signal-tag">missing_signals</span><span class="signal-tag">evidence_summary</span><span class="signal-tag">probe_budget</span><span class="signal-tag">witnesses</span></p><p class="text-muted">Drawn only for this reader: <span class="signal-tag">plain_account</span></p>
           <iframe title="The affected-individual rendering of this run" onload="var w=this.contentWindow,e=w.document.getElementById(&#x27;findings&#x27;);if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY)" loading="lazy" style="width: 100%; height: 24rem; margin-top: var(--space-xs); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);" srcdoc="&lt;!DOCTYPE html&gt;
@@ -4818,6 +4965,30 @@
       max-width: 65ch;
       text-wrap: pretty;
     }
+    .affected-person-card {
+      margin: var(--space-l);
+      padding: var(--space-m) var(--space-l);
+      background: var(--warn-soft);
+      border: 1px solid var(--warn-line);
+      border-left: 4px solid var(--warn);
+      border-radius: var(--radius);
+    }
+    .affected-person-card-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--warn);
+      margin-bottom: var(--space-2xs);
+    }
+    .affected-person-card p {
+      margin: 0;
+      max-width: 75ch;
+      font-size: var(--step-0);
+      line-height: 1.45;
+      color: var(--ink);
+    }
     .provenance-bar {
       font-size: 0.8rem;
       color: var(--ink-muted);
@@ -5229,7 +5400,7 @@
           &lt;h1 class=&quot;main-title&quot;&gt;Conformance Report&lt;/h1&gt;
         &lt;/div&gt;
         &lt;span class=&quot;header-corner&quot;&gt;
-          &lt;a href=&quot;index.html&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
+          &lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;&amp;larr; landing&lt;/a&gt; &amp;middot; audit dossier
         &lt;/span&gt;
       &lt;/div&gt;
       &lt;div class=&quot;meta-grid&quot;&gt;
@@ -5244,6 +5415,11 @@
       &lt;/div&gt;
     &lt;/header&gt;
 
+
+    &lt;aside class=&quot;affected-person-card&quot; aria-label=&quot;For a person affected by a decision&quot;&gt;
+      &lt;div class=&quot;affected-person-card-title&quot;&gt;For a person affected by a decision&lt;/div&gt;
+      &lt;p&gt;This checks a formal test chosen by people; it does not decide whether that test is the correct legal interpretation or whether the decision-maker complied. A sample report is not evidence about your decision. Ask for the exact per-decision report and every item marked not evaluated, unattainable, or not applicable.&lt;/p&gt;
+    &lt;/aside&gt;
 
     
 
@@ -5364,7 +5540,7 @@
     &lt;/section&gt;
     &lt;footer class=&quot;dossier-foot&quot;&gt;
       &lt;span&gt;reasonsmith &amp;middot; audit-grade explanations&lt;/span&gt;
-      &lt;span&gt;&lt;a href=&quot;index.html&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
+      &lt;span&gt;&lt;a href=&quot;https://reasonsmith.dev/&quot;&gt;landing&lt;/a&gt; &amp;middot; &lt;a href=&quot;#top&quot;&gt;top&lt;/a&gt;&lt;/span&gt;
     &lt;/footer&gt;
   &lt;/div&gt;
   &lt;script&gt;
@@ -5614,7 +5790,7 @@
     </section>
     <footer class="dossier-foot">
       <span>reasonsmith &middot; audit-grade explanations</span>
-      <span><a href="index.html">landing</a> &middot; <a href="#top">top</a></span>
+      <span><a href="https://reasonsmith.dev/">landing</a> &middot; <a href="#top">top</a></span>
     </footer>
   </div>
   <script>

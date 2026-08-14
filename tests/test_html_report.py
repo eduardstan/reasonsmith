@@ -87,9 +87,10 @@ def test_html_renderer_presents_exact_same_counts_and_verdicts():
 
     html = report.render_html()
 
-    # Self-contained check: no external network resources
+    # Self-contained check: no external network resources; the two canonical landing links are
+    # navigation, not fetched resources, and intentionally point at the live front door.
     assert "http://" not in html
-    assert "https://" not in html
+    assert html.count('href="https://reasonsmith.dev/"') == 2
 
     # Limits check
     assert report.limits in html
@@ -630,7 +631,7 @@ def test_the_dark_page_is_still_self_contained():
     html = _minimal_report().render_html()
 
     assert "http://" not in html
-    assert "https://" not in html
+    assert html.count('href="https://reasonsmith.dev/"') == 2
     assert "@import" not in html
     assert "src=" not in html
     assert "<link" not in html

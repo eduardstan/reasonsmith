@@ -262,6 +262,30 @@
       max-width: 65ch;
       text-wrap: pretty;
     }
+    .affected-person-card {
+      margin: var(--space-l);
+      padding: var(--space-m) var(--space-l);
+      background: var(--warn-soft);
+      border: 1px solid var(--warn-line);
+      border-left: 4px solid var(--warn);
+      border-radius: var(--radius);
+    }
+    .affected-person-card-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--warn);
+      margin-bottom: var(--space-2xs);
+    }
+    .affected-person-card p {
+      margin: 0;
+      max-width: 75ch;
+      font-size: var(--step-0);
+      line-height: 1.45;
+      color: var(--ink);
+    }
     .provenance-bar {
       font-size: 0.8rem;
       color: var(--ink-muted);
@@ -673,7 +697,7 @@
           <h1 class="main-title">Conformance Report</h1>
         </div>
         <span class="header-corner">
-          <a href="index.html">&larr; landing</a> &middot; audit dossier
+          <a href="https://reasonsmith.dev/">&larr; landing</a> &middot; audit dossier
         </span>
       </div>
       <div class="meta-grid">
@@ -702,9 +726,19 @@
       <div class="provenance-bar"><strong>Report Provenance:</strong> Generated without an identified source commit. Command: <code>python docs/build_example.py</code>. Re-running that command in any checkout of this repository rewrites this page identically; test_docs_index_html_matches_the_renderer fails if it does not. No commit hash is named because a page committed into the repository it describes cannot name the commit that carries it: that commit does not exist while the page is being rendered.</div>
     </div>
 
+    <aside class="affected-person-card" aria-label="For a person affected by a decision">
+      <div class="affected-person-card-title">For a person affected by a decision</div>
+      <p>This checks a formal test chosen by people; it does not decide whether that test is the correct legal interpretation or whether the decision-maker complied. A sample report is not evidence about your decision. Ask for the exact per-decision report and every item marked not evaluated, unattainable, or not applicable.</p>
+    </aside>
+
     
 
     
+    <section class="limits-card">
+      <h3 class="limits-header">Demonstration only</h3>
+      <p class="limits-text">This is a demonstration on frozen synthetic data &mdash; not evidence about any real decision.</p>
+    </section>
+
     <style>
 
   .key-finding-section {
@@ -1167,7 +1201,7 @@
     </section>
     <footer class="dossier-foot">
       <span>reasonsmith &middot; audit-grade explanations</span>
-      <span><a href="index.html">landing</a> &middot; <a href="#top">top</a></span>
+      <span><a href="https://reasonsmith.dev/">landing</a> &middot; <a href="#top">top</a></span>
     </footer>
   </div>
   <script>

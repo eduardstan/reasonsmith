@@ -14,6 +14,8 @@ The answer is the minimal audit artefact each stakeholder needs, mechanically de
 
 On decision `APP-1042`, the system stated one reason while its inference used five. reasonsmith re-ran that inference, switched reasons off, and measured the four the answer did not depend on. The figure is generated from the run, not typed beside it; regenerate all showcase artefacts with [`docs/build_showcase.py`](docs/build_showcase.py).
 
+> **Demonstration only:** This is a demonstration on frozen synthetic data — not evidence about any real decision.
+
 
 ## The organising question
 
@@ -79,7 +81,7 @@ Choose the question you are carrying into the report. Each invitation gets you t
 - **Deployer:** Compare the three system surfaces in [`docs/three-systems.md`](docs/three-systems.md), use [`docs/adopting.md`](docs/adopting.md), and finish at [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md).
 - **Auditor:** Start with the generated [`docs/example-output.md`](docs/example-output.md), read [`docs/semantics.md`](docs/semantics.md), and finish with [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
 - **Regulator:** Start with the statutory retrieval record in [`docs/legal-sources.md`](docs/legal-sources.md), follow [`docs/refinement.md`](docs/refinement.md), and finish with [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
-- **Affected individual:** Start with [`docs/example-output.md`](docs/example-output.md), read the audience projection in [`docs/semantics.md`](docs/semantics.md), and finish at [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md).
+- **Affected individual:** Start with [`docs/example-output.md`](docs/example-output.md), read the [`affected-individual audience gallery`](docs/audiences.html) and the audience projection in [`docs/semantics.md`](docs/semantics.md), and finish at [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md). The legal reading and formalisation are human assumptions: reasonsmith checks the formal test it is given but does not validate that the test is the correct legal interpretation or whether it applies to your case.
 
 ## Install and run
 
@@ -241,6 +243,7 @@ LIMITS OF THIS REPORT
 - `observed` speaks only about supplied records; `probed` is bounded replay; `proved` covers the declared logic's admitted inputs. A rung is evidence strength, not a compliance grade or confidence score.
 - The system's declarations are trusted inputs. An inference artefact must declare monotonicity; a false declaration is reported not evaluated.
 - Group-statistical fairness, proxies, disparate impact, open-textured predicates, and legal interpretation beyond the formalised clause are outside this evidence model.
+- The legal reading and formalisation are human assumptions: reasonsmith does not validate that the formal test is the correct legal interpretation or that it applies to your case.
 - The certificate measures reason deletion only when the system exposes a suitable inference artefact; a log-only system cannot be upgraded by its adapter.
 
 Read the full boundaries in [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md) and the soundness obligations in [`docs/semantics.md`](docs/semantics.md) §3.

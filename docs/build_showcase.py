@@ -544,6 +544,8 @@ def showcase_html(audit: dict, figure: str, cast: str) -> str:
     )
     return f"""
     <section class="limits-card">
+      <h3 class="limits-header">Demonstration only</h3>
+      <p class="limits-text">This is a demonstration on frozen synthetic data &mdash; not evidence about any real decision.</p>
       <h3 class="limits-header">What reasonsmith found</h3>
       <p class="limits-text">A credit system declined application
       <code>{html.escape(audit["decision_id"])}</code> and stated <strong>one</strong> reason. Its

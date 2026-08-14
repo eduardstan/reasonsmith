@@ -84,6 +84,13 @@ def example_report() -> ConformanceReport:
 #: `main` and pointed at the document that shows it. Nothing may be named here that the
 #: repository does not have: the claim sits on the most public page this project publishes.
 #: It reuses the `limits-card` classes the renderer already defines and adds no rule of its own.
+SAMPLE_NOTICE_HTML = """
+    <section class="limits-card">
+      <h3 class="limits-header">Demonstration only</h3>
+      <p class="limits-text">This is a demonstration on frozen synthetic data &mdash; not evidence about any real decision.</p>
+    </section>
+"""
+
 SCOPE_NOTE_HTML = """
     <section class="limits-card">
       <h3 class="limits-header">What this dossier does not show</h3>
@@ -105,7 +112,7 @@ def render() -> str:
     return example_report().render_html(
         commit_hash="",
         command=BUILD_COMMAND,
-        extra_section_html=render_key_finding_html() + SCOPE_NOTE_HTML,
+        extra_section_html=SAMPLE_NOTICE_HTML + render_key_finding_html() + SCOPE_NOTE_HTML,
         provenance_note=PROVENANCE_NOTE,
     )
 

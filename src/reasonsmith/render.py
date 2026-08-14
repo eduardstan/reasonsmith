@@ -45,6 +45,17 @@ from reasonsmith.report import (
 from reasonsmith.verdict import EvidenceBasis, Strength, Verdict
 
 
+# This warning belongs beside every HTML conformance headline so an affected person sees the
+# boundary before interpreting a verdict. It is deliberately not rendered in text output: the
+# affected-person front door is the HTML report and the audience gallery.
+AFFECTED_PERSON_CARD_TEXT = (
+    "This checks a formal test chosen by people; it does not decide whether that test is the "
+    "correct legal interpretation or whether the decision-maker complied. A sample report is "
+    "not evidence about your decision. Ask for the exact per-decision report and every item "
+    "marked not evaluated, unattainable, or not applicable."
+)
+
+
 @dataclass(frozen=True)
 class AudienceProjection:
     """Which parts of a report one audience is shown.
@@ -660,6 +671,12 @@ def render_html(
             "    </div>\n"
             if view.overview
             else ""
+        )
+        affected_person_card = (
+            '    <aside class="affected-person-card" aria-label="For a person affected by a decision">\n'
+            '      <div class="affected-person-card-title">For a person affected by a decision</div>\n'
+            f'      <p>{html.escape(AFFECTED_PERSON_CARD_TEXT)}</p>\n'
+            '    </aside>\n'
         )
         dashboard_block = (
             '    <section class="dashboard-section">\n'
@@ -1300,6 +1317,30 @@ def render_html(
       max-width: 65ch;
       text-wrap: pretty;
     }}
+    .affected-person-card {{
+      margin: var(--space-l);
+      padding: var(--space-m) var(--space-l);
+      background: var(--warn-soft);
+      border: 1px solid var(--warn-line);
+      border-left: 4px solid var(--warn);
+      border-radius: var(--radius);
+    }}
+    .affected-person-card-title {{
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--warn);
+      margin-bottom: var(--space-2xs);
+    }}
+    .affected-person-card p {{
+      margin: 0;
+      max-width: 75ch;
+      font-size: var(--step-0);
+      line-height: 1.45;
+      color: var(--ink);
+    }}
     .provenance-bar {{
       font-size: 0.8rem;
       color: var(--ink-muted);
@@ -1711,7 +1752,7 @@ def render_html(
           <h1 class="main-title">Conformance Report</h1>
         </div>
         <span class="header-corner">
-          <a href="index.html">&larr; landing</a> &middot; audit dossier
+          <a href="https://reasonsmith.dev/">&larr; landing</a> &middot; audit dossier
         </span>
       </div>
       <div class="meta-grid">
@@ -1727,6 +1768,7 @@ def render_html(
     </header>
 
 {headline_block}
+{affected_person_card}
     {notice_html}
 
     {extra_section}
@@ -1742,7 +1784,7 @@ def render_html(
     </section>
     <footer class="dossier-foot">
       <span>reasonsmith &middot; audit-grade explanations</span>
-      <span><a href="index.html">landing</a> &middot; <a href="#top">top</a></span>
+      <span><a href="https://reasonsmith.dev/">landing</a> &middot; <a href="#top">top</a></span>
     </footer>
   </div>
   <script>

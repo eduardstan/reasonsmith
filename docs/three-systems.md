@@ -1,5 +1,7 @@
 # One duty, three systems, three rungs
 
+> **Demonstration only:** The reports below are demonstrations on frozen synthetic data — not evidence about any real decision.
+
 How does a model — neural, probabilistic, symbolic — get fed into this tool and have a legal
 property verified on it? By writing an adapter that says what the system exposes. Nothing else
 about the system matters, and nothing else is asked of it.

@@ -1,5 +1,7 @@
 # A language model as a system under test
 
+> **Demonstration only:** This report is a demonstration on frozen synthetic data — not evidence about any real decision.
+
 The three systems in [`three-systems.md`](three-systems.md) answer one question: *how far does a
 claim reach?* One duty, three surfaces, three rungs — `observed`, `probed`, `proved`.
 

@@ -9,6 +9,8 @@ what rather than quietly losing the paragraph.
 Read it beside [`docs/semantics.md`](semantics.md), which states what each verdict *does* mean, one
 engine at a time.
 
+> **Human legal assumption:** People choose the legal reading and formalisation tested here. reasonsmith does not validate that this formal test is the correct legal interpretation or that it applies to your case.
+
 ---
 
 ## 1. It takes the system's word about what it is
