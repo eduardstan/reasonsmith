@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test"
+import { describeNativeBinary } from "./pty"
 import { lstat, mkdir, mkdtemp, readFile, realpath, rm, stat } from "node:fs/promises"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
@@ -48,7 +49,7 @@ describe("PR evidence", () => {
   })
 })
 
-describe("native evidence bundle", () => {
+describeNativeBinary("native evidence bundle", () => {
   let root = ""
   let recording = ""
 

@@ -472,7 +472,7 @@ class Requirement:
                 "degree() atom is classified 'graded' — see docs/semantics.md §9."
             )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "source_document": self.source_document,
@@ -507,7 +507,7 @@ class Pack:
     title: str
     description: str
     requirements: tuple[Requirement, ...]
-    source_metadata: dict = field(default_factory=dict)
+    source_metadata: dict[str, Any] = field(default_factory=dict)
     algebra: str = ""
 
     def __post_init__(self) -> None:
@@ -526,7 +526,7 @@ class Pack:
                 return req
         raise KeyError(f"Requirement {req_id!r} not found in pack {self.id!r}")
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "title": self.title,

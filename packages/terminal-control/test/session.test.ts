@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { SessionManager } from "../src/manager"
 import { translateKeys } from "../src/keys"
+import { describePty } from "./pty"
 
 describe("translateKeys", () => {
   test("named keys and modifiers", () => {
@@ -16,7 +17,7 @@ describe("translateKeys", () => {
   })
 })
 
-describe("SessionManager — lifecycle", () => {
+describePty("SessionManager — lifecycle", () => {
   test("runs a command, captures output, and stops", async () => {
     const manager = new SessionManager()
     manager.start({

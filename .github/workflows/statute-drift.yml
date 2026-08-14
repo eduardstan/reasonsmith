@@ -8,7 +8,9 @@ on:
     - cron: "0 3 1 * *"
 
 permissions:
-  contents: read
+  # `contents: write` is for the verification manifest below: a clean run is a fact about the
+  # statutes on a date, and it is worth nothing to anyone if it exists only in a log that expires.
+  contents: write
   issues: write
 
 concurrency:
@@ -29,8 +31,32 @@ jobs:
       # Exits 1 when any quote differs, any source is unreachable, or a registered passage can no
       # longer be extracted, and always writes drift-report.json before doing so, so the issue step
       # below can read the findings.
+      # `--verification-manifest` writes docs/legal-verification.json only when nothing drifted, so
+      # a run that finds a difference leaves the previous verification date standing rather than
+      # overwriting it with a failure.
       - name: Re-fetch official sources and compare pack quotes
-        run: python -m reasonsmith.drift --report drift-report.json
+        run: |
+          python -m reasonsmith.drift \
+            --report drift-report.json \
+            --verification-manifest docs/legal-verification.json
+      # `published_counts` reads that manifest and refuses one that does not cover every statutory
+      # quote, so this regeneration is also the check that the two agree. Without it the artefact
+      # the site consumes reports `quotes_verification: not_run` forever, however many times this
+      # workflow has actually verified the quotes.
+      - name: Regenerate the published counts
+        run: reasonsmith published-counts -o docs/published-counts.json
+      - name: Commit the verification, if it moved
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/legal-verification.json docs/published-counts.json; then
+            echo "verification unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/legal-verification.json docs/published-counts.json
+          git commit -m "chore: record the statute verification of $(date -u +%Y-%m-%d)"
+          git push
       - name: Open or update the drift issue
         if: failure()
         env:

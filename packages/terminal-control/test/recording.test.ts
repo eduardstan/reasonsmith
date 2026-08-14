@@ -12,6 +12,7 @@ import {
 import { renderText } from "../src/render/text"
 import { renderAnimatedSvg } from "../src/render/video"
 import { SessionManager } from "../src/manager"
+import { describePty } from "./pty"
 
 /** Build a recording by hand with known timings. */
 function makeRecording(): ReturnType<Recorder["data"]> {
@@ -139,7 +140,7 @@ describe("replay", () => {
   })
 })
 
-describe("SessionManager recording integration", () => {
+describePty("SessionManager recording integration", () => {
   test("records a live session and exports asciicast", async () => {
     const manager = new SessionManager()
     manager.start({
@@ -150,9 +151,16 @@ describe("SessionManager recording integration", () => {
       rows: 4,
     })
     manager.startRecording("rec")
-    await manager.wait("rec", { type: "text", value: "ONE", timeout: 3000 })
-    manager.marker("rec", "saw-one")
-    await manager.wait("rec", { type: "text", value: "TWO", timeout: 3000 })
+    const sawOne = await manager.wait("rec", { type: "text", value: "ONE", timeout: 3000 })
+    expect(sawOne.satisfied).toBe(true)
+    // `Session.marker` is `this.recorder?.marker(name)` and `Recorder.marker` returns undefined
+    // once stopped: two silent no-ops in a row. Asserting the return value here means a recorder
+    // that is not running fails at the call that needed it, rather than as a marker missing from
+    // the timeline three assertions later — which is how this test failed on #181 and #183, on
+    // branches that changed nothing it touches.
+    expect(manager.marker("rec", "saw-one")).toBeTruthy()
+    const sawTwo = await manager.wait("rec", { type: "text", value: "TWO", timeout: 3000 })
+    expect(sawTwo.satisfied).toBe(true)
     const data = manager.stopRecording("rec")
     expect(data).not.toBeNull()
     expect(data!.events.length).toBeGreaterThan(0)

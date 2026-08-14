@@ -192,7 +192,7 @@ class EvidenceBasis(Enum):
         return Strength.parse(strength) in self.rungs
 
     def __str__(self) -> str:
-        return self.value
+        return str(self.value)
 
     def _refuse_order(self, other: object) -> bool:
         raise TypeError(
