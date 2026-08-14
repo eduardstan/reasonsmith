@@ -7,18 +7,18 @@ GitHub LaTeX; implementation identifiers remain code spans.
 |---|---|---|---|---|---|
 | $\mathbf{A} = (A, \sqcap, \sqcup, \otimes, \to, \neg, 0, 1)$ | `Algebra` | algebra | An algebra and its carrier and operations. | 03 Semantics | `manyvalued.Algebra` |
 | $A$ | `A` | carrier | Carrier of an algebra. | 03 Semantics | `manyvalued.Algebra` |
-| $\sqcap$ | `meet` | binary operation | Meet operation. | 03 Semantics | `manyvalued.Algebra.conjunction` |
-| $\sqcup$ | `join` | binary operation | Join operation; existential quantification uses this operation. | 03 Semantics | `manyvalued.Algebra.disjunction` |
+| $\sqcap$ | `meet` | binary operation | Lattice meet; trace aggregation uses the lattice minimum. | 03 Semantics | `manyvalued.degree_over_trace` (`min`) |
+| $\sqcup$ | `join` | binary operation | Lattice join; no standalone runtime operation is exposed. | 03 Semantics | — |
 | $\otimes$ | `t_norm` | binary operation | The algebra's conjunction (t-norm). | 03 Semantics | `manyvalued.Algebra.conjunction` |
 | $\to$ | `residuum` | binary operation | Residuated implication. | 03 Semantics | `manyvalued.Algebra.residuum` |
 | $\neg$ | `negation` | unary operation | Algebra negation. | 03 Semantics | `manyvalued.Algebra.negation` |
 | $0$ | `0` | element of $A$ | Bottom element. | 03 Semantics | `manyvalued.ALGEBRAS` |
 | $1$ | `1` | element of $A$ | Top element. | 03 Semantics | `manyvalued.ALGEBRAS` |
-| $\mathsf{f}$ | `F` | Kleene value | False in the Kleene chain. | 03 Semantics | `rulelang.kleene_value` |
-| $\mathsf{u}$ | `U` | Kleene value | Unknown in the Kleene chain. | 03 Semantics | `rulelang.UNKNOWN` |
-| $\mathsf{t}$ | `T` | Kleene value | True in the Kleene chain. | 03 Semantics | `rulelang.kleene_value` |
-| $F$ | `F` | set of facts | Facts exposed by an inference artefact. | 01 Models | `artifacts.InferenceArtifact` |
-| $T$ | `T` | set of traces | Trace set used by the denotation. | 01 Models | `rulelang.eval_temporal_trace` |
+| $\mathsf{f}$ | `kleene_false` | Kleene value | False in the Kleene chain. | 03 Semantics | `rulelang.kleene_value` |
+| $\mathsf{u}$ | `kleene_unknown` | Kleene value | Unknown in the Kleene chain. | 03 Semantics | `rulelang.UNKNOWN` |
+| $\mathsf{t}$ | `kleene_true` | Kleene value | True in the Kleene chain. | 03 Semantics | `rulelang.kleene_value` |
+| $F$ | `facts` | set of facts | Facts exposed by an inference artefact. | 01 Models | `artifacts.InferenceArtifact` |
+| $T$ | `traces` | set of traces | Trace set used by the denotation. | 01 Models | `rulelang.eval_temporal_trace` |
 | $L$ | `L` | declaration | System declaration. | 01 Models | `sut.SystemUnderTest.logic` |
 | $\mathbb{L}(\beta)$ | `L(beta)` | deletion lattice | Lattice of deletions of the fact set for interpretation $\beta$. | 07 Explanation | `explanations.contrastive_sets` |
 | $D(L)$ | `D(L)` | input space | Declaration model and its input space. | 01 Models | `engines.proved.encode_logic_domain` |
@@ -49,8 +49,8 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $x, y, z$ | `x, y, z` | element of $A$ | Algebra elements. | 03 Semantics | `manyvalued.Algebra` |
 | $c$ | `c` | class | Regulatory class. | 01 Models | `spec.Requirement.scope` |
 | $k$ | `k` | constant | Comparison constant. | 02 Syntax | `rulelang.parse_property` |
-| $P$ | `P` | set of pairs | Replay pair set. | 04 Decision problems | `engines.counterfactual` |
-| $R$ | `R` | set of pairs | Replay set, preserving the relation $R \subseteq P$. | 04 Decision problems | `engines.counterfactual.cross_rung_signal` |
+| $P$ | `declared_pairs` | set of pairs | Pair set admitted by the declaration. | 04 Decision problems | `engines.counterfactual` |
+| $R$ | `replay_pairs` | set of pairs | Replay set, preserving the relation $R \subseteq P$. | 04 Decision problems | `engines.counterfactual.cross_rung_signal` |
 | $\Pi$ | `Pi` | program | Program, only where a mathematical name is unavoidable. | 01 Models | `program` |
 | $\varphi$ | `phi` | formula metavariable | Formula metavariable. | 02 Syntax | `rulelang.parse_property` |
 | $\psi$ | `psi` | formula metavariable | Formula metavariable. | 02 Syntax | `rulelang.parse_property` |
@@ -70,8 +70,8 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $\mathbb{B}$ | `Boolean` | algebra | Two-element Boolean algebra, a degenerate residuated lattice. | 03 Semantics | `manyvalued.ALGEBRAS` |
 | $j$ | `j` | index | Temporal position or quantifier index. | 03 Semantics | `rulelang.eval_temporal_trace` |
 | $\bigwedge$ | `infimum` | aggregation | Finite meet over a family of values. | 03 Semantics | `manyvalued.degree_over_trace` |
-| $\bigvee$ | `supremum` | aggregation | Finite join over a family of values. | 03 Semantics | `manyvalued.degree_over_trace` |
-| $\mathcal{P}$ | `powerset constructor` | operation | Powerset constructor in a trace domain. | 03 Semantics | `rulelang.eval_temporal_trace` |
+| $\bigvee$ | `supremum` | aggregation | Finite join over a family of values. | 03 Semantics | — |
+| $\mathcal{P}$ | `powerset` | operation | Powerset constructor in a trace domain. | 03 Semantics | `rulelang.eval_temporal_trace` |
 | $[\hspace{-0.17em}[$ | `left_bracket` | delimiter | Left denotation bracket. | 03 Semantics | `rulelang.eval_expression` |
 | $]\hspace{-0.17em}]$ | `right_bracket` | delimiter | Right denotation bracket. | 03 Semantics | `rulelang.eval_expression` |
 | $\cdot$ | `dot` | placeholder | Formula placeholder in the denotation map. | 03 Semantics | `rulelang.eval_expression` |

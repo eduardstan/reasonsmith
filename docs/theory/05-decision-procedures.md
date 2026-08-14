@@ -14,7 +14,7 @@ is refused by the interpreter on an observation model, as Definition 3.9 require
 
 > **Proposition 5.1 (reference interpretation).** Whenever the interpreter returns a defined value
 > for a formula on the supplied record or finite trace, that value is the denotation specified by
-> Definitions 3.5–3.11 for that structure and the Kleene value layer of Definition 3.11.
+> Definitions 3.5–3.11 for that structure and the Kleene value layer of Definition 3.11. [test-backed implementation invariant: test_temporal_satisfied]
 
 This procedure is complete only for the supplied evidence and the defined fragment. An empty trace,
 missing or ill-typed values, and the relational atom on $O(\sigma)$ remain undefined. Its conformance
@@ -33,7 +33,7 @@ procedure; `engines/temporal.py` reaches it only after reducing `always(state pr
 > the reference interpreter on its checked witness, and Z3 reports `premises ∧ ¬spec` unsatisfiable,
 > then every valuation admitted by the declared constraints satisfies `spec` in the encoded
 > declaration model $D(L)$. If Z3 supplies a witness and replay reproduces the violation, that
-> witness refutes the universal claim.
+> witness refutes the universal claim. [conditional argument — assumptions stated]
 
 The proposition is about the exposed declaration, not automatically the deployed implementation.
 It is incomplete where the encoding is unsupported, premises are unsatisfiable, directions are
@@ -51,7 +51,7 @@ non-strict comparisons can have the same margin.
 > **Proposition 5.3 (monitor rendering).** For every formula shape accepted by the renderer and not
 > on its documented divergence list, the Boolean result obtained from the rendered finite trace
 > agrees with the reference interpreter's finite-trace result; the reported robustness is only an
-> additional margin.
+> additional margin. [test-backed implementation invariant: test_the_monitor_agrees_with_the_reference_reading]
 
 This is incomplete for the deliberately refused or divergent shapes recorded in Definition 3.8
 and Remark 3.3, for traces too short to supply a sampling period, and wherever the renderer cannot
@@ -70,7 +70,7 @@ silently changed into a negative finding.
 > **Proposition 5.4 (affirmative abstraction).** If BLACK affirms satisfiability of the rendered
 > propositional abstraction, then the abstraction has a non-empty finite-trace model under the
 > procedure's finite-trace semantics. If it affirms an entailment query, the corresponding
-> unsatisfiability question has the stated meaning over that same abstraction.
+> unsatisfiability question has the stated meaning over that same abstraction. [test-backed implementation invariant: test_the_ltlf_backend_agrees_with_the_monitor]
 
 The abstraction is incomplete for the original magnitudes and for questions it does not affirm;
 relations skipped by the mapping are not answered. The optional binary may be absent. Source
@@ -91,7 +91,7 @@ not a proof rung; its definitions and certificate consequences are in [`07-expla
 > **Proposition 5.5 (MARCO enumeration).** Under the declared monotonicity premise, every contrastive
 > set reported by the completed seed/shrink/grow search is minimal, and a completed enumeration
 > supports the universal `deleted` conclusion; one contrastive witness suffices for the existential
-> `live` conclusion.
+> `live` conclusion. [conditional argument — assumptions stated]
 
 The procedure is incomplete while budgeted enumeration has not terminated: it reports
 `undetermined`, never additional `deleted` reasons. It probes only interpretations in the deletion
@@ -108,7 +108,7 @@ every position is stated, including atoms absent from a record; the final-positi
 length exact.
 
 > **Proposition 5.6 (characteristic trace).** Over the procedure's non-empty finite-trace semantics,
-> $L(pin(\sigma)) = \lbrace\sigma\rbrace$.
+> $L(pin(\sigma)) = \lbrace\sigma\rbrace$. [test-backed implementation invariant: test_the_pinning_formula_states_every_atom_at_every_position]
 
 Consequently, for non-empty $\sigma$, `accepts(φ, σ)` agrees with satisfiability of
 `φ ∧ pin(σ)`, and entailment is reduced to unsatisfiability of `left ∧ ¬right` over the same
