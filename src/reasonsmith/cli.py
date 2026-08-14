@@ -125,6 +125,7 @@ from reasonsmith import __version__
 from reasonsmith.adapters.jsonl import JSONLAdapter
 from reasonsmith.render import AUDIENCES
 from reasonsmith.report import check_conformance
+from reasonsmith.scaffold import ScaffoldError, create_scaffold
 from reasonsmith.spec import DECISION_DOMAINS, REGULATORY_CLASSES, Pack, list_packs, load_pack
 from reasonsmith.sut import SystemUnderTest
 from reasonsmith.verdict import Verdict
@@ -285,6 +286,18 @@ def main(args: list[str] | None = None) -> int:
         help="Print the installed version and exit",
     )
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")
+
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Create an out-of-tree pack or engine plug-in scaffold",
+    )
+    init_subparsers = init_parser.add_subparsers(dest="init_kind", required=True)
+    init_subparsers.add_parser(
+        "pack", help="Create an installable requirement-pack plug-in scaffold"
+    ).add_argument("name", help="New package directory and entry-point name")
+    init_subparsers.add_parser(
+        "engine", help="Create an installable engine plug-in scaffold"
+    ).add_argument("name", help="New package directory and entry-point name")
 
     check_parser = subparsers.add_parser(
         "check",
@@ -538,6 +551,15 @@ def main(args: list[str] | None = None) -> int:
         else:
             print("\n\n".join(rendered))
         return 2 if failed else 0
+
+    if parsed.command == "init":
+        try:
+            target = create_scaffold(parsed.init_kind, parsed.name)
+        except (OSError, ScaffoldError) as exc:
+            print(f"Error creating {parsed.init_kind} scaffold: {exc}", file=sys.stderr)
+            return 1
+        print(f"Created {parsed.init_kind} scaffold in {target}")
+        return 0
 
     if parsed.command == "published-counts":
         from reasonsmith.published_counts import published_counts

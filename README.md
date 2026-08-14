@@ -263,6 +263,23 @@ LIMITS OF THIS REPORT
 
 `check` emits text, JSON, or self-contained HTML; it exits 2 for a violation, 1 for usage/input errors, and 0 otherwise.
 
+## Extending reasonsmith
+
+The entry-point extension machinery is already part of reasonsmith. Generate an installable
+out-of-tree package without editing this repository:
+
+```sh
+reasonsmith init pack my-regulation-pack
+reasonsmith init engine my-engine
+```
+
+Each scaffold contains TODOs and the correct `reasonsmith.packs` or `reasonsmith.engines`
+wiring. Read [`docs/authoring-packs.md`](docs/authoring-packs.md) or
+[`docs/authoring-engines.md`](docs/authoring-engines.md) before publishing it. Consumers can
+validate the generated report envelope with the versioned
+[`report-v2.schema.json`](docs/schema/report-v2.schema.json); regenerate it with
+[`docs/build_report_schema.py`](docs/build_report_schema.py).
+
 ## Limits
 
 - This is an evidence checker, not a compliance guarantee or legal advice; whether a finding discharges a legal duty remains outside the tool.

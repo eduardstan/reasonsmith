@@ -1,0 +1,589 @@
+{
+  "type": "object",
+  "properties": {
+    "audience": {
+      "type": "object",
+      "properties": {
+        "evidence_summary": {
+          "type": "boolean"
+        },
+        "legal_metadata": {
+          "type": "boolean"
+        },
+        "missing_signals": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "overview": {
+          "type": "boolean"
+        },
+        "plain_account": {
+          "type": "boolean"
+        },
+        "probe_budget": {
+          "type": "boolean"
+        },
+        "signals": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "boolean"
+        },
+        "witnesses": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "evidence_summary",
+        "legal_metadata",
+        "missing_signals",
+        "name",
+        "overview",
+        "plain_account",
+        "probe_budget",
+        "signals",
+        "strength",
+        "witnesses"
+      ],
+      "additionalProperties": true
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "binding_total": {
+          "type": "integer"
+        },
+        "inconclusive": {
+          "type": "integer"
+        },
+        "interpretive_inconclusive": {
+          "type": "integer"
+        },
+        "interpretive_not_applicable": {
+          "type": "integer"
+        },
+        "interpretive_not_evaluated": {
+          "type": "integer"
+        },
+        "interpretive_observed": {
+          "type": "integer"
+        },
+        "interpretive_on_an_assessment": {
+          "type": "integer"
+        },
+        "interpretive_probed": {
+          "type": "integer"
+        },
+        "interpretive_proved": {
+          "type": "integer"
+        },
+        "interpretive_recounted": {
+          "type": "integer"
+        },
+        "interpretive_total": {
+          "type": "integer"
+        },
+        "interpretive_unattainable": {
+          "type": "integer"
+        },
+        "interpretive_violated": {
+          "type": "integer"
+        },
+        "not_applicable": {
+          "type": "integer"
+        },
+        "not_evaluated": {
+          "type": "integer"
+        },
+        "observed": {
+          "type": "integer"
+        },
+        "on_an_assessment": {
+          "type": "integer"
+        },
+        "probed": {
+          "type": "integer"
+        },
+        "proved": {
+          "type": "integer"
+        },
+        "recounted": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "unattainable": {
+          "type": "integer"
+        },
+        "violated": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "binding_total",
+        "inconclusive",
+        "interpretive_inconclusive",
+        "interpretive_not_applicable",
+        "interpretive_not_evaluated",
+        "interpretive_observed",
+        "interpretive_on_an_assessment",
+        "interpretive_probed",
+        "interpretive_proved",
+        "interpretive_recounted",
+        "interpretive_total",
+        "interpretive_unattainable",
+        "interpretive_violated",
+        "not_applicable",
+        "not_evaluated",
+        "observed",
+        "on_an_assessment",
+        "probed",
+        "proved",
+        "recounted",
+        "total",
+        "unattainable",
+        "violated"
+      ],
+      "additionalProperties": true
+    },
+    "headline": {
+      "type": "string"
+    },
+    "limits": {
+      "type": "string"
+    },
+    "pack_id": {
+      "type": "string"
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "basis": {
+            "type": "string"
+          },
+          "binding": {
+            "type": "boolean"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "certificate": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "attribution": {
+                      "type": "string"
+                    },
+                    "claimed_semantics": {
+                      "type": "string"
+                    },
+                    "decision_index": {
+                      "type": "integer"
+                    },
+                    "engine_value": {
+                      "type": "number"
+                    },
+                    "exact_semantics": {
+                      "type": "string"
+                    },
+                    "exact_value": {
+                      "type": "number"
+                    },
+                    "monotone": {
+                      "type": "boolean"
+                    },
+                    "reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "engine_drop": {
+                            "type": "number"
+                          },
+                          "exact_drop": {
+                            "type": "number"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "detail",
+                          "engine_drop",
+                          "exact_drop",
+                          "label",
+                          "score",
+                          "status"
+                        ],
+                        "additionalProperties": true
+                      }
+                    },
+                    "value_gap": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "attribution",
+                    "claimed_semantics",
+                    "decision_index",
+                    "engine_value",
+                    "exact_semantics",
+                    "exact_value",
+                    "monotone",
+                    "reasons",
+                    "value_gap"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "certificates": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "attribution": {
+                      "type": "string"
+                    },
+                    "certificate_verdict": {
+                      "type": "string"
+                    },
+                    "decision_index": {
+                      "type": "integer"
+                    },
+                    "missing_reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "reasons_deleted": {
+                      "type": "integer"
+                    },
+                    "reasons_found": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "attribution",
+                    "certificate_verdict",
+                    "decision_index",
+                    "missing_reasons",
+                    "reasons_deleted",
+                    "reasons_found"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "decisions_certified": {
+                "type": "integer"
+              },
+              "decisions_without_an_artifact": {
+                "type": "integer"
+              },
+              "decisions_without_an_enumerated_reason": {
+                "type": "integer"
+              },
+              "engine": {
+                "type": "string"
+              },
+              "evaluation_scores": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              },
+              "offending_trace_segment": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "artifact_logs_counteroffer_not_accepted": {
+                      "type": "integer"
+                    },
+                    "artifact_logs_decision_record": {
+                      "type": "string"
+                    },
+                    "artifact_logs_notification_latency_days": {
+                      "type": "integer"
+                    },
+                    "artifact_logs_reason_explanation": {
+                      "type": "string"
+                    },
+                    "decision_id": {
+                      "type": "string"
+                    },
+                    "provenance_model_version": {
+                      "type": "string"
+                    },
+                    "scope_statements_local_vs_global": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "artifact_logs_counteroffer_not_accepted",
+                    "artifact_logs_decision_record",
+                    "artifact_logs_notification_latency_days",
+                    "artifact_logs_reason_explanation",
+                    "decision_id",
+                    "provenance_model_version",
+                    "scope_statements_local_vs_global"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "probe_budget": {
+                "type": "object",
+                "properties": {
+                  "input_space": {
+                    "type": "object",
+                    "properties": {
+                      "decisions certified": {
+                        "type": "integer"
+                      },
+                      "decisions whose joint search did not finish": {
+                        "type": "integer"
+                      },
+                      "facts switched off": {
+                        "type": "integer"
+                      },
+                      "joint deletion patterns tried": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "decisions certified",
+                      "decisions whose joint search did not finish",
+                      "facts switched off",
+                      "joint deletion patterns tried"
+                    ],
+                    "additionalProperties": true
+                  },
+                  "seed": {
+                    "type": "string"
+                  },
+                  "strategy": {
+                    "type": "string"
+                  },
+                  "trials": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "input_space",
+                  "seed",
+                  "strategy",
+                  "trials"
+                ],
+                "additionalProperties": true
+              },
+              "reason": {
+                "type": "string"
+              },
+              "reason_set_is_exact": {
+                "type": "boolean"
+              },
+              "reasons_live_only_jointly": {
+                "type": "integer"
+              },
+              "reasons_not_certifiable": {
+                "type": "integer"
+              },
+              "reasons_undetermined_by_the_joint_search": {
+                "type": "integer"
+              },
+              "records_observed": {
+                "type": "integer"
+              },
+              "treatment_limit": {
+                "type": "string"
+              },
+              "violation_step_indices": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [],
+            "additionalProperties": true
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "evidence_summary": {
+            "type": "string"
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "decision_index": {
+                  "type": "integer"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "verdict": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision_index",
+                "type",
+                "verdict"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "formalized_subset_note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "formalized_subset_only": {
+            "type": "boolean"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "requirement_id": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "scope_boundary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "signals_missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "signals_required": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source_clause": {
+            "type": "string"
+          },
+          "strength": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verbatim_text": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string"
+          },
+          "witness_provenance": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "basis",
+          "binding",
+          "details",
+          "domains",
+          "evidence_summary",
+          "findings",
+          "formalized_subset_note",
+          "formalized_subset_only",
+          "outcome",
+          "requirement_id",
+          "scope",
+          "scope_boundary",
+          "signals_missing",
+          "signals_required",
+          "source_clause",
+          "strength",
+          "verbatim_text",
+          "verdict",
+          "witness_provenance"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "schema_version": {
+      "const": 2,
+      "type": "integer"
+    },
+    "system_domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "system_name": {
+      "type": "string"
+    },
+    "system_scope": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "time_domain": {
+      "type": "string"
+    },
+    "undeclared_domain_notice": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "audience",
+    "counts",
+    "headline",
+    "limits",
+    "pack_id",
+    "results",
+    "schema_version",
+    "system_domains",
+    "system_name",
+    "system_scope",
+    "time_domain",
+    "undeclared_domain_notice"
+  ],
+  "additionalProperties": true,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://reasonsmith.dev/schema/report-v2.schema.json",
+  "title": "reasonsmith conformance report envelope"
+}
