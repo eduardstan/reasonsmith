@@ -520,7 +520,10 @@ class OnnxArtifact:
             _fail("OnnxArtifact requires embedded model bytes; external model paths are refused")
         model_data = bytes(raw_model)
         if onnx is None or checker is None or TensorProto is None:
-            _fail("ONNX validation requires the onnx package")
+            _fail(
+                "ONNX validation requires the onnx package; install it with "
+                "pip install 'reasonsmith[neural]'"
+            )
         try:
             parsed = onnx.load_model_from_string(model_data)
         except Exception as exc:

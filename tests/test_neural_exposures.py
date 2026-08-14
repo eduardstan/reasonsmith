@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import FrozenInstanceError
 
 import pytest
-from onnx import TensorProto, helper
+
+pytest.importorskip("onnx")
+from onnx import TensorProto, helper  # noqa: E402
 
 from reasonsmith.neural import DeclaredInputSpace, OnnxArtifact
 from reasonsmith.sut import NeuralExposures, SystemUnderTest
