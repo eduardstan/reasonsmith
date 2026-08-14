@@ -1,7 +1,13 @@
 # Reasonsmith documentation index
 
-Each line points to the document that owns the subject; the numbered chapters are the mathematical
-spine and `semantics.md` is the operational report-reading contract.
+Start with the operational contract, then follow the mathematical spine. The nine numbered chapters
+state reasonsmith's mathematics once, in one notation. [`theory/00-notation.md`](theory/00-notation.md)
+is the machine-checked symbol table; [`theory/bibliography.md`](theory/bibliography.md) is the
+repository-wide citation registry; [`theory/claim-map.md`](theory/claim-map.md) ties the chapters to
+tests. `semantics.md` remains the operational report-reading contract.
+
+Each line below points to the document that owns its subject. This index links rather than repeating
+what those documents say.
 
 - [`semantics.md`](semantics.md) — report outcomes, evidence reading, audience projections, and operational boundaries.
 - [`adopting.md`](adopting.md) — user-facing commands and system surfaces.
@@ -30,14 +36,14 @@ spine and `semantics.md` is the operational report-reading contract.
 
 ## Five audience reading paths
 
-Each path reaches all nine numbered chapters; the surrounding documents answer the audience's
+Each invitation reaches all nine numbered chapters; the surrounding documents answer the audience's
 operational question before or after the mathematical spine.
 
-- **Developer:** README → adopting → [`00`](theory/00-notation.md) → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md) → authoring-engines → limits.
-- **Deployer:** README → three-systems → adopting → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md) → semantics → limits.
-- **Auditor:** example-output → semantics → [`00`](theory/00-notation.md) → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md) → refinement → findings.
-- **Regulator:** legal-sources → refinement → [`00`](theory/00-notation.md) → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md) → semantics → limits.
-- **Affected individual:** example-output → semantics → [`00`](theory/00-notation.md) → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md) → limits.
+- **Developer:** Want to build or extend a check? Begin at README → adopting, walk [`00`](theory/00-notation.md) → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md), then finish at authoring-engines → limits.
+- **Deployer:** Choosing an evidence surface? Compare three-systems → adopting, walk [`00`](theory/00-notation.md) → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md), then finish at semantics → limits.
+- **Auditor:** Reading a finding? Start at example-output → semantics, walk [`00`](theory/00-notation.md) → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md), then finish at refinement → findings.
+- **Regulator:** Checking the legal path? Start at legal-sources → refinement, walk [`00`](theory/00-notation.md) → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md), then finish at semantics → limits.
+- **Affected individual:** Want the plain account? Start at example-output → semantics, walk [`00`](theory/00-notation.md) → [`01`](theory/01-models.md) → [`02`](theory/02-syntax.md) → [`03`](theory/03-semantics.md) → [`04`](theory/04-decision-problems.md) → [`05`](theory/05-decision-procedures.md) → [`06`](theory/06-formalisation.md) → [`07`](theory/07-explanation.md) → [`08`](theory/08-evidence.md), then finish at limits.
 
 ## Project records
 

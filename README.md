@@ -4,7 +4,9 @@
 [![Python >= 3.11](https://img.shields.io/badge/python->=3.11-blue.svg)](https://www.python.org/)
 [![MIT licence](https://img.shields.io/github/license/eduardstan/reasonsmith)](https://github.com/eduardstan/reasonsmith/blob/main/LICENSE)
 
-**reasonsmith answers one question:** given a system and a regulatory context, what is the minimal audit artefact each stakeholder needs, mechanically derived from that system and bounded by its evidence?
+**reasonsmith asks one honest question:** given a system and a regulatory context, what can this system establish, what can its evidence only witness, and what must the report refuse to pretend it knows?
+
+The answer is the minimal audit artefact each stakeholder needs, mechanically derived from that system and bounded by its evidence. Developers use it to check conformance against the evidence surface their system exposes. Regulators read a report with its evidence strength and limits in view. Researchers can follow nine numbered theory chapters where the mathematics is stated once, in one notation, with a machine-checked symbol table and citation registry.
 
 ![One reason stated, five used, four struck](docs/assets/showcase-figure.svg)
 
@@ -15,7 +17,7 @@ On decision `APP-1042`, the system stated one reason while its inference used fi
 
 ## The organising question
 
-What can this system honestly establish about this duty, and what can each audience take away from the evidence? A clause becomes a recorded formal property, then meets the evidence surface the system actually exposes. The result is not a pipeline: applicability comes first, evidence branches by available surface, and one finding can be read five ways.
+Start with a clause of law and the evidence your system actually exposes. reasonsmith records the clause as a formal property and asks which evidence rung that property and surface can support. This is not a pipeline: applicability comes first, evidence then branches, and each finding can be read five ways.
 
 ```mermaid
 flowchart TB
@@ -65,19 +67,19 @@ flowchart TB
     class ladder,verdict,five outcome
 ```
 
-The rung is decided by what the system exposes and what the property permits; an auditor cannot choose a stronger engine. **Unattainable** means the system cannot emit the evidence the duty needs. **Not applicable** means the system has not declared the regulatory class or decision domain to which the duty is limited. They are different answers, not interchangeable failures.
+The evidence-strength chain is explicit: unattainable, observed trace, recounted reasons, bounded probe, and proof over declared rules. The strongest rung the property and surface both permit wins; an auditor cannot choose it. **Unattainable** means the system cannot emit the evidence the duty needs. **Not applicable** means the system has not declared the regulatory class or decision domain to which the duty is limited. They are different answers, not interchangeable failures.
 
 This tree ships **five packs**, **seven engines**, and **twenty-nine shipped requirements**. The machine-readable source and every destination are listed in [`docs/README.md`](docs/README.md).
 
 ## Five reading paths
 
-The same evidence is projected for different duties:
+Choose the question you are carrying into the report. Each invitation gets you to the right operational document first, then points into the mathematical spine:
 
-- **Developer:** [`docs/adopting.md`](docs/adopting.md) → [`docs/theory/00-notation.md`](docs/theory/00-notation.md) → [`docs/theory/01-models.md`](docs/theory/01-models.md) → [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) → [`docs/theory/03-semantics.md`](docs/theory/03-semantics.md) → [`docs/theory/04-decision-problems.md`](docs/theory/04-decision-problems.md) → [`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) → [`docs/theory/06-formalisation.md`](docs/theory/06-formalisation.md) → [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) → [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) → [`docs/authoring-engines.md`](docs/authoring-engines.md).
-- **Deployer:** [`docs/adopting.md`](docs/adopting.md) → [`docs/three-systems.md`](docs/three-systems.md) → [`docs/theory/00-notation.md`](docs/theory/00-notation.md) → [`docs/theory/01-models.md`](docs/theory/01-models.md) → [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) → [`docs/theory/03-semantics.md`](docs/theory/03-semantics.md) → [`docs/theory/04-decision-problems.md`](docs/theory/04-decision-problems.md) → [`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) → [`docs/theory/06-formalisation.md`](docs/theory/06-formalisation.md) → [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) → [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md).
-- **Auditor:** [`docs/example-output.md`](docs/example-output.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/theory/00-notation.md`](docs/theory/00-notation.md) → [`docs/theory/01-models.md`](docs/theory/01-models.md) → [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) → [`docs/theory/03-semantics.md`](docs/theory/03-semantics.md) → [`docs/theory/04-decision-problems.md`](docs/theory/04-decision-problems.md) → [`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) → [`docs/theory/06-formalisation.md`](docs/theory/06-formalisation.md) → [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) → [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) → [`docs/refinement.md`](docs/refinement.md) → [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
-- **Regulator:** [`docs/legal-sources.md`](docs/legal-sources.md) → [`docs/refinement.md`](docs/refinement.md) → [`docs/theory/00-notation.md`](docs/theory/00-notation.md) → [`docs/theory/01-models.md`](docs/theory/01-models.md) → [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) → [`docs/theory/03-semantics.md`](docs/theory/03-semantics.md) → [`docs/theory/04-decision-problems.md`](docs/theory/04-decision-problems.md) → [`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) → [`docs/theory/06-formalisation.md`](docs/theory/06-formalisation.md) → [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) → [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
-- **Affected individual:** [`docs/example-output.md`](docs/example-output.md) → [`docs/semantics.md`](docs/semantics.md) → [`docs/theory/00-notation.md`](docs/theory/00-notation.md) → [`docs/theory/01-models.md`](docs/theory/01-models.md) → [`docs/theory/02-syntax.md`](docs/theory/02-syntax.md) → [`docs/theory/03-semantics.md`](docs/theory/03-semantics.md) → [`docs/theory/04-decision-problems.md`](docs/theory/04-decision-problems.md) → [`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) → [`docs/theory/06-formalisation.md`](docs/theory/06-formalisation.md) → [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) → [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) → [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md).
+- **Developer:** Start with [`docs/adopting.md`](docs/adopting.md), follow the theory spine from [`docs/README.md`](docs/README.md), and finish at [`docs/authoring-engines.md`](docs/authoring-engines.md).
+- **Deployer:** Compare the three system surfaces in [`docs/three-systems.md`](docs/three-systems.md), use [`docs/adopting.md`](docs/adopting.md), and finish at [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md).
+- **Auditor:** Start with the generated [`docs/example-output.md`](docs/example-output.md), read [`docs/semantics.md`](docs/semantics.md), and finish with [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
+- **Regulator:** Start with the statutory retrieval record in [`docs/legal-sources.md`](docs/legal-sources.md), follow [`docs/refinement.md`](docs/refinement.md), and finish with [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
+- **Affected individual:** Start with [`docs/example-output.md`](docs/example-output.md), read the audience projection in [`docs/semantics.md`](docs/semantics.md), and finish at [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md).
 
 ## Install and run
 
