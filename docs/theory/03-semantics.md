@@ -158,10 +158,10 @@ The trace value of a temporal formula is its position-zero value. The strong and
 Kleene chain $\mathsf{f} < \mathsf{u} < \mathsf{t}$ for these clauses, rather than treating
 unknown record values as ordinary falsity `[@kleene-1952]`.
 
-**Remark 3.1 (boundary divergence).** Runtime `next` and `prev` are weak at their boundaries:
-`next` is $1$ at the final position and `prev` is $1$ at position zero. The LTLf abstraction in
-`ltlf.py` renders `next` as strong `X`, which is false at the final position. These are the two
-faithful code-side semantics; the divergence is deliberately documented, not resolved here.
+**Remark 3.1 (boundary convention).** Runtime `next` and `prev` are weak at their boundaries:
+`next` is $1$ at the final position and `prev` is $1$ at position zero. The former divergence was
+deliberately documented when the LTLf abstraction rendered `next` as strong `X`; on 2026-08-14 ([pull request 199](https://github.com/eduardstan/reasonsmith/pull/199)), `ltlf.py` was aligned with the runtime by rendering source `next` as BLACK's weak
+`wX` (strong `X` remains only in the characteristic-trace pin), so the two readings now agree.
 
 **Definition 3.9 (relational atom).** `counterfactually_invariant(o, p)` is the whole
 `counterfactual` fragment. Over a declaration model, its value is $1$ exactly when every pair of

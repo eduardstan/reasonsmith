@@ -29,6 +29,7 @@ claim is paired with the test that enforces it; chapter prose remains mathematic
 | rtamt still raises for every other construct the language admits, so the refusal list is still three long | `test_rtamt_still_behaves_the_way_the_refusals_assume` |
 | No shipped pack writes one of those shapes | `test_no_shipped_spec_uses_a_shape_the_monitor_misrenders` |
 | The LTLf backend and the monitor agree about every shipped temporal duty | `test_the_ltlf_backend_agrees_with_the_monitor` |
+| The LTLf weak-next abstraction agrees with the reference interpreter at generated boundaries | `test_generated_weak_next_boundaries_match_the_reference_interpreter` |
 | LTLf questions are asked over a non-empty trace, so `⨅ ∅` is never the answer | `test_an_always_duty_satisfiable_only_by_the_empty_trace_is_reported_unsatisfiable` |
 | An empty trace has no value, at every rung and on the graded scale | `test_an_empty_trace_is_not_evidence`, `test_a_graded_duty_with_no_grading_or_no_trace_is_not_evaluated` |
 | `undetermined()` has no value in any algebra and names its authority instead | `test_an_undetermined_atom_is_reported_undetermined_and_names_its_authority`, `test_an_undetermined_atom_is_refused_by_the_two_valued_interpreter`, `test_an_undetermined_duty_dominates_the_settleable_parts_of_its_formula` |

@@ -73,10 +73,11 @@ silently changed into a negative finding.
 > unsatisfiability question has the stated meaning over that same abstraction.
 
 The abstraction is incomplete for the original magnitudes and for questions it does not affirm;
-relations skipped by the mapping are not answered. The optional binary may be absent. Runtime
-`next` is weak at the final position, whereas BLACK's rendered `X` is strong, so that known
-boundary divergence is documented in Definition 3.8's Remark 3.1 and is not resolved here. The
+relations skipped by the mapping are not answered. The optional binary may be absent. Source
+`next` is rendered with BLACK's weak `wX`, aligning its final-position reading with the runtime;
+the historical divergence and its resolution are recorded in Remark 3.1. The
 procedure's evidence includes `test_the_ltlf_backend_agrees_with_the_monitor`,
+`test_generated_weak_next_boundaries_match_the_reference_interpreter`,
 `test_black_non_empty_semantics_g_false_is_unsat`, and
 `test_a_question_over_the_atom_budget_is_refused_by_name`.
 
@@ -111,10 +112,11 @@ length exact.
 Consequently, for non-empty $\sigma$, `accepts(φ, σ)` agrees with satisfiability of
 `φ ∧ pin(σ)`, and entailment is reduced to unsatisfiability of `left ∧ ¬right` over the same
 traces. The construction is incomplete as a procedure for the full language: it uses the
-propositional abstraction, past operators are skipped, the atom budget can refuse a question, and
-runtime weak `next` differs from BLACK's strong `X` at the boundary. The structural and behavioural
-conformance evidence is `test_the_pinning_formula_states_every_atom_at_every_position` and
-`test_pin_characteristic_formula_accepts_sigma_and_rejects_neighbors`.
+propositional abstraction, past operators are skipped, and the atom budget can refuse a question.
+The source formula uses weak `wX` for `next`; the strong `X`/`Last` pair here remains the
+characteristic-trace pinning mechanism, not the source operator's semantics. The structural and
+behavioural conformance evidence is `test_the_pinning_formula_states_every_atom_at_every_position`
+and `test_pin_characteristic_formula_accepts_sigma_and_rejects_neighbors`.
 
 The proposition concerns the formula built by `ltlf.py`, not a monitor. BLACK uses non-empty traces;
 the empty trace is refused before the solver is asked, so the construction does not restore the
