@@ -151,15 +151,13 @@ $$
 $$
 \text{rise}(\varphi):
 \quad [\hspace{-0.17em}[\text{rise}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr
-[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes \neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
+= \begin{cases}[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes \neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
 $$
 
 $$
 \text{fall}(\varphi):
 \quad [\hspace{-0.17em}[\text{fall}(\varphi)]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i)
-= \begin{cases}\neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr
-\neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
+= \begin{cases}\neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,0),&i=0,\cr\neg[\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i) \otimes [\hspace{-0.17em}[\varphi]\hspace{-0.17em}]^{\mathrm{pos}}(\sigma,i-1),&i>0.\end{cases}
 $$
 
 For the binary operators:
