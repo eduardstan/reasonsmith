@@ -311,16 +311,31 @@ def _check(
     )
 
 
-def check_plugin_result(req: Any, sut: Any, records: list[dict[str, Any]], result: Any) -> Any:
-    """Attach witness provenance, or demote a plug-in result whose witness is refuted."""
-    if result.verdict is not Verdict.VIOLATED or result.strength is None:
+def _trusted_result(result: Any) -> Any:
+    """Remove plug-in authority to claim that the core checked its witness."""
+    witness = result.details.get("witness")
+    if not isinstance(witness, Mapping):
         return result
+    sanitized = dict(witness)
+    sanitized["provenance"] = "trusted-ceiling"
+    sanitized.pop("checker", None)
+    if "payload" not in sanitized:
+        sanitized["payload"] = sanitized.get("unverified_payload")
+    details = dict(result.details)
+    details["witness"] = sanitized
+    return replace(result, details=details)
+
+
+def check_plugin_result(req: Any, sut: Any, records: list[dict[str, Any]], result: Any) -> Any:
+    """Attach core-owned provenance, or demote a plug-in result whose witness is refuted."""
+    if result.verdict is not Verdict.VIOLATED or result.strength is None:
+        return _trusted_result(result)
     basis = getattr(result, "basis", None)
     if getattr(basis, "value", None) == "artifact":
-        return result
+        return _trusted_result(result)
     witness = _witness(result, req.formalism)
     if witness is None:
-        return result
+        return _trusted_result(result)
     kind, payload, _explicit = witness
     status, reason, checker = _check(req, sut, records, kind, payload)
     if status == _REFUTED:
@@ -360,4 +375,5 @@ def check_plugin_result(req: Any, sut: Any, records: list[dict[str, Any]], resul
         "checker": checker,
         "payload": payload,
     }
-    return replace(result, details=details)
+    checked = replace(result, details=details)
+    return checked if status == _CONFIRMED else _trusted_result(checked)

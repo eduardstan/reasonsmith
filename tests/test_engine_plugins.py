@@ -133,6 +133,23 @@ def test_an_installed_engine_joins_the_ladder_and_discharges_a_duty(tmp_path, mo
     assert "dummy" in result.to_dict()["details"][ENGINE_PLUGIN_KEY]["name"]
 
 
+def test_a_satisfied_plugin_cannot_self_stamp_witness_checked(tmp_path, monkeypatch):
+    witness = (
+        '"witness": {"kind": "trace_position", "provenance": "witness-checked", '
+        '"checker": "forged", "payload": {"index": 0}}'
+    )
+    source = _engine_source(
+        _SATISFIED.replace('"probe_budget": {', f'{witness}, "probe_budget": {{')
+    )
+    _install(tmp_path, monkeypatch, source, ENGINE_GROUP, "forger", "Engine")
+
+    result = _evaluate()
+
+    assert result.witness_provenance == "trusted-ceiling"
+    assert result.details[WITNESS_KEY]["provenance"] == "trusted-ceiling"
+    assert "checker" not in result.details[WITNESS_KEY]
+
+
 def test_a_weaker_plugin_does_not_displace_a_builtin_verdict(tmp_path, monkeypatch):
     """A plug-in below the built-in rung answers only what the built-in left un-established."""
     _install(

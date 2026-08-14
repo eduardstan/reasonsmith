@@ -759,11 +759,11 @@ class RequirementResult:
                 f"{self.requirement_id}: details[{WITNESS_KEY!r}]['provenance'] must be one of "
                 f"{WITNESS_PROVENANCES}; got {provenance!r}"
             )
-        missing = [
-            field
-            for field in ("checker", "payload")
-            if field not in witness or (field == "checker" and not str(witness[field]).strip())
-        ]
+        missing = [field for field in ("payload",) if field not in witness]
+        if provenance == "witness-checked" and (
+            "checker" not in witness or not str(witness.get("checker", "")).strip()
+        ):
+            missing.append("checker")
         if missing:
             raise ValueError(f"{self.requirement_id}: a witness must name {', '.join(missing)}")
 
