@@ -35,6 +35,8 @@ dependencies = [
     # printed verbatim in the evidence summary and the HTML report, so an unpinned solver moves
     # reported output between installs.
     "z3-solver==5.0.0.0",
+    # ONNX is used only to parse and validate typed neural exposures; no verifier is bundled.
+    "onnx==1.22.0",
 ]
 
 [project.optional-dependencies]

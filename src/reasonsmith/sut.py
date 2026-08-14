@@ -102,6 +102,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Optional, Protocol, runtime_checkable
 
+from reasonsmith.neural import DeclaredInputSpace
 from reasonsmith.spec import Pack, load_pack
 
 #: Section 6.3 top-level taxonomy for capability signals supplied through the SUT protocol
@@ -256,12 +257,15 @@ def _validate_capability_collection(declared: Any, subject: str) -> None:
 class SystemUnderTest(Protocol):
     """Required protocol for a system under test in reasonsmith.
 
-    An adapter may additionally expose ``decide(case)`` or ``artifact(decision)``. Both stay
-    outside this protocol because both are optional: ``decide`` is used for active probing only
+    An adapter may additionally expose ``decide(case)``, ``artifact(decision=None)`` or
+    ``input_space()``. These hooks remain optional: ``decide`` is used for active probing only
     when no exposed ``logic()`` is available, and ``artifact`` only by a reason-adequacy duty,
     which reports a system exposing none unattainable rather than judging it on something weaker.
-    What ``artifact`` returns is `artifacts.InferenceArtifact`, whose own contract is the one this
-    module's docstring states.
+    What a decision-bound ``artifact(decision)`` returns is
+    `artifacts.InferenceArtifact`, whose own contract is the one this module's docstring states.
+    The additive ``artifact(None)`` convention may instead return a model-global
+    `neural.OnnxArtifact`; certificate code never asks for that form. ``input_space()`` may return
+    a `neural.DeclaredInputSpace` and is not consumed by the current engines.
     """
 
     def capabilities(self) -> set[str]:
@@ -274,6 +278,23 @@ class SystemUnderTest(Protocol):
 
     def logic(self) -> Any:
         """Return exposed decision logic for formal verification, if available."""
+        ...
+
+
+@runtime_checkable
+class NeuralExposures(Protocol):
+    """Optional, additive neural exposure hooks.
+
+    This separate protocol keeps ``SystemUnderTest`` runtime-compatible with every existing
+    adapter: neither hook is required merely to be a SUT.
+    """
+
+    def artifact(self, decision: Mapping[str, Any] | None = None) -> Any:
+        """Return a decision artifact, or a model-global OnnxArtifact for ``None``."""
+        ...
+
+    def input_space(self) -> DeclaredInputSpace | None:
+        """Return a validated declared replay space when the adapter exposes one."""
         ...
 
 
@@ -297,6 +318,7 @@ class BaseSUT:
 
     def logic(self) -> Any:
         return None
+
 
 
 @lru_cache(maxsize=1)
