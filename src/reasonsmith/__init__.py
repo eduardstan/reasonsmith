@@ -46,3 +46,9 @@ What a reader must not break:
 """
 
 __version__ = "0.9.2"
+
+
+# Slice-1 typed neural exposure types. They validate declarations only; no engine is routed here.
+from reasonsmith.neural import DeclaredInputSpace, OnnxArtifact
+
+__all__ = ["DeclaredInputSpace", "OnnxArtifact", "__version__"]

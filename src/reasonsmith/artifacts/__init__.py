@@ -93,6 +93,7 @@ import math
 from collections.abc import Mapping
 from typing import Any, Protocol, runtime_checkable
 
+from reasonsmith.neural import DeclaredInputSpace, OnnxArtifact
 from reasonsmith.spec import normalize_claimed_semantics
 
 __all__ = [
@@ -107,6 +108,8 @@ __all__ = [
     "RECOUNTED_REASONS",
     "UNDECLARED_MONOTONICITY",
     "InferenceArtifact",
+    "DeclaredInputSpace",
+    "OnnxArtifact",
     "admits_interpretation",
     "default_label",
     "deletion_semantics_refusal",

@@ -29,7 +29,7 @@ jobs:
       # Environment Setup"): nesyarena is pinned to exact version 0.1.0 on PyPI in pyproject.toml,
       # so this environment and a local one resolve to the same code. torch is deliberately not
       # installed — see RESULTS.md, "What Changed From Prior Torch Caveats".
-      - run: pip install -e ".[dev]"
+      - run: pip install -e ".[dev,neural]"
       - name: Install BLACK solver (Linux)
         if: runner.os == 'Linux'
         run: |
