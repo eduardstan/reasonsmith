@@ -75,7 +75,8 @@ silently changed into a negative finding.
 The abstraction is incomplete for the original magnitudes and for questions it does not affirm;
 relations skipped by the mapping are not answered. The optional binary may be absent. Source
 `next` is rendered with BLACK's weak `wX`, aligning its final-position reading with the runtime;
-the historical divergence and its resolution are recorded in Remark 3.1. The
+the historical divergence and its resolution are recorded in Remark 3.1, with the alignment
+made on 2026-08-14 ([pull request 199](https://github.com/eduardstan/reasonsmith/pull/199)). The
 procedure's evidence includes `test_the_ltlf_backend_agrees_with_the_monitor`,
 `test_generated_weak_next_boundaries_match_the_reference_interpreter`,
 `test_black_non_empty_semantics_g_false_is_unsat`, and
