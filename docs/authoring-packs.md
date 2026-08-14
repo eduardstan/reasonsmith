@@ -1,15 +1,43 @@
 # Authoring a requirement pack
 
 A requirement pack is a TOML file the loader reads into `Requirement` and `Pack` structures
-(`src/reasonsmith/spec.py`). Every requirement must be traceable to its statutory source: that is
-the point of a pack, and it is why the loader refuses a pack that omits or adds a field rather
-than guessing what a missing or unread field meant.
+(`src/reasonsmith/spec.py`). Every requirement must be traceable to the source it claims — a
+statutory source or an internal-policy provenance record. That is the point of a pack, and it is
+why the loader refuses a pack that omits or adds a field rather than guessing what a missing or
+unread field meant.
 
 This guide documents the *fields*. The *method* — how a clause of law becomes a formula, and what
 that formula does not discharge — is in [`refinement.md`](refinement.md), which carries one row per
 shipped requirement and a fourth column naming what the refinement deliberately left out. Read it
 before writing a `spec`, and add your requirement's row in the same commit: a test fails if a pack
 gains a requirement that record does not name.
+
+## Required step: write the formula gap before validating
+
+For **every clause**, write this pair before you write or validate its TOML:
+
+> **This formula proves X; it does not prove Y.**
+
+`X` is the exact property the formula checks over the records or trace. `Y` is the policy or legal
+meaning a reader might otherwise overclaim. This is an authoring record, not a parser exercise:
+document the choices your formula makes, including whether a field means an event, a capability, a
+quality judgment, or a calendar interval. Do not wait for a green verdict to discover the gap, and
+do not build a lint that pretends to infer policy meaning from words in `rationale`.
+
+Here is the five-clause internal AI-use policy example that makes the step concrete:
+
+| Clause and formula | This formula proves X | It does not prove Y |
+|---|---|---|
+| `present(rejection_log)` | Every sampled decision record carries a non-empty `rejection_log` value. | That a log exists **only for automated rejections**, rather than for every sampled decision. |
+| `present(human_override)` | Every sampled record carries a non-empty `human_override` value. | That a human **can override** the system, rather than that an override field is populated. |
+| `automated_rejection == 1 -> present(rejection_notice)` | A record whose author-defined `automated_rejection` value is `1` carries a non-empty notice field. | That the notice contains the **main factors**. Use `undetermined(...)` when the policy supplies no objective predicate and authority for that judgment. |
+| `present(model_version)` | Every sampled record carries a non-empty model-version value. | That the value identifies the deployed model, is authentic, or is the version required by the policy. |
+| `always(present(monthly_override_review))` | At every position in the supplied trace, the review field is non-empty. | That reviews happen monthly; a repeated field at sampled positions is not calendar cadence. |
+
+The table is deliberately blunt. A `satisfied` result answers the middle column only; the last
+column belongs in the pack's refinement record and in this authoring note. If the clause needs the
+meaning in the last column, add a signal and a formula only when the clause supplies an objective
+constraint; otherwise leave it open-textured rather than presenting an author decision as a verdict.
 
 Validate your pack before shipping it — the CLI accepts the same names and files a `check` run
 loads, because both go through the same loader:
@@ -146,6 +174,43 @@ under the same duty's name rather than the same one with weaker evidence.
 If a duty cannot be written in this language, that is a finding to record in `docs/semantics.md` —
 not a reason to widen the language until it fits. Widening it to accommodate one stubborn duty is
 how a property language becomes an untyped string again.
+
+## Literal and record-value types
+
+The text in `spec` is parsed with Python-style literals, while decision records are JSON. The
+spelling and the value carried by a record are related but not interchangeable:
+
+| kind | accepted literal in `spec` | expected JSON value in a record | authoring boundary |
+|---|---|---|---|
+| Boolean | `True` or `False` (capitalised) in a comparison such as `automated_rejection == True` | JSON `true` or `false` | `True`/`False` cannot stand alone as a Boolean atom; use `present(signal)` for presence. A temporal comparison against a Boolean literal is refused. |
+| numeric | Python integer or floating-point forms such as `0`, `-1`, `2.5`, `1e3` | JSON number | `0` and `1` are numeric values. Their domain meaning — for example, whether `1` means automated rejection — is the **pack author's choice** and must be stated in the rationale/refinement. |
+| string | A quoted Python string such as `"approved"` or `'approved'` | JSON string; for `contains`, a string or a JSON array of strings | `contains(signal, "phrase")` is a case-insensitive ASCII substring check, not paraphrase or semantic matching. |
+
+A missing key, JSON `null`, blank string, and empty array/object are absent to `present(signal)`;
+`0`, `1`, `false`, and other non-empty values are present. A comparison reads the record value as
+supplied, so choose one representation consistently and test both the formula and its intended
+domain meaning. `None` is the language's null literal when a formula needs to name it, but a whole
+`spec` still has to be a Boolean property.
+
+## Temporal authoring: supply at least two samples
+
+Before running a temporal duty against a system, prepare a trace with **at least two decision
+records**. The discrete-time monitor needs two positions to establish the sampling period it reasons
+over; with one record it reports `not evaluated` at runtime rather than silently treating one point
+as a cadence. This is an authoring prerequisite, not a repair to discover after the first `check`.
+
+Minimal trace shape for `always(present(monthly_override_review))`:
+
+```jsonl
+{"monthly_override_review": "review-2026-01"}
+{"monthly_override_review": "review-2026-02"}
+```
+
+The two lines make two samples available, but they do not carry a calendar interval that
+reasonsmith interprets. **`always(present(x))` is not a calendar-frequency check.** It proves only
+that `x` is present at every sampled position. If the policy means monthly, state that gap in the
+required `this formula proves X; it does not prove Y` note and do not call the repeated field
+monthly evidence.
 
 ## A predicate the law states without a boundary — two ways to write it
 
@@ -398,6 +463,42 @@ figure has to be repeated identically in every line of the log. The trace then c
 statistic three times, not three measurements, and the violated finding reads `failed at decision
 step(s) [0, 1, 2]` — three breaching decisions, when there was one number. The step indices in a
 parity finding count records, not findings, and they will overstate the breach every time.
+
+## Internal-policy sources: provenance, not legal authority
+
+Internal documents are accepted as pack sources. The loader checks that the metadata and exact
+clause text are present; it does not turn an internal policy into a statute or independently verify
+its authority. For an internal source, `[source]` is a **provenance record** — where the policy came
+from and which version an author formalised — not a claim of legal authority. Say that distinction
+in the pack description and in the requirement's rationale. If a policy is an internal control,
+classify `binding` according to the pack's stated interpretation; do not use that field to imply a
+statutory obligation.
+
+For example, this is internal-policy metadata, deliberately different from a statutory citation
+such as `document = "12 CFR 1002.9"` and `publication = "Code of Federal Regulations"`:
+
+```toml
+[pack]
+id = "internal_ai_use"
+title = "Internal AI-use controls"
+description = "Internal policy provenance; these rows are not independent legal authority."
+
+[source]
+document = "Internal AI Use Policy"
+publication = "Responsible AI Office, version 3.2, approved 2026-01-15"
+url = "https://intranet.example/policies/ai-use-v3-2"
+
+[[requirement]]
+id = "internal_ai_use_rejection_log"
+source_document = "Internal AI Use Policy"
+article_clause = "§4.2(1) — automated rejection logging"
+verbatim_text = "The service records each automated rejection."
+# ...the remaining required fields...
+```
+
+`source_document` and `article_clause` identify the internal document and its section; they are not
+an official citation. Keep the policy's exact text in `verbatim_text`, and keep any legal source in
+its own statutory metadata/requirement rather than blending the two provenance records.
 
 ## Verbatim text must be traceable to the print
 
