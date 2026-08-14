@@ -385,9 +385,11 @@ threshold for authorities or duties that do not name it.
   `reasonsmith.engines` entry points documented in
   [`docs/authoring-packs.md`](docs/authoring-packs.md) and
   [`docs/authoring-engines.md`](docs/authoring-engines.md).
-- **CI packaging:** package the landed [GitHub Actions test matrix](.github/workflows/ci.yml), the
-  CLI's `--strict-unresolved` policy and its JSON `outcome` field as a reusable Action and Docker
-  image, without changing what any outcome means.
+- **CI packaging — met:** [`action.yml`](action.yml) packages the landed [GitHub Actions test
+  matrix](.github/workflows/ci.yml), the CLI's `--strict-unresolved` policy and its JSON `outcome`
+  field as a reusable Action, while [`Dockerfile`](Dockerfile) provides the matching lightweight
+  container entrypoint. The Action smoke job exercises the shipped example and uploads JSON/HTML
+  reports; neither integration changes what any outcome means.
 - **Versioned JSON Schema:** publish a machine-readable schema for the envelope already versioned by
   `report.JSON_SCHEMA_VERSION` and pinned by `tests/test_json_schema_version.py`.
 - **Static registry:** render the installed pack and engine inventory already discoverable through

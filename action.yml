@@ -1,0 +1,79 @@
+name: reasonsmith conformance check
+description: Run reasonsmith checks and upload JSON/HTML conformance reports
+author: eduardstan
+inputs:
+  system-module:
+    description: Python module and attribute exposing the system under test (MODULE:ATTRIBUTE)
+    required: true
+  packs:
+    description: Pack names or paths, separated by commas or newlines
+    required: true
+  strict-unresolved:
+    description: Fail when a result is unattainable, not applicable, or not evaluated
+    required: false
+    default: "true"
+  report-artifact-path:
+    description: Directory in the workspace in which to write JSON and HTML reports
+    required: false
+    default: reasonsmith-reports
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: "3.11"
+    - name: Install reasonsmith
+      shell: bash
+      run: python -m pip install "${GITHUB_ACTION_PATH}"
+    - name: Run conformance checks
+      shell: bash
+      env:
+        REASONSMITH_SYSTEM_MODULE: ${{ inputs.system-module }}
+        REASONSMITH_PACKS: ${{ inputs.packs }}
+        REASONSMITH_STRICT: ${{ inputs.strict-unresolved }}
+        REASONSMITH_REPORT_PATH: ${{ inputs.report-artifact-path }}
+      run: |
+        set +e
+        mkdir -p "$REASONSMITH_REPORT_PATH"
+        overall=0
+        index=0
+        normalized=$(printf '%s\n' "$REASONSMITH_PACKS" | tr ',' '\n')
+        while IFS= read -r pack; do
+          pack="$(printf '%s' "$pack" | xargs)"
+          [ -z "$pack" ] && continue
+          index=$((index + 1))
+          number=$(printf '%02d' "$index")
+          json="$REASONSMITH_REPORT_PATH/report-${number}.json"
+          html="$REASONSMITH_REPORT_PATH/report-${number}.html"
+          args=(check --system-module "$REASONSMITH_SYSTEM_MODULE" --pack "$pack" --json --html "$html")
+          if [ "${REASONSMITH_STRICT,,}" = "true" ]; then
+            args+=(--strict-unresolved)
+          fi
+          echo "reasonsmith: checking pack $pack"
+          python -m reasonsmith.cli "${args[@]}" > "$json"
+          status=$?
+          echo "reasonsmith: pack $pack exited $status"
+          # A multi-pack action runs every requested check. Preserve the first CLI
+          # failure code unchanged so a single-pack invocation is a direct pass-through.
+          if [ "$status" -ne 0 ] && [ "$overall" -eq 0 ]; then
+            overall=$status
+          fi
+        done <<< "$normalized"
+        if [ "$index" -eq 0 ]; then
+          echo "No packs were supplied" >&2
+          overall=1
+        fi
+        echo "REASONSMITH_EXIT_CODE=$overall" >> "$GITHUB_ENV"
+    - name: Upload conformance reports
+      if: ${{ always() }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: reasonsmith-reports
+        path: ${{ inputs.report-artifact-path }}
+        if-no-files-found: warn
+    - name: Return reasonsmith exit code
+      if: ${{ always() }}
+      shell: bash
+      run: exit "${REASONSMITH_EXIT_CODE:-1}"

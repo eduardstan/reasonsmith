@@ -1,0 +1,14 @@
+.git
+.github
+.agents
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+node_modules
+tests
+docs
+artifacts/tui
+*.pyc
+__pycache__
