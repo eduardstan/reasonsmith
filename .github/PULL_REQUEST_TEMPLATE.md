@@ -10,6 +10,10 @@ The problem it solves, and any issue it closes (e.g. `Fixes #123`).
 
 Which of `ruff check .`, `pytest`, and `python -m reasonsmith.demo` you ran, and the result. Name the test that would fail if this change were reverted.
 
+## Intended label
+
+Which label this should carry. Applying one needs triage permission, so an outside contributor names it here and a maintainer applies it.
+
 ## Authoritative text
 
 Does this touch quoted statute? If yes, name the official source recorded in `docs/legal-sources.md` and say why the quote is character-for-character correct.
