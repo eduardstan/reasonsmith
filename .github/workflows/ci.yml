@@ -78,3 +78,34 @@ jobs:
       # `test_the_coverage_floor_fails_a_total_below_it` is what keeps it biting.
       - run: pytest --cov=reasonsmith --cov-report=term-missing --cov-fail-under=92.5
       - run: python -m reasonsmith.demo
+
+  action-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the shipped symbolic example through the composite action
+        uses: ./
+        with:
+          system-module: reasonsmith.examples.symbolic_rules:system_under_test
+          packs: ecoa
+          # The example intentionally leaves some duties outside its evidence surface;
+          # this smoke job tests report production without changing the action's strict default.
+          strict-unresolved: false
+          report-artifact-path: action-smoke-reports
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the lightweight image
+        run: docker build --tag reasonsmith-ci-smoke .
+      - name: Run a shipped example and extract both reports
+        run: |
+          mkdir -p docker-smoke-reports
+          docker run --rm \
+            --volume "$PWD/docker-smoke-reports:/reports" \
+            reasonsmith-ci-smoke check \
+            --system-module reasonsmith.examples.symbolic_rules:system_under_test \
+            --pack ecoa --json --html /reports/ecoa.html > docker-smoke-reports/ecoa.json
+          test -s docker-smoke-reports/ecoa.json
+          test -s docker-smoke-reports/ecoa.html

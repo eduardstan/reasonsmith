@@ -124,6 +124,54 @@ with no checkable witness remains `trusted-ceiling`. In particular, a `satisfied
 package deliberately does not check a Z3 proof term or invent a correctness certificate. Read the
 per-result provenance in a report that mixes these claims; it is the installer's job to act on it.
 
+## Verifying an engine before publishing it
+
+Install your engine package, then run the shipped conformance kit against its entry-point name:
+
+```console
+$ reasonsmith verify-engine my-engine
+```
+
+For local development, `module:attribute` is accepted in place of an installed entry point. The
+command runs eight named gold triples drawn from the shipped example systems, reports the expected
+and actual verdict/strength for each, shows witness provenance, and exits `0` only when every row
+passes (an honest decline is a pass); findings exit `2`. Use `--json` for machine-readable output.
+The timing-violation example is shipped as `reasonsmith.examples.symbolic_rules_timing_violation`,
+so this command needs no checkout data.
+
+### What passing proves
+
+1. On these eight inputs, the engine's verdict and strength agree with the built-in ladder, or it
+declined.
+2. It never reported above its declared `max_strength` — already enforced at
+`report.py:698-722`, but the kit exercises it deliberately rather than incidentally.
+3. Where it answered on a witness-bearing direction (§1), the witness it emitted was re-checked by
+the core and confirmed.
+4. Every result named its plug-in (`plugins.py:31-34`).
+
+### What passing cannot prove, stated plainly
+
+<!-- The witness-validator source is registered as `[@beyer-2022]`. -->
+- **Eight triples are eight points.** Agreement on a gold set is not soundness, and no size of gold
+set becomes soundness. The SV-COMP witness-validation experience is that validators and verifiers
+disagree, that a confirmation is a *second opinion* rather than a proof, and that unconfirmed
+results are common and often the validator's fault rather than the verifier's (Beyer & Strejček,
+*Case Study on Verification-Witness Validators: Where We Are and Where We Go*, SAS 2022, LNCS
+13790, 160–174). The kit inherits every one of those caveats.
+- **The kit cannot see the direction the gold set does not go.** An engine that answers these eight
+correctly and answers a ninth duty wrongly passes.
+- **A confirmed violation witness certifies the witness, not the search.** The engine may have
+missed ten other violations. Nothing in reasonsmith ever claimed otherwise — that is what `probed`
+means and why `PROBE_BUDGET_FIELDS` is compulsory — but a passing conformance kit is exactly the
+kind of artefact a reader over-reads, so `verify-engine`'s own output must carry the limit the way
+`MUTATION_LIMIT` and `TREATMENT_LIMIT` ride on their results.
+- **The kit says nothing about safety.** A plug-in is imported and executed (`plugins.py:87`
+`ep.load()`); the trusted-code warning in the README's *Install and run* governs it, and passing
+the kit does not soften that.
+
+The kit reports agreement on eight named triples and confirms the witnesses those runs produced; it
+is not an audit of the engine and does not bound what the engine does on any duty not listed above.
+
 ## Installing a pack the same way
 
 The pack side is the same mechanism in the group `reasonsmith.packs`; see
