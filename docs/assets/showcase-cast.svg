@@ -69,10 +69,10 @@
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k3" x="18.0" y="117.5" xml:space="preserve">declared scope: undeclared</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k4" x="18.0" y="135.5" xml:space="preserve">declared domains: consumer-credit</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k5" x="18.0" y="153.5" xml:space="preserve">pack: ecoa</text>
-  <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k6" x="18.0" y="171.5" xml:space="preserve">headline: 6 requirements · 6 binding: 3 observed, 1 violated, 1 not evaluated, 1 unattainable</text>
-  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k7" x="18.0" y="189.5" xml:space="preserve">  ⋯ 10 line(s) not shown</text>
+  <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k6" x="18.0" y="171.5" xml:space="preserve">headline: 6 requirements · 6 binding: 3 observed, 1 violated, 1 not evaluated, 1 unattainable · all positives observed-only</text>
+  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k7" x="18.0" y="189.5" xml:space="preserve">  ⋯ 12 line(s) not shown</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k8" x="18.0" y="207.5" xml:space="preserve">  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied</text>
-  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k9" x="18.0" y="225.5" xml:space="preserve">  ⋯ 3 line(s) not shown</text>
+  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k9" x="18.0" y="225.5" xml:space="preserve">  ⋯ 5 line(s) not shown</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k10" x="18.0" y="243.5" xml:space="preserve">  [PROBED] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated</text>
   <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k11" x="18.0" y="261.5" xml:space="preserve">  ⋯ 5 line(s) not shown</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k12" x="18.0" y="279.5" xml:space="preserve">    offending record: decision APP-1042 (step 1)</text>

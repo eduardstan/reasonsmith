@@ -537,6 +537,21 @@
       max-width: 75ch;
       text-wrap: pretty;
     }
+    .scope-boundary {
+      margin-top: var(--space-xs);
+      padding: var(--space-xs);
+      border-left: 3px solid var(--warn);
+      background: var(--warn-soft);
+      color: var(--ink);
+      font-size: var(--step--1);
+      max-width: 75ch;
+    }
+    .subset-marker {
+      margin-top: var(--space-xs);
+      color: var(--ink-muted);
+      font-size: var(--step--1);
+      font-style: italic;
+    }
     .callout-box {
       margin-top: var(--space-s);
       padding: var(--space-s);
@@ -683,7 +698,7 @@
 
     <div class="headline-banner">
       <div class="headline-title">Executive Headline Summary</div>
-      <div class="headline-text">6 requirements · 6 binding: 3 observed, 1 violated, 1 not evaluated, 1 unattainable</div>
+      <div class="headline-text">6 requirements · 6 binding: 3 observed, 1 violated, 1 not evaluated, 1 unattainable · all positives observed-only</div>
       <div class="provenance-bar"><strong>Report Provenance:</strong> Generated without an identified source commit. Command: <code>python docs/build_showcase.py</code>. Re-running that command in any checkout of this repository rewrites this page and both figures identically; test_docs_showcase_matches_the_builder fails if it does not. No commit hash is named because a page committed into the repository it describes cannot name the commit that carries it: that commit does not exist while the page is being rendered.</div>
     </div>
 
@@ -926,10 +941,10 @@
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k3" x="18.0" y="117.5" xml:space="preserve">declared scope: undeclared</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k4" x="18.0" y="135.5" xml:space="preserve">declared domains: consumer-credit</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k5" x="18.0" y="153.5" xml:space="preserve">pack: ecoa</text>
-  <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k6" x="18.0" y="171.5" xml:space="preserve">headline: 6 requirements · 6 binding: 3 observed, 1 violated, 1 not evaluated, 1 unattainable</text>
-  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k7" x="18.0" y="189.5" xml:space="preserve">  ⋯ 10 line(s) not shown</text>
+  <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k6" x="18.0" y="171.5" xml:space="preserve">headline: 6 requirements · 6 binding: 3 observed, 1 violated, 1 not evaluated, 1 unattainable · all positives observed-only</text>
+  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k7" x="18.0" y="189.5" xml:space="preserve">  ⋯ 12 line(s) not shown</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k8" x="18.0" y="207.5" xml:space="preserve">  [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied</text>
-  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k9" x="18.0" y="225.5" xml:space="preserve">  ⋯ 3 line(s) not shown</text>
+  <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k9" x="18.0" y="225.5" xml:space="preserve">  ⋯ 5 line(s) not shown</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k10" x="18.0" y="243.5" xml:space="preserve">  [PROBED] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated</text>
   <text class="rs-cast-row rs-cast-elision" style="animation-name: rs-cast-k11" x="18.0" y="261.5" xml:space="preserve">  ⋯ 5 line(s) not shown</text>
   <text class="rs-cast-row rs-cast-out" style="animation-name: rs-cast-k12" x="18.0" y="279.5" xml:space="preserve">    offending record: decision APP-1042 (step 1)</text>
@@ -1012,6 +1027,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_decision_record</span><span class="signal-tag">artifact_logs_notification_latency_days</span><span class="signal-tag">artifact_logs_counteroffer_not_accepted</span>
             </div>
             <div class="evidence-summary">Observed over 2 decision(s): temporal monitor for &#x27;always(present(artifact_logs_decision_record) -&gt; ((artifact_logs_notification_latency_days &lt;= 30) or ((artifact_logs_counteroffer_not_accepted &gt;= 0.5) and (artifact_logs_notification_latency_days &lt;= 90))))&#x27; satisfied at every decision step.</div>
+            <div class="scope-boundary">Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.</div>
+
             
           </div>
         </article>
@@ -1038,6 +1055,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_decision_record</span><span class="signal-tag">provenance_model_version</span>
             </div>
             <div class="evidence-summary">Observed over 2 decision(s): temporal monitor for &#x27;always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))&#x27; satisfied at every decision step.</div>
+            <div class="scope-boundary">Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.</div>
+
             
           </div>
         </article>
@@ -1064,6 +1083,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_reason_explanation</span><span class="signal-tag">provenance_model_version</span><span class="signal-tag">scope_statements_local_vs_global</span>
             </div>
             <div class="evidence-summary">Observed over 2 decision(s): state monitor for &#x27;present(artifact_logs_reason_explanation) -&gt; ( present(provenance_model_version) and present(scope_statements_local_vs_global) and not contains(artifact_logs_reason_explanation, &quot;internal standards&quot;) and not contains(artifact_logs_reason_explanation, &quot;internal policies&quot;) and not contains(artifact_logs_reason_explanation, &quot;failed to achieve a qualifying score&quot;))&#x27; satisfied at every decision step.</div>
+            <div class="scope-boundary">Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.</div>
+            <div class="subset-marker">Formalized subset only — see explain ecoa_reg_b_1002_9_b_2_specific_reasons rationale.</div>
             
           </div>
         </article>
@@ -1090,6 +1111,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_reason_explanation</span><span class="signal-tag">artifact_logs_deleted_reason_count</span>
             </div>
             <div class="evidence-summary">Violated on 1 of 2 certified decision(s): the stated reasons are not all the reasons. On decision #1 exact inference found 5 reason(s) and the deletion probe showed the system&#x27;s answer does not depend on 4 of them — C05 — Insufficient number of credit references provided; C03 — Delinquent past or present credit obligations; C04 — Too many recent inquiries on credit bureau report; C02 — Length of time credit has been established is too short. Attribution: The deleted reasons are exactly the 4 lowest-scoring of the 5, and the engine kept the top 1. This is the signature of top-k proof truncation at k=1: top-k works by discarding proofs, so the dropped reasons are lost by configuration, not by error. The missing probability mass is 0.225799. Measured against the inference artefact the system exposed, not read from its decision log.</div>
+
+
             <div class="callout-box callout-violated"><strong>CERTIFICATE FINDING — FAIL:</strong> decision 1</div><div class="callout-box callout-violated"><strong>VIOLATED IN TRACE — Execution Counterexample Witness (all 1 offending record):</strong><table class="witness-table"><thead><tr><th>Trace Step</th><th>Decision Record Witness</th></tr></thead><tbody><tr><td>Step 1</td><td><code>decision_id: APP-1042, artifact_logs_decision_record: adverse action on APP-1042, artifact_logs_reason_explanation: C01 — Income insufficient for amount of credit requested, artifact_logs_notification_latency_days: 12, artifact_logs_counteroffer_not_accepted: 0, provenance_model_version: credit-scoring-2026.03.1 / rules cs-rules-2026.03, scope_statements_local_vs_global: local: reasons for this application only</code></td></tr></tbody></table></div><div class="callout-box callout-probe"><strong>PROBED — What Was Searched:</strong><br>13 input(s) replayed, seed none — the proof enumeration and the deletion probes are deterministic, input space: decisions certified (2 values), decisions whose joint search did not finish (0 values), facts switched off (10 values), joint deletion patterns tried (1 values). Strategy: for each decision the system exposed an inference artefact for, its reasons are enumerated exactly by bounded proof enumeration over the ground program and scored by exact weighted model counting; every fact of a reason that no other reason uses is then switched off alone and the system&#x27;s own engine re-run on the perturbed interpretation. A reason a single deletion moves the engine on is one its answer depends on. A reason no single deletion moves is then put to a second search, because two reasons jointly necessary and individually removable look exactly like two dropped ones: the subset-minimal *joint* deletions the engine notices are enumerated over the remaining facts, and a reason is counted here only where that enumeration ran to exhaustion and met no fact of it. The probe only ever switches a fact off, never on<div class="callout-note">A bounded search, not a proof: the property is unchecked outside the inputs named here.</div></div>
           </div>
         </article>
@@ -1116,6 +1139,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_incompleteness_notice_sent</span>
             </div>
             <div class="evidence-summary">Unattainable as built: the system declares no capability to emit artifact_logs_incompleteness_notice_sent, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.</div>
+
+
             <div class="callout-box callout-unattainable"><strong>UNATTAINABLE AS BUILT — Missing Capability Signals:</strong><br><span class="signal-tag missing">artifact_logs_incompleteness_notice_sent</span><div class="callout-note">The system declares no capability to emit these signals. No testing trace can satisfy this requirement.</div></div>
           </div>
         </article>
@@ -1142,6 +1167,8 @@
               <strong>Requires Signals:</strong> <span class="signal-tag">artifact_logs_decision_record</span><span class="signal-tag">applicant_prohibited_basis</span>
             </div>
             <div class="evidence-summary">Not evaluated: the system exposes no decide(), so there is no twin decision to run. A counterfactual is what the system would have decided, and a decision log records only what it did — no trace, however long, establishes one. Limit of this duty: it is invariance under one named variable holding all others fixed, so it is a property of treatment and says nothing about effects. A proxy is invisible to it — a rule set that never reads the protected variable and decides by postcode is satisfied here — and a disparate impact is not a thing it can find. It also reaches exactly one variable: a system answerable on several prohibited bases is answered here about the one this duty names.</div>
+
+
             
           </div>
         </article>

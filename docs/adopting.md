@@ -213,7 +213,7 @@ system: notice-service
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 6 requirements · 6 binding: 1 observed, 1 not evaluated, 4 unattainable
+headline: 6 requirements · 6 binding: 1 observed, 1 not evaluated, 4 unattainable · all positives observed-only
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): inconclusive
@@ -225,6 +225,7 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_decision_record, provenance_model_version
     domain limit: consumer-credit
     summary: Observed over 2 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied at every decision step.
+    Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [UNATTAINABLE] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): inconclusive
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
     domain limit: consumer-credit
@@ -281,7 +282,7 @@ system: notice-service
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 6 requirements · 6 binding: 1 observed, 1 violated, 1 not evaluated, 3 unattainable
+headline: 6 requirements · 6 binding: 1 observed, 1 violated, 1 not evaluated, 3 unattainable · all positives observed-only
 
 REQUIREMENT FINDINGS:
   [UNATTAINABLE] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): inconclusive
@@ -293,6 +294,7 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_decision_record, provenance_model_version
     domain limit: consumer-credit
     summary: Observed over 2 decision(s): temporal monitor for 'always(present(artifact_logs_decision_record) and present(provenance_model_version) and (present(artifact_logs_reason_explanation) or present(artifact_logs_right_to_reasons_disclosure)))' satisfied at every decision step.
+    Scope of this positive result: this formal property was satisfied only on the supplied 2 decision records at the observed evidence rung; this run did not establish that the trace is complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside those records.
   [OBSERVED] ecoa_reg_b_1002_9_b_2_specific_reasons (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): violated
     requires: artifact_logs_reason_explanation, provenance_model_version, scope_statements_local_vs_global
     domain limit: consumer-credit
