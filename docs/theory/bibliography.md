@@ -142,6 +142,7 @@ addition rather than a rewrite.
   `verbatim_text` and `drift.py` implement (§6.10).
 - **`[@kusner-2017]`** M. J. Kusner, J. R. Loftus, C. Russell, R. Silva. *Counterfactual Fairness.*
   NeurIPS 2017, 4066–4076. — the property `counterfactually_invariant` is an instance of (Definition 3.8).
+- **`[@beyer-2022]`** D. Beyer, M. Strejček. *Case Study on Verification-Witness Validators: Where We Are and Where We Go.* SAS 2022, LNCS 13790:160–174. — validator agreement is a second opinion, not a soundness proof, and the conformance kit inherits that limit (§4.4).
 - **`[@stan-2026]`** I. E. Stan, G. Sciavicco, P. Napoletano. *Symbols and Neurons: A Review of
   Symbolic XAI in Deep Learning.* Journal of Artificial Intelligence Research, 2026. — Table 7
   (p. 36:22) is the duty-to-artifact mapping `table7.toml` transcribes; Section 6.3 (p. 36:24) is

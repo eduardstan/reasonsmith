@@ -11,6 +11,7 @@ What this module is for:
           [--capabilities <file>] [--audience <reader>] [--strict-unresolved] [--json]
       reasonsmith check --system-module <module>:<attribute> --pack <pack_name> [...]
       reasonsmith validate-pack <pack_name_or_file> [...]
+      reasonsmith verify-engine <entry-point-or-module> [--json]
       reasonsmith explain <requirement_id> [--pack <pack_name_or_file>]...
 
 What a reader must not break:
@@ -453,6 +454,27 @@ def main(args: list[str] | None = None) -> int:
         ),
     )
 
+    verify_parser = subparsers.add_parser(
+        "verify-engine",
+        help="Run an installed engine against the eight gold conformance triples",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "NAME is an entry-point name in reasonsmith.engines, or module:attribute for a "
+            "local engine. A declined result is an honest pass; findings make the command "
+            "exit 2.\n\n"
+            "  0  every gold triple passed (an engine may decline).\n"
+            "  2  at least one triple failed.\n"
+            "  1  usage error or no usable max_strength."
+        ),
+    )
+    verify_parser.add_argument(
+        "engine",
+        nargs="+",
+        metavar="NAME",
+        help="installed reasonsmith.engines entry-point name(s), or module:attribute",
+    )
+    verify_parser.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+
     metrics_parser = subparsers.add_parser(
         "published-counts",
         help="Emit machine-readable counts and provenance for the site build",
@@ -492,6 +514,30 @@ def main(args: list[str] | None = None) -> int:
     )
 
     parsed = parser.parse_args(args)
+
+    if parsed.command == "verify-engine":
+        from reasonsmith.verify_engine import render, verify_engine
+
+        rendered = []
+        failed = False
+        for name in parsed.engine:
+            try:
+                rows, ceiling = verify_engine(name)
+            except ValueError as exc:
+                print(f"Error verifying engine {name!r}: {exc}", file=sys.stderr)
+                return 1
+            failed = failed or not all(row.passed for row in rows)
+            rendered.append(render(rows, name, ceiling, as_json=parsed.json))
+        if parsed.json:
+            # Each requested engine is independently useful JSON; retain one object for the
+            # common case and an array for NAME NAME, without mixing human contract prose.
+            if len(rendered) == 1:
+                print(rendered[0])
+            else:
+                print("[" + ",\n".join(rendered) + "]")
+        else:
+            print("\n\n".join(rendered))
+        return 2 if failed else 0
 
     if parsed.command == "published-counts":
         from reasonsmith.published_counts import published_counts
