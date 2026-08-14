@@ -36,8 +36,9 @@ The mathematics of trace pinning:
   a satisfiability question over the trace's characteristic formula pin(sigma).
 
   Fix the finite atom set AP. LTLf is interpreted over finite traces
-  sigma = sigma_0 ... sigma_{n-1} with sigma_i <= AP. X is the strong next (requires a successor
-  to exist), and Last == !X True holds exactly at the final position.
+  sigma = sigma_0 ... sigma_{n-1} with sigma_i <= AP. BLACK's `wX` is the weak next used for
+  the language's `next`; the strong `X` remains available for pinning a concrete trace, and
+  Last == !X True holds exactly at the final position.
 
   Complete literal at a position:
     lambda_i := AND_{a in sigma_i} a  and  AND_{a in AP \\ sigma_i} !a
@@ -168,7 +169,8 @@ LTLF_ABSTRACTION_LIMIT = (
 ATOM_BUDGET = 100
 
 #: The rulelang operators BLACK has, and their LTLf spelling.
-_UNARY_RENDERING = {"always": "G", "eventually": "F", "next": "X"}
+#: Runtime ``next`` is weak at the final position, so use BLACK's native weak-next operator.
+_UNARY_RENDERING = {"always": "G", "eventually": "F", "next": "wX"}
 _BINARY_RENDERING = {"until": "U"}
 
 #: The operators of the language BLACK is not handed here. LTLf is the future fragment;

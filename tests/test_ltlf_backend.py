@@ -35,6 +35,7 @@ from reasonsmith.rulelang import (
     PRESENCE_CALL,
     UnsupportedConstructError,
     eval_expression,
+    eval_temporal_trace,
     measured_magnitude_names,
     parse_property,
     signal_names,
@@ -69,7 +70,7 @@ def temporal_requirements() -> list[Requirement]:
     [
         ("always(present(a))", "G(p0)"),
         ("eventually(present(a))", "F(p0)"),
-        ("next(present(a))", "X(p0)"),
+        ("next(present(a))", "wX(p0)"),
         ("until(present(a), present(b))", "(p0 U p1)"),
         ("always(present(a) -> present(b))", "G((p0 -> p1))"),
         ("always(present(a) and present(b))", "G((p0 & p1))"),
@@ -338,6 +339,56 @@ def test_the_ltlf_backend_agrees_with_the_monitor():
     # duty would pass against a mapping that renders every formula as `true`.
     assert len(seen) >= 30, f"only {len(seen)} trace(s) reached both backends"
     assert seen.count(Verdict.SATISFIED) >= 10 and seen.count(Verdict.VIOLATED) >= 10, seen
+
+
+def test_generated_weak_next_boundaries_match_the_reference_interpreter():
+    """The pinning SAT query must agree at the positions where strong X used to diverge.
+
+    The generated corpus deliberately includes one-record traces (both the final and initial
+    position), adjacent positions with every Boolean valuation, and nested/Boolean contexts.
+    ``prev`` remains a past operator and is tested for named refusal above; only ``next`` reaches
+    this future-only abstraction.
+    """
+    rng = random.Random(20260814)
+    formulas = [
+        "next(present(a))",
+        "not next(present(a))",
+        "next(present(a)) and present(b)",
+        "next(next(present(a)))",
+        "always(next(present(a)))",
+        "eventually(next(present(a)))",
+    ]
+    compared = 0
+    saw_singleton = False
+    saw_next_to_last = False
+    for spec in formulas:
+        abstraction = ltlf.Abstraction()
+        formula = ltlf.to_ltlf(spec, abstraction)
+        node = parse_property(spec).body
+        for length in (1, 2, 3, 4):
+            for _ in range(8):
+                records = [
+                    {"a": bool(rng.getrandbits(1)), "b": bool(rng.getrandbits(1))}
+                    for _ in range(length)
+                ]
+                if length == 1:
+                    saw_singleton = True
+                if length >= 2:
+                    saw_next_to_last = True
+                reference = eval_temporal_trace(node, records)[0]
+                assert reference in (True, False), (spec, records, reference)
+                abstract_accepts = ltlf.accepts(
+                    formula, [_atom_values(abstraction, record) for record in records]
+                )
+                compared += 1
+                assert abstract_accepts is (reference is True), (
+                    spec,
+                    formula,
+                    records,
+                    reference,
+                )
+    assert compared >= 150
+    assert saw_singleton and saw_next_to_last
 
 
 # --------------------------------------------------------------------------------------------
