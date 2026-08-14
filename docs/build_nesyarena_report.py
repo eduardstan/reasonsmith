@@ -348,7 +348,8 @@ def render() -> str:
         f"**Packs:** {', '.join(PACKS)} — shipped, unchanged  ",
         "**Declared regulatory class:** none",
         "",
-        "> **Demonstration only:** This report is a demonstration on frozen synthetic data — not evidence about any real decision.",
+        "> **Demonstration only:** This report is a demonstration on frozen synthetic data — "
+        "not evidence about any real decision.",
         "",
         "This file is generated. Do not edit it by hand: regenerate it with the command above.",
         "The written account of what it found, including the unflattering parts, is in",

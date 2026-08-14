@@ -77,6 +77,13 @@ SHOWCASE_FIGURE = ROOT / "docs" / "assets" / "showcase-figure.svg"
 SHOWCASE_CAST = ROOT / "docs" / "assets" / "showcase-cast.svg"
 SHOWCASE_HTML = ROOT / "docs" / "showcase.html"
 
+SAMPLE_NOTICE_HTML = (
+    '      <h3 class="limits-header">Demonstration only</h3>\n'
+    '      <p class="limits-text">This is a demonstration on frozen synthetic '
+    'data &mdash; not evidence about any real '
+    'decision.</p>\n'
+)
+
 #: The clause both halves of the figure are about, and the two duties this repository ships it as.
 FORM_DUTY = "ecoa_reg_b_1002_9_b_2_specific_reasons"
 CONTENT_DUTY = "ecoa_reg_b_1002_9_b_2_principal_reasons_complete"
@@ -544,9 +551,7 @@ def showcase_html(audit: dict, figure: str, cast: str) -> str:
     )
     return f"""
     <section class="limits-card">
-      <h3 class="limits-header">Demonstration only</h3>
-      <p class="limits-text">This is a demonstration on frozen synthetic data &mdash; not evidence about any real decision.</p>
-      <h3 class="limits-header">What reasonsmith found</h3>
+{SAMPLE_NOTICE_HTML}      <h3 class="limits-header">What reasonsmith found</h3>
       <p class="limits-text">A credit system declined application
       <code>{html.escape(audit["decision_id"])}</code> and stated <strong>one</strong> reason. Its
       own inference used <strong>{audit["found"]}</strong>. reasonsmith re-ran that inference,

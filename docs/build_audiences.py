@@ -77,6 +77,13 @@ PROVENANCE_NOTE = (
 
 AUDIENCES_HTML = ROOT / "docs" / "audiences.html"
 
+GALLERY_SAMPLE_NOTICE_HTML = (
+    '      <h3 class="limits-header">Demonstration only</h3>\n'
+    '      <p class="limits-text">This is a demonstration on frozen synthetic '
+    'data &mdash; not evidence about any real '
+    'decision.</p>\n'
+)
+
 #: How tall each embedded document is drawn. One number, so no frame is given more room than
 #: another and a document's length on the page is its own length and not a layout decision.
 #:
@@ -204,9 +211,7 @@ def gallery_html(report: ConformanceReport) -> str:
     cards = "".join(_card(name, documents[name]) for name in order)
     return f"""
     <section class="limits-card">
-      <h3 class="limits-header">Demonstration only</h3>
-      <p class="limits-text">This is a demonstration on frozen synthetic data &mdash; not evidence about any real decision.</p>
-      <h3 class="limits-header">One run, five readers</h3>
+{GALLERY_SAMPLE_NOTICE_HTML}      <h3 class="limits-header">One run, five readers</h3>
       <p class="limits-text">Each frame below holds a complete conformance report — the whole
       document <code>reasonsmith check --audience &lt;name&gt;</code> writes, embedded as it was
       written. All five are the same run against the same pack, evaluated once. An audience

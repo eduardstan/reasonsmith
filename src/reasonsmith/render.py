@@ -44,7 +44,6 @@ from reasonsmith.report import (
 )
 from reasonsmith.verdict import EvidenceBasis, Strength, Verdict
 
-
 # This warning belongs beside every HTML conformance headline so an affected person sees the
 # boundary before interpreting a verdict. It is deliberately not rendered in text output: the
 # affected-person front door is the HTML report and the audience gallery.
@@ -673,8 +672,10 @@ def render_html(
             else ""
         )
         affected_person_card = (
-            '    <aside class="affected-person-card" aria-label="For a person affected by a decision">\n'
-            '      <div class="affected-person-card-title">For a person affected by a decision</div>\n'
+            '    <aside class="affected-person-card" '
+            'aria-label="For a person affected by a decision">\n'
+            '      <div class="affected-person-card-title">'
+            'For a person affected by a decision</div>\n'
             f'      <p>{html.escape(AFFECTED_PERSON_CARD_TEXT)}</p>\n'
             '    </aside>\n'
         )
