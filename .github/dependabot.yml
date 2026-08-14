@@ -29,5 +29,15 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # `init` and `analyze` are two paths into one action and must run the same major: when they
+      # disagree the job dies with `Loaded a configuration file for version '3.37.7', but running
+      # version '4.37.6'` — which is #184, where Dependabot moved `analyze` to v4 on its own because
+      # it reads the two paths as two dependencies. This group carries majors as well, so the pair
+      # always arrives in one pull request; every other action keeps its major to itself, where a
+      # breaking change is worth reading alone.
+      codeql-action:
+        patterns: ["github/codeql-action*"]
+        update-types: [major, minor, patch]
       actions:
+        exclude-patterns: ["github/codeql-action*"]
         update-types: [minor, patch]
