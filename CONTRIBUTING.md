@@ -114,7 +114,7 @@ We aim to acknowledge a contribution within one week and to give it an initial r
 
 ## Attribution convention
 
-Commit messages, pull-request bodies, and pull-request comments should not include an AI co-author trailer or an AI-attribution footer. The commit record names the humans accountable for the change. Human co-author trailers remain welcome. This is a contributor-facing convention, not an automated check: no build, test, lint rule, or CI job enforces it.
+Commit messages, pull-request bodies, and pull-request comments should not include an AI co-author trailer or an AI-attribution footer. Disclosing AI use is fine; the ideas and invention belong to the author, and a tool gets no authorship credit, just as a compiler or proof assistant does not. Human co-author trailers remain welcome. This is a contributor-facing convention, not an automated check: no build, test, lint rule, or CI job enforces it.
 
 ## Submitting Pull Requests
 

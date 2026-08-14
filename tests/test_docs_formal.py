@@ -1,6 +1,6 @@
 """Tests holding `the theory chapters` to the code and claim-to-test map.
 
-The bibliography registry is in `theory/bibliography.md`.
+The bibliography registry is in `docs/theory/bibliography.md`.
 
 What this module is for:
   The theory chapters state the mathematics of this tool once, in one notation. Three things have to
@@ -12,7 +12,7 @@ What this module is for:
      document cannot be edited into disagreement with `Strength`, `BASIS_RUNGS`,
      `rulelang.FRAGMENTS` or `manyvalued.ALGEBRAS`. Three documents each held to the code cannot
      drift apart from each other, which is what makes a fourth document safe to add.
-  3. The bibliography in `theory/bibliography.md` is a **registry**: every citation key used
+  3. The bibliography in `docs/theory/bibliography.md` is a **registry**: every citation key used
      anywhere in the scanned corpus
      resolves to an entry, every entry is cited by at least one claim, and a source named without a
      key fails the build. This is the new part. Before it, the densest concentration of references
@@ -349,7 +349,7 @@ def test_a_source_named_without_a_key_is_refused():
     """A paragraph naming a venue and carrying no citation key is an unregistered source.
 
     This is the half of the registry that keeps references from drifting back into docstrings. It
-    is a heuristic over `VENUE_MARKERS` and `theory/bibliography.md` says so: a venue not on
+    is a heuristic over `VENUE_MARKERS` and `docs/theory/bibliography.md` says so: a venue not on
     the list is a hole. The other two checks are not heuristics.
     """
     assert VENUE_MARKERS, "the marker list is empty, so this check passes vacuously"
