@@ -106,7 +106,7 @@ build a release whose tag is not `v` plus that version.
 For a bug, question, or pack proposal:
 1. **Questions go to [GitHub Discussions](https://github.com/eduardstan/reasonsmith/discussions)**; issues are for bugs and pack proposals.
 2. Check the existing discussions or issues before starting a new one.
-3. Pick a template from `.github/ISSUE_TEMPLATE/` — GitHub offers them automatically when you open an issue. **Bug report** asks for the exact command you ran and the output you saw; **Pack proposal** is how a new regulation pack gets started (which regulation, which official source, which duty). A proposal is the fastest way to go from interested reader to contributor.
+3. Pick a template from `.github/ISSUE_TEMPLATE/` — GitHub offers them automatically when you open an issue, and each applies its own label (see [Labels](#labels)). **Bug report** asks for the exact command you ran and the output you saw; **Pack proposal** is how a new regulation pack gets started (which regulation, which official source, which duty). A proposal is the fastest way to go from interested reader to contributor.
 
 ## Response times
 
@@ -123,6 +123,16 @@ Commit messages, pull-request bodies, and pull-request comments should not inclu
 3. Verify that `ruff check .`, `pytest`, and `python -m reasonsmith.demo` pass.
 4. Open a Pull Request targeting `main`, referencing any open issue it addresses (e.g., `Fixes #123`). The concise template in `.github/PULL_REQUEST_TEMPLATE.md` is shown automatically.
 5. **No AI co-author trailers:** Do not include automated co-author trailers in commit messages.
+
+### Labels
+
+Every issue and pull request carries at least one label. A label is how a reader filters a list they did not write; an unlabelled item is findable only by whoever remembers it.
+
+Issues opened through a form are labelled automatically — **Bug report** carries `bug`, **Pack proposal** carries `pack`. An issue opened through the API or `gh issue create` bypasses the form and arrives with none, so add one or say which it should have.
+
+A pull request has no form and no automatic label, and **applying a label needs triage permission, which an outside contributor does not have**. So the convention is: name the intended label under *Intended label* in the pull-request description, and a maintainer applies it. Dependabot labels its own.
+
+Beyond GitHub's defaults, the labels in use are `pack`, for a regulation pack, and `dependencies`, `javascript` and `github_actions`, which Dependabot creates as it needs them.
 
 ### Pull-Request Titles and the Squash Merge
 
