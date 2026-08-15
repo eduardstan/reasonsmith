@@ -542,4 +542,4 @@ Engines install the same way, through `reasonsmith.engines` — see
 [`authoring-engines.md`](authoring-engines.md), which is also where the discipline lives: what a
 plug-in may claim, and what a `proved` from an engine this repository never audited is worth.
 
-For the model-free autoformalisation verification gates, see [`autoformalization.md`](autoformalization.md).
+For the AI-assisted authoring path — source quote → model proposal → round-trip and gold gates → human sign-off — see [`autoformalization.md`](autoformalization.md) and the measured [`autoformalization-study.md`](autoformalization-study.md). The model proposes, the formal checker disposes: it never produces a verdict and no engine may call one.

@@ -23,6 +23,7 @@ what those documents say.
 - [`findings-nesyarena.md`](findings-nesyarena.md) — findings from the conformance run.
 - [`nesyarena-conformance-report.md`](nesyarena-conformance-report.md) — generated conformance dossier.
 - [`autoformalization.md`](autoformalization.md) — challenge corpus and proposer workflow.
+- [`autoformalization-study.md`](autoformalization-study.md) — measured agreement against the hand-authored gold packs.
 - [`theory/00-notation.md`](theory/00-notation.md) — global mathematical notation registry.
 - [`theory/01-models.md`](theory/01-models.md) — records, traces, declarations, and structures.
 - [`theory/02-syntax.md`](theory/02-syntax.md) — grammar, validation, and fragment assignment.

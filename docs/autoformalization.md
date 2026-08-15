@@ -33,7 +33,8 @@ Only semantic equivalence clears the round-trip gate. A model response that is n
 formula accepted by the repository parser is a refusal, not an extraction or guess. The proposer
 measurement command is `python -m reasonsmith.proposer --model MODEL --attempts 3` (or
 `--command COMMAND` for any provider adapter that reads a prompt on stdin); its result is
-reported in [`RESULTS.md`](../RESULTS.md). A strictly stronger, strictly weaker or
+reported in the committed [`autoformalization-study.md`](autoformalization-study.md) and
+[`RESULTS.md`](../RESULTS.md). A strictly stronger, strictly weaker or
 incomparable formula is returned as a repair finding; record and logical comparisons include a
 solver witness, temporal comparisons return the entailment relation without one, and differing
 counterfactual atoms name the outcome/protected-signal mismatch. This harness never rewrites the
@@ -61,3 +62,33 @@ not import an engine. Adding a set does not add a requirement or replace the ref
 The module has no model import and no path to a conformance engine or verdict. It is therefore
 exercisable entirely with hand-written formulas, which is the intended review surface before a
 proposer is introduced.
+
+## The AI-assisted authoring path: one worked duty
+
+The model proposes, the formal checker disposes: it never produces a verdict and no engine may call
+it as one. Here is the complete path for the real EU AI Act Article 12(1) duty
+`eu_ai_act_art12_1_automatic_logging`.
+
+1. **Source quote and hand-authored gold.** The pack quotes: “High-risk AI systems shall
+   technically allow for the automatic recording of events (logs) over the lifetime of the
+   system.” The hand-authored gold in `packs/eu_ai_act.toml` is
+   `present(artifact_logs_event_log) and present(provenance_model_version)`; the refinement row
+   explains that lifetime, durability, and whether a log was automatically assembled remain outside
+   this property.
+2. **Proposal.** With the fixed two-attempt Claude measurement command, the proposer returned
+   `present(artifact_logs_event_log) and present(provenance_model_version)` on its first attempt.
+   The response is text only; it is not passed to an engine.
+3. **Round-trip gate.** `round_trip_check` parsed the candidate and established
+   `equivalent` against the shipped `spec` (the exact-match case).
+4. **Gold-challenge gate.** `check_challenges` ran all four cases in
+   `src/reasonsmith/challenges/eu_ai_act_art12_1_automatic_logging.toml`: the complete record
+   passed, the missing-event-log violation passed, the blank-provenance near-miss passed, and the
+   missing-both near-miss passed.
+5. **Human gate.** The row in [`refinement.md`](refinement.md) is the audit record and currently
+   says `Human sign-off: pending (gold set: ...; no candidate approved)`. A reviewer must inspect
+   the quote, formula gap, round-trip evidence, and challenge evidence and change that row to
+   `Human sign-off: signed-off` before this candidate is approved. Until then, it is only a
+   machine-cleared proposal.
+
+The measured results, including unavailable provider calls and semantic-only agreements, are in the
+[agreement study](autoformalization-study.md).
