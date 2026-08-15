@@ -248,7 +248,11 @@ class InputSlot:
             if values:
                 _fail(f"slot {signal!r} cannot declare categorical values for type {kind!r}")
         elif kind == "boolean":
-            if values and set(values) != {False, True}:
+            if values and (
+                len(values) != 2
+                or any(type(item) is not bool for item in values)
+                or set(values) != {False, True}
+            ):
                 _fail(f"slot {signal!r} boolean values must be exactly false and true")
             values = (False, True)
             if has_lower or has_upper:
@@ -272,8 +276,11 @@ class InputSlot:
                     _fail(f"slot {signal!r} has reversed bounds")
                 if any(code < lower or code > upper for code in values):
                     _fail(f"slot {signal!r} has a categorical code outside its bounds")
-            if kind == "string-enum" and (has_lower or has_upper):
-                _fail(f"slot {signal!r} string-enum cannot have numeric bounds")
+            if kind == "string-enum":
+                if any(type(item) is not str or not item for item in values):
+                    _fail(f"slot {signal!r} string-enum values must be non-empty strings")
+                if has_lower or has_upper:
+                    _fail(f"slot {signal!r} string-enum cannot have numeric bounds")
 
         raw_tokens = value.get("value_to_token", value.get("tokens", {}))
         if raw_tokens is None:

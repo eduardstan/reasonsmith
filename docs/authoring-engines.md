@@ -10,6 +10,35 @@ are, written in the one language of `rulelang.py` ([`authoring-packs.md`](author
 and answers it or does not. What becomes open is the set of engines that may discharge a duty, and
 nothing else.
 
+The trusted boundary for a plug-in violation is deliberately narrow:
+
+```mermaid
+flowchart LR
+    engine["Installed engine plug-in"] --> result["Engine result and witness"]
+    result --> core["Trusted core replays the witness"]
+    core --> checked["witness-checked provenance"]
+    core --> refuted["Refuted witness becomes not evaluated"]
+    result --> ceiling["No checkable witness keeps trusted-ceiling provenance"]
+    checked --> report["Report result"]
+    ceiling --> report
+    refuted --> report
+
+    classDef engine fill:#e5f2f8,stroke:#1f6f8f,color:#16181d
+    classDef core fill:#fff8e7,stroke:#9a6700,color:#16181d
+    classDef accepted fill:#eaf6ef,stroke:#1d6b45,color:#16181d
+    classDef refused fill:#fde2e2,stroke:#a33a3a,color:#16181d
+    class engine,result engine
+    class core,ceiling core
+    class checked,report accepted
+    class refuted refused
+```
+
+The engine plug-in is installed Python and runs in-process; reasonsmith does not provide a host
+wall-clock limit for it. The separate neural verifier adapters cross an out-of-process boundary,
+which is documented in [`neural-verifiers.md`](neural-verifiers.md) and is not a sandbox for a
+generic engine plug-in. A plug-in can answer only fragments the report ladder offers it; generic
+plug-ins do not answer counterfactual duties.
+
 ## Where the implementation contract lives
 
 The numbered theory chapters are **conceptual and non-implementational**: they define the language,

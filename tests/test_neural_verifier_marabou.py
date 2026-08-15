@@ -220,6 +220,10 @@ def test_resource_limits_are_serialized_and_validate_values() -> None:
     for kwargs in (
         {"cpu_seconds": 0},
         {"memory_bytes": 0},
+        {"cpu_seconds": 1.5},
+        {"memory_bytes": 1.5},
+        {"cpu_seconds": "1"},
+        {"memory_bytes": "1"},
         {"gpu": ""},
     ):
         with pytest.raises(ValueError):
@@ -317,3 +321,67 @@ def test_sat_nonfinite_or_conflicting_assignments_are_rejected(monkeypatch, outp
     assert result.status == "error"
     assert result.provenance["failure"] == "malformed_assignment"
     assert result.assignment is None
+
+
+def test_timeout_is_one_total_budget_across_probe_and_solver(monkeypatch) -> None:
+    query = _query()
+    verifier = MarabouVerifier()
+    clock = [100.0]
+    calls = []
+    monkeypatch.setattr("reasonsmith.neural_verifiers.marabou.time.monotonic", lambda: clock[0])
+
+    def run(command, cwd, timeout):
+        calls.append(timeout)
+        clock[0] += 0.2
+        if len(calls) == 1:
+            return "Marabou 2.0.0\n", "", 0, None
+        return "unsat\n", "", 0, None
+
+    monkeypatch.setattr(verifier, "_run_command", run)
+    result = verifier.verify(query, timeout=0.3)
+    assert result.status == "timeout"
+    assert len(calls) == 2
+    assert calls[0] == pytest.approx(0.3)
+    assert 0 < calls[1] < calls[0]
+    assert result.provenance["resource_limits"]["wall_seconds"] == 0.3
+
+
+def test_timeout_expiry_after_version_probe_skips_solver(monkeypatch) -> None:
+    query = _query()
+    verifier = MarabouVerifier()
+    clock = [100.0]
+    calls = []
+    monkeypatch.setattr("reasonsmith.neural_verifiers.marabou.time.monotonic", lambda: clock[0])
+
+    def run(command, cwd, timeout):
+        calls.append(timeout)
+        clock[0] += 0.4
+        return "Marabou 2.0.0\n", "", 0, None
+
+    monkeypatch.setattr(verifier, "_run_command", run)
+    result = verifier.verify(query, timeout=0.3)
+    assert result.status == "timeout"
+    assert len(calls) == 1
+
+
+def test_timeout_expiry_before_probe_or_solver_starts(monkeypatch) -> None:
+    query = _query()
+    values = iter((100.0, 100.4))
+    monkeypatch.setattr(
+        "reasonsmith.neural_verifiers.marabou.time.monotonic",
+        lambda: next(values, 100.4),
+    )
+    verifier = MarabouVerifier()
+    monkeypatch.setattr(verifier, "_run_command", lambda *args: pytest.fail("child started"))
+    result = verifier.verify(query, timeout=0.3)
+    assert result.status == "timeout"
+
+    values = iter((200.0, 200.4))
+    monkeypatch.setattr(
+        "reasonsmith.neural_verifiers.marabou.time.monotonic",
+        lambda: next(values, 200.4),
+    )
+    verifier = MarabouVerifier(check_version=False)
+    monkeypatch.setattr(verifier, "_run_command", lambda *args: pytest.fail("child started"))
+    result = verifier.verify(query, timeout=0.3)
+    assert result.status == "timeout"

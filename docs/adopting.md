@@ -40,7 +40,7 @@ says so in the report's own words; nothing on this page may be read past it.
 
 What you can be told is decided by what your system exposes, and by nothing else — not by the
 vendor's confidence in it, and not by which word a pack author typed in `formalism`
-(`report._engine_ladder`; [`semantics.md`](semantics.md) §3.5).
+(`report._engine_ladder`; [`theory/01-models.md`](theory/01-models.md) Definition 1.8).
 
 | what you have | how it comes in | reaches | cannot reach |
 |---|---|---|---|
@@ -50,8 +50,8 @@ vendor's confidence in it, and not by which word a pack author typed in `formali
 | an inference artefact | `--system-module m:attr` exposing `artifact(decision)` | `probed`, or `recounted` where the reasons are the system's own account | whether the reasons a notice states are adequate, correct, or the ones a person would call principal |
 
 Each row is a ceiling on what can be *established*, never a grade: all four can be `satisfied`, and
-what differs is how far the claim reaches ([`semantics.md`](semantics.md) §4, *What a comparison
-does not mean*).
+what differs is how far the claim reaches ([`theory/08-evidence.md`](theory/08-evidence.md) §8.1,
+*The evidence ladder is not a grade*).
 
 **A decision log.** `--system decisions.jsonl` constructs [`JSONLAdapter`](../src/reasonsmith/adapters/jsonl.py),
 which exposes neither `decide()` nor `logic()`, so it cannot rise above `observed` whatever the
@@ -173,14 +173,14 @@ enumerated from a model encoding (`reasons_are_exact = True`, so `probed`), and
 *recounts* for one decision, each tested by suppressing its facts and re-running the system
 (`recounted`). Silence claims the weaker rung. The artefact must also declare whether its inference
 is monotone; one that does not is reported *not evaluated* and never downgraded to the presence
-check sharing its clause ([`semantics.md`](semantics.md) §3, *The inference artefact*;
+check sharing its clause ([`theory/07-explanation.md`](theory/07-explanation.md) §7.1, *The inference artefact*;
 [`theory/07-explanation.md`](theory/07-explanation.md) for what a `deleted` reason is). The semantics duty
 needs one thing more of the family and nothing more of you: the artefact's own `exact_value()` must
 compute the semantics your adapter claims, which the ground-program family does for `distribution
 semantics` and the recounted family does for none — so a reason trace is reported *unattainable*
 there, and an adapter claiming any other member of `spec.CLAIMED_SEMANTICS` is reported *not
-evaluated* naming the claim, never violated ([`semantics.md`](semantics.md) §3, *The first shipped
-duty whose deviation is measured rather than declared*).
+evaluated* naming the claim, never violated ([`theory/07-explanation.md`](theory/07-explanation.md) §7.7,
+*The deviation duty*).
 
 `--system` and `--system-module` name two different systems and refuse each other, as does
 `--capabilities` against `--system-module`. Adapt from whichever of the four files under
@@ -238,26 +238,27 @@ REFINEMENT
   When the clock started. The clause counts from three different events; the property reads one
   latency number the system computes about itself, so which event it was measured from is the
   system's own claim and no engine checks it. A record may now *state* which event started its
-  clock (`sut.TIME_DOMAIN_KEY`, `docs/semantics.md` §2), and this property still does not read
-  it: the recorded events are evidence waiting for a metric semantics, not a check this row has
-  gained. The paragraph (ii) exception — *unless notice is provided in accordance with paragraph
-  (c)* — is not modelled, so a lawful incomplete-application notice under 1002.9(c) is still
-  held to the 30-day bound. `artifact_logs_counteroffer_not_accepted` is read under the flag
-  encoding of `docs/semantics.md` §2, where any present non-numeric value becomes true, so a
-  record that carries prose in that field takes the 90-day branch. Both numbers are the clause's
-  own, not this pack's (`docs/authoring-packs.md`, *a number in a spec*). **And the shipped
-  example systems demonstrate the tool; none is a fixture for this duty, and none will be built
-  to.** Against `reasonsmith.examples.symbolic_rules` this duty is proved satisfied with its
-  trigger firing, and its ninety-day counteroffer branch is vacuously passed: that system's own
-  seven-day batching bounds every notice under thirty days — `notification_queue_days <= 7`, and
-  the notice lands a day after the batch, so `artifact_logs_notification_latency_days <= 8` —
-  which makes the first disjunct true of every admissible input and the second (the only branch
-  the 90-day bound reaches) replaceable by any formula whatsoever without moving the verdict. No
-  shipped system exercises that branch, and none will be built to: a system engineered to light
-  up a branch is a fixture, and a fixture becomes the thing the tool is tuned against — the
-  failure this repository's whole design is arranged to avoid. The adapters of `docs/three-
-  systems.md` and `docs/language-model.md` exist to demonstrate the tool, not to exercise the
-  duties.
+  clock (`sut.TIME_DOMAIN_KEY`, [`docs/theory/03-semantics.md`](theory/03-semantics.md)
+  Definition 3.5), and this property still does not read it: the recorded events are evidence
+  waiting for a metric semantics, not a check this row has gained. The paragraph (ii) exception
+  — *unless notice is provided in accordance with paragraph (c)* — is not modelled, so a lawful
+  incomplete-application notice under 1002.9(c) is still held to the 30-day bound.
+  `artifact_logs_counteroffer_not_accepted` is read under the flag encoding of
+  [`docs/theory/03-semantics.md`](theory/03-semantics.md) Definition 3.5, where any present non-
+  numeric value becomes true, so a record that carries prose in that field takes the 90-day
+  branch. Both numbers are the clause's own, not this pack's (`docs/authoring-packs.md`, *a
+  number in a spec*). **And the shipped example systems demonstrate the tool; none is a fixture
+  for this duty, and none will be built to.** Against `reasonsmith.examples.symbolic_rules` this
+  duty is proved satisfied with its trigger firing, and its ninety-day counteroffer branch is
+  vacuously passed: that system's own seven-day batching bounds every notice under thirty days —
+  `notification_queue_days <= 7`, and the notice lands a day after the batch, so
+  `artifact_logs_notification_latency_days <= 8` — which makes the first disjunct true of every
+  admissible input and the second (the only branch the 90-day bound reaches) replaceable by any
+  formula whatsoever without moving the verdict. No shipped system exercises that branch, and
+  none will be built to: a system engineered to light up a branch is a fixture, and a fixture
+  becomes the thing the tool is tuned against — the failure this repository's whole design is
+  arranged to avoid. The adapters of `docs/three-systems.md` and `docs/language-model.md` exist
+  to demonstrate the tool, not to exercise the duties.
 ```
 
 `REQUIRES` is the list your system has to emit for the duty to be answered at all; `FORMULA` is what
@@ -418,17 +419,17 @@ applicable and not evaluated all exit 0 and are findings to read, never verdicts
 system. CI that must answer every duty can add `--strict-unresolved`, which returns exit 3 for
 those unresolved outcomes and names them in the headline.
 
-## 4. The four outcomes, and which one you are looking at
+## 4. The five outcomes, and which one you are looking at
 
-[`semantics.md`](semantics.md) §4, *Four outcomes that must never collapse*, is the authority: it
-carries the table of `not applicable` (both gates), `unattainable` (both bases), `not evaluated` and
-`violated`, and for each one what happened and **what to do next**. Read it there rather than here;
-this page will not restate it, because a second copy is a copy that goes stale.
+[`semantics.md`](semantics.md) §1, *The report's five operational outcomes*, is the authority. It
+carries the table of `satisfied`, `violated`, `not applicable`, `unattainable`, and `not evaluated`,
+and for each one what happened and **what to do next**. This section highlights the four unresolved
+outcomes but does not restate the table, because a second copy is a copy that goes stale.
 
 Two things about it are worth an adopter's attention specifically.
 
 **`unattainable` is a strength, not a verdict.** It sits at the bottom of the lattice
-`unattainable < observed < recounted < probed < proved` ([`semantics.md`](semantics.md) §4), and
+`unattainable < observed < recounted < probed < proved` ([`theory/08-evidence.md`](theory/08-evidence.md) §8.1), and
 the verdict beside it is `inconclusive`. It says *this system, on this evidence, cannot show me* —
 which is why its two bases send you to two different places: a declared-basis miss means change the
 system, a trace-basis miss means supply a longer trace or a capability declaration first.

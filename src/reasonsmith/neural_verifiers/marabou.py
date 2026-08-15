@@ -83,11 +83,15 @@ class ResourceLimits:
 
     def __post_init__(self) -> None:
         if self.cpu_seconds is not None and (
-            isinstance(self.cpu_seconds, bool) or self.cpu_seconds < 1
+            isinstance(self.cpu_seconds, bool)
+            or not isinstance(self.cpu_seconds, int)
+            or self.cpu_seconds < 1
         ):
             raise ValueError("cpu_seconds must be a positive integer or None")
         if self.memory_bytes is not None and (
-            isinstance(self.memory_bytes, bool) or self.memory_bytes < 1
+            isinstance(self.memory_bytes, bool)
+            or not isinstance(self.memory_bytes, int)
+            or self.memory_bytes < 1
         ):
             raise ValueError("memory_bytes must be a positive integer or None")
         if self.gpu is not None and (not isinstance(self.gpu, str) or not self.gpu):
@@ -403,6 +407,16 @@ class MarabouVerifier:
             )
 
         started = time.monotonic()
+        deadline = None if timeout is None else started + timeout
+
+        def remaining_timeout() -> float | None:
+            if deadline is None:
+                return None
+            return max(0.0, deadline - time.monotonic())
+
+        def budget_expired() -> bool:
+            return deadline is not None and time.monotonic() >= deadline
+
         with tempfile.TemporaryDirectory(prefix="reasonsmith-marabou-") as raw_dir:
             workdir = Path(raw_dir)
             model_path = workdir / "query.onnx"
@@ -414,8 +428,16 @@ class MarabouVerifier:
 
             observed_version = self.expected_version
             if self.check_version:
+                remaining = remaining_timeout()
+                if remaining is not None and remaining <= 0:
+                    provenance["failure"] = "timeout"
+                    provenance["duration_seconds"] = round(time.monotonic() - started, 6)
+                    return self._run_result(
+                        "timeout", query, provenance,
+                        diagnostic="Marabou exceeded the wall-clock limit",
+                    )
                 version_out, version_err, version_code, version_failure = self._run_command(
-                    (*self.executable, *self.version_args), workdir, timeout
+                    (*self.executable, *self.version_args), workdir, remaining
                 )
                 version_text = version_out + "\n" + version_err
                 observed_version = _version_from_output(version_text)
@@ -425,6 +447,8 @@ class MarabouVerifier:
                     "stdout_sha256": _sha256(version_out),
                     "stderr_sha256": _sha256(version_err),
                 }
+                if budget_expired() and version_failure != "crash":
+                    version_failure = "timeout"
                 if version_failure is not None:
                     provenance["failure"] = version_failure
                     return self._run_result(
@@ -466,8 +490,19 @@ class MarabouVerifier:
                 + self.extra_args
                 + ("<model.onnx>", "--vnnlib", "<query.vnnlib>")
             )
-            stdout, stderr, returncode, failure = self._run_command(command, workdir, timeout)
+            remaining = remaining_timeout()
+            if remaining is not None and remaining <= 0:
+                provenance["failure"] = "timeout"
+                provenance["duration_seconds"] = round(time.monotonic() - started, 6)
+                return self._run_result(
+                    "timeout", query, provenance,
+                    diagnostic="Marabou exceeded the wall-clock limit",
+                    version=observed_version,
+                )
+            stdout, stderr, returncode, failure = self._run_command(command, workdir, remaining)
             provenance["duration_seconds"] = round(time.monotonic() - started, 6)
+            if budget_expired() and failure != "crash":
+                failure = "timeout"
             provenance["returncode"] = returncode
             provenance["hashes"]["stdout_sha256"] = _sha256(stdout)
             provenance["hashes"]["stderr_sha256"] = _sha256(stderr)

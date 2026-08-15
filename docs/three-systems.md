@@ -63,8 +63,7 @@ Three things made it the right duty for this demonstration, and it is worth sayi
   scope it speaks for and is not one of the two the clause itself calls insufficient. That is what
   lets all three rungs be in play — the solver and the replay search each reason about one decision
   at a time. A temporal duty reaches the solver only where it reduces to a property of one decision,
-  which `always(f)` does and no other shape here does — see [`semantics.md`](semantics.md) §3.5 and
-  §3, *`proved`, over a trace*.
+  which `always(f)` does and no other shape here does — see [`theory/05-decision-procedures.md`](theory/05-decision-procedures.md) §§5.1–5.2, *`proved`, over a trace*.
 
   It is worth knowing what this duty used to be, because the change is the reason the demonstration
   is worth more than it was. Until recently the property was a conjunction of `present()` atoms:
@@ -81,7 +80,7 @@ Three things made it the right duty for this demonstration, and it is worth sayi
   request reasons instead has none yet and is not in breach. Where that antecedent holds nowhere in
   the evidence an engine had, the duty is reported **not evaluated** rather than satisfied, naming
   the trigger that never fired — so a log that was checked and found clean never reads the same as
-  one the duty imposed nothing on ([`semantics.md`](semantics.md) §4).
+  one the duty imposed nothing on ([`theory/08-evidence.md`](theory/08-evidence.md) §8.1).
 
 ## 1. Neural — `observed`
 
@@ -170,7 +169,7 @@ table can also name a signal the system merely logs. `RulesAdapter` derives
 that from the rules themselves, so this system says it computes what its rules assign and nothing
 more. It is what lets the engine tell an input it may quantify over from a name the system has no
 notion of, and refuse a proof about the latter rather than answer it from a constant the solver
-invented ([`semantics.md`](semantics.md) §3.5).
+invented ([`theory/05-decision-procedures.md`](theory/05-decision-procedures.md) §5.1).
 
 The same system, from a shell and against the whole `ecoa` pack, is
 `reasonsmith check --system-module reasonsmith.examples.symbolic_rules:system_under_test --pack ecoa`
@@ -233,7 +232,7 @@ comes back `proved` and the probabilistic one `probed` on `ecoa_reg_b_1002_9_b_2
 Of the pack's four other duties, `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` is unattainable
 on all three systems, because none of these adapters exposes the inference artefact its
 `artifact_logs_deleted_reason_count` is measured from — and that duty is never answered by anything
-weaker (`docs/semantics.md` §3, *certificate*). The two `temporal` duties are unattainable on the
+weaker ([`docs/theory/07-explanation.md`](theory/07-explanation.md) §7.5, *certificate*). The two `temporal` duties are unattainable on the
 probabilistic and neural systems, which declare no `artifact_logs_decision_record`. The symbolic
 system declares one, and there the two split on the shape of the property rather than on the
 surface: `1002.9(a)(1)` is `always(f)` over a state property, so it reduces and the solver proves it,
@@ -242,7 +241,7 @@ assign, so the presence atom cannot be proved and the duty lands on the trace at
 pack's fifth duty is the one relational one: `1002.4(a)` comes back `unattainable` on all three
 systems, and the engine reports that rather than `satisfied` — none of these lenders reads an
 `applicant_prohibited_basis` the property could hold fixed, and unawareness of one is not a
-discharge (`docs/semantics.md` §3, *counterfactual*). Two
+discharge ([`docs/theory/04-decision-problems.md`](theory/04-decision-problems.md) §4.4, *counterfactual*). Two
 temporal duties, one system, two different rungs, and neither of them a fact about the word
 `temporal`.
 

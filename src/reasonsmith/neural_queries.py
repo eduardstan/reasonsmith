@@ -171,6 +171,7 @@ class _Coordinate:
 
 
 _IDENT = re.compile(r"[^A-Za-z0-9_]")
+_REPLAY_SUPPORTED_DTYPES = frozenset(("float32", "float64", "int32", "int64"))
 
 
 def _require_onnx() -> None:
@@ -188,7 +189,8 @@ def _safe_name(value: str) -> str:
 def _num(value: Any) -> str:
     if isinstance(value, bool):
         return "1" if value else "0"
-    value = float(value) if isinstance(value, float) else value
+    if not isinstance(value, (int, float)):
+        raise ValueError(f"VNN-LIB numeric value must be a finite number, got {value!r}")
     if isinstance(value, float):
         if not math.isfinite(value):
             raise ValueError("query values must be finite")
@@ -225,9 +227,17 @@ def _coordinates(artifact: OnnxArtifact) -> tuple[_Coordinate, ...]:
             if key in seen:
                 raise ValueError("input coordinate map is not injective")
             seen.add(key)
-            result.append(
-                _Coordinate(signal, binding.name, coordinate, flat, slot.lower, slot.upper)
-            )
+            if slot.kind == "string-enum":
+                raise ValueError(
+                    f"VNN-LIB cannot encode string-enum input signal {signal!r} as a Real"
+                )
+            if slot.kind == "boolean":
+                lower, upper = 0, 1
+            else:
+                lower, upper = slot.lower, slot.upper
+            if lower is None or upper is None:
+                raise ValueError(f"input signal {signal!r} has no numeric VNN-LIB bounds")
+            result.append(_Coordinate(signal, binding.name, coordinate, flat, lower, upper))
         if covered != set(range(math.prod(binding.shape))):
             raise ValueError("every product-network input coordinate needs a declared signal/bound")
     return tuple(result)
@@ -315,12 +325,28 @@ def _var(c: _Coordinate, suffix: str) -> str:
     return f"{_safe_name(c.tensor)}_{suffix}_{c.flat}"
 
 
+def _smt_operator(operator: Any) -> str:
+    if operator == "==":
+        return "="
+    if operator in ("<", "<=", "=", ">=", ">"):
+        return str(operator)
+    raise ValueError(f"unsupported input-space constraint operator {operator!r}")
+
+
 def _input_assertions(artifact: OnnxArtifact, coordinates: Sequence[_Coordinate]) -> list[str]:
     assertions: list[str] = []
     for suffix in ("a", "b"):
         for c in coordinates:
-            assertions.append(f"(>= {_var(c, suffix)} {_num(c.lower)})")
-            assertions.append(f"(<= {_var(c, suffix)} {_num(c.upper)})")
+            variable = _var(c, suffix)
+            assertions.append(f"(>= {variable} {_num(c.lower)})")
+            assertions.append(f"(<= {variable} {_num(c.upper)})")
+            slot = artifact.input_space.slot(c.signal)
+            if slot.kind in ("categorical", "boolean"):
+                values = tuple(
+                    1 if value is True else 0 if value is False else value for value in slot.values
+                )
+                terms = [f"(= {variable} {_num(value)})" for value in values]
+                assertions.append(terms[0] if len(terms) == 1 else f"(or {' '.join(terms)})")
         for constraint in artifact.input_space.constraints:
             if "signal" in constraint:
                 c = next(item for item in coordinates if item.signal == constraint["signal"])
@@ -331,7 +357,7 @@ def _input_assertions(artifact: OnnxArtifact, coordinates: Sequence[_Coordinate]
                 left = _var(left_c, suffix)
                 right_c = next(item for item in coordinates if item.signal == constraint["right"])
                 right = _var(right_c, suffix)
-            assertions.append(f"({constraint['op']} {left} {right})")
+            assertions.append(f"({_smt_operator(constraint['op'])} {left} {right})")
     return assertions
 
 
@@ -397,7 +423,26 @@ def _decoded_different(left: str, right: str, decoder: OutputDecoder) -> str:
     return terms[0] if len(terms) == 1 else f"(or {' '.join(terms)})"
 
 
+def _validate_vnnlib_text(text: str) -> None:
+    """Reject the small set of Python-shaped/malformed forms this compiler must never emit."""
+    declarations = re.findall(
+        r"^\(declare-fun ([A-Za-z_][A-Za-z0-9_]*) \(\) Real\)$", text, re.MULTILINE
+    )
+    if not declarations:
+        raise ValueError("compiled query has no valid VNN-LIB Real declarations")
+    if len(declarations) != len(set(declarations)):
+        raise ValueError("compiled query contains duplicate VNN-LIB identifiers")
+    if "(check-sat)" not in text:
+        raise ValueError("compiled query is missing the VNN-LIB check-sat command")
+    if "==" in text:
+        raise ValueError("compiled query uses Python equality instead of SMT equality")
+    if re.search(r"\b(?:None|True|False)\b", text):
+        raise ValueError("compiled query contains a non-SMT literal")
+
+
 def _query_text(variables: Sequence[str], assertions: Sequence[str], unsafe: str) -> str:
+    if len(variables) != len(set(variables)):
+        raise ValueError("compiled query contains colliding VNN-LIB identifiers")
     lines = ["; reasonsmith VNN-LIB 1.0", "; query describes the unsafe region"]
     lines.extend(f"(declare-fun {name} () Real)" for name in variables)
     lines.extend(f"(assert {assertion})" for assertion in assertions)
@@ -423,6 +468,7 @@ def _make_query(
             for suffix in ("a", "b"):
                 output_variables.append(f"{_safe_name(binding.name)}_{suffix}_{coordinate}")
     text = _query_text(variables + output_variables, assertions, unsafe)
+    _validate_vnnlib_text(text)
     required = tuple(assertions)
     return CompiledNeuralQuery(
         shape,
@@ -591,7 +637,25 @@ def compile_local_robustness_query(
 
 
 def validate_compiled_query(query: CompiledNeuralQuery) -> None:
-    """Reject query text mutants that drop equalities or widen declared bounds."""
+    """Reject query/model mutants before either verifier receives them."""
+    actual_model_sha256 = hashlib.sha256(query.artifact.model).hexdigest()
+    if query.artifact.model_sha256 != actual_model_sha256:
+        raise ValueError("artifact model_sha256 does not match embedded ONNX bytes")
+    if query.model_sha256 != actual_model_sha256:
+        raise ValueError("compiled query model_sha256 does not match its artifact")
+    actual_query_sha256 = hashlib.sha256(query.vnnlib.encode()).hexdigest()
+    if query.query_sha256 != actual_query_sha256:
+        raise ValueError("compiled query query_sha256 does not match VNN-LIB text")
+    expected_product = _copy_product_model(query.artifact)
+    if query.product_model != expected_product:
+        raise ValueError("compiled query product_model is not derived from its artifact model")
+    product_sha256 = hashlib.sha256(query.product_model).hexdigest()
+    recorded_product_sha256 = query.metadata.get("product_model_sha256")
+    if recorded_product_sha256 is None:
+        raise ValueError("compiled query is missing product_model_sha256")
+    if recorded_product_sha256 != product_sha256:
+        raise ValueError("compiled query product_model_sha256 does not match product_model")
+    _validate_vnnlib_text(query.vnnlib)
     for assertion in query.required_assertions:
         if f"(assert {assertion})" not in query.vnnlib:
             raise ValueError("compiled query lost a required declaration assertion")
@@ -655,6 +719,19 @@ def _decode(value: float, decoder: OutputDecoder) -> Any:
     return decoder.tie
 
 
+def _numpy_dtype(dtype: str) -> Any:
+    _require_onnx()
+    try:
+        return {
+            "float32": np.float32,
+            "float64": np.float64,
+            "int32": np.int32,
+            "int64": np.int64,
+        }[dtype]
+    except KeyError as exc:
+        raise ValueError(f"ONNX replay does not support tensor dtype {dtype!r}") from exc
+
+
 def _reference_replay(
     artifact: OnnxArtifact, values: Mapping[str, Any]
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -664,13 +741,7 @@ def _reference_replay(
 
     feeds: dict[str, Any] = {}
     for binding in artifact.inputs:
-        dtype = (
-            np.float32
-            if binding.dtype == "float32"
-            else np.float64
-            if binding.dtype == "float64"
-            else np.int64
-        )
+        dtype = _numpy_dtype(binding.dtype)
         array = np.zeros(binding.shape, dtype=dtype)
         for signal, coordinate in binding.coordinates.items():
             flat = _flat_coordinate(coordinate, binding.shape)
@@ -720,6 +791,17 @@ def check_witness(
                 return WitnessCheck(
                     False, "assignment violates categorical values or cross-input constraints"
                 )
+        unsupported_dtypes = {
+            binding.dtype
+            for binding in (*query.artifact.inputs, *query.artifact.outputs)
+            if binding.dtype not in _REPLAY_SUPPORTED_DTYPES
+        }
+        if unsupported_dtypes:
+            return WitnessCheck(
+                False,
+                "unsupported ONNX tensor dtype(s): "
+                + ", ".join(sorted(unsupported_dtypes)),
+            )
         if query.shape == QueryShape.COUNTERFACTUAL:
             protected = query.metadata["protected_signal"]
             if left[protected] == right[protected]:

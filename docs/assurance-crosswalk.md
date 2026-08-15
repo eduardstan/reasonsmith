@@ -9,8 +9,8 @@ A reference in this document means that a reasonsmith run can produce evidence u
 reader of that framework. It does not mean that the framework's outcome has been achieved.
 `partially` is intentional: the table names the missing part in the same line. A reasonsmith
 `Strength` (`observed`, `recounted`, `probed`, or `proved`) is an evidence rung, not a
-confidence score or an assurance-framework maturity level. `EvidenceBasis` (`behavioural`,
-`relational`, `artifact`, or `assessment`) says what the evidence is about; it is not another
+confidence score or an assurance-framework maturity level. `EvidenceBasis` (`behavioural`, `relational`,
+`artifact`, `assessment`, or `statistical`) says what the evidence is about; it is not another
 rank. `satisfied`, `violated`, `not applicable`, `unattainable`, and `not evaluated` retain the
 meanings in [`semantics.md`](semantics.md), and none is a certification result.
 

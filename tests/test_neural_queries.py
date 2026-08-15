@@ -14,6 +14,9 @@ from reasonsmith.neural_queries import (  # noqa: E402
     FakeOracle,
     QueryShape,
     VerifierRun,
+    _num,
+    _numpy_dtype,
+    _validate_vnnlib_text,
     check_witness,
     compile_counterfactual_query,
     compile_local_robustness_query,
@@ -273,3 +276,227 @@ def test_local_query_rejects_malformed_centres_radii_and_tolerance() -> None:
         compile_local_robustness_query(
             _artifact(), centre=base, radius=1, outcome_signal="outcome", output_tolerance=-1
         )
+
+
+@pytest.mark.parametrize("onnx_dtype", [TensorProto.FLOAT16, TensorProto.BFLOAT16])
+def test_witness_replay_refuses_unsupported_tensor_dtypes(onnx_dtype) -> None:
+    x = helper.make_tensor_value_info("x", onnx_dtype, [1])
+    y = helper.make_tensor_value_info("y", onnx_dtype, [1])
+    model = helper.make_model(
+        helper.make_graph([helper.make_node("Identity", ["x"], ["y"])], "dtype", [x], [y]),
+        opset_imports=[helper.make_opsetid("", 13)],
+    )
+    artifact = OnnxArtifact(
+        model=model.SerializeToString(),
+        inputs=[{"name": "x", "signal_map": {"feature": 0}}],
+        outputs=[
+            {
+                "name": "y",
+                "signal_map": {"out": 0},
+                "decoder": {
+                    "kind": "threshold",
+                    "threshold": 0.5,
+                    "low": "no",
+                    "high": "yes",
+                    "tie": "no",
+                },
+            }
+        ],
+        input_space=DeclaredInputSpace(
+            [{"signal": "feature", "type": "real", "lower": 0, "upper": 1}]
+        ),
+    )
+    query = compile_local_robustness_query(
+        artifact, centre={"feature": 0.9}, radius=0.1, outcome_signal="out", output_tolerance=0.5
+    )
+    witness = check_witness(query, {"x_a_0": 0.9, "x_b_0": 1.0})
+    assert not witness.valid
+    assert "tensor dtype(s)" in (witness.reason or "")
+
+
+def test_compiled_query_hashes_and_product_model_are_bound() -> None:
+    query = compile_counterfactual_query(_artifact(), outcome_signal="record")
+    with pytest.raises(ValueError, match="query_sha256"):
+        validate_compiled_query(replace(query, query_sha256="0" * 64))
+    with pytest.raises(ValueError, match="product_model"):
+        validate_compiled_query(replace(query, product_model=query.artifact.model))
+    other = _artifact(mode="negative")
+    with pytest.raises(ValueError, match="model_sha256"):
+        validate_compiled_query(replace(query, artifact=other))
+
+
+def test_vnnlib_compiler_refuses_identifier_collisions_and_maps_smt_equality() -> None:
+    x_dash = helper.make_tensor_value_info("x-a", TensorProto.FLOAT, [1])
+    x_under = helper.make_tensor_value_info("x_a", TensorProto.FLOAT, [1])
+    y = helper.make_tensor_value_info("y", TensorProto.FLOAT, [1])
+    model = helper.make_model(
+        helper.make_graph(
+            [helper.make_node("Identity", ["x-a"], ["y"])],
+            "collision",
+            [x_dash, x_under],
+            [y],
+        ),
+        opset_imports=[helper.make_opsetid("", 13)],
+    )
+    space = DeclaredInputSpace(
+        [
+            {"signal": "left", "type": "real", "lower": 0, "upper": 1},
+            {"signal": "right", "type": "real", "lower": 0, "upper": 1},
+        ],
+        constraints=({"signal": "left", "op": "==", "value": 0},),
+    )
+    artifact = OnnxArtifact(
+        model=model.SerializeToString(),
+        inputs=[
+            {"name": "x-a", "signal_map": {"left": 0}},
+            {"name": "x_a", "signal_map": {"right": 0}},
+        ],
+        outputs=[
+            {
+                "name": "y",
+                "signal_map": {"out": 0},
+                "decoder": {
+                    "kind": "threshold",
+                    "threshold": 0,
+                    "low": "no",
+                    "high": "yes",
+                    "tie": "no",
+                },
+            }
+        ],
+        input_space=space,
+    )
+    with pytest.raises(ValueError, match="colliding"):
+        compile_monotonicity_query(artifact, feature="left", outcome_signal="out")
+
+    query = compile_monotonicity_query(
+        _artifact(constraints=({"signal": "feature", "op": "==", "value": 0},)),
+        feature="feature",
+        outcome_signal="outcome",
+    )
+    assert "(==" not in query.vnnlib
+    assert "(= x_a_0 0)" in query.vnnlib
+
+
+def test_neural_input_enum_types_are_not_smuggled_into_numeric_vnnlib() -> None:
+    with pytest.raises(ValueError, match="string-enum values"):
+        DeclaredInputSpace([{"signal": "x", "type": "string-enum", "values": [1]}])
+    with pytest.raises(ValueError, match="boolean values"):
+        DeclaredInputSpace([{"signal": "x", "type": "boolean", "values": [0, 1]}])
+
+
+def test_vnnlib_preserves_finite_numeric_enum_domains() -> None:
+    base = _artifact()
+    artifact = OnnxArtifact(
+        model=base.model,
+        inputs=[{"name": "x", "signal_map": {"feature": 0, "applicant_prohibited_basis": 1}}],
+        outputs=[
+            {
+                "name": "y",
+                "signal_map": {"outcome": 0, "record": 1},
+                "decoder": {
+                    "outcome": {
+                        "kind": "threshold",
+                        "threshold": 0,
+                        "low": "no",
+                        "high": "yes",
+                        "tie": "no",
+                    },
+                    "record": {
+                        "kind": "threshold",
+                        "threshold": 0.5,
+                        "low": "no",
+                        "high": "yes",
+                        "tie": "no",
+                    },
+                },
+            }
+        ],
+        input_space=DeclaredInputSpace(
+            [
+                {
+                    "signal": "feature",
+                    "type": "categorical",
+                    "lower": 0,
+                    "upper": 2,
+                    "values": [0, 2],
+                },
+                {
+                    "signal": "applicant_prohibited_basis",
+                    "type": "categorical",
+                    "lower": 0,
+                    "upper": 1,
+                    "values": [0, 1],
+                },
+            ]
+        ),
+    )
+    query = compile_monotonicity_query(artifact, feature="feature", outcome_signal="outcome")
+    assert "(or (= x_a_0 0) (= x_a_0 2))" in query.vnnlib
+    witness = check_witness(query, {"x_a_0": 1, "x_a_1": 0, "x_b_0": 2, "x_b_1": 0})
+    assert not witness.valid
+    assert "categorical" in (witness.reason or "")
+
+
+def test_string_enum_input_is_refused_before_numeric_vnnlib() -> None:
+    base = _artifact()
+    artifact = OnnxArtifact(
+        model=base.model,
+        inputs=[{"name": "x", "signal_map": {"feature": 0, "applicant_prohibited_basis": 1}}],
+        outputs=[
+            {
+                "name": "y",
+                "signal_map": {"outcome": 0, "record": 1},
+                "decoder": {
+                    "outcome": {
+                        "kind": "threshold",
+                        "threshold": 0,
+                        "low": "no",
+                        "high": "yes",
+                        "tie": "no",
+                    },
+                    "record": {
+                        "kind": "threshold",
+                        "threshold": 0.5,
+                        "low": "no",
+                        "high": "yes",
+                        "tie": "no",
+                    },
+                },
+            }
+        ],
+        input_space=DeclaredInputSpace(
+            [
+                {"signal": "feature", "type": "string-enum", "values": ["a"]},
+                {
+                    "signal": "applicant_prohibited_basis",
+                    "type": "categorical",
+                    "lower": 0,
+                    "upper": 1,
+                    "values": [0, 1],
+                },
+            ]
+        ),
+    )
+    with pytest.raises(ValueError, match="cannot encode string-enum"):
+        compile_monotonicity_query(artifact, feature="feature", outcome_signal="outcome")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "(assert (= x 0))\n(check-sat)\n",
+        "(declare-fun x () Real)\n(assert (== x 0))\n",
+        "(declare-fun x () Real)\n(assert (>= x None))\n",
+    ],
+)
+def test_vnnlib_shape_validator_rejects_malformed_literals(text) -> None:
+    with pytest.raises(ValueError):
+        _validate_vnnlib_text(text)
+
+
+def test_numeric_vnnlib_helpers_reject_non_numeric_values() -> None:
+    with pytest.raises(ValueError):
+        _num(None)
+    with pytest.raises(ValueError):
+        _numpy_dtype("uint8")

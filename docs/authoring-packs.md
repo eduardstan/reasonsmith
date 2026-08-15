@@ -59,7 +59,7 @@ requirement whose property is the first one written differently, and a duty whos
 evidence could make matter. Findings do not change the exit code; they are for you to read.
 Add `--system-module <module>:<attribute>` as well — which imports and executes that module — and
 vacuity is asked over the inputs that system's declared logic admits, and each duty gets a mutation
-score against single-point mutants of that system's rules. `docs/semantics.md` §8 states what each
+score against single-point mutants of that system's rules. [`theory/04-decision-problems.md`](theory/04-decision-problems.md) §4.6 states what each
 answer means, and what a mutation score is not.
 
 ## Structure
@@ -106,7 +106,7 @@ codebase acts on when it does not.
 | `source_document`, `article_clause` | The statute and clause the duty comes from. Together they are the citation a finding is reported against. |
 | `verbatim_text` | The exact words of the clause, quoted for the report. |
 | `stakeholder` | Whose interest the duty protects. |
-| `formalism` | Which **fragment** of the property language `spec` is written in: `record` (a conjunction of `present(signal)` atoms), `temporal` (anything using a temporal operator), `logical` (any other property of one decision record), `counterfactual` (the one relational atom), `undetermined` and `graded` (predicates the law states without a sharp boundary — see "A predicate the law states without a boundary" below). It says what the property *is*; it does not decide which engine answers it. The loader parses `spec`, works out the fragment and refuses a mismatch. |
+| `formalism` | Which **fragment** of the property language `spec` is written in: `record` (a conjunction of `present(signal)` atoms), `temporal` (anything using a temporal operator), `logical` (any other property of one decision record), `counterfactual` (the one relational atom), `statistical` (the whole-spec `selection_rate_ratio()` measurement), and `undetermined` and `graded` (predicates the law states without a sharp boundary — see "A predicate the law states without a boundary" below). It says what the property *is*; it does not decide which engine answers it. The loader parses `spec`, works out the fragment and refuses a mismatch. |
 | `spec` | The property, as a formula. Never prose — see "One property language" below. |
 | `rationale` | What the duty asks, in English, for a human reading the pack. Nothing derives a verdict from its wording. |
 | `requires` | The signal names the system must be capable of emitting for the requirement to be checkable at all. A system missing one is reported unattainable on the missing signal, without being run. It is a conjunction — see "An either/or clause" below before listing a branch of one here. |
@@ -130,7 +130,7 @@ presence atoms (`present(signal)`), phrase atoms (`contains(signal, "literal")`)
 signal values, boolean connectives and arrows, the temporal operators, and the rulelang calls
 `implies`, `abs`, `min`, `max`. The arrows are `->` / `=>` / ` implies ` for implication and `<=>` /
 `<->` for equivalence; both are connectives and neither is a comparison, so `<=>` is admitted in a
-graded `spec` where `==` between two degrees is not (below, and [`semantics.md`](semantics.md) §2). Every name in it is
+graded `spec` where `==` between two degrees is not (below, and [`theory/08-evidence.md`](theory/08-evidence.md) §8.4). Every name in it is
 resolved against the decision record the system produces, so the names in `spec`, the names in
 `requires` and the names the system's `logic()` declares are one vocabulary, not three — and the
 loader refuses a `spec` reading an *unconditional* signal `requires` does not gate.
@@ -145,7 +145,7 @@ Two load-time checks make `formalism` mean something:
   exact and not merely compatible: a presence conjunction is also a well-formed `logical` property,
   and accepting it as one would cost the record engine's per-signal, per-record diagnostics.
 
-There are three further fragments and each behaves unlike the first three.
+There are four further fragments and each behaves unlike the first three.
 `counterfactually_invariant(outcome_signal, protected_signal)` — hold every input fixed, move one
 named variable, and the decision must not move — is a property of a *pair* of executions and
 classifies into `counterfactual`. Both arguments are signal names and never expressions, the two
@@ -154,20 +154,24 @@ or a temporal quantification over it is a load error rather than a duty nothing 
 ladder has no trace rung at all, so a system exposing neither `logic()` nor `decide()` is reported
 *not evaluated* however long its log, and a system whose declared logic has no notion of the
 protected variable is reported *unattainable* rather than satisfied. Writing one means reading
-`docs/semantics.md` §3, *counterfactual*, first — in particular that the protected variable is an
+[`theory/04-decision-problems.md`](theory/04-decision-problems.md) §4.4, *counterfactual*, first — in particular that the protected variable is an
 input the decision procedure accepts and **not** a field a decision record should be made to carry.
 Both names still belong in `requires` — the protected one is what the engine reports as missing
 when a system has no notion of it — but it is the single name the capability gate does not
 subtract, so a duty written this way never tells an adopter to start logging a prohibited basis.
 
-The fifth and sixth are `undetermined` and `graded`, for predicates the law states without a sharp
-boundary; both are below, under *A predicate the law states without a boundary*.
+The fifth fragment is `statistical`: `selection_rate_ratio(outcome_signal, group_signal)` is a
+whole-spec measurement of declared groups, sampling uncertainty, and authority provenance. It is
+reported as measurement-only with `decision_rule = null`, never as a satisfied or violated
+population claim. The sixth and seventh are `undetermined` and `graded`, for predicates the law
+states without a sharp boundary; both are below, under *A predicate the law states without a sharp
+boundary*.
 
 **The fragment does not pick the engine.** How strongly a duty can be discharged is a fact about the
 system under test, not about the pack: `report._engine_ladder` collects every engine the fragment
 and the system's exposed surface allow, and takes the strongest evidence produced. A presence
 property is `observed` against a trace, `probed` against a system exposing `decide()`, and `proved`
-against one exposing `logic()`. `docs/semantics.md` §3.5 states the rule, its limits, and the one
+against one exposing `logic()`. [`theory/05-decision-procedures.md`](theory/05-decision-procedures.md) §5.1 states the rule, its limits, and the one
 duty given a ladder of a single rung — where a weaker engine would answer a *different* property
 under the same duty's name rather than the same one with weaker evidence.
 
@@ -217,7 +221,7 @@ monthly evidence.
 Most of what a shipped pack has left out is not a construct. It is a *predicate*: *meaningful*,
 *sufficiently detailed*, *adequate*, *appropriate*. Twenty-eight of the thirty-seven shipped
 requirements are presence checks and the fourth column of [`refinement.md`](refinement.md) says so
-row after row. There are two ways to write one, and both are the fifth and sixth fragments.
+row after row. There are two ways to write one, and they are the sixth and seventh fragments.
 
 **`undetermined(signal, "predicate", "authority")`** says this tool does not settle the predicate
 and names who does. The duty is reported *not evaluated*, the result names both, and the reader is
@@ -256,7 +260,7 @@ is admitted. The difference is what the author wrote, and `==` still gets the re
 
 **Nothing turns a degree into a verdict**, here or anywhere. A graded duty is reported *not
 evaluated* with the degree carried beside it as a measurement, and what discharges the duty is a
-legal reading. Read [`semantics.md`](semantics.md) §9 in full before writing either atom — in
+legal reading. Read [`theory/08-evidence.md`](theory/08-evidence.md) §8.5 in full before writing either atom — in
 particular the presentation rule, which is why a degree never appears in a report without the
 authority, scale, method and algebra that fixed it.
 
@@ -277,14 +281,14 @@ threshold. Quote the clause in `verbatim_text`, put the phrase in the `spec`, an
 
 **Never ask the system to grade itself.** A signal such as `reason_is_specific` would make the
 verdict a restatement of the system's own opinion of itself. reasonsmith checks what a system says,
-not whether it was honest (`docs/semantics.md` §3), and a self-declared adequacy flag is not an
+not whether it was honest ([`docs/semantics.md`](semantics.md) §4), and a self-declared adequacy flag is not an
 adequacy check.
 
 **What the atom does and does not do.** It is a substring test with ASCII case folding: it does not
 paraphrase, so a clause's meaning expressed in other words passes. A non-ASCII phrase is refused at
 load time, because the fold must stay reproducible character-for-character by the solver. A record
 carrying no value for the signal contains no phrase, which is what lets an implication guarded by
-`present()` express a clause that only bites in some circumstances — read `docs/semantics.md` §4
+`present()` express a clause that only bites in some circumstances — read [`docs/semantics.md`](semantics.md) §1
 before relying on that: a duty whose trigger fires nowhere is reported *not evaluated* at every
 rung, so a pack that guards a duty this way buys the correct absence of a false violation and loses
 the clean line the duty used to get where the clause never bit.
@@ -382,7 +386,7 @@ Three rules follow from that, and each is a test:
   nothing about the system was checked and no strength may be claimed — the same answer, and the
   same wording discipline, the class gate already gives an undeclared class. The reason string says
   which of the two ways it failed to reach, so *not applicable* is never read as *cleared*
-  (`docs/semantics.md` §4, `test_an_undeclared_system_cannot_reach_satisfied_on_a_domain_limited_duty`).
+  ([`docs/semantics.md`](semantics.md) §1, `test_an_undeclared_system_cannot_reach_satisfied_on_a_domain_limited_duty`).
 - **`domains = []` is a wildcard, and it is a classification.** A duty about no particular kind of
   decision reaches every system, including one that declares nothing — GDPR Article 22 governs a
   solely-automated decision whatever it is about. That behaviour is safe only because it has to be
@@ -444,7 +448,7 @@ exist, and both are narrower than the hazard:
 - **The computed-magnitude guard on `proved`.** The proof rung refuses a property that reads free
   names as magnitudes when the system's declared rules assign none of them, on the ground that
   arithmetic over numbers nobody computed is not a fact about the system
-  (`docs/semantics.md` §3.5, *When the magnitudes are not the system's own*). So a parity spec does
+  ([`theory/05-decision-procedures.md`](theory/05-decision-procedures.md) §5.2, *When the magnitudes are not the system's own*). So a parity spec does
   not reach `proved` through a system whose rules never derive the rates. It says nothing about the
   `observed` rung, which reads the trace as written and answers.
 
