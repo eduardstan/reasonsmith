@@ -23,7 +23,7 @@ jobs:
       # Environment Setup"), plus the
       # `build` frontend that provides `python -m build`. nesyarena is pinned to exact 0.1.0 on
       # PyPI in pyproject.toml, so this environment and a local one resolve to the same code.
-      - run: pip install -e ".[dev,neural]" build
+      - run: pip install -e ".[dev,neural,pdf]" build
       - run: ruff check .
       # The same measured 95% floor `ci.yml` runs, compared at the precision
       # `[tool.coverage.report]` sets.
