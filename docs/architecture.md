@@ -151,6 +151,7 @@ flowchart TB
     verdict --> auditor
     verdict --> regulator
     verdict --> individual
+    developer ~~~ deployer ~~~ auditor ~~~ regulator ~~~ individual
 
     classDef outcome fill:#fff8e7,stroke:#9a6700,color:#16181d
     classDef audience fill:#ffffff,stroke:#16181d,color:#16181d
