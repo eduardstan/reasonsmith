@@ -20,9 +20,10 @@ def test_the_study_publishes_the_complete_current_corpus_and_rates():
     assert "37 challenge sets" in document
     for phrase in ("28 record-presence", "4 logical", "temporal, and", "1 counterfactual"):
         assert phrase in document
-    assert "exact-match rate is **9/37 (24.32%)**" in document
-    assert "**11/37 (29.73%)**" in document
+    assert "31/37 (83.78%) exact-match" in document
+    assert "36/37 (97.30%)" in document
     assert "25 unavailable" in document
+    assert "36/36" in document
 
 
 def test_the_authoring_docs_link_the_worked_path_and_keep_the_safety_boundary():
