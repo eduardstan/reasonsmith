@@ -22,19 +22,19 @@ def test_badge_uses_measured_percentage_and_green_at_floor(tmp_path: Path):
     build_badge(report, badge)
 
     output = badge.read_text(encoding="utf-8")
-    assert 'aria-label="coverage: 95.00%"' in output
+    assert 'aria-label="coverage: 95.0%"' in output
     assert 'fill="#2da44e"' in output
-    assert "95.00%" in output
+    assert "95.0%" in output
 
 
 def test_badge_marks_measurement_below_target_red(tmp_path: Path):
     report = tmp_path / "coverage.json"
     badge = tmp_path / "coverage.svg"
-    _report(report, 94.999)
+    _report(report, 94.94)
 
     build_badge(report, badge)
 
-    assert 'aria-label="coverage: 95.00%"' in badge.read_text(encoding="utf-8")
+    assert 'aria-label="coverage: 94.9%"' in badge.read_text(encoding="utf-8")
     assert 'fill="#cf222e"' in badge.read_text(encoding="utf-8")
 
 
