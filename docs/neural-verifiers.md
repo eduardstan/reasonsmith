@@ -48,3 +48,34 @@ an admission risk, not a footnote; alpha-beta-CROWN is the planned first `proved
 
 The real integration fixture is skipped unless `marabou --version` reports exactly `2.0.0`; CI uses
 mocked subprocesses for the failure taxonomy, so the base test suite never requires Marabou.
+
+## alpha-beta-CROWN (slice 6)
+
+The second adapter is `reasonsmith.neural_verifiers.AlphaBetaCrownVerifier`, an optional
+out-of-process bridge. It pins the upstream repository at commit
+`e5c7e17bf0488843acb77b7519f59876717a49f4` (package metadata `abcrown==0.7.0`; the upstream
+repository publishes no release tags) and VNN-LIB 1.0. It writes the embedded ONNX and generated
+query to a private directory and invokes `complete_verifier/abcrown.py` without a shell.
+alpha-beta-CROWN, PyTorch, CUDA, Gurobi, and CPLEX are not reasonsmith dependencies. Proprietary
+solver modes are explicitly disabled.
+
+Native statuses are retained in `VerifierRun.provenance["native_status"]` and are not collapsed:
+`unsafe-pgd` and `unsafe-bab` are SAT candidates requiring `verify_query`/`check_witness` replay;
+`safe-incomplete` is an incomplete bound and never a proof; `safe`/`complete-safe` are proof
+candidates only when an explicitly admitted complete configuration is used; timeout and unknown
+remain non-verdict statuses. The current pinned installation did not pass the runner preflight, so
+the adapter's honest ceiling is `probed` and complete mode is refused.
+
+The differential helpers in `neural_verifiers.differential` compare two raw or replayed runs. They
+never vote: a semantic disagreement, or an agreement where either run is not verdict-eligible,
+sets `stronger_allowed=False` and carries a diagnostic requiring the witness or
+query/configuration to be reproduced.
+
+## Optional-install evidence
+
+The pinned alpha-beta-CROWN source was cloned at the commit above and installation was attempted
+from this runner's Python 3.12.9 environment. Pip refused the package metadata before dependency
+resolution because the project requires Python `~=3.11.0`; no verifier executable was produced and
+no complete corpus run was possible. The full attempt and hashes are recorded in
+[`docs/neural-soundness-corpus.md`](neural-soundness-corpus.md). CI therefore mocks subprocesses for
+all alpha-beta-CROWN status/configuration tests, just as it does for Marabou.

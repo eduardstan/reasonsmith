@@ -74,3 +74,47 @@ could not pass on that path, `MarabouVerifier.max_strength` stays `probed`, `mod
 `{bounded-search}`, and `COMPLETE_MODE` remains refused. The VNN-COMP 2024 soundness incident
 remains a gating risk rather than a footnote. The first `proved` integration is deferred to
 alpha-beta-CROWN in slice 6; see ROADMAP objective 8 and the slice-4 fallback note there.
+
+
+# alpha-beta-CROWN slice-6 gate
+
+The same six pinned finite-reference cases and assertion-order mutants were selected for the
+second verifier. The adapter was not admitted at `proved`: the pinned upstream repository has no
+release tags, so this gate pins immutable source commit
+`e5c7e17bf0488843acb77b7519f59876717a49f4` (package metadata `abcrown==0.7.0`;
+`complete_verifier.__version__` reports `0.7.2`).
+
+## Installation evidence
+
+| item | value |
+|---|---|
+| alpha-beta-CROWN source commit | `e5c7e17bf0488843acb77b7519f59876717a49f4` |
+| auto_LiRPA submodule commit | `5a098e8f9fb5786a428a024981d833d303921f2d` |
+| package metadata | `abcrown==0.7.0` |
+| VNN-LIB profile | `1.0` |
+| runner Python | `3.12.9` |
+| installation command | `python -m pip install -e . --no-deps` |
+| attempt log SHA-256 | `6fbc6ec7618ce5291ca00ab7d66645ba6d99cc51af845225f0e65964458c5dc1` |
+| result | refused by Python requirement `~=3.11.0`; exit 1 |
+| proprietary solver modes | Gurobi and CPLEX disabled |
+
+The command was run from a recursive clone of the pinned source in the worktree. Pip refused the
+package metadata before dependency resolution because this runner is Python 3.12.9 and the pinned
+project requires Python 3.11 (`~=3.11.0`). No alpha-beta-CROWN executable was installed, so no
+complete-mode corpus run could be performed. This is an unavailable gate, not a clean pass.
+
+## Mapping and admission
+
+The adapter preserves native statuses in every run: `unsafe-pgd`, `unsafe-bab`,
+`safe-incomplete`, complete-safe (`safe`/`verified`), timeout, and unknown have distinct native
+labels and provenance semantics. Unsafe output is only a candidate until the existing witness
+checker replays it; `safe-incomplete` is never a proof. Complete-safe can become verdict-eligible
+only after an explicit complete configuration is admitted by this corpus gate. Since installation
+failed, `AlphaBetaCrownVerifier.max_strength` remains `probed` and its complete mode remains
+refused.
+
+Both adapters use the same compiled model/query fixtures. The differential check is diagnostic
+only: if semantic outcomes disagree, no stronger result is allowed until the witness or the
+query/configuration is reproduced and explained. It never chooses a majority result.
+
+The executable helper `run_differential_corpus` in `tests/neural_soundness_corpus.py` feeds each original and assertion-order variant to both adapters and returns only agreement/diagnostic metadata; it never selects a winner.

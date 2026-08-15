@@ -341,6 +341,15 @@ neural verdict moved. The evidence and exact hashes are in
 alpha-beta-CROWN as the first `proved` integration in slice 6, subject to its own explicit status
 and soundness gate.
 
+**Slice-6 gate result.** The independent alpha-beta-CROWN adapter and differential corpus are now
+implemented. The upstream repository has no release tag; the adapter pins source commit
+`e5c7e17bf0488843acb77b7519f59876717a49f4` (with auto_LiRPA submodule
+`5a098e8f9fb5786a428a024981d833d303921f2d`). Installation was attempted on Python 3.12.9 but
+pip refused its `~=3.11.0` requirement before dependency resolution. The adapter therefore remains
+at its honest `probed` ceiling, complete mode is refused, and no neural verdict moved. Native
+unsafe/safe-incomplete/complete-safe/timeout/unknown statuses remain distinct; disagreements are
+diagnostic and block stronger results. See [`docs/neural-soundness-corpus.md`](docs/neural-soundness-corpus.md).
+
 ## 9. A safety-commitments pack
 
 **The gap.** Objective 4 sets the admission bar itself: a sixth pack must say which duty reaches

@@ -27,7 +27,9 @@ from reasonsmith.neural_queries import (  # noqa: E402
     compile_local_robustness_query,
     compile_monotonicity_query,
 )
+from reasonsmith.neural_verifiers.differential import compare_runs  # noqa: E402
 from reasonsmith.neural_verifiers.marabou import (  # noqa: E402
+    BOUNDED_SEARCH_MODE,
     COMPLETE_MODE,
     MARABOU_VERSION,
     VNNLIB_VERSION,
@@ -159,25 +161,41 @@ def _cases() -> tuple[CorpusCase, ...]:
     decreasing = _artifact(operation="neg")
     increasing = _artifact()
     queries = (
-        ("counterfactual-sat-discriminatory", compile_counterfactual_query(
-            discriminatory, outcome_signal="artifact_logs_decision_record"
-        )),
-        ("counterfactual-unsat-constant", compile_counterfactual_query(
-            constant_pair, outcome_signal="artifact_logs_decision_record"
-        )),
-        ("monotonicity-sat-decreasing", compile_monotonicity_query(
-            decreasing, feature="feature", outcome_signal="score"
-        )),
-        ("monotonicity-unsat-increasing", compile_monotonicity_query(
-            increasing, feature="feature", outcome_signal="score"
-        )),
-        ("linf-sat-identity", compile_local_robustness_query(
-            increasing, centre={"feature": 0}, radius=1, outcome_signal="score"
-        )),
-        ("linf-unsat-constant", compile_local_robustness_query(
-            _artifact(operation="constant"), centre={"feature": 0}, radius=1,
-            outcome_signal="score"
-        )),
+        (
+            "counterfactual-sat-discriminatory",
+            compile_counterfactual_query(
+                discriminatory, outcome_signal="artifact_logs_decision_record"
+            ),
+        ),
+        (
+            "counterfactual-unsat-constant",
+            compile_counterfactual_query(
+                constant_pair, outcome_signal="artifact_logs_decision_record"
+            ),
+        ),
+        (
+            "monotonicity-sat-decreasing",
+            compile_monotonicity_query(decreasing, feature="feature", outcome_signal="score"),
+        ),
+        (
+            "monotonicity-unsat-increasing",
+            compile_monotonicity_query(increasing, feature="feature", outcome_signal="score"),
+        ),
+        (
+            "linf-sat-identity",
+            compile_local_robustness_query(
+                increasing, centre={"feature": 0}, radius=1, outcome_signal="score"
+            ),
+        ),
+        (
+            "linf-unsat-constant",
+            compile_local_robustness_query(
+                _artifact(operation="constant"),
+                centre={"feature": 0},
+                radius=1,
+                outcome_signal="score",
+            ),
+        ),
     )
     return tuple(
         CorpusCase(name, query, _finite_reference(query), _finite_reference(query))
@@ -261,6 +279,42 @@ def run_complete_corpus(*, executable: str = "marabou") -> dict[str, Any]:
         "available": available,
         "clean": agrees,
         "results": results,
+    }
+
+
+def run_differential_corpus(
+    marabou_verifier: Any, abcrown_verifier: Any, *, mode: str = BOUNDED_SEARCH_MODE
+) -> dict[str, Any]:
+    """Run both optional adapters over exactly the same pinned cases and variants.
+
+    This helper is diagnostic: it never selects a verifier's answer. ``stronger_allowed`` is true
+    only when the two semantic outcomes agree and both raw runs explicitly mark themselves
+    verdict-eligible. Callers must still use ``verify_query`` for SAT witness replay.
+    """
+    rows: list[dict[str, Any]] = []
+    for case in _cases():
+        for variant, query in (("original", case.query), ("assertion-order", _mutant(case.query))):
+            left = marabou_verifier.verify(query, mode=mode, timeout=30)
+            right = abcrown_verifier.verify(query, mode=mode, timeout=30)
+            differential = compare_runs(left, right)
+            rows.append(
+                {
+                    "case": case.name,
+                    "variant": variant,
+                    "model_sha256": query.model_sha256,
+                    "query_sha256": query.query_sha256,
+                    "marabou_status": left.status,
+                    "abcrown_status": right.status,
+                    "agreement": differential.agreement,
+                    "stronger_allowed": differential.stronger_allowed,
+                    "diagnostic": differential.diagnostic,
+                }
+            )
+    return {
+        "corpus_version": CORPUS_VERSION,
+        "cases": rows,
+        "all_agree": all(row["agreement"] for row in rows),
+        "stronger_allowed": all(row["stronger_allowed"] for row in rows),
     }
 
 

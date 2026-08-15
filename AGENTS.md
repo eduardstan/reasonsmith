@@ -826,7 +826,7 @@ model-free checker and `proposer._challenge_prompt` presents each shape. Update 
 
 ## Neural verifier boundary
 
-The optional Marabou bridge is `src/reasonsmith/neural_verifiers/marabou.py`, documented in `docs/neural-verifiers.md`: it is an out-of-process oracle pinned to Marabou 2.0.0/VNN-LIB 1.0, bounded-search only, and never a verdict engine. SAT must pass the existing `neural_queries.verify_query` witness replay; bounded UNSAT is provenance only. Keep this boundary intact until the design’s slice-4 soundness gate.
+The optional Marabou bridge is `src/reasonsmith/neural_verifiers/marabou.py`, documented in `docs/neural-verifiers.md`: it is an out-of-process oracle pinned to Marabou 2.0.0/VNN-LIB 1.0, bounded-search only, and never a verdict engine. SAT must pass the existing `neural_queries.verify_query` witness replay; bounded UNSAT is provenance only. Keep this boundary intact until the design’s slice-4 soundness gate. The alpha-beta-CROWN bridge is the independent slice-6 adapter in `src/reasonsmith/neural_verifiers/alpha_beta_crown.py`; its upstream source commit, status mapping, and failed Python 3.12 install gate are recorded in `docs/neural-soundness-corpus.md`. Preserve the native-status distinction, SAT replay requirement, and differential disagreement block.
 
 ## Maintaining this file
 
