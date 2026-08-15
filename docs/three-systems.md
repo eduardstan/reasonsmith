@@ -18,12 +18,12 @@ binding duty**. They come back at three different rungs of the evidence lattice.
 | probabilistic log-odds scorer, in-process | [`probabilistic_scorer.py`](../src/reasonsmith/examples/probabilistic_scorer.py) | `decisions()` + `decide(case)` replay | `probed`, carrying its search budget |
 | symbolic underwriting rule set | [`symbolic_rules.py`](../src/reasonsmith/examples/symbolic_rules.py) | `decisions()` + `logic()` | `proved`, over every input the constraints admit |
 
-> **Produced with reasonsmith `0.10.1` — the version of the tree these blocks were generated
+> **Produced with reasonsmith `0.10.2` — the version of the tree these blocks were generated
 > from.** Every block below ran on that version, and the pins hold the page to it. If the same
 > command prints differently under your own install, your `reasonsmith` is a different version
 > than this page describes — check `pip show reasonsmith` before reading anything into the
 > difference. A mismatch against an older release means this page is ahead of your package, not
-> that your install is broken; upgrade to `0.10.1` or newer and re-run before comparing.
+> that your install is broken; upgrade to `0.10.2` or newer and re-run before comparing.
 
 Every block below is stdout pasted unedited from a real run.
 `tests/test_docs_three_systems.py` re-runs all three commands and holds each committed block to

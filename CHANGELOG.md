@@ -8,6 +8,12 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-08-15
+
+### Fixed
+
+- The release publish workflow now installs the `pdf` extra, so the release build tests the same environment as CI and the package publishes to PyPI. v0.10.0 and v0.10.1 were tagged but not published because the release build was missing that extra. ([#235](https://github.com/eduardstan/reasonsmith/pull/235))
+
 ## [0.10.1] - 2026-08-15
 
 ### Changed
@@ -1588,6 +1594,7 @@ for the log's directory.
   applicable. `reasonsmith` never infers a system's decision domain.
   ([#63](https://github.com/eduardstan/reasonsmith/pull/63))
 
-[Unreleased]: https://github.com/eduardstan/reasonsmith/compare/v0.10.1...HEAD
+[Unreleased]: https://github.com/eduardstan/reasonsmith/compare/v0.10.2...HEAD
+[0.10.2]: https://github.com/eduardstan/reasonsmith/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/eduardstan/reasonsmith/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/eduardstan/reasonsmith/compare/v0.9.2...v0.10.0
