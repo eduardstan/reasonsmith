@@ -38,6 +38,7 @@ from reasonsmith.report import (
     CERTIFICATES_KEY,
     OPEN_TEXTURE_KEY,
     PROBE_BUDGET_KEY,
+    STATISTICAL_MEASUREMENT_KEY,
     TRUTH_DEGREE_KEY,
     ConformanceReport,
     certificate_findings,
@@ -275,6 +276,33 @@ def _budget_line(budget: Mapping[str, Any]) -> str:
     )
 
 
+def statistical_sentence(measurement: Mapping[str, Any]) -> str:
+    """Render a statistical measurement without turning it into a verdict."""
+    metric = measurement.get("metric", {})
+    confidence = measurement.get("confidence", {})
+    ratio = metric.get("point_estimate")
+    interval = confidence.get("ratio_interval")
+    plan = measurement.get("sampling_assumption", {})
+    plan_name = plan.get("design", "undeclared") if isinstance(plan, Mapping) else "undeclared"
+    estimate = "not identified" if ratio is None else f"{float(ratio):.6g}"
+    bound = (
+        "not established"
+        if interval is None
+        else f"[{float(interval[0]):.6g}, {float(interval[1]):.6g}]"
+    )
+    level = confidence.get("level")
+    level_text = (
+        "no declared confidence level"
+        if level is None
+        else f"{float(level):.6g} confidence"
+    )
+    return (
+        f"selection-rate ratio estimate {estimate}; simultaneous interval {bound} ({level_text}, "
+        f"plan {plan_name}). This is a measurement, not a verdict; its coverage speaks only under "
+        "the declared sampling plan, and supplied records are not called representative."
+    )
+
+
 def degree_sentence(reading: Mapping[str, Any]) -> str:
     """The one rendering of a truth degree there is, in text and in HTML alike.
 
@@ -324,6 +352,12 @@ _BASIS_SENTENCES = {
         "assessment — this duty rests on how an open-textured predicate applies, which a named "
         "authority settles and no engine here does. No rung of the strength lattice ranks it, "
         "because the lattice ranks ways of interrogating a system and no system was interrogated"
+    ),
+    EvidenceBasis.STATISTICAL: (
+        "statistical — this duty measures a declared sample and its population-shaped estimand; "
+        "the first wave admits no strength rung, so the measurement remains beside not evaluated. "
+        "Its interval speaks only under the declared sampling plan and supplied records are not "
+        "called representative"
     ),
 }
 
@@ -375,6 +409,7 @@ _CATEGORY_PILL_STYLE = {
     # is a *kind* of evidence and not a rank, and an icon from the lattice row above would put it
     # in the ladder. See `basis_sentence`.
     "on_an_assessment": ("inconclusive", "≈"),
+    "on_a_statistical_measurement": ("inconclusive", "∿"),
     "unattainable": ("unattainable", "⊘"),
     "not_applicable": ("not-applicable", "⊝"),
 }
@@ -561,6 +596,9 @@ def render_text(report: ConformanceReport, audience: str | None = None) -> str:
             reading = r.details.get(TRUTH_DEGREE_KEY)
             if view.evidence_summary and reading:
                 lines.append(f"    truth degree: {degree_sentence(reading)}")
+            measurement = r.details.get(STATISTICAL_MEASUREMENT_KEY)
+            if view.evidence_summary and measurement:
+                lines.append(f"    statistical measurement: {statistical_sentence(measurement)}")
             budget = r.details.get(PROBE_BUDGET_KEY)
             if view.probe_budget and budget:
                 lines.append(f"    probe budget: {_budget_line(budget)}")
@@ -970,6 +1008,15 @@ def render_html(
                     '<div class="callout-note">A degree is a distinct evidence basis, not a '
                     "rescaled verdict: it is not a percentage of compliance and it carries no rung "
                     "of the evidence lattice.</div>"
+                    "</div>"
+                )
+
+            measurement = r.details.get(STATISTICAL_MEASUREMENT_KEY)
+            if view.evidence_summary and measurement:
+                details_html += (
+                    '<div class="callout-box callout-probe">'
+                    "<strong>NOT EVALUATED — Statistical Measurement:</strong><br>"
+                    f"{html.escape(statistical_sentence(measurement))}"
                     "</div>"
                 )
 

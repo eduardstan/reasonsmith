@@ -84,6 +84,9 @@ CONTAINS_CALL = "contains"
 #: never from the trace. See `engines/counterfactual.py` and `docs/semantics.md` §3.
 COUNTERFACTUAL_CALL = "counterfactually_invariant"
 
+#: Narrow population aggregate atom; it is never evaluated per record.
+STATISTICAL_CALL = "selection_rate_ratio"
+
 #: The atom for a predicate the law states in words with no sharp boundary, which **no engine here
 #: settles** — `undetermined(signal, "predicate", "authority")`.
 #:
@@ -124,6 +127,7 @@ _SIGNAL_ARGUMENT_CALLS = (
     PRESENCE_CALL,
     CONTAINS_CALL,
     COUNTERFACTUAL_CALL,
+    STATISTICAL_CALL,
     UNDETERMINED_CALL,
     DEGREE_CALL,
 )
@@ -191,7 +195,15 @@ VALUE_CALLS = {"implies": 2, "Implies": 2, EQUIVALENCE_CALL: 2, "abs": 1, "min":
 #: discharge a duty, and neither of these may be discharged by any of them. A spec with no
 #: `degree()` atom can never be classified `graded`, which is the whole of the guarantee that a duty
 #: with a sharp boundary does not acquire a truth degree because the machinery now exists.
-FRAGMENTS = ("record", "logical", "temporal", "counterfactual", "undetermined", "graded")
+FRAGMENTS = (
+    "record",
+    "logical",
+    "temporal",
+    "counterfactual",
+    "statistical",
+    "undetermined",
+    "graded",
+)
 
 #: The fragments that are properties of a single decision record, and can therefore be discharged
 #: by an engine that reasons about one decision at a time (the solver, the replay search) as well
@@ -471,6 +483,32 @@ def counterfactual_atom(node: ast.AST) -> tuple[str, str] | None:
     ):
         return counterfactual_arguments(node)
     return None
+
+
+def statistical_atom(node: ast.AST) -> tuple[str, str] | None:
+    """Return the raw outcome/group signal pair for the whole statistical atom."""
+    if isinstance(node, ast.Expression):
+        return statistical_atom(node.body)
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == STATISTICAL_CALL
+    ):
+        if len(node.args) != 2 or not all(isinstance(arg, ast.Name) for arg in node.args):
+            raise UnsupportedConstructError(
+                f"{STATISTICAL_CALL}() takes exactly two signal names: {ast.unparse(node)!r}"
+            )
+        return (node.args[0].id, node.args[1].id)
+    return None
+
+
+def has_statistical_atom(node: ast.AST) -> bool:
+    return any(
+        isinstance(child, ast.Call)
+        and isinstance(child.func, ast.Name)
+        and child.func.id == STATISTICAL_CALL
+        for child in ast.walk(node)
+    )
 
 
 def has_counterfactual_atom(node: ast.AST) -> bool:
@@ -786,6 +824,9 @@ def expression_kind(node: ast.AST) -> str:
         if name == COUNTERFACTUAL_CALL:
             counterfactual_arguments(node)
             return "boolean"
+        if name == STATISTICAL_CALL:
+            statistical_atom(node)
+            return "boolean"
         if name == UNDETERMINED_CALL:
             undetermined_arguments(node)
             return "boolean"
@@ -825,6 +866,11 @@ def expression_kind(node: ast.AST) -> str:
 
 def validate_property(node: ast.AST) -> None:
     """Refuse a parsed expression that is not a Boolean property in this language."""
+    if has_statistical_atom(node) and statistical_atom(node) is None:
+        raise UnsupportedConstructError(
+            f"{STATISTICAL_CALL}() is a population measurement and must be the whole of a spec: "
+            f"{ast.unparse(node)!r} mixes the aggregate with another construct"
+        )
     # The one relational atom stands alone or not at all. A conjunction, a negation or an
     # implication over a 2-safety atom is a strictly larger claim — a property of a pair of runs
     # combined with a property of one, or with a second pair — and no engine here discharges one.
@@ -1224,6 +1270,8 @@ def classify_fragment(spec: str) -> str:
     decides which engines may discharge a duty, and a trace cannot establish a counterfactual.
     """
     node = parse_property(spec)
+    if statistical_atom(node) is not None:
+        return "statistical"
     if counterfactual_atom(node) is not None:
         return "counterfactual"
     # `undetermined` is asked before everything else that follows, and it dominates: one atom no
@@ -1427,6 +1475,13 @@ def eval_expression(node: ast.AST, env: dict[str, Any]) -> Any:
         if name == CONTAINS_CALL:
             signal, phrase = contains_arguments(node)
             return contains_literal(env.get(signal), phrase)
+        if name == STATISTICAL_CALL:
+            outcome, group = statistical_atom(node) or ("", "")
+            raise UnsupportedConstructError(
+                f"{STATISTICAL_CALL}({outcome}, {group}) is a population measurement and cannot "
+                "be evaluated against one decision record; use the statistical evaluator over the "
+                "raw sample"
+            )
         if name == COUNTERFACTUAL_CALL:
             outcome, protected = counterfactual_arguments(node)
             raise UnsupportedConstructError(

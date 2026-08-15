@@ -172,15 +172,20 @@ class EvidenceBasis(Enum):
         (D. Dubois, H. Prade, *Possibility Theory, Probability Theory and Multiple-Valued Logics:
         A Clarification*, Annals of Mathematics and Artificial Intelligence 32:35–66, 2001 —
         `[@dubois-2001]`).
+      statistical — evidence about a fixed-group sample and a declared sampling model, estimand and
+        uncertainty procedure. The first wave is measurement-only: the payload carries counts and
+        simultaneous Clopper–Pearson intervals beside `strength=None` and `inconclusive`, so no
+        statistical measurement is a strength rung or a conformance verdict.
 
     The members carry **no order**. `<` and its siblings raise rather than answering, so a basis
-    cannot be sorted into a ladder, compared against a strength, or rendered as a fifth rung.
+    cannot be sorted into a ladder, compared against a strength, or rendered as a rung.
     """
 
     BEHAVIOURAL = "behavioural"
     RELATIONAL = "relational"
     ARTIFACT = "artifact"
     ASSESSMENT = "assessment"
+    STATISTICAL = "statistical"
 
     @property
     def rungs(self) -> tuple[Strength, ...]:
@@ -239,6 +244,10 @@ BASIS_RUNGS: dict[EvidenceBasis, tuple[Strength, ...]] = {
     EvidenceBasis.RELATIONAL: (Strength.UNATTAINABLE, Strength.PROBED, Strength.PROVED),
     EvidenceBasis.ARTIFACT: (Strength.UNATTAINABLE, Strength.RECOUNTED, Strength.PROBED),
     EvidenceBasis.ASSESSMENT: (Strength.UNATTAINABLE,),
+    # Statistical evidence is a measurement in the first wave, not a strength rung.  The
+    # capability-gate state remains the sole admissible lattice member; a computed measurement
+    # carries ``strength=None`` and ``verdict=inconclusive``.
+    EvidenceBasis.STATISTICAL: (Strength.UNATTAINABLE,),
 }
 
 

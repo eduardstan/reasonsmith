@@ -69,6 +69,7 @@ VALID_FORMALISMS = (
     "temporal",
     "logical",
     "counterfactual",
+    "statistical",
     "undetermined",
     "graded",
 )
@@ -386,7 +387,7 @@ class Requirement:
     verbatim_text: str
     stakeholder: str
     formalism: Literal[
-        "record", "temporal", "logical", "counterfactual", "undetermined", "graded"
+        "record", "temporal", "logical", "counterfactual", "statistical", "undetermined", "graded"
     ]
     spec: str
     rationale: str

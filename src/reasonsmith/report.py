@@ -46,6 +46,7 @@ from reasonsmith.rulelang import (
     counterfactual_atom,
     is_present,
     parse_property,
+    statistical_atom,
     undetermined_atoms,
 )
 from reasonsmith.spec import (
@@ -55,6 +56,14 @@ from reasonsmith.spec import (
     normalize_domains,
     normalize_frontier_ai_status,
     normalize_scope,
+)
+from reasonsmith.statistical import (
+    PROXY_BLINDNESS_LIMIT,
+    measure_selection_rates,
+    validate_measurement_payload,
+)
+from reasonsmith.statistical import (
+    STATISTICAL_MEASUREMENT_KEY as STATISTICAL_PAYLOAD_KEY,
 )
 from reasonsmith.sut import (
     ORDINAL_TIME,
@@ -95,6 +104,7 @@ SUPPORTED_FORMALISMS = (
     "temporal",
     "logical",
     "counterfactual",
+    "statistical",
     "undetermined",
     "graded",
 )
@@ -118,6 +128,9 @@ OPEN_TEXTURE_FIELDS = ("signal", "predicate", "authority")
 #:   basis and not a rescaled verdict**: nothing here turns `0.7` into seventy percent of a verdict,
 #:   and no rung of the lattice means "graded".
 TRUTH_DEGREE_KEY = "truth_degree"
+
+#: A statistical result is a measurement beside a not-evaluated outcome in the first wave.
+STATISTICAL_MEASUREMENT_KEY = STATISTICAL_PAYLOAD_KEY
 
 #: The fields that key carries. `atoms` is every graded atom's own degree, so a reader sees what the
 #: algebra combined rather than only what it produced.
@@ -514,9 +527,10 @@ class RequirementResult:
         # what a reader needs to read it.
         self._validate_open_texture()
         self._validate_truth_degree()
+        self._validate_statistical_measurement()
 
         # The two coordinates have to agree. A rung this duty's basis does not admit is a claim
-        # that some engine reached it, and for each of the three non-behavioural bases there is no
+        # that some engine reached it, and for each of the four non-behavioural bases there is no
         # such engine and no such evidence — see `verdict.EvidenceBasis`.
         self._validate_basis()
 
@@ -715,6 +729,45 @@ class RequirementResult:
                 f"evidence strength {self.strength}. A degree is a distinct evidence basis and "
                 "never a rescaled verdict — no rung of the lattice means 'graded', and a reader "
                 "handed both would read the number as a fraction of the rung"
+            )
+
+    def _validate_statistical_measurement(self) -> None:
+        """Enforce the first-wave statistical measurement contract.
+
+        A payload is not a fourth spelling of an observed verdict: it is a population-shaped
+        measurement beside ``not_evaluated``.  Keeping this refusal at the result boundary makes
+        every renderer and JSON consumer inherit the same limits.
+        """
+        payload = self.details.get(STATISTICAL_MEASUREMENT_KEY)
+        if self.verdict is Verdict.NOT_APPLICABLE:
+            return
+        if payload is None:
+            if self.basis is EvidenceBasis.STATISTICAL and self.strength is None:
+                raise ValueError(
+                    f"{self.requirement_id}: a statistical result must carry "
+                    f"details[{STATISTICAL_MEASUREMENT_KEY!r}]"
+                )
+            return
+        if self.basis is not EvidenceBasis.STATISTICAL:
+            raise ValueError(
+                f"{self.requirement_id}: statistical measurement details require the statistical "
+                "evidence basis"
+            )
+        if self.strength is not None:
+            raise ValueError(
+                f"{self.requirement_id}: a statistical measurement is not a strength rung; "
+                "first-wave results carry strength=None"
+            )
+        if self.verdict is not Verdict.INCONCLUSIVE:
+            raise ValueError(
+                f"{self.requirement_id}: a first-wave statistical measurement cannot be reported "
+                f"{self.verdict}; it is not evaluated"
+            )
+        validate_measurement_payload(payload)
+        if payload.get("proxy_blindness_limit") != PROXY_BLINDNESS_LIMIT:
+            raise ValueError(
+                f"{self.requirement_id}: statistical measurements must carry the proxy-blindness "
+                "limit"
             )
 
     def _validate_basis(self) -> None:
@@ -1059,6 +1112,7 @@ _CATEGORY_LABELS = (
     ("inconclusive", "inconclusive"),
     ("not_evaluated", "not evaluated"),
     ("on_an_assessment", "on an assessment"),
+    ("on_a_statistical_measurement", "on a statistical measurement"),
     ("unattainable", "unattainable"),
     ("not_applicable", "not applicable"),
 )
@@ -1110,6 +1164,19 @@ def _category_counts(results: list[RequirementResult], prefix: str = "") -> dict
         "unattainable": sum(1 for r in results if r.strength == Strength.UNATTAINABLE),
         "not_applicable": sum(1 for r in results if r.verdict == Verdict.NOT_APPLICABLE),
     }
+    statistical = sum(
+        1
+        for r in results
+        if not r.evaluated
+        and r.verdict != Verdict.NOT_APPLICABLE
+        and r.basis == EvidenceBasis.STATISTICAL
+        and STATISTICAL_MEASUREMENT_KEY in r.details
+    )
+    # Keep existing report envelopes byte-compatible when no statistical duty was run; the
+    # category is materialized as soon as the new measurement basis appears.
+    if statistical:
+        counts["on_a_statistical_measurement"] = statistical
+        counts["not_evaluated"] -= statistical
     return {f"{prefix}{key}": value for key, value in counts.items()}
 
 
@@ -1246,7 +1313,7 @@ class ConformanceReport:
             categories = [
                 f"{counts[prefix + key]} {label}"
                 for key, label in _CATEGORY_LABELS
-                if counts[prefix + key]
+                if counts.get(prefix + key, 0)
             ]
             detail = f": {', '.join(categories)}" if categories else ""
             parts.append(f"{counts[total_key]} {noun}{detail}")
@@ -1433,6 +1500,8 @@ def evidence_basis(req: Requirement) -> EvidenceBasis:
     """
     from reasonsmith.engines.certificate import MEASURED_SIGNALS
 
+    if getattr(req, "formalism", None) == "statistical":
+        return EvidenceBasis.STATISTICAL
     if any(signal in req.requires for signal in MEASURED_SIGNALS):
         return EvidenceBasis.ARTIFACT
     if req.formalism == "counterfactual":
@@ -1696,6 +1765,7 @@ def evaluate_requirement(
     grading: Any | None = None,
     frontier_trigger: str = "",
     frontier_ai_status: str | None = None,
+    statistical_plan: Mapping[str, Any] | None = None,
     *,
     _resources: _EvaluationResources | None = None,
 ) -> RequirementResult:
@@ -1725,6 +1795,7 @@ def evaluate_requirement(
         grading,
         frontier_trigger,
         frontier_ai_status,
+        statistical_plan,
         _resources=_resources,
     )
     # The duty's own domain limit is stamped once, here, rather than threaded through four
@@ -1756,6 +1827,7 @@ def _evaluate_requirement(
     grading: Any | None,
     frontier_trigger: str,
     frontier_ai_status: str | None,
+    statistical_plan: Mapping[str, Any] | None,
     *,
     _resources: _EvaluationResources | None,
 ) -> RequirementResult:
@@ -1787,6 +1859,11 @@ def _evaluate_requirement(
         return _unattainable_result(req, missing, sut)
 
     clause = f"{req.source_document} {req.article_clause}"
+
+    if req.formalism == "statistical":
+        return _evaluate_statistical_requirement(
+            req, records if records is not None else resources.trace(), statistical_plan
+        )
 
     if req.formalism not in SUPPORTED_FORMALISMS:
         # Declaring the signals is not evidence that the property holds, and this build has no
@@ -1846,6 +1923,73 @@ def _evaluate_requirement(
         if fallback is None or fallback.details.get("result") == _NO_LOGIC_TO_REASON_OVER:
             fallback = result
     return cast(RequirementResult, fallback)
+
+
+def _evaluate_statistical_requirement(
+    req: Requirement, records: list[dict[str, Any]], plan: Mapping[str, Any] | None
+) -> RequirementResult:
+    """Run the population measurement once, outside the ordinary trace engine ladder."""
+    clause = f"{req.source_document} {req.article_clause}"
+    try:
+        atom = statistical_atom(parse_property(req.spec))
+        if atom is None:
+            raise ValueError("statistical requirement must be one selection_rate_ratio() atom")
+        outcome_field, group_field = atom
+        config = dict(plan or {})
+        groups = config.pop("groups", None)
+        if not groups:
+            raise ValueError("statistical plan must declare the fixed duty group set")
+        payload = measure_selection_rates(
+            records,
+            groups=tuple(groups),
+            group_field=group_field,
+            outcome_field=outcome_field,
+            sampling_assumption=config.pop("sampling_assumption", None),
+            confidence_level=float(config.pop("confidence_level", 0.95)),
+            authority_provenance=config.pop("authority_provenance", None),
+            threshold=config.pop("threshold", None),
+            unit_field=config.pop("unit_field", None),
+        )
+        summary = (
+            "Statistical measurement only: the sample estimate and uncertainty interval are "
+            "reported under the declared plan; this first wave makes no conformance verdict."
+        )
+    except (TypeError, ValueError) as exc:
+        payload = {
+            "groups": list((plan or {}).get("groups", ())) or ["undeclared"],
+            "sampling_assumption": (plan or {}).get("sampling_assumption")
+            or {"status": "absent", "description": "no valid sampling plan"},
+            "n": 0,
+            "counts": {},
+            "metric": {"formula": "min_g(p_hat_g) / max_h(p_hat_h)", "status": "refused"},
+            "confidence": {
+                "level": None,
+                "interval_method": None,
+                "tail_allocation": None,
+                "intervals": None,
+                "ratio_interval": None,
+            },
+            "threshold": (plan or {}).get("threshold"),
+            "authority_provenance": (plan or {}).get("authority_provenance"),
+            "decision_rule": None,
+            "status": "refused",
+            "refusal": str(exc),
+            "proxy_blindness_limit": PROXY_BLINDNESS_LIMIT,
+        }
+        validate_measurement_payload(payload)
+        summary = f"Statistical measurement not evaluated: {exc}."
+    return RequirementResult(
+        requirement_id=req.id,
+        source_clause=clause,
+        verdict=Verdict.INCONCLUSIVE,
+        strength=None,
+        signals_required=tuple(req.requires),
+        evidence_summary=summary,
+        details={STATISTICAL_MEASUREMENT_KEY: payload},
+        binding=req.binding,
+        scope=req.scope,
+        basis=EvidenceBasis.STATISTICAL,
+    )
 
 
 #: Tags a proof-rung result produced without any logic to reason over — `logic()` absent, returning
@@ -2110,6 +2254,7 @@ def check_conformance(
     system_domains: Iterable[str] | None = None,
     grading: Any | None = None,
     frontier_ai_status: str | None = None,
+    statistical_plan: Mapping[str, Any] | None = None,
 ) -> ConformanceReport:
     """Check conformance of a SUT against all requirements in a Pack.
 
@@ -2137,6 +2282,7 @@ def check_conformance(
             grading=grading,
             frontier_trigger=pack.frontier_trigger,
             frontier_ai_status=frontier_ai_status,
+            statistical_plan=statistical_plan,
             _resources=resources,
         )
         for req in pack.requirements

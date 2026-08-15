@@ -267,7 +267,7 @@ def test_the_basis_admits_exactly_the_rungs_the_ladder_can_reach():
         offered[basis] |= rungs
 
     for basis, rungs in offered.items():
-        if basis is EvidenceBasis.ASSESSMENT:
+        if basis in (EvidenceBasis.ASSESSMENT, EvidenceBasis.STATISTICAL):
             continue  # no shipped duty, and by design no ladder at all — see below.
         advertised = set(basis.rungs) - {Strength.UNATTAINABLE}
         assert rungs <= advertised and max(advertised) == max(rungs), (

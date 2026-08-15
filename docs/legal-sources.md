@@ -294,6 +294,33 @@ Comments 1 and 4-7 concern how many reasons to give and how to select them from 
 
 ---
 
+## Provision 5: Uniform Guidelines on Employee Selection Procedures — 29 CFR 1607.4(D)
+
+### Metadata & Citation
+- **Document Title:** Title 29 — Labor, Subtitle B — Regulations Relating to Labor,
+  Chapter XIV — Equal Employment Opportunity Commission, Part 1607 — Uniform Guidelines
+  on Employee Selection Procedures, § 1607.4 Information on impact.
+- **Document Identifier / Citation:** `29 CFR 1607.4(D)`.
+- **Official Source URL:** https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XIV/part-1607/section-1607.4
+- **Direct eCFR API Endpoint:** `https://www.ecfr.gov/api/versioner/v1/full/2017-01-03/title-29.xml?part=1607&section=1607.4`
+- **Version metadata endpoint:** `https://www.ecfr.gov/api/versioner/v1/versions/title-29.json?part=1607&section=1607.4`
+- **Effective / latest amendment date:** 2017-01-03 (substantive=true; removed=false in
+  the section-specific Versioner response); source note cites 43 FR 38295, 38312 (Aug. 25,
+  1978), as amended at 46 FR 63268 (Dec. 31, 1981).
+- **Retrieval Date & Time:** 2026-08-15 08:48 UTC.
+- **Response:** HTTP 200, `text/xml`, 6,778 bytes; raw SHA-256
+  `0b70dc7befc9eddc68a8707a4be03d0e34f305c2cee89f9ca888e2889786d3a3`.
+- **Uncertainty / Status Flag:** Verified against official eCFR Versioner XML. XML was decoded
+  using its UTF-8 declaration; presentation whitespace around `<FR>` was normalized for the
+  quotation, while the hash covers the original response. Scope is employment selection only;
+  this is not an ECOA/Regulation B source.
+
+### Verbatim Text
+
+#### 29 CFR 1607.4(D)
+D. Adverse impact and the “four-fifths rule.” A selection rate for any race, sex, or ethnic group which is less than four-fifths (4/5) (or eighty percent) of the rate for the group with the highest rate will generally be regarded by the Federal enforcement agencies as evidence of adverse impact, while a greater than four-fifths rate will generally not be regarded by Federal enforcement agencies as evidence of adverse impact. Smaller differences in selection rate may nevertheless constitute adverse impact, where they are significant in both statistical and practical terms or where a user's actions have discouraged applicants disproportionately on grounds of race, sex, or ethnic group. Greater differences in selection rate may not constitute adverse impact where the differences are based on small numbers and are not statistically significant, or where special recruiting or other programs cause the pool of minority or female candidates to be atypical of the normal pool of applicants from that group. Where the user's evidence concerning the impact of a selection procedure indicates adverse impact but is based upon numbers which are too small to be reliable, evidence concerning the impact of the procedure over a longer period of time and/or evidence concerning the impact which the selection procedure had when used in the same manner in similar circumstances elsewhere may be considered in determining adverse impact. Where the user has not maintained data on adverse impact as required by the documentation section of applicable guidelines, the Federal enforcement agencies may draw an inference of adverse impact of the selection process from the failure of the user to maintain such data, if the user has an underutilization of a group in the job category, as compared to the group's representation in the relevant labor market or, in the case of jobs filled from within, the applicable work force.
+
+This is an employment-selection enforcement guideline and not a generic fairness threshold, legal-compliance verdict, or source for ECOA/GDPR distributional questions. Those questions remain `undetermined()` until their own authority supplies a scoped rule.
 ## Provision 6 — Frontier AI Safety Commitments, AI Seoul Summit 2024 (GOV.UK)
 
 ### Metadata & Citation

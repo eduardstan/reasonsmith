@@ -102,6 +102,7 @@ class SourceDocument:
     key: str
     url: str
     kind: Literal["cellar-xhtml", "ecfr-xml", "pdf", "govuk-html"]
+    versions_url: str | None = None
     edition_sentinel: str | None = None
 
 
@@ -135,7 +136,13 @@ SOURCES = (
         "seoul_frontier_ai_safety_2024",
         "https://www.gov.uk/government/publications/frontier-ai-safety-commitments-ai-seoul-summit-2024/frontier-ai-safety-commitments-ai-seoul-summit-2024",
         "govuk-html",
-        "Updated 7 February 2025",
+        edition_sentinel="Updated 7 February 2025",
+    ),
+    SourceDocument(
+        "uniform_guidelines",
+        "https://www.ecfr.gov/api/versioner/v1/full/2017-01-03/title-29.xml?part=1607&section=1607.4",
+        "ecfr-xml",
+        versions_url="https://www.ecfr.gov/api/versioner/v1/versions/title-29.json?part=1607&section=1607.4",
     ),
 )
 SOURCES_BY_KEY = {source.key: source for source in SOURCES}
@@ -176,6 +183,7 @@ PROVISIONS = {
     "Commitment VI": ("seoul_frontier_ai_safety_2024", "VI"),
     "Commitment VII": ("seoul_frontier_ai_safety_2024", "VII"),
     "Commitment VIII": ("seoul_frontier_ai_safety_2024", "VIII"),
+    "29 CFR 1607.4(D)": ("uniform_guidelines", None),
 }
 
 
@@ -529,7 +537,8 @@ def _fetch_url(url: str, *, timeout: float, max_bytes: int) -> str:
 
 
 def _current_ecfr_url(source: SourceDocument, *, timeout: float, max_bytes: int) -> str:
-    metadata_text = _fetch_url(ECFR_VERSIONS_URL, timeout=timeout, max_bytes=max_bytes)
+    metadata_url = source.versions_url or ECFR_VERSIONS_URL
+    metadata_text = _fetch_url(metadata_url, timeout=timeout, max_bytes=max_bytes)
     try:
         issue_date = json.loads(metadata_text)["meta"]["latest_issue_date"]
         canonical_date = datetime.strptime(issue_date, "%Y-%m-%d").date().isoformat()
@@ -537,7 +546,7 @@ def _current_ecfr_url(source: SourceDocument, *, timeout: float, max_bytes: int)
             raise ValueError(f"non-canonical issue date {issue_date!r}")
     except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
         raise DriftFetchError(
-            f"could not resolve the current eCFR version from {ECFR_VERSIONS_URL}: {exc}"
+            f"could not resolve the current eCFR version from {metadata_url}: {exc}"
         ) from exc
     prefix, marker, dated_path = source.url.partition("/full/")
     _recorded_date, separator, suffix = dated_path.partition("/")

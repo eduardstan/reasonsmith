@@ -37,6 +37,7 @@ about:
 | `relational` | a pair of executions (a 2-safety property) |
 | `artifact` | the inference artefact behind a decision |
 | `assessment` | how an open-textured predicate applies, according to a named authority |
+| `statistical` | a declared sample, sampling model, estimand and uncertainty procedure |
 
 A basis is a kind and never a rank. Its members have no ordering, and a basis is not comparable with
 a `Strength`: the coordinates answer different questions. Evidence about a different object is a
@@ -59,6 +60,7 @@ and `verdict.BASIS_RUNGS` is its executable registry. A pair belongs to the rela
 | `relational` | `unattainable`, `probed`, `proved` |
 | `artifact` | `unattainable`, `recounted`, `probed` |
 | `assessment` | `unattainable` |
+| `statistical` | `unattainable` |
 
 `unattainable` is present in every row because capability analysis precedes the basis-specific
 engine. The relational row has no `observed` rung because one record is not a pair. The artefact
@@ -75,7 +77,25 @@ Consequently, no engine ladder can publish a rung its basis refuses, and no rend
 basis into an extra rung. The relation changes neither verdicts nor strengths; it records the
 already-produced evidence without widening what any duty can claim.
 
-## 8.4 Graded assessment
+## 8.4 Statistical measurement
+
+The `statistical` basis is a measurement basis, not a fifth strength rung.  Its first-wave
+admissibility row contains only `unattainable`: a computed sample measurement carries
+`verdict=inconclusive`, `outcome=not_evaluated`, and `strength=None`.  The measurement records the
+fixed duty-named groups, raw per-record counts and point estimates, simultaneous
+Clopper--Pearson binomial intervals with Bonferroni allocation, the ratio enclosure, the
+caller-supplied sampling plan, and the authority provenance.  A missing plan yields descriptive
+rates only; a valid plan without a named authority remains not evaluated.  `decision_rule` is
+`null` in this wave, so no ratio or interval becomes a satisfied or violated verdict.
+
+The interval's repeated-sampling coverage is conditional on the declared plan.  Records supplied
+to a run are never called representative, and the result carries the standing limit that this
+association does not detect proxies, causal discrimination, intersectional effects, disparate
+treatment, applicant discouragement, or criteria requiring ground truth.  The 29 CFR 1607.4(D)
+source record is scoped to employment selection; no four-fifths threshold is transplanted into
+ECOA or GDPR duties.
+
+## 8.5 Graded assessment
 
 The open-textured constructs are evidence about assessment, not another strength rung. The
 residuated algebra and state denotation are Definitions 3.2–3.7; this chapter records the evidence

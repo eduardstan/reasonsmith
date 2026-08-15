@@ -371,35 +371,30 @@ frontier status. What reasonsmith checks is the selected framework's formalised 
 evidence basis and strength each property admits — not "alignment", not the adequacy of the framework,
 and not safety outside the quoted commitments.
 
-## 10. A statistical evidence basis — **second wave**
+## 10. A statistical evidence basis — **first wave landed**
 
-**This is a deliberate reversal.** Objective 3 says disparate impact is *not on this roadmap to be
-built*, for three reasons: a rate over a trace carries no sampling claim, no statute supplies a
-generic threshold, and criteria such as equalised odds and calibration need ground truth the SUT
-protocol does not expose. The reversal keeps those reasons and turns them into admission
-conditions. What changed is the decision to design for them; what did not change is that no current
-verdict may be read as a population claim, and no threshold may be invented by a pack author.
+**What this wave closes.** The fifth, unordered `statistical` evidence basis is now part of the
+result model. It is a measurement basis with no first-wave strength rung: a raw sample can carry
+counts, point estimates, and a simultaneous Clopper–Pearson interval only beside
+`verdict=inconclusive`, `outcome=not_evaluated`, and `strength=None`. The measurement carries its
+caller-supplied sampling plan, fixed groups, authority/provenance and threshold-shaped fields,
+with `decision_rule=null`; supplied records are never called representative.
 
-**The design boundary.** `statistical` becomes an explicit member of the evidence-basis dimension
-defined in [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §8.2, carrying a declared
-sampling assumption, confidence level and authority-named threshold. The candidate first threshold
-is the four-fifths rule in
-[29 CFR 1607.4(D)](https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XIV/part-1607/section-1607.4),
-whose authority and scope travel with the measurement. A duty with no named authority remains *not
-evaluated* with the statistical measurement beside it; a measured ratio alone never becomes a
-verdict.
+The first source record is 29 CFR 1607.4(D), scoped honestly to employment selection. It is an
+enforcement guideline whose “generally” language and small-number and statistical/practical
+significance caveats remain limits, not a generic four-fifths law. It is not transplanted into
+ECOA or GDPR duties; distributional questions there remain `undetermined()` until their own
+authority supplies a scoped rule.
 
-**Measurable outcome.** The first disparate-impact measurement duty ships with a named authority,
-an explicit sampling assumption and a declared confidence level. Today §8.2 enumerates exactly
-`behavioural`, `relational`, `artifact` and `assessment`; no basis named `statistical` exists. That
-enumeration is the pin that fails now and must be deliberately widened, with the basis's admitted
-rungs and result invariants, when this objective closes.
+**What remains deliberately open.** No statistical strength rung, satisfied/violated verdict,
+shipped statistical duty, generic threshold, proxy detector, causal claim, ground-truth error
+criterion, or representativeness claim is introduced by this wave. A future authority-specific
+decision engine would need a new source-backed duty, formal decision rule, uncertainty semantics,
+and tests before widening `BASIS_RUNGS`.
 
-**Depends on.** Objectives 7–9 landing first: this is explicitly the **second wave**, and work on it
-does not begin while any of those three remains open. It then needs a statistical-design review and
-the legal source for the first threshold. The design does not promise representative data, infer
-ground truth, generalise beyond its declared sampling model, or turn the four-fifths rule into a
-threshold for authorities or duties that do not name it.
+**Depends on.** A future employment-selection duty requires legal and pack review, the source
+record above, an explicit probability-sampling design, and a decision semantics that preserves the
+authority's caveats. ECOA/GDPR distributional effects require separate authority retrieval.
 
 ## Infrastructure
 

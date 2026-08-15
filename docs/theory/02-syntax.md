@@ -119,14 +119,15 @@ identifier is part of the language contract and is preserved verbatim.
 | `R-CONFLICTING-ROLES` | one signal in both the bare-Boolean and the measured-magnitude role |
 | `R-TEMPORAL-BOOLEAN-COMPARISON` | `== `/`!=` against a Boolean literal inside the temporal fragment |
 
-The six fragments are decided by the shape of the formula, not by the word a pack author typed.
+The seven fragments are decided by the shape of the formula, not by the word a pack author typed.
 
 **Definition 2.6 (fragment assignment).** Fragment assignment is the following function on
 formulas. The order is narrowest-first and is the definition, not an optimisation.
 
 ```
 fragment(spec) =
-     "counterfactual"  if the whole spec is the relational atom
+     "statistical"     if the whole spec is selection_rate_ratio()
+else "counterfactual"  if the whole spec is the relational atom
 else "undetermined"    if undetermined() occurs anywhere
 else "graded"          if degree() occurs anywhere
 else "temporal"        if a temporal operator occurs anywhere
@@ -134,6 +135,7 @@ else "record"          if the spec is a conjunction of present() atoms and nothi
 else "logical"
 ```
 
-The first three cases dominate later cases because each names a claim no trace-reading engine may
-answer. A formula containing `undetermined()` is therefore not a record formula with an ignored
+The first four cases dominate later cases because each names a claim no ordinary trace-reading
+engine may answer. `selection_rate_ratio()` is a whole-property population measurement over raw
+records, never a per-record Boolean atom. A formula containing `undetermined()` is therefore not a record formula with an ignored
 conjunct.
