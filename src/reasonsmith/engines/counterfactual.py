@@ -74,6 +74,7 @@ from typing import Any, Optional
 
 import z3
 
+from reasonsmith.neural import DeclaredInputSpace
 from reasonsmith.report import PROBE_BUDGET_KEY, RequirementResult
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
@@ -130,7 +131,7 @@ STRATEGY = (
     "each decision the system logged is replayed through its own decide() once per admissible "
     "value of the protected variable, with every other field of the recorded input left exactly "
     "as it was, and the outcomes compared. The admissible values are enumerated from the system's "
-    "declared `constraints` and its declared sort for that variable, never from the trace: the "
+    "declared input space (or its declared constraints and sort), never from the trace: the "
     "values recorded for a protected attribute are the one place this search must not look. Each "
     "value is compared against the first, which finds any disagreement among them without "
     "replaying every pair"
@@ -735,6 +736,45 @@ class CounterfactualProofEngine:
         )
 
 
+def _declared_space_values(
+    space: DeclaredInputSpace, protected: str, limit: int
+) -> list[Any]:
+    """Enumerate a finite declared slot without consulting the decision trace."""
+    slot = space.slot(protected)
+    if slot.values:
+        values = list(slot.values)
+    elif slot.kind == "integer":
+        assert slot.lower is not None and slot.upper is not None
+        lower, upper = int(slot.lower), int(slot.upper)
+        # The extra candidate lets the caller distinguish a finite complete set from a bound.
+        values = list(range(lower, min(upper + 1, lower + limit)))
+    else:
+        raise ValueError(f"slot {protected!r} has no finite executable values")
+
+    def holds(value: Any, constraint: Mapping[str, Any]) -> bool:
+        op = constraint.get("op", constraint.get("operator"))
+        if "signal" in constraint and constraint.get("signal") == protected:
+            right = constraint.get("value")
+        elif (
+            constraint.get("left") == protected
+            and constraint.get("right") == protected
+        ):
+            right = value
+        else:
+            return True  # a cross-slot constraint is checked against each replay base elsewhere
+        return {
+            "<": value < right,
+            "<=": value <= right,
+            "=": value == right,
+            "==": value == right,
+            ">=": value >= right,
+            ">": value > right,
+        }[op]
+
+    values = [value for value in values if all(holds(value, c) for c in space.constraints)]
+    return sorted(values, key=repr)[:limit]
+
+
 def _admissible_values(
     variables: Mapping[str, str],
     constraints: Iterable[str],
@@ -827,47 +867,93 @@ class PairedReplayEngine:
                 "no_decide",
             )
 
-        logic_func = getattr(sut, "logic", None)
-        try:
-            logic_data = logic_func() if callable(logic_func) else None
-        except Exception as exc:  # noqa: BLE001 — reported, never swallowed
-            return not_evaluated(
-                f"Not evaluated: reading the system's decision logic failed — "
-                f"{type(sut).__name__}.logic() raised {type(exc).__name__}: {exc}, and the values "
-                f"of {protected!r} this search may use come from the declared constraints and from "
-                "nowhere else.",
-                "logic_raised",
-            )
-        if logic_data is None:
-            return not_evaluated(
-                "Not evaluated: the system declares no input space, so there is no admissible "
-                f"value of {protected!r} to replay a decision against. This search never takes a "
-                "protected value from the trace — a decision record is what happened to one "
-                "applicant, and reading a counterfactual value out of it would make this duty a "
-                "reason to log a protected attribute.",
-                "no_declared_input_space",
-            )
+        # A callable may expose a finite, renderable input space without exposing symbolic logic.
+        # This is the prompt/model boundary: input_space() supplies values for replay only; it
+        # never adds a proved rung.
+        space: DeclaredInputSpace | None = None
+        input_space_func = getattr(sut, "input_space", None)
+        if callable(input_space_func):
+            try:
+                raw_space = input_space_func()
+                if raw_space is not None:
+                    space = DeclaredInputSpace.from_value(raw_space)
+            except Exception as exc:  # noqa: BLE001 — declaration failures are findings
+                return not_evaluated(
+                    f"Not evaluated: reading the system's declared input space failed — "
+                    f"{type(exc).__name__}: {exc}.",
+                    "input_space_raised",
+                )
 
-        try:
-            _, variables, constraints, computes = read_declared_logic(logic_data)
-        except LogicDeclarationError as exc:
-            return _result(
-                req,
-                Verdict.INCONCLUSIVE,
-                None,
-                exc.summary,
-                details={"engine": "paired-replay", **exc.details},
-            )
+        logic_data: Any = None
+        if space is None:
+            logic_func = getattr(sut, "logic", None)
+            try:
+                logic_data = logic_func() if callable(logic_func) else None
+            except Exception as exc:  # noqa: BLE001 — reported, never swallowed
+                return not_evaluated(
+                    f"Not evaluated: reading the system's decision logic failed — "
+                    f"{type(sut).__name__}.logic() raised {type(exc).__name__}: {exc}, and the "
+                    f"values of {protected!r} this search may use come from the declared "
+                    "constraints and from nowhere else.",
+                    "logic_raised",
+                )
+            if logic_data is None:
+                return not_evaluated(
+                    "Not evaluated: the system declares no input space, so there is no admissible "
+                    f"value of {protected!r} to replay a decision against. This search never "
+                    "takes a protected value from the trace — a decision record is what happened "
+                    "to one applicant, and reading a counterfactual value out of it would make "
+                    "this duty a reason to log a protected attribute.",
+                    "no_declared_input_space",
+                )
 
-        refusal = _direction_refusal(req, outcome, protected, variables, computes)
-        if refusal is not None:
-            return refusal
+            try:
+                _, variables, constraints, computes = read_declared_logic(logic_data)
+            except LogicDeclarationError as exc:
+                return _result(
+                    req,
+                    Verdict.INCONCLUSIVE,
+                    None,
+                    exc.summary,
+                    details={"engine": "paired-replay", **exc.details},
+                )
+
+            refusal = _direction_refusal(req, outcome, protected, variables, computes)
+            if refusal is not None:
+                return refusal
+        else:
+            if protected not in space.signals:
+                return not_evaluated(
+                    f"Not evaluated: the declared input space has no slot for protected "
+                    f"variable {protected!r}; replay cannot move a value the callable does not "
+                    "declare.",
+                    "protected_slot_missing",
+                )
+            slot = space.slot(protected)
+            if slot.kind not in ("integer", "categorical", "boolean", "string-enum"):
+                return not_evaluated(
+                    f"Not evaluated: protected slot {protected!r} has unsupported replay type "
+                    f"{slot.kind!r}; it must be integer-like or finite categorical.",
+                    "protected_slot_not_finite_categorical",
+                )
+            if space.outcomes and outcome not in set(space.outcomes.values()):
+                return not_evaluated(
+                    f"Not evaluated: the declared input space does not bind returned record "
+                    f"field {outcome!r} in outcomes.",
+                    "outcome_not_bound",
+                )
+            variables = {}
+            constraints = []
+            computes = {outcome}
 
         try:
             # One more than the bound, so the summary can say whether the search saw the whole
             # admitted set or stopped inside it. Reporting the searched values as the admitted set
             # was a false claim about the measurement.
-            values = _admissible_values(variables, constraints, protected, max_values + 1)
+            if space is None:
+                values = _admissible_values(variables, constraints, protected, max_values + 1)
+            else:
+                values = _declared_space_values(space, protected, max_values + 1)
         except Exception as exc:  # noqa: BLE001 — reported, never swallowed
             return not_evaluated(
                 f"Not evaluated: the admissible values of {protected!r} could not be enumerated "
@@ -910,8 +996,12 @@ class PairedReplayEngine:
         first_error = ""
         replayed = 0
         attempted = 0
+        calls_made = 0
+
+        planned_pairs = min(len(bases) * len(alternatives), max_pairs)
 
         def budget() -> dict[str, Any]:
+            complete = attempted >= planned_pairs
             return {
                 "trials": replayed,
                 "strategy": STRATEGY,
@@ -924,9 +1014,19 @@ class PairedReplayEngine:
                     "base decisions": len(bases),
                     "protected variable": protected,
                     "protected values used": values,
-                    "pairs planned": min(len(bases) * len(alternatives), max_pairs),
+                    "declared values": values,
+                    "pairs planned": planned_pairs,
                 },
                 "pairs_errored": errored,
+                "pairs_attempted": attempted,
+                "pairs_completed": replayed,
+                "facts_switched": attempted,
+                "calls": calls_made,
+                "calls_made": calls_made,
+                "declared_values": values,
+                "terminated": complete,
+                "termination": "complete" if complete else "pair_budget_exhausted",
+                "termination_reason": "complete" if complete else "pair_budget_exhausted",
             }
 
         def replay_input(case: Mapping[str, Any], value: Any) -> dict[str, Any]:
@@ -938,7 +1038,10 @@ class PairedReplayEngine:
             return replay
 
         def run_pair(case: Mapping[str, Any], other: Any) -> tuple[Any, Any]:
+            nonlocal calls_made
+            calls_made += 1
             left = decide(replay_input(case, baseline))
+            calls_made += 1
             right = decide(replay_input(case, other))
             for record in (left, right):
                 if not isinstance(record, Mapping) or outcome not in record:

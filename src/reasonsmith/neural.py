@@ -37,6 +37,106 @@ _SLOT_TYPES = frozenset(("real", "integer", "categorical", "boolean", "string-en
 _PLACEHOLDER = re.compile(r"(?<!\{)\{([A-Za-z_][A-Za-z0-9_.-]*)\}(?!\})")
 
 
+def _constraint_holds(space: "DeclaredInputSpace", values: Mapping[str, Any]) -> bool:
+    """Evaluate constraints that are decidable from one complete assignment."""
+    def compare(left: Any, op: str, right: Any) -> bool:
+        return {
+            "<": left < right,
+            "<=": left <= right,
+            "=": left == right,
+            "==": left == right,
+            ">=": left >= right,
+            ">": left > right,
+        }[op]
+
+    for constraint in space.constraints:
+        if "signal" in constraint:
+            signal = str(constraint["signal"])
+            if signal not in values:
+                continue
+            if not compare(values[signal], str(constraint["op"]), constraint["value"]):
+                return False
+        elif constraint.get("left") in values and constraint.get("right") in values:
+            if not compare(
+                values[str(constraint["left"])],
+                str(constraint["op"]),
+                values[str(constraint["right"])],
+            ):
+                return False
+    return True
+
+
+def render_template(
+    space: "DeclaredInputSpace", values: Mapping[str, Any], *, validate: bool = True
+) -> str:
+    """Render a declared template deterministically for one complete input assignment.
+
+    Rendering is deliberately owned by the declaration module so an adapter and the replay
+    engine can use the same placeholder and token rules.  A template identifier without inline
+    text cannot be rendered by reasonsmith and is therefore refused here.
+    """
+    import json
+    from urllib.parse import quote
+
+    if not isinstance(space, DeclaredInputSpace):
+        space = DeclaredInputSpace.from_value(space)
+    template = space.template
+    if template is None or template.text is None:
+        raise ValueError("declared input space has no renderable template text")
+    expected = set(space.signals)
+    actual = set(values)
+    if actual != expected:
+        missing = sorted(expected - actual)
+        extra = sorted(actual - expected)
+        raise ValueError(
+            "template values must cover exactly the declared slots "
+            f"(missing={missing}, extra={extra})"
+        )
+
+    rendered: dict[str, str] = {}
+    for slot in space.slots:
+        value = values[slot.signal]
+        allowed = slot.values
+        if validate and slot.kind in ("categorical", "boolean", "string-enum"):
+            if not any(value == candidate for candidate in allowed):
+                raise ValueError(
+                    f"value {value!r} is not in the finite domain of slot {slot.signal!r}"
+                )
+        elif validate and slot.kind == "integer":
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise ValueError(f"slot {slot.signal!r} requires an integer value")
+            if value < slot.lower or value > slot.upper:  # type: ignore[operator]
+                raise ValueError(f"value {value!r} is outside slot {slot.signal!r} bounds")
+        elif validate and slot.kind == "real":
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"slot {slot.signal!r} requires a numeric value")
+            if value < slot.lower or value > slot.upper:  # type: ignore[operator]
+                raise ValueError(f"value {value!r} is outside slot {slot.signal!r} bounds")
+
+        token = slot.value_to_token.get(value) if slot.value_to_token else None
+        token = str(value) if token is None else token
+        if template.escaping == "json":
+            token = json.dumps(token, ensure_ascii=False)
+        elif template.escaping == "url":
+            token = quote(token, safe="")
+        rendered[slot.signal] = token
+
+    if validate and not _constraint_holds(space, values):
+        raise ValueError("input assignment violates a declared input-space constraint")
+
+    def replace(match: re.Match[str]) -> str:
+        placeholder = match.group(1)
+        signal = template.placeholders[placeholder]
+        return rendered[signal]
+
+    return _PLACEHOLDER.sub(replace, template.text)
+
+
+def render_declared_template(space: "DeclaredInputSpace", values: Mapping[str, Any]) -> str:
+    """Compatibility spelling for the shared declared-template renderer."""
+    return render_template(space, values)
+
+
 def _schema_version(value: Any, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         _fail(f"{label} must be integer schema version 1")
@@ -737,6 +837,8 @@ __all__ = [
     "InputSlot",
     "TemplateSpec",
     "DeclaredInputSpace",
+    "render_template",
+    "render_declared_template",
     "OutputDecoder",
     "TensorBinding",
     "OnnxArtifact",
