@@ -7,8 +7,10 @@ from dataclasses import dataclass
 import pytest
 import z3
 
+import reasonsmith.engines.observed as observed_engine
 from reasonsmith import witness
 from reasonsmith.adapters.rules import RulesAdapter
+from reasonsmith.engines.observed import ObservedEngine
 from reasonsmith.report import RequirementResult
 from reasonsmith.spec import Requirement
 from reasonsmith.verdict import EvidenceBasis, Strength, Verdict
@@ -485,3 +487,170 @@ def test_pair_checker_refuses_unchanged_protected_input_and_missing_replay(monke
         req, sut, [{"protected": 0}, {"protected": 1}]
     )
     assert status == "uncheckable" and "no replay surface" in reason
+
+
+def test_temporal_prefix_witness_is_confirmed_refuted_or_uncheckable() -> None:
+    req = _req("temporal", "until(present(start), present(end))")
+    confirmed_records = [{"start": "sent"}]
+    payload = {"trace": confirmed_records, "positions": [0], "position": 0}
+    assert witness._trace_prefix_check(req, confirmed_records, payload)[0] == "confirmed"
+
+    refuted_records = [{"start": "sent", "end": "done"}]
+    assert witness._trace_prefix_check(req, refuted_records, payload)[0] == "refuted"
+
+    unknown_req = _req("temporal", "until(present(start), end >= 1)")
+    unknown_records = [{"start": "sent"}]
+    # A missing magnitude makes the reference interpreter unable to decide rather than evidence
+    # that the witness is wrong.
+    status, _ = witness._trace_prefix_check(
+        unknown_req, unknown_records, {"trace": unknown_records}
+    )
+    assert status == "uncheckable"
+
+
+def test_temporal_prefix_dispatches_through_plugin_witness_checker() -> None:
+    req = _req("temporal", "until(present(start), present(end))")
+    records = [{"start": "sent"}]
+    result = _result(
+        details={
+            "witness": {
+                "kind": "trace_prefix",
+                "provenance": "trusted-ceiling",
+                "payload": {"trace": records, "positions": [0]},
+            }
+        }
+    )
+    checked = witness.check_plugin_result(req, object(), records, result)
+    assert checked.details["witness"]["provenance"] == "witness-checked"
+
+
+
+def test_observed_until_violation_emits_recheckable_prefix() -> None:
+    req = _req("temporal", "until(present(start), present(end))")
+    records = [{"start": "sent"}, {"start": "still sent"}]
+    result = ObservedEngine.evaluate(req, object(), records)
+
+    assert result.verdict is Verdict.VIOLATED
+    witness_record = result.details["witness"]
+    assert witness_record["kind"] == "trace_prefix"
+    prefix = witness_record["payload"]["trace"]
+    assert witness._trace_prefix_check(req, records, witness_record["payload"])[0] == "confirmed"
+    assert prefix == records[: len(prefix)]
+
+def test_temporal_prefix_payload_shapes_and_malformed_witnesses() -> None:
+    req = _req("temporal", "until(present(start), present(end))")
+    records = [{"start": "sent"}]
+
+    # The checker accepts both a bare list and a position-only witness, deriving the prefix from
+    # the supplied trace.
+    assert witness._trace_prefix_check(req, records, records)[0] == "confirmed"
+    assert witness._trace_prefix_check(req, records, {"position": 0})[0] == "confirmed"
+
+    malformed = [
+        "not a trace",
+        {"trace": "not a sequence"},
+        {"trace": []},
+        {"trace": ["not a record"]},
+        {"trace": [{"start": "different"}]},
+        {"trace": records, "positions": []},
+        {"trace": records, "positions": [2]},
+        {},
+    ]
+    for payload in malformed:
+        assert witness._trace_prefix_check(req, records, payload)[0] == "refuted"
+
+
+def test_temporal_prefix_checker_refuses_non_temporal_and_bad_interpreters(monkeypatch) -> None:
+    records = [{"start": "sent"}]
+    temporal = _req("temporal", "until(present(start), present(end))")
+    payload = {"trace": records}
+
+    assert witness._trace_prefix_check(_req("logical", "present(start)"), records, payload)[0] == (
+        "refuted"
+    )
+    assert witness._trace_prefix_check(_req("temporal", "until("), records, payload)[0] == (
+        "uncheckable"
+    )
+    # A syntactically valid temporal call with missing operands reaches the reference evaluator
+    # and is uncheckable when that evaluator cannot interpret it.
+    bad_eval = _req("temporal", "until(present(start))")
+    assert witness._trace_prefix_check(bad_eval, records, payload)[0] == "uncheckable"
+
+    monkeypatch.setattr(witness, "eval_temporal_trace", lambda _node, _records: [])
+    assert witness._trace_prefix_check(temporal, records, payload)[0] == "refuted"
+
+
+def test_temporal_prefix_checker_distinguishes_unknown_and_true_positions() -> None:
+    unknown_req = _req(
+        "temporal",
+        "always(until(present(start), present(end) and latency >= 1))",
+    )
+    unknown_records = [{}, {"start": "sent", "end": "done"}]
+    assert witness._trace_prefix_check(
+        unknown_req, unknown_records, {"trace": unknown_records, "positions": [1]}
+    )[0] == "uncheckable"
+
+    true_req = _req("temporal", "always(until(present(start), present(end)))")
+    true_records = [{}, {"start": "sent", "end": "done"}]
+    assert witness._trace_prefix_check(
+        true_req, true_records, {"trace": true_records, "positions": [1]}
+    )[0] == "refuted"
+
+def test_temporal_prefix_checker_handles_reference_failure_and_late_violation(monkeypatch) -> None:
+    req = _req("temporal", "until(present(start), present(end))")
+    records = [{"start": "sent", "end": "done"}, {"start": "sent"}]
+    # The first one-record prefix is satisfied; the full prefix is the temporal counterexample.
+    assert witness._trace_prefix_check(req, records, {"trace": records})[0] == "refuted"
+
+    def raises(_node, _records):
+        raise RuntimeError("reference unavailable")
+
+    monkeypatch.setattr(witness, "eval_temporal_trace", raises)
+    assert witness._trace_prefix_check(req, records, {"trace": records})[0] == "uncheckable"
+
+
+def test_observed_prefix_fallback_and_pair_shape_are_covered(monkeypatch) -> None:
+    req = _req("temporal", "always(until(present(start), present(end)))")
+    records = [{"start": "sent"}, {"start": "sent"}]
+    calls = 0
+
+    def folded(_node, _records):
+        nonlocal calls
+        calls += 1
+        return [False] if calls == 1 else []
+
+    monkeypatch.setattr(observed_engine, "eval_temporal_trace", folded)
+    result = ObservedEngine.evaluate(req, object(), records)
+    assert result.verdict is Verdict.VIOLATED
+    assert result.details["violation_step_indices"] == [0]
+
+    pair_req = _req("counterfactual", "counterfactually_invariant(outcome, protected)")
+    assert witness._pair_check(
+        pair_req, object(), [{"protected": 0}, {"protected": 0}]
+    )[0] == "refuted"
+
+def test_temporal_prefix_work_does_not_hide_unsupported_domain_sorts(monkeypatch) -> None:
+    class Sort:
+        def kind(self):
+            return -1
+
+    class Const:
+        def sort(self):
+            return Sort()
+
+    class Solver:
+        def add(self, _constraint):
+            pass
+
+        def check(self):
+            return "sat"
+
+    class Scope:
+        inputs = {"x": Const()}
+
+    monkeypatch.setattr(
+        "reasonsmith.engines.proved.encode_logic_domain",
+        lambda _logic: (Scope(), Solver(), [], {}),
+    )
+    admitted, reason = witness._admissible(object(), {"x": 1})
+    assert admitted is False and "unsupported declared sort" in reason

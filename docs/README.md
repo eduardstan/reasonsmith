@@ -13,6 +13,7 @@ what those documents say.
 - [`adopting.md`](adopting.md) — user-facing commands and system surfaces.
 - [`authoring-packs.md`](authoring-packs.md) — pack schema and authoring rules.
 - [`authoring-engines.md`](authoring-engines.md) — installed engine contract.
+- [`registry.html`](registry.html) — generated pack and engine discovery registry.
 - [`refinement.md`](refinement.md) — one row for every clause-to-property refinement.
 - [`legal-sources.md`](legal-sources.md) — statutory retrieval record.
 - [`what-this-does-not-do.md`](what-this-does-not-do.md) — documented limits and hazards.

@@ -7,13 +7,17 @@ witness that the checker refutes demotes a result to not evaluated.
 
 from __future__ import annotations
 
+import ast
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from typing import Any
 
 from reasonsmith.rulelang import (
+    BINARY_TEMPORAL_OPERATORS,
     counterfactual_atom,
     eval_expression,
+    eval_temporal_trace,
+    is_unknown,
     kleene_value,
     parse_property,
     presence_atoms,
@@ -94,6 +98,107 @@ def _record_for_index(records: list[dict[str, Any]], index: int) -> dict[str, An
     if index < 0 or index >= len(records):
         return None
     return dict(records[index])
+
+
+def _prefix_parts(
+    payload: Any, records: list[dict[str, Any]]
+) -> tuple[list[dict[str, Any]], list[int]] | None:
+    """Read a temporal prefix witness and its claimed run-out positions.
+
+    A plug-in may send the prefix itself (the useful, portable witness) or just positions, in
+    which case the prefix is taken from the trace the plug-in was given.  In both cases the
+    checker insists that the witness is an actual prefix of that trace; otherwise an engine could
+    manufacture a failing trace instead of witnessing its answer.
+    """
+    prefix: Any = None
+    positions: Any = None
+    if isinstance(payload, Mapping):
+        for key in ("trace", "prefix", "trace_prefix", "records"):
+            if key in payload:
+                prefix = payload[key]
+                break
+        positions = payload.get(
+            "positions", payload.get("indices", payload.get("position", payload.get("index")))
+        )
+    elif isinstance(payload, Sequence) and not isinstance(payload, (str, bytes)):
+        # A bare list of records is a convenient explicit prefix shape.
+        if all(isinstance(item, Mapping) for item in payload):
+            prefix = payload
+
+    if prefix is None:
+        indices = _indices(positions)
+        if not indices:
+            return None
+        end = max(indices) + 1
+        prefix = records[:end]
+    if not isinstance(prefix, Sequence) or isinstance(prefix, (str, bytes)):
+        return None
+    if not prefix or not all(isinstance(item, Mapping) for item in prefix):
+        return None
+    prefix_records = [dict(item) for item in prefix]
+    if prefix_records != records[: len(prefix_records)]:
+        return None
+
+    if positions is None:
+        positions_list = [len(prefix_records) - 1]
+    else:
+        parsed_positions = _indices(positions)
+        if not parsed_positions:
+            return None
+        positions_list = parsed_positions
+    if any(index < 0 or index >= len(prefix_records) for index in positions_list):
+        return None
+    return prefix_records, positions_list
+
+
+def _trace_prefix_check(req: Any, records: list[dict[str, Any]], payload: Any) -> tuple[str, str]:
+    """Re-evaluate a finite temporal prefix with the shared reference interpreter."""
+    parts = _prefix_parts(payload, records)
+    if parts is None:
+        return _REFUTED, "the temporal witness did not name a prefix of the supplied trace"
+    prefix, positions = parts
+    try:
+        node = parse_property(req.spec)
+    except Exception as exc:
+        return (
+            _UNCHECKABLE,
+            f"reference temporal interpreter refused the property: {type(exc).__name__}: {exc}",
+        )
+    if not any(
+        isinstance(current, ast.Call)
+        and isinstance(current.func, ast.Name)
+        and current.func.id in BINARY_TEMPORAL_OPERATORS
+        for current in ast.walk(node)
+    ):
+        return _REFUTED, "a trace-prefix witness requires an until or since property"
+    try:
+        values = eval_temporal_trace(node, prefix)
+    except Exception as exc:
+        return (
+            _UNCHECKABLE,
+            f"reference temporal interpreter refused the prefix: {type(exc).__name__}: {exc}",
+        )
+    if not values:
+        return _REFUTED, "the temporal witness named an empty prefix"
+    root = kleene_value(values[0])
+    if is_unknown(root):
+        return _UNCHECKABLE, "reference temporal interpreter returned UNKNOWN for the prefix"
+    if root is not False:
+        return _REFUTED, f"reference temporal interpreter returned {values[0]!r} at trace start"
+    for position in positions:
+        value = kleene_value(values[position])
+        if is_unknown(value):
+            return _UNCHECKABLE, (
+                f"reference temporal interpreter returned UNKNOWN at run-out position {position}"
+            )
+        if value is not False:
+            return _REFUTED, (
+                f"reference temporal interpreter returned {values[position]!r} at run-out "
+                f"position {position}"
+            )
+    return _CONFIRMED, (
+        f"reference temporal interpreter confirmed the prefix through positions {positions}"
+    )
 
 
 def _trace_check(
@@ -257,8 +362,6 @@ def _pair_check(req: Any, sut: Any, payload: Any) -> tuple[str, str]:
     changed = {name for name in names if left.get(name) != right.get(name)}
     if changed != {protected}:
         return _REFUTED, f"the pair changes {sorted(changed)}, not only {protected!r}"
-    if left.get(protected) == right.get(protected):
-        return _REFUTED, f"the pair does not change protected input {protected!r}"
     try:
         logic_data = sut.logic() if callable(getattr(sut, "logic", None)) else None
     except Exception as exc:
@@ -298,6 +401,9 @@ def _check(
     if kind in ("trace_position", "presence_absence"):
         status, reason = _trace_check(req, records, kind, payload)
         return status, reason, "reasonsmith.witness._trace_check"
+    if kind == "trace_prefix":
+        status, reason = _trace_prefix_check(req, records, payload)
+        return status, reason, "reasonsmith.witness._trace_prefix_check"
     if kind == "input_valuation":
         status, reason = _valuation_check(req, sut, payload)
         return status, reason, "reasonsmith.witness._valuation_check"
