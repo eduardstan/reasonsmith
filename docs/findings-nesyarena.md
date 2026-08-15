@@ -255,7 +255,7 @@ declare `consumer-credit` would report it *not evaluated*, because these provena
 `decide()` nor `logic()` and no length of decision log establishes what a system would have decided.
 The capability gate does not answer it either: the protected variable is an input the decision
 procedure accepts rather than a field a decision record carries, so it is the one name that gate
-does not subtract (`docs/semantics.md` §3, *counterfactual*). Three duties came back `unattainable` for all five systems —
+does not subtract ([`docs/theory/04-decision-problems.md`](theory/04-decision-problems.md) §4.4, *counterfactual*). Three duties came back `unattainable` for all five systems —
 the whole unattainable column of fifteen: the GDPR logical duty
 `gdpr_art22_1_no_prohibited_decision_for_any_input`, the GDPR record duty
 `gdpr_art22_1_automated_decision_prohibition` and the GDPR temporal duty
@@ -276,7 +276,7 @@ them not applicable without running any engine, so their rung is decided by find
 by the evidence ladder. The GDPR error-risk duty was the one temporal duty this run checked, and it now checks none: that
 duty is settled against the inference artefact or not at all, so it is `unattainable` here before
 any monitor runs. Temporal monitoring would not have reached either of the top two rungs anyway, and
-no engine in this build reasons about a formula quantified over a trace (`docs/semantics.md` §3.5).
+no engine in this build reasons about a formula quantified over a trace ([`docs/theory/05-decision-procedures.md`](theory/05-decision-procedures.md) §5.1).
 
 **The conclusion still holds, against the current counts: the Z3 proved engine and the replay
 probed engine never ran.** Z3 never ran because no `logical` duty reaches an engine in this run —
@@ -366,7 +366,7 @@ Three things this did not fix, in descending order of how much they should worry
 - **A declaration is a self-declaration.** Nothing checks that a system declaring `consumer-credit`
   issues credit. The gate stops a duty reaching a system that said nothing; it does nothing about
   one that said the wrong thing — the same standing as the Article 22(2) basis flags
-  (`docs/semantics.md` §3, *the assumption all seven share*).
+  ([`docs/semantics.md`](semantics.md) §4, *operational boundaries*).
 - **The trigger inside a decision is still not modelled.** 12 CFR 1002.9 is triggered by adverse
   action having been taken, not by the creditor being in consumer credit. Against a system that
   *does* declare `consumer-credit`, the property still runs over every record in the trace,

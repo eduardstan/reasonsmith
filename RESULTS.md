@@ -465,7 +465,7 @@ Two nesyarena tests still cannot pass here — not for lack of torch, but for la
 ## Pack Analysis Note (2026-08-04)
 
 `reasonsmith validate-pack <pack> --analyse` reads a pack as a set of formulas rather than as a
-checklist to run a system against (`src/reasonsmith/analysis.py`, `docs/semantics.md` §8). The
+checklist to run a system against (`src/reasonsmith/analysis.py`, [`docs/theory/04-decision-problems.md`](docs/theory/04-decision-problems.md) §4.6). The
 figures below were measured on branch `fm/rs-w0-pack-analysis` with the commands quoted, in the
 same environment as the section above (`pip install -e ".[dev]"`, `nesyarena==0.1.0`, no torch).
 They name **no commit**, for the reason [`docs/report.html`](docs/report.html) names none: the
@@ -583,7 +583,7 @@ automaton is built, because there is no wall clock anywhere in this package.
 > replace this block with what it prints.
 
 Read
-[`docs/semantics.md`](docs/semantics.md) §8 before quoting any of this: the reading is
+[`docs/theory/05-decision-procedures.md`](docs/theory/05-decision-procedures.md) §5.4 before quoting any of this: the reading is
 propositional, so satisfiability is reported only in the affirmative and an entailment it does not
 report is not a distinction any system can make.
 

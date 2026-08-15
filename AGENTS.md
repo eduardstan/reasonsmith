@@ -139,15 +139,16 @@ engine or an explicit no-engine dispatch, never a name this build cannot act on;
 rendering instead of being a rendering convention.
 
 The lattice is a chain and it has a **second coordinate beside it**, not more links: `strength` says
-how far a claim was pushed and `verdict.EvidenceBasis` says what the claim is *about*. Four members
+how far a claim was pushed and `verdict.EvidenceBasis` says what the claim is *about*. Five members
 — `behavioural` (a trace property), `relational` (a 2-safety property), `artifact` (an abductive
-explanation over a model encoding), `assessment` (a truth degree over a residuated lattice) — each
-named after published work, cited in `docs/theory/08-evidence.md` §8.2, which is the contract. It exists
+explanation over a model encoding), `assessment` (a truth degree over a residuated lattice), and
+`statistical` (a declared sample measurement with uncertainty) — each named after the evidence
+contract cited in `docs/theory/08-evidence.md` §8.2. It exists
 because three duty shapes were off the chain and every one of them was prose in a module docstring:
 the counterfactual fragment's missing trace rung, the certificate duty's ladder of one, and a graded
 duty that counted as one an engine failed to settle. Five things must not be undone. A basis is a
 **kind and never a rank**, so the members carry no order and `<` between two of them, or one and a
-`Strength`, raises rather than answering — this is the whole reason it is a dimension and not four
+`Strength`, raises rather than answering — this is the whole reason it is a dimension and not five
 more rungs. `BASIS_RUNGS` is the rungs each basis admits and `RequirementResult.__post_init__`
 **refuses** a result outside its row, which is three docstring sentences turned into one refusal;
 widen a row only when an engine for that rung exists, and

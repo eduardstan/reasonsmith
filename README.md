@@ -318,7 +318,7 @@ validate the generated report envelope with the versioned
 - The legal reading and formalisation are human assumptions: reasonsmith does not validate that the formal test is the correct legal interpretation or that it applies to your case.
 - The certificate measures reason deletion only when the system exposes a suitable inference artefact; a log-only system cannot be upgraded by its adapter.
 
-Read the full boundaries in [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md) and the soundness obligations in [`docs/semantics.md`](docs/semantics.md) §3.
+Read the full boundaries in [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md) and the soundness obligations in [`docs/theory/07-explanation.md`](docs/theory/07-explanation.md) §7.1 and [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §8.4.
 
 The full destination map is [`docs/README.md`](docs/README.md); the live dossier is [reasonsmith.dev/report.html](https://reasonsmith.dev/report.html); empirical measurements are in [`RESULTS.md`](RESULTS.md), the backlog in [`ROADMAP.md`](ROADMAP.md), and contribution rules in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 

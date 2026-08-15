@@ -53,7 +53,7 @@ claim is paired with the test that enforces it; chapter prose remains mathematic
 | Claim | Test or operational warrant |
 |---|---|
 | A statutory reading is recorded as clause, quotation, formula, gates, classifications, and explicit limits rather than as a legal verdict | `docs/refinement.md`; `tests/test_docs_refinement.py` |
-| Open-textured predicates are not silently settled by presence, and the refinement records what remains outside the formula | `test_no_shipped_pack_uses_either_open_texture_construct`; `docs/semantics.md` §9 |
+| Open-textured predicates are not silently settled by presence, and the refinement records what remains outside the formula | `test_no_shipped_pack_uses_either_open_texture_construct`; [`docs/theory/08-evidence.md`](08-evidence.md) §8.5 |
 | A refinement's legal adequacy is an assumption, not a theorem of conformance | `docs/refinement.md`, *How to read column four* |
 
 ## Chapter 7 — Explanation

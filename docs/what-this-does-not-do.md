@@ -61,6 +61,7 @@ written in:
 | `logical` | 4 | any other property of one decision record |
 | `temporal` | 4 | a property over the trace |
 | `counterfactual` | 1 | invariance under one named protected variable |
+| `statistical` | 0 | a declared-sample selection-rate measurement with uncertainty |
 | `undetermined` | 0 | a predicate no engine here settles, and who does |
 | `graded` | 0 | a truth degree over an algebra the pack declares |
 
@@ -78,17 +79,19 @@ and 37 duties; the fragment table above is the source of truth for its family ta
 Presence is also not adequacy, at the level of the individual duty: a reason field that is filled
 in is not a reason that is sufficient. Where a clause supplies its own list of insufficient
 wordings, this tool uses it and can go no further
-([`docs/refinement.md`](refinement.md), *presence is not adequacy*). The two zero rows above are the
-machinery for the rest of that problem, shipped with no duty on it: a pack can now say that
-*meaningful* is open-textured and name who settles it, or carry a truth degree for it, and neither
-turns the adjective into a verdict — a graded duty is reported *not evaluated* with its degree
-beside it as a measurement ([`docs/semantics.md`](semantics.md) §9). Which clause gets the first one
-is a legal reading ([`ROADMAP.md`](../ROADMAP.md) §6).
+([`docs/refinement.md`](refinement.md), *presence is not adequacy*). The three zero rows above
+are distinct: the `statistical` fragment is shipped as a measurement dispatch but no shipped duty
+uses it, while `undetermined` and `graded` are the open-texture machinery with no shipped duty. A
+statistical result carries rates and uncertainty but no population verdict; an open-texture duty
+names its authority or carries a degree, and neither turns an adjective into a verdict. Read the
+statistical boundary in [`docs/theory/08-evidence.md`](theory/08-evidence.md) §8.4 and the graded
+boundary in §8.5. Which clause gets the first open-texture duty is a legal reading
+([`ROADMAP.md`](../ROADMAP.md) §6).
 
 ## 3. A rung is not a grade
 
 `unattainable < observed < recounted < probed < proved` ranks **how a conclusion was reached**, never **what it
-was reached about**. [`docs/semantics.md`](semantics.md) §4, *The lattice*, states the consequence,
+was reached about**. [`docs/theory/08-evidence.md`](theory/08-evidence.md) §8.1, *The evidence ladder is not a grade*, states the consequence,
 and it is quoted rather than paraphrased here:
 
 > It is not a confidence score, and it does not rank how much a reader should believe anything. A
@@ -107,7 +110,7 @@ one is about a *pair* of them and one is about the inference artefact behind a d
 neither can reach every rung whatever the system exposes. `relational` and `artifact` name what the
 evidence is about; they do not sit above or below `observed`, they are not ordered against each
 other, and comparing two of them raises rather than answering
-([`docs/semantics.md`](semantics.md) §10). A ceiling on one of those duties is a fact about the
+([`docs/theory/08-evidence.md`](theory/08-evidence.md) §8.2). A ceiling on one of those duties is a fact about the
 duty, and a report that showed it as an unfinished ladder was telling a reader to expose more of a
 system that could expose nothing further.
 
@@ -146,7 +149,7 @@ at `proved`** across five systems and three packs — the Z3 engine and the repl
 that the README leads with is the sharpest result this tool produces, and it is reachable only
 because that system exposes the inference artefact behind each decision. A system that cannot be
 opened up is reported `unattainable` on that duty and is never quietly returned to the presence
-check beside it ([`docs/semantics.md`](semantics.md) §3, *certificate*).
+check beside it ([`docs/theory/07-explanation.md`](theory/07-explanation.md) §7.5, *The certificate*).
 
 ---
 
