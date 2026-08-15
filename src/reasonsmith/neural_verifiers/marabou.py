@@ -26,8 +26,8 @@ from typing import Any
 
 from reasonsmith.neural_queries import CompiledNeuralQuery, QueryShape, VerifierRun
 
-# Slice 3 deliberately pins the open-source CPU path.  Complete mode is not accepted here; the
-# constant is kept in one place so a later complete-mode integration has an explicit review point.
+# The soundness gate did not admit complete mode on the pinned open-source CPU path. Keep the
+# constant in one place so a future complete-mode integration has an explicit review point.
 MARABOU_VERSION = "2.0.0"
 VNNLIB_VERSION = "1.0"
 BOUNDED_SEARCH_MODE = "bounded-search"
@@ -191,8 +191,8 @@ class MarabouVerifier:
 
     The adapter accepts an executable (or argv prefix) instead of importing ``maraboupy``.  This
     keeps the base install free of Marabou and makes the subprocess boundary straightforward to
-    mock.  ``complete-verification`` is refused until slice 4; even a textual ``UNSAT`` from
-    bounded mode is tagged provenance-only and must not be promoted by a caller.
+    mock.  ``complete-verification`` remains refused after the slice-4 gate failed; even a textual
+    ``UNSAT`` from bounded mode is tagged provenance-only and must not be promoted by a caller.
     """
 
     name = "marabou"
@@ -335,7 +335,7 @@ class MarabouVerifier:
                 query,
                 provenance,
                 diagnostic=(
-                    "slice 3 admits bounded-search only; complete mode is reserved for slice 4"
+                    "complete mode is not admitted until the pinned slice-4 soundness gate passes"
                 ),
             )
         try:

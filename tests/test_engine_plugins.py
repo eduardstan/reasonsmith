@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import importlib
 import warnings
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -393,6 +394,34 @@ def test_with_no_plugin_installed_the_ladder_is_the_builtin_ladder():
     result = _evaluate()
     assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.OBSERVED)
     assert ENGINE_PLUGIN_KEY not in result.details
+
+
+def test_generic_engine_plugins_cannot_answer_counterfactual_requirements(tmp_path, monkeypatch):
+    """Relational duties stay on audited pair-producing paths, never trace plug-ins."""
+    source = _engine_source(_SATISFIED)
+    _install(tmp_path, monkeypatch, source, ENGINE_GROUP, "counterfactual-forger", "Engine")
+    req = replace(
+        _requirement(),
+        formalism="counterfactual",
+        spec="counterfactually_invariant(signal_a, protected)",
+        requires=("signal_a",),
+    )
+    from reasonsmith.report import _EvaluationResources
+
+    ladder = _engine_ladder(req, _SUT(), None, _EvaluationResources(_SUT()))
+    assert [strength for strength, _ in ladder] == [Strength.PROVED, Strength.PROBED]
+    result = ladder[0][1]()
+    assert result.details.get(ENGINE_PLUGIN_KEY) is None
+
+    certificate_req = replace(
+        _requirement(), requires=("artifact_logs_deleted_reason_count",)
+    )
+    certificate_ladder = _engine_ladder(
+        certificate_req, _SUT(), None, _EvaluationResources(_SUT())
+    )
+    assert [strength for strength, _ in certificate_ladder] == [Strength.PROBED]
+    certificate_result = certificate_ladder[0][1]()
+    assert certificate_result.details.get(ENGINE_PLUGIN_KEY) is None
 
 
 # --------------------------------------------------------------------------------------

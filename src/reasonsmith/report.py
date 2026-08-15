@@ -1960,11 +1960,11 @@ def _engine_ladder(
         if callable(getattr(sut, "logic", None)):
             counterfactual.append((Strength.PROVED, proof))
         counterfactual.append((Strength.PROBED, replay))
-        from reasonsmith.plugins import engine_rungs
-
-        counterfactual.extend(
-            engine_rungs(req, sut, lambda: records if records is not None else resources.trace())
-        )
+        # Counterfactual evidence is relational and must be produced by one of the audited
+        # pair-producing paths above. Generic installed engines consume a trace and therefore
+        # cannot answer a property about executions the trace does not contain. Keep this early
+        # branch closed to the generic plug-in group; a future neural verifier gets a dedicated,
+        # typed insertion here rather than answering through ``reasonsmith.engines``.
         return counterfactual
 
     ladder: list[tuple[Strength, Any]] = []

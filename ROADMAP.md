@@ -328,7 +328,18 @@ not the evidential value of its old log.
 VNN-LIB exposure covers only the operators, input bounds and properties the chosen verifier can
 check; a model outside that fragment remains at its existing ceiling. A declared language-model
 input space is likewise a bounded intervention domain, not evidence that prompts represent a
-population or that a sampled replay is a proof.
+population or that a sampled replay is a proof. The current neural artifact profile is embedded
+ONNX with a generated VNN-LIB 1.0 query; it does not claim VNN-LIB-only artifact support.
+
+**Slice-4 gate result (2026-08-15).** The pinned Marabou 2.0.0 open-source CPU source commit
+`d4b51bf5b14fc2dcd7f28c34d8f4fe4c7447cb6d` was attempted by pip as an optional, separate tool, but
+its build did not produce a runnable verifier on the recorded Python 3.12.9 runner. The committed
+finite SAT/UNSAT corpus and semantically equivalent query mutants therefore could not establish a
+clean complete-mode run. Complete mode remains refused and Marabou remains `probed`-only; no
+neural verdict moved. The evidence and exact hashes are in
+[`docs/neural-soundness-corpus.md`](docs/neural-soundness-corpus.md). The stated fallback is
+alpha-beta-CROWN as the first `proved` integration in slice 6, subject to its own explicit status
+and soundness gate.
 
 ## 9. A safety-commitments pack
 
