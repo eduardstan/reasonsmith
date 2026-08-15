@@ -326,23 +326,36 @@ def test_no_check_scores_a_certificate_that_measured_nothing():
     """One predicate gates every metric, so not-checked cannot score as checked-and-sound."""
     cert = unmeasured_cert()
     assert not conformance.measured(cert)
-    for metric in (conformance.fidelity, conformance.retained_share, conformance.coverage,
-                   conformance.reason_set_size):
-        assert metric(cert) is None
+    # Value comparison succeeded even though reason enumeration found no candidate.
+    assert conformance.fidelity(cert) == pytest.approx(1 - abs(cert.value_gap))
+    assert conformance.retained_share(cert) == 1.0
+    assert conformance.coverage(cert) is None
+    assert conformance.reason_set_size(cert) is None
     assert conformance.reason_diversity([cert]) is None
     assert conformance.stability([cert]) is None
     stats = conformance.group_stats([cert])
-    assert stats["n"] == 1 and stats["measured"] == 0
-    assert all(v is None for k, v in stats.items() if k not in ("n", "measured"))
+    assert stats["n"] == 1 and stats["measured"] == 0 and stats["value_measured"] == 1
+    assert stats["cohort_sizes"]["fidelity"] == 1
+    assert stats["cohort_sizes"]["coverage"] == 0
 
 
 def test_an_unmeasured_group_never_wins_the_per_group_comparison():
     s = conformance.stratified({"real": [certify_case(credit_case(), ReferenceAdapter(TopK(1)))],
                                 "unprovable": [unmeasured_cert()]})
-    assert s["per_group"]["unprovable"]["fidelity"] is None
-    assert s["per_group"]["unprovable"]["retained_share"] is None
-    assert all(g["best"] != "unprovable" for g in s["gaps"].values())
-    assert all(g["gap"] is None for g in s["gaps"].values())   # one measured group is no comparison
+    assert s["per_group"]["unprovable"]["fidelity"] == 1.0
+    assert s["per_group"]["unprovable"]["retained_share"] == 1.0
+    assert s["gaps"]["fidelity"]["best"] == "unprovable"
+    assert s["gaps"]["retained_share"]["best"] == "unprovable"
+    assert all(
+        s["gaps"][metric]["best"] != "unprovable"
+        for metric in ("coverage", "reasons_used", "reason_diversity")
+    )
+    assert s["gaps"]["fidelity"]["gap"] is not None
+    assert s["gaps"]["retained_share"]["gap"] is not None
+    assert all(
+        s["gaps"][m]["gap"] is None
+        for m in ("coverage", "reasons_used", "reason_diversity")
+    )
     conformance.render(s, size_cap=3)
 
 

@@ -16,7 +16,7 @@ what the tool would print. Regenerate any block by running the command shown abo
 - **Environment:** Python 3.12.9, Linux, `nesyarena` at the commit `pyproject.toml` pinned when
   these transcripts were captured (`57720fa212834689692e171882272140f1d1fed7`); re-run since
   against the PyPI release `nesyarena==0.1.0` now pinned, byte-for-byte identical
-- **Demo transcript:** 909 lines, `md5sum` `259fb66c4ebe4ce5c4b136c0e947f4cb` — the same length and
+- **Demo transcript:** 913 lines, `md5sum` `258d1a61ad6eceaf20dc89b9fc0bab56` — the same length and
   hash [RESULTS.md](../RESULTS.md) reports, which is what lets the two files be checked against
   each other
 
@@ -516,17 +516,19 @@ design A: confidence varies, reason structure fixed
 CONFORMANCE CHECKS (Table 19: fidelity, coverage, reason-set size,
                     stratified per-group checks, reason diversity;
                     stability is reported separately, over windows)
+  Fidelity and retained share use value-measured cases; enumeration metrics use cases
+  with reason enumeration (their cohorts can differ). Each metric's n is shown below.
 
   group                       n         measured    reasons_found     reasons_used  reasons_deleted         coverage         fidelity   retained_share reason_diversity
   typical                     4                4           3.0000           1.0000           2.0000           0.3333           0.7807           0.7731           0.3333
   atypical                    4                4           3.0000           1.0000           2.0000           0.3333           0.7272           0.4929           0.3333
 
   per-group gaps (best group minus worst):
-    fidelity           +0.0535   (best typical, worst atypical)
-    retained_share     +0.2802   (best typical, worst atypical)
-    coverage           +0.0000   (best typical, worst typical)
-    reasons_used       +0.0000   (best typical, worst typical)
-    reason_diversity   +0.0000   (best typical, worst typical)
+    fidelity           +0.0535   (best typical, worst atypical; typical n=4, atypical n=4)
+    retained_share     +0.2802   (best typical, worst atypical; typical n=4, atypical n=4)
+    coverage           +0.0000   (best typical, worst typical; typical n=4, atypical n=4)
+    reasons_used       +0.0000   (best typical, worst typical; typical n=4, atypical n=4)
+    reason_diversity   +0.0000   (best typical, worst typical; typical n=4, atypical n=4)
 
   reason-set size cap 3: typical mean 1.00 within; atypical mean 1.00 within
 
@@ -538,17 +540,19 @@ design B: reason multiplicity varies, confidence fixed
 CONFORMANCE CHECKS (Table 19: fidelity, coverage, reason-set size,
                     stratified per-group checks, reason diversity;
                     stability is reported separately, over windows)
+  Fidelity and retained share use value-measured cases; enumeration metrics use cases
+  with reason enumeration (their cohorts can differ). Each metric's n is shown below.
 
   group                       n         measured    reasons_found     reasons_used  reasons_deleted         coverage         fidelity   retained_share reason_diversity
   typical                     4                4           2.0000           1.0000           1.0000           0.5000           0.7831           0.7292           0.5000
   atypical                    4                4           5.0000           1.0000           4.0000           0.2000           0.6360           0.6163           0.2000
 
   per-group gaps (best group minus worst):
-    fidelity           +0.1472   (best typical, worst atypical)
-    retained_share     +0.1129   (best typical, worst atypical)
-    coverage           +0.3000   (best typical, worst atypical)
-    reasons_used       +0.0000   (best typical, worst typical)
-    reason_diversity   +0.3000   (best typical, worst atypical)
+    fidelity           +0.1472   (best typical, worst atypical; typical n=4, atypical n=4)
+    retained_share     +0.1129   (best typical, worst atypical; typical n=4, atypical n=4)
+    coverage           +0.3000   (best typical, worst atypical; typical n=4, atypical n=4)
+    reasons_used       +0.0000   (best typical, worst typical; typical n=4, atypical n=4)
+    reason_diversity   +0.3000   (best typical, worst atypical; typical n=4, atypical n=4)
 
   reason-set size cap 3: typical mean 1.00 within; atypical mean 1.00 within
 
