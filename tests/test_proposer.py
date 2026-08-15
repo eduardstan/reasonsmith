@@ -70,8 +70,8 @@ def test_measurement_uses_all_gold_sets_and_reports_machine_agreement():
         raise AssertionError("unknown requirement prompt")
 
     measurement = measure_agreement(model=model, model_name="test-model", max_attempts=1)
-    assert measurement.sample_size == 29
-    assert measurement.agreements == 29
+    assert measurement.sample_size == 37
+    assert measurement.agreements == 37
     assert measurement.rate == 1.0
     assert measurement.model == "test-model"
 

@@ -237,6 +237,8 @@ def format_pack(pack: Pack) -> str:
         f"title: {pack.title}",
         f"description: {pack.description}",
     ]
+    if pack.frontier_trigger:
+        lines.append(f"frontier_trigger: {pack.frontier_trigger}")
     for key, value in pack.source_metadata.items():
         lines.append(f"source.{key}: {value}")
     lines.append(f"requirements: {len(pack.requirements)}")

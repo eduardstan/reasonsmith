@@ -1,0 +1,142 @@
+
+[pack]
+id = "seoul_frontier_ai_safety_2024"
+title = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+frontier_trigger = "frontier_ai_status == frontier"
+description = "Voluntary commitments by named organisations, pinned to the GOV.UK edition updated 7 February 2025. This pack applies only to systems that self-declare frontier_ai_status = frontier; an undeclared or not-frontier system is not applicable, and a wrong declaration is the audited system's overclaim. All duties are scoped to general-purpose systems as the nearest existing class. Commitment IV is a four-signal logical depth anchor; the other duties are record-level presence approximations. Adequacy, intolerability, sufficient resources, and real-world frontier status remain outside this tool. This is not a compliance guarantee."
+
+[source]
+document = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+publication = "GOV.UK, Department for Science, Innovation and Technology, updated 7 February 2025"
+url = "https://www.gov.uk/government/publications/frontier-ai-safety-commitments-ai-seoul-summit-2024/frontier-ai-safety-commitments-ai-seoul-summit-2024"
+edition = "updated 2025-02-07"
+edition_policy = "immutable; later editions use __updated_YYYY-MM-DD and open review rather than mutating this pack"
+retrieval_sha256 = "e19e0ecc72113970f63b03f08c269fe0dcc40da802815b1ae8d236c6d7c394ac"
+
+[[requirement]]
+id = "seoul_frontier_i_lifecycle_risk_assessment"
+source_document = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+article_clause = "Commitment I"
+verbatim_text = "Assess the risks posed by their frontier models or systems across the AI lifecycle, including before deploying that model or system, and, as appropriate, before and during training. Risk assessments should consider model capabilities and the context in which they are developed and deployed, as well as the efficacy of implemented mitigations to reduce the risks associated with their foreseeable use and misuse. They should also consider results from internal and external evaluations as appropriate, such as by independent third-party evaluators, their home governments, and other bodies their governments deem appropriate."
+stakeholder = "regulator"
+formalism = "record"
+spec = "present(artifact_logs_model_evaluation_results) and present(artifact_logs_training_and_testing_process)"
+rationale = "The supplied evidence carries a model-evaluation result and a training/testing process record."
+requires = ["artifact_logs_model_evaluation_results", "artifact_logs_training_and_testing_process"]
+binding = false
+scope = "general-purpose"
+domains = []
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"
+
+[[requirement]]
+id = "seoul_frontier_ii_thresholds_and_breach_assessment"
+source_document = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+article_clause = "Commitment II"
+verbatim_text = "Set out thresholds at which severe risks posed by a model or system, unless adequately mitigated, would be deemed intolerable. Assess whether these thresholds have been breached, including monitoring how close a model or system is to such a breach. These thresholds should be defined with input from trusted actors, including organisations’ respective home governments as appropriate. They should align with relevant international agreements to which their home governments are party. They should also be accompanied by an explanation of how thresholds were decided upon, and by specific examples of situations where the models or systems would pose intolerable risk."
+stakeholder = "regulator"
+formalism = "record"
+spec = "present(artifact_logs_systemic_risk_assessment)"
+rationale = "The supplied evidence carries a systemic-risk assessment record."
+requires = ["artifact_logs_systemic_risk_assessment"]
+binding = false
+scope = "general-purpose"
+domains = []
+deontic_type = "obligation"
+defeasibility = "defeasible-unmodelled"
+
+[[requirement]]
+id = "seoul_frontier_iii_risk_mitigation_process"
+source_document = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+article_clause = "Commitment III"
+verbatim_text = "Articulate how risk mitigations will be identified and implemented to keep risks within defined thresholds, including safety and security-related risk mitigations such as modifying system behaviours and implementing robust security controls for unreleased model weights."
+stakeholder = "regulator"
+formalism = "record"
+spec = "present(artifact_logs_systemic_risk_mitigation) and present(artifact_logs_corrective_measures)"
+rationale = "The supplied evidence carries systemic-risk mitigation and corrective-measure records."
+requires = ["artifact_logs_systemic_risk_mitigation", "artifact_logs_corrective_measures"]
+binding = false
+scope = "general-purpose"
+domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
+
+[[requirement]]
+id = "seoul_frontier_iv_no_deployment_above_threshold"
+source_document = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+article_clause = "Commitment IV"
+verbatim_text = "Set out explicit processes they intend to follow if their model or system poses risks that meet or exceed the pre-defined thresholds. This includes processes to further develop and deploy their systems and models only if they assess that residual risks would stay below the thresholds. In the extreme, organisations commit not to develop or deploy a model or system at all, if mitigations cannot be applied to keep risks below the thresholds."
+stakeholder = "regulator"
+formalism = "logical"
+spec = "(artifact_logs_frontier_risk_score >= scope_statements_frontier_risk_threshold and artifact_logs_mitigation_available < 0.5) -> (artifact_logs_deployment_decision < 0.5)"
+rationale = "For the proposed depth surface, a computed risk score at or above a declared threshold with unavailable mitigation implies a computed no-deployment decision."
+requires = ["artifact_logs_frontier_risk_score", "scope_statements_frontier_risk_threshold", "artifact_logs_mitigation_available", "artifact_logs_deployment_decision"]
+binding = false
+scope = "general-purpose"
+domains = []
+deontic_type = "prohibition"
+defeasibility = "defeasible-unmodelled"
+
+[[requirement]]
+id = "seoul_frontier_v_continuing_mitigation_monitoring"
+source_document = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+article_clause = "Commitment V"
+verbatim_text = "Continually invest in advancing their ability to implement commitments i-iv, including risk assessment and identification, thresholds definition, and mitigation effectiveness. This should include processes to assess and monitor the adequacy of mitigations, and identify additional mitigations as needed to ensure risks remain below the pre-defined thresholds. They will contribute to and take into account emerging best practice, international standards, and science on AI risk identification, assessment, and mitigation."
+stakeholder = "regulator"
+formalism = "record"
+spec = "present(artifact_logs_systemic_risk_mitigation) and present(artifact_logs_corrective_measures)"
+rationale = "The supplied evidence carries mitigation monitoring and additional corrective-measure records."
+requires = ["artifact_logs_systemic_risk_mitigation", "artifact_logs_corrective_measures"]
+binding = false
+scope = "general-purpose"
+domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
+
+[[requirement]]
+id = "seoul_frontier_vi_governance_review_and_resources"
+source_document = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+article_clause = "Commitment VI"
+verbatim_text = "Adhere to the commitments outlined in I-V, including by developing and continuously reviewing internal accountability and governance frameworks and assigning roles, responsibilities and sufficient resources to do so."
+stakeholder = "regulator"
+formalism = "record"
+spec = "present(reviews_and_sign_offs) and present(signer)"
+rationale = "The supplied evidence carries a review/sign-off and accountable signer record."
+requires = ["reviews_and_sign_offs", "signer"]
+binding = false
+scope = "general-purpose"
+domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
+
+[[requirement]]
+id = "seoul_frontier_vii_public_transparency"
+source_document = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+article_clause = "Commitment VII"
+verbatim_text = "Provide public transparency on the implementation of the above (I-VI), except insofar as doing so would increase risk or divulge sensitive commercial information to a degree disproportionate to the societal benefit. They should still share more detailed information which cannot be shared publicly with trusted actors, including their respective home governments or appointed body, as appropriate."
+stakeholder = "public"
+formalism = "record"
+spec = "present(provenance_technical_documentation) and present(scope_statements_capabilities_and_limitations)"
+rationale = "The supplied evidence carries technical documentation and a capabilities/limitations statement that can be inspected as a transparency artefact."
+requires = ["provenance_technical_documentation", "scope_statements_capabilities_and_limitations"]
+binding = false
+scope = "general-purpose"
+domains = []
+deontic_type = "obligation"
+defeasibility = "defeasible-unmodelled"
+
+[[requirement]]
+id = "seoul_frontier_viii_external_involvement_explanation"
+source_document = "Frontier AI Safety Commitments, AI Seoul Summit 2024"
+article_clause = "Commitment VIII"
+verbatim_text = "Explain how, if at all, external actors, such as governments, civil society, academics, and the public are involved in the process of assessing the risks of their AI models and systems, the adequacy of their safety framework (as described under I-VI), and their adherence to that framework."
+stakeholder = "public"
+formalism = "record"
+spec = "present(scope_statements_explanation_scope)"
+rationale = "The supplied evidence carries an explanation-scope record for the external-involvement explanation."
+requires = ["scope_statements_explanation_scope"]
+binding = false
+scope = "general-purpose"
+domains = []
+deontic_type = "obligation"
+defeasibility = "strict"

@@ -1,0 +1,47 @@
+formalism = "logical"
+requirement = "seoul_frontier_iv_no_deployment_above_threshold"
+rationale = "Boundary cases exercise the four-signal Commitment IV implication, including its exact threshold and mitigation boundary."
+
+[[case]]
+id = "threshold-no-mitigation-no-deploy"
+kind = "satisfied"
+expected = "satisfied"
+description = "Risk at the declared threshold with unavailable mitigation results in no deployment."
+[case.signals]
+artifact_logs_frontier_risk_score = 0.8
+scope_statements_frontier_risk_threshold = 0.8
+artifact_logs_mitigation_available = 0.0
+artifact_logs_deployment_decision = 0.0
+
+[[case]]
+id = "threshold-no-mitigation-deploy"
+kind = "violated"
+expected = "violated"
+description = "Risk at threshold with unavailable mitigation must not be deployed."
+[case.signals]
+artifact_logs_frontier_risk_score = 0.8
+scope_statements_frontier_risk_threshold = 0.8
+artifact_logs_mitigation_available = 0.0
+artifact_logs_deployment_decision = 1.0
+
+[[case]]
+id = "just-below-threshold-deploy"
+kind = "near-miss"
+expected = "satisfied"
+description = "A score just below threshold permits deployment and tests the strict boundary."
+[case.signals]
+artifact_logs_frontier_risk_score = 0.79
+scope_statements_frontier_risk_threshold = 0.8
+artifact_logs_mitigation_available = 0.0
+artifact_logs_deployment_decision = 1.0
+
+[[case]]
+id = "mitigation-available-deploy"
+kind = "satisfied"
+expected = "satisfied"
+description = "Available mitigation permits deployment even at a high risk score."
+[case.signals]
+artifact_logs_frontier_risk_score = 0.9
+scope_statements_frontier_risk_threshold = 0.8
+artifact_logs_mitigation_available = 1.0
+artifact_logs_deployment_decision = 1.0

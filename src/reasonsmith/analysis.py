@@ -648,10 +648,12 @@ def _mutation_coverage(
                 constraints=constraints,
                 declared_capabilities=capabilities,
                 test_inputs=inputs,
+                frontier_ai_status=getattr(sut, "frontier_ai_status", None),
             )
         except (ValueError, TypeError):
             return None
         adapter.system_domains = domains
+        adapter.system_scope = scope
         return adapter
 
     baseline_sut = build(rules)

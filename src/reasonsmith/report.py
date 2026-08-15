@@ -48,7 +48,14 @@ from reasonsmith.rulelang import (
     parse_property,
     undetermined_atoms,
 )
-from reasonsmith.spec import Pack, Requirement, normalize_domains, normalize_scope
+from reasonsmith.spec import (
+    FRONTIER_TRIGGER,
+    Pack,
+    Requirement,
+    normalize_domains,
+    normalize_frontier_ai_status,
+    normalize_scope,
+)
 from reasonsmith.sut import (
     ORDINAL_TIME,
     SystemUnderTest,
@@ -66,14 +73,18 @@ LIMITS = (
     "Recital and guidance items inform how statutory duties are interpreted but create no "
     "obligation of their own; interpretive requirements are evaluated and reported separately, "
     "and are never folded into the binding headline counts. A requirement reported not "
-    "applicable was excluded on one of two independent gates. Either no regulatory class was "
+    "applicable was excluded on one of the independent gates. Either no regulatory class was "
     "declared for the system at all, or the class that was declared is not the one the "
     "requirement is limited to; or no decision domain was declared for the system at all, or "
-    "none of the domains that were declared is one the requirement is about. This tool infers "
-    "neither the class nor the domain, so an undeclared system is neither placed in scope nor "
-    "cleared of the duty: read the declared scope and domain lines before reading a "
-    "not-applicable result. The decision-domain vocabulary is written by the pack author and by "
-    "no regulation, and a duty declaring no domain reaches every system it is run against."
+    "none of the domains that were declared is one the requirement is about; or the Seoul pack "
+    "self-asserted frontier_ai_status is undeclared or not-frontier. This tool infers neither "
+    "the class nor the domain, and it does not infer frontier status, so an undeclared system is "
+    "neither placed in scope nor "
+    "cleared of the duty: read the declared scope, domain, and frontier-status lines before "
+    "reading "
+    "a not-applicable result. The decision-domain vocabulary is written by the pack author and by "
+    "no regulation, and a duty declaring no domain reaches every system it is run against. A wrong "
+    "frontier declaration remains an audited-system overclaim."
 )
 
 #: Formalisms this build can actually evaluate. `undetermined` and `graded` are on this list and
@@ -128,6 +139,9 @@ _UNREAD = object()
 #: left to be recovered from the reason prose, so every rendering asks the result rather than
 #: parsing a sentence that is free to be reworded.
 UNDECLARED_DOMAIN_KEY = "skipped_for_undeclared_domain"
+
+#: Where a Seoul-pack result records the self-asserted frontier applicability gate.
+FRONTIER_GATE_KEY = "frontier_ai_status"
 
 #: Where a result produced by an installed engine plug-in records which plug-in produced it and
 #: what ceiling that plug-in declared. Both halves are load-bearing. The name is provenance: a
@@ -1610,7 +1624,12 @@ def _not_applicable(
 
 
 def _inapplicability(
-    req: Requirement, sys_scope_norm: str, sys_domains: tuple[str, ...], system_scope: Any
+    req: Requirement,
+    sys_scope_norm: str,
+    sys_domains: tuple[str, ...],
+    system_scope: Any,
+    frontier_trigger: str = "",
+    frontier_ai_status: str | None = None,
 ) -> tuple[str, dict[str, Any]] | None:
     """Why this duty does not reach this system, and what that is, or None when it does.
 
@@ -1620,10 +1639,11 @@ def _inapplicability(
     system declared a domain that is simply not this duty's carries nothing — that one is a real
     answer, and warning about it would train a reader to ignore the warning that matters.
 
-    Two independent gates, on two axes that are not the same question. `scope` is a regulatory
-    class from one statute's own fixed vocabulary; `domains` is the kind of decision the duty is
-    about, from a vocabulary this repository wrote (`spec.DECISION_DOMAINS`). A duty is evaluated
-    only when it passes both.
+    Three independent applicability axes can matter, on questions that are not the same. `scope`
+    is a regulatory class from one statute's own fixed vocabulary; `domains` is the kind of decision
+    a duty is about, from a vocabulary this repository wrote (`spec.DECISION_DOMAINS`); and the
+    optional pack-level `frontier_trigger` requires a self-asserted frontier status. A duty is
+    evaluated only when it passes every gate its pack declares.
 
     Each gate is a conjunction against a declaration this tool never infers, and each fails in
     the same two ways — the system declared nothing, or declared something else — because those
@@ -1635,6 +1655,19 @@ def _inapplicability(
     decision — the GDPR's Article 22 is both. Neither can be reached by omission, because the
     loader refuses a requirement that does not carry both fields.
     """
+    if frontier_trigger == FRONTIER_TRIGGER and frontier_ai_status != "frontier":
+        if frontier_ai_status is None:
+            declaration = "undeclared"
+        else:
+            declaration = repr(frontier_ai_status)
+        return (
+            "Not applicable: this pack applies only when the system self-declares "
+            "frontier_ai_status='frontier'; the system's frontier AI status is "
+            f"{declaration}, so no requirement was evaluated. reasonsmith does not independently "
+            "verify this self-declaration; a wrong frontier declaration is the audited system's "
+            "overclaim.",
+            {FRONTIER_GATE_KEY: frontier_ai_status or "undeclared"},
+        )
     if req.scope and normalize_scope(req.scope) != sys_scope_norm:
         desc = f"declared as {system_scope!r}" if sys_scope_norm else "undeclared"
         return (
@@ -1661,6 +1694,8 @@ def evaluate_requirement(
     system_scope: str | None = None,
     system_domains: Iterable[str] | None = None,
     grading: Any | None = None,
+    frontier_trigger: str = "",
+    frontier_ai_status: str | None = None,
     *,
     _resources: _EvaluationResources | None = None,
 ) -> RequirementResult:
@@ -1682,7 +1717,15 @@ def evaluate_requirement(
     re-running the system once per requirement.
     """
     result = _evaluate_requirement(
-        req, sut, records, system_scope, system_domains, grading, _resources=_resources
+        req,
+        sut,
+        records,
+        system_scope,
+        system_domains,
+        grading,
+        frontier_trigger,
+        frontier_ai_status,
+        _resources=_resources,
     )
     # The duty's own domain limit is stamped once, here, rather than threaded through four
     # engines: an engine has nothing to say about which systems a duty reaches, and a rung that
@@ -1711,6 +1754,8 @@ def _evaluate_requirement(
     system_scope: str | None,
     system_domains: Iterable[str] | None,
     grading: Any | None,
+    frontier_trigger: str,
+    frontier_ai_status: str | None,
     *,
     _resources: _EvaluationResources | None,
 ) -> RequirementResult:
@@ -1719,8 +1764,21 @@ def _evaluate_requirement(
     system_scope = _declared_scope(sut, system_scope)
     sys_scope_norm = normalize_scope(system_scope, "declared system scope")
     sys_domains = _declared_domains(sut, system_domains)
+    frontier_ai_status = normalize_frontier_ai_status(
+        frontier_ai_status
+        if frontier_ai_status is not None
+        else getattr(sut, "frontier_ai_status", None),
+        "declared frontier AI status",
+    )
 
-    inapplicable = _inapplicability(req, sys_scope_norm, sys_domains, system_scope)
+    inapplicable = _inapplicability(
+        req,
+        sys_scope_norm,
+        sys_domains,
+        system_scope,
+        frontier_trigger,
+        frontier_ai_status,
+    )
     if inapplicable:
         return _not_applicable(req, *inapplicable)
 
@@ -2051,6 +2109,7 @@ def check_conformance(
     system_scope: str | None = None,
     system_domains: Iterable[str] | None = None,
     grading: Any | None = None,
+    frontier_ai_status: str | None = None,
 ) -> ConformanceReport:
     """Check conformance of a SUT against all requirements in a Pack.
 
@@ -2076,6 +2135,8 @@ def check_conformance(
             system_scope=system_scope,
             system_domains=sys_domains,
             grading=grading,
+            frontier_trigger=pack.frontier_trigger,
+            frontier_ai_status=frontier_ai_status,
             _resources=resources,
         )
         for req in pack.requirements

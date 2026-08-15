@@ -30,4 +30,12 @@ requirements = [
   "ecoa_reg_b_1002_9_a_2_written_statement",
   "ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out",
   "ecoa_reg_b_1002_4_a_no_disparate_treatment",
+  "seoul_frontier_i_lifecycle_risk_assessment",
+  "seoul_frontier_ii_thresholds_and_breach_assessment",
+  "seoul_frontier_iii_risk_mitigation_process",
+  "seoul_frontier_iv_no_deployment_above_threshold",
+  "seoul_frontier_v_continuing_mitigation_monitoring",
+  "seoul_frontier_vi_governance_review_and_resources",
+  "seoul_frontier_vii_public_transparency",
+  "seoul_frontier_viii_external_involvement_explanation",
 ]

@@ -1,0 +1,28 @@
+formalism = "record"
+requirement = "seoul_frontier_vii_public_transparency"
+rationale = "Cases exercise the exact record-presence approximation for seoul_frontier_vii_public_transparency."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required evidence signal is present."
+[case.signals]
+provenance_technical_documentation = "recorded"
+scope_statements_capabilities_and_limitations = "recorded"
+
+[[case]]
+id = "missing-provenance-technical-documentation"
+kind = "violated"
+expected = "violated"
+description = "The required evidence is missing one signal."
+[case.signals]
+scope_statements_capabilities_and_limitations = "recorded"
+
+[[case]]
+id = "near-miss-provenance-technical-documentation"
+kind = "near-miss"
+expected = "violated"
+description = "A near-miss record still omits the required signal."
+[case.signals]
+scope_statements_capabilities_and_limitations = "recorded"

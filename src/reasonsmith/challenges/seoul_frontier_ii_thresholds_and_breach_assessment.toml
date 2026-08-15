@@ -1,0 +1,26 @@
+formalism = "record"
+requirement = "seoul_frontier_ii_thresholds_and_breach_assessment"
+rationale = "Cases exercise the exact record-presence approximation for seoul_frontier_ii_thresholds_and_breach_assessment."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required evidence signal is present."
+[case.signals]
+artifact_logs_systemic_risk_assessment = "recorded"
+
+[[case]]
+id = "missing-artifact-logs-systemic-risk-assessment"
+kind = "violated"
+expected = "violated"
+description = "The required evidence is missing one signal."
+[case.signals]
+
+
+[[case]]
+id = "near-miss-artifact-logs-systemic-risk-assessment"
+kind = "near-miss"
+expected = "violated"
+description = "A near-miss record still omits the required signal."
+[case.signals]

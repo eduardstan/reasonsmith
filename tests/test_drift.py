@@ -40,6 +40,7 @@ FIXTURE_BY_KEY = {
     "gdpr_original": "gdpr_original_rct71.xhtml",
     "ecoa": "ecoa_1002_9.xml",
     "ecoa_general_rules": "ecoa_1002_4.xml",
+    "seoul_frontier_ai_safety_2024": "ai_seoul_frontier_commitments.html",
 }
 
 STATUTORY_REQUIREMENT_COUNT = sum(len(load_pack(name).requirements) for name in STATUTORY_PACKS)
@@ -234,6 +235,43 @@ class TestFetchSource:
         assert "A creditor shall notify an applicant of action taken within:" in passage
 
 
+class TestGovUkHtml:
+    def test_extracts_numbered_commitments_and_skips_footnotes(self):
+        source = (FIXTURE_DIR / FIXTURE_BY_KEY["seoul_frontier_ai_safety_2024"]).read_text(
+            encoding="utf-8"
+        )
+        assert extract_passage(source, selector="I", kind="govuk-html").startswith(
+            "I. Assess the risks posed"
+        )
+        assert "[footnote" not in extract_passage(source, selector="II", kind="govuk-html")
+        assert extract_passage(source, selector="VIII", kind="govuk-html").startswith(
+            "VIII. Explain how"
+        )
+        assert extract_passage(source, selector="IX", kind="govuk-html") is None
+
+    def test_edition_marker_is_frozen(self):
+        source = (FIXTURE_DIR / FIXTURE_BY_KEY["seoul_frontier_ai_safety_2024"]).read_text(
+            encoding="utf-8"
+        )
+        assert drift.extract_govuk_edition(source) == "Updated 7 February 2025"
+        changed = source.replace("Updated 7 February 2025", "Updated 8 February 2025")
+        with pytest.raises(DriftFetchError, match="edition sentinel mismatch"):
+            drift._validate_source_edition(
+                next(s for s in SOURCES if s.key == "seoul_frontier_ai_safety_2024"), changed
+            )
+
+    def test_changed_edition_is_not_quote_drift(self):
+        source = (FIXTURE_DIR / FIXTURE_BY_KEY["seoul_frontier_ai_safety_2024"]).read_text(
+            encoding="utf-8"
+        )
+        changed = source.replace("Updated 7 February 2025", "Updated 8 February 2025")
+        report = check_statute_drift(
+            lambda _source: changed, packs=["seoul_frontier_ai_safety_2024"]
+        )
+        assert report.counts == {"match": 0, "differ": 0, "could-not-verify": 8}
+        assert all("edition sentinel mismatch" in r.note for r in report.results)
+
+
 class TestCheckStatuteDrift:
     def test_all_statutory_quotes_match_the_recorded_sources(self):
         report = check_statute_drift(fixture_fetcher)
@@ -302,6 +340,7 @@ class TestCheckStatuteDrift:
             "gdpr_original",
             "ecoa",
             "ecoa_general_rules",
+            "seoul_frontier_ai_safety_2024",
         ]
 
 
@@ -365,8 +404,7 @@ class TestReport:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         assert manifest["schema_version"] == 2
         assert manifest["quote_corpus_sha256"] == quote_corpus_sha256(
-            (result.pack_id, result.requirement_id, result.quote)
-            for result in match_report.results
+            (result.pack_id, result.requirement_id, result.quote) for result in match_report.results
         )
 
         drift_report = DriftReport(

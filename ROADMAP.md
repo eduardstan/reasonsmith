@@ -10,10 +10,10 @@ check that fails today and would pass when the objective is met; a closed object
 same check now passes. Where the honest answer is that an objective is blocked, or deliberately not
 started, that is written down rather than left as an implied "soon".
 
-Current state, for scale: **5 packs, 29 requirements, 7 engines** (`record`, `observed`, `probed`,
+Current state, for scale: **6 packs, 37 requirements, 7 engines** (`record`, `observed`, `probed`,
 `certificate` — also at `probed` — `proved`, the temporal proof engine, also at `proved`, and the
 counterfactual engine, which spans both `proved` and `probed`).
-`reasonsmith validate-pack ecoa eu_ai_act gdpr gpai table7` prints what each contains.
+`reasonsmith validate-pack ecoa eu_ai_act gdpr gpai seoul_frontier_ai_safety_2024 table7` prints what each contains.
 
 ---
 
@@ -123,8 +123,9 @@ variable, and that it cannot see a disparate impact.
 
 ## 4. Breadth: more regulations than five
 
-**The gap, and what a fifth pack did and did not settle.** Five packs now ship — Table 7, EU AI Act
-(Art. 12 & 13), GPAI (EU AI Act Art. 53 & 55), GDPR, ECOA/Reg B — and four of them quote statute.
+**The gap, and what a sixth pack did and did not settle.** Six packs now ship — Table 7, EU AI Act
+(Art. 12 & 13), GPAI (EU AI Act Art. 53 & 55), GDPR, ECOA/Reg B, and the Seoul Frontier AI
+Safety Commitments — and five of them quote an official source.
 The GPAI pack met the outcome below in full and closed one thing the objective did not ask for: the
 `general-purpose` member of `spec.REGULATORY_CLASSES` was wired and used by zero shipped
 requirements, so the class gate had a member no run had ever exercised, and its eight duties are the
@@ -132,12 +133,12 @@ first to exercise it.
 
 **What it did not settle, and the honest cost of it.** The judgement this objective names — whether
 another pack is worth more than depth on the ones that ship — is *less* settled than before, not
-more. Twenty-one of the twenty-nine shipped requirements are now presence checks, up from thirteen
+more. Twenty-eight of the thirty-seven shipped requirements are now presence checks, up from thirteen
 of nineteen, because Article 53 and Article 55 are document-production duties for which presence is
 the correct refinement and no stronger property exists to write
 ([`docs/refinement.md`](docs/refinement.md), *presence is not adequacy*). Breadth bought that way is
-real breadth and it is not depth. **A sixth pack that is another eight presence checks makes this
-worse, and a proposal should say which of its duties reaches above `record`.**
+real breadth and it is not depth. **The Seoul pack adds seven record approximations and one logical Commitment IV depth anchor, so it meets
+this bar while retaining the explicit limits in `docs/refinement.md`.**
 
 There is now a measurement beside that count rather than only the count.
 `reasonsmith validate-pack <pack> --analyse --system-module …` mutates a system's declared rules
@@ -234,8 +235,8 @@ evaluated*, never compared against exact WMC as though it had claimed distributi
 
 ## 6. The first duty written with an open-textured predicate
 
-**The gap.** [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §8.4 opens by stating it: twenty-one of the
-twenty-nine shipped requirements are presence checks, and the fourth column of
+**The gap.** [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §8.4 opens by stating it: twenty-eight of the
+thirty-seven shipped requirements are presence checks, and the fourth column of
 [`docs/refinement.md`](docs/refinement.md) says the same thing row after row — *meaningful*,
 *sufficiently detailed*, *adequate*, *appropriate*, *without undue delay* were not modelled. Presence
 is not a bad proxy for those predicates; it is a refusal to model them at all. §8.4 also states what is
@@ -350,26 +351,25 @@ at its honest `probed` ceiling, complete mode is refused, and no neural verdict 
 unsafe/safe-incomplete/complete-safe/timeout/unknown statuses remain distinct; disagreements are
 diagnostic and block stronger results. See [`docs/neural-soundness-corpus.md`](docs/neural-soundness-corpus.md).
 
-## 9. A safety-commitments pack
+## 9. A safety-commitments pack — closed
 
-**The gap.** Objective 4 sets the admission bar itself: a sixth pack must say which duty reaches
-above `record`, because another collection of presence checks would increase breadth without depth.
-The GPAI pack establishes the legitimate narrower precedent — document-production commitments can
-properly refine to `record` — but it does not remove that bar for the next pack.
+**Closed.** The Seoul Frontier AI Safety Commitments pack is the sixth pack and Commitment IV reaches
+above `record` through its four-signal logical implication. The seven record duties are explicit
+presence approximations, and the pack description/refinement rows state their limits.
 
-**Measurable outcome.** One pack from a published AI-safety framework passes every gate objective 4
-already names: a retrieval record in [`docs/legal-sources.md`](docs/legal-sources.md),
+**Measured outcome.** One pack from a published AI-safety framework passes every gate objective 4
+names: a retrieval record in [`docs/legal-sources.md`](docs/legal-sources.md),
 character-for-character quotations accepted by the verbatim-quote test, a live source covered by
 the drift workflow, and one [`docs/refinement.md`](docs/refinement.md) row per duty naming what was
 left out. At least one of those duties reaches above `record`; a proposed pack containing only
-document-presence duties does not close the objective. The absence of a sixth pack meeting those
-conditions is the check that fails today.
+document-presence duties does not close the objective. The Seoul pack, its GOV.UK drift fixture and sentinel, its eight refinement rows, and its Commitment IV
+proved example are the checks that now pass.
 
-**Depends on.** The framework survey now under way and the captain's choice of framework. The
-choice must precede formalisation because the source decides which commitments exist and which
-authority, if any, stands behind them. What reasonsmith would check is the selected framework's
-formalised commitments at the evidence basis and strength each property admits — not "alignment",
-not the adequacy of the framework, and not safety outside the quoted commitments.
+**Why this is still limited.** The gate is self-asserted, the source calls the commitments voluntary,
+and the formalisation does not determine adequacy, intolerability, sufficient resources, or real-world
+frontier status. What reasonsmith checks is the selected framework's formalised commitments at the
+evidence basis and strength each property admits — not "alignment", not the adequacy of the framework,
+and not safety outside the quoted commitments.
 
 ## 10. A statistical evidence basis — **second wave**
 

@@ -103,7 +103,7 @@ from functools import lru_cache
 from typing import Any, Optional, Protocol, runtime_checkable
 
 from reasonsmith.neural import DeclaredInputSpace
-from reasonsmith.spec import Pack, load_pack
+from reasonsmith.spec import Pack, load_pack, normalize_frontier_ai_status
 
 #: Section 6.3 top-level taxonomy for capability signals supplied through the SUT protocol
 #: (Stan, Sciavicco & Napoletano, JAIR 2026, Section 6.3, p. 36:24 — `[@stan-2026]`):
@@ -299,11 +299,21 @@ class NeuralExposures(Protocol):
 
 
 class BaseSUT:
-    """Convenience base class or reference helper for SUT implementations."""
+    """Convenience base class or reference helper for SUT implementations.
 
-    def __init__(self, declared_capabilities: set[str] | Iterable[str]):
+    ``frontier_ai_status`` is an optional, self-asserted applicability declaration for the Seoul
+    pack. It is not a record capability and reasonsmith never infers or independently verifies it.
+    """
+
+    def __init__(
+        self,
+        declared_capabilities: set[str] | Iterable[str],
+        *,
+        frontier_ai_status: str | None = None,
+    ):
         _validate_capability_collection(declared_capabilities, "declared_capabilities must be")
         self._capabilities = set(declared_capabilities)
+        self.frontier_ai_status = normalize_frontier_ai_status(frontier_ai_status)
         for signal in self._capabilities:
             if not isinstance(signal, str) or not signal.strip():
                 raise ValueError(

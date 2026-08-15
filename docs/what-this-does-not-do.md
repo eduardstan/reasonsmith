@@ -52,20 +52,20 @@ credit** ([`docs/findings-nesyarena.md`](findings-nesyarena.md), finding 3;
 
 ## 2. Depth is uneven, and here is the shape of it
 
-Five packs ship, with 29 requirements between them. Counted by the fragment each property is
+Six packs ship, with 37 requirements between them. Counted by the fragment each property is
 written in:
 
 | formalism | requirements | what it asks |
 |---|---:|---|
-| `record` | 21 | a conjunction of `present(signal)` — the field is there |
-| `logical` | 3 | any other property of one decision record |
+| `record` | 28 | a conjunction of `present(signal)` — the field is there |
+| `logical` | 4 | any other property of one decision record |
 | `temporal` | 4 | a property over the trace |
 | `counterfactual` | 1 | invariance under one named protected variable |
 | `undetermined` | 0 | a predicate no engine here settles, and who does |
 | `graded` | 0 | a truth degree over an algebra the pack declares |
 
-**Three quarters of the shipped duties are presence checks.** Reproduce the count with
-`reasonsmith validate-pack ecoa eu_ai_act gdpr gpai table7`, which prints each requirement's
+**Most of the shipped duties are presence checks.** Reproduce the count with
+`reasonsmith validate-pack ecoa eu_ai_act gdpr gpai seoul_frontier_ai_safety_2024 table7`, which prints each requirement's
 formalism.
 
 That is not an accident of laziness: `packs/gpai.toml`'s eight Article 53 and 55 duties are

@@ -37,17 +37,18 @@ class JSONLAdapter(BaseSUT):
         self,
         source: str | Path | TextIO,
         declared_capabilities: set[str] | Iterable[str] | None = None,
+        frontier_ai_status: str | None = None,
     ):
         self.source = source
         self._records = self._parse_source(source)
 
         if declared_capabilities is not None:
-            super().__init__(declared_capabilities)
+            super().__init__(declared_capabilities, frontier_ai_status=frontier_ai_status)
             self._partially_present: dict[str, tuple[int, int]] = {}
             self.capability_basis = "declared"
         else:
             capabilities, partially_present = self._derive_capabilities(self._records)
-            super().__init__(capabilities)
+            super().__init__(capabilities, frontier_ai_status=frontier_ai_status)
             self._partially_present = partially_present
             self.capability_basis = "trace"
 

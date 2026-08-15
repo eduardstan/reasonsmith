@@ -146,6 +146,31 @@ DEFEASIBILITY_CLASSES = (
     "trigger-unmodelled",
 )
 
+FRONTIER_AI_STATUSES = ("frontier", "not-frontier")
+FRONTIER_TRIGGER = "frontier_ai_status == frontier"
+
+
+def normalize_frontier_ai_status(value: Any, what: str = "frontier AI status") -> str | None:
+    """Normalize the self-asserted frontier applicability declaration.
+
+    The declaration is intentionally not inferred or verified here. A missing value remains
+    missing so the Seoul pack can report it as not applicable; any other value is refused rather
+    than silently treating a misspelling as a status.
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise TypeError(f"a {what} must be a string or None, got {type(value).__name__}: {value!r}")
+    normalized = value.strip().lower()
+    if not normalized:
+        return None
+    if normalized not in FRONTIER_AI_STATUSES:
+        raise ValueError(
+            f"{value!r} is not a known {what}. Accepted: "
+            f"{', '.join(repr(s) for s in FRONTIER_AI_STATUSES)}, or leave it undeclared"
+        )
+    return normalized
+
 
 #: The regulatory classes this tool knows how to name, as a fixed vocabulary rather than
 #: whatever strings a pack or a caller happens to write. Both sides of the comparison are
@@ -509,8 +534,14 @@ class Pack:
     requirements: tuple[Requirement, ...]
     source_metadata: dict[str, Any] = field(default_factory=dict)
     algebra: str = ""
+    frontier_trigger: str = ""
 
     def __post_init__(self) -> None:
+        if self.frontier_trigger not in ("", FRONTIER_TRIGGER):
+            raise ValueError(
+                f"Pack {self.id!r}: unsupported frontier_trigger {self.frontier_trigger!r}; "
+                f"the only supported gate is {FRONTIER_TRIGGER!r}"
+            )
         if not self.requirements:
             raise ValueError(f"Pack {self.id!r} contains no requirements")
         ids = [r.id for r in self.requirements]
@@ -534,6 +565,7 @@ class Pack:
             "requirements": [r.to_dict() for r in self.requirements],
             "source_metadata": dict(self.source_metadata),
             "algebra": self.algebra,
+            "frontier_trigger": self.frontier_trigger,
         }
 
 
@@ -614,6 +646,18 @@ def load_pack(name_or_path: str | Path) -> Pack:
     pack_id = pack_info.get("id", path.stem)
     title = pack_info.get("title", pack_id)
     description = pack_info.get("description", "")
+    frontier_trigger = pack_info.get("frontier_trigger", "")
+    if not isinstance(frontier_trigger, str):
+        raise ValueError(
+            f"{path} [pack] frontier_trigger must be a string, got "
+            f"{type(frontier_trigger).__name__}"
+        )
+    frontier_trigger = frontier_trigger.strip()
+    if frontier_trigger not in ("", FRONTIER_TRIGGER):
+        raise ValueError(
+            f"{path} [pack] frontier_trigger {frontier_trigger!r} is unsupported; the only "
+            f"supported gate is {FRONTIER_TRIGGER!r}"
+        )
 
     source_meta = data.get("source", {})
 
@@ -715,6 +759,7 @@ def load_pack(name_or_path: str | Path) -> Pack:
         requirements=tuple(reqs),
         source_metadata=source_meta,
         algebra=pack_algebra,
+        frontier_trigger=frontier_trigger,
     )
 
 

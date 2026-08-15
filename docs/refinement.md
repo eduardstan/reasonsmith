@@ -3,7 +3,7 @@
 Every requirement in this repository was written by someone reading a clause of law and deciding
 what formula stands for it. That step — refinement — is where the legal meaning is either preserved
 or quietly lost, and it is the step no pack file records. `docs/authoring-packs.md` documents the
-*fields* of a requirement. This document is the record of the *judgement*: for each of the 29 shipped
+*fields* of a requirement. This document is the record of the *judgement*: for each of the 37 shipped
 requirements, the clause, the duty it states, the property it became, and — the column that matters —
 what the refinement deliberately did not capture.
 
@@ -31,7 +31,7 @@ flowchart LR
 
 ## Autoformalisation challenge sets and sign-off
 
-Twenty-nine duties have executable, lawyer-readable gold challenge sets under
+Thirty-seven duties have executable, lawyer-readable gold challenge sets under
 [`autoformalization.md`](autoformalization.md) and `src/reasonsmith/challenges/`. They cover all shipped record and logical duties plus four temporal traces and one counterfactual
 pair corpus. Open-textured and certificate duties remain outside this model-free benchmark rather
 than being silently approximated here. The
@@ -49,9 +49,9 @@ duty is different for every requirement, and column four is where it is written 
 
 Four kinds of gap recur, and naming them once keeps the table short:
 
-- **Presence is not adequacy.** Twenty-one of the twenty-nine shipped duties are `record` duties: a
-  conjunction of `present(signal)` atoms, and a twenty-second is the same presence check quantified
-  over the trace. A reason field containing `"n/a"` is present
+- **Presence is not adequacy.** Twenty-eight of the thirty-seven shipped duties are `record` duties:
+  conjunctions of `present(signal)` atoms. The remaining logical, temporal, counterfactual,
+  certificate, and other fragments do not turn a presence claim into an adequacy finding. A reason field containing `"n/a"` is present
   (`docs/semantics.md` §3, *record*). Every clause whose content is an adjective — *meaningful*,
   *suitable*, *concise, complete, correct and clear*, *sufficiently detailed*, *adequate* — meets a
   check that can see only whether a field is non-empty.
@@ -106,23 +106,24 @@ Four kinds of gap recur, and naming them once keeps the table short:
 - **The property's reach is not the clause's scope.** Most clauses below are triggered — by adverse
   action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
   evaluated over every record in a trace is checked outside that trigger too. Two axes of a
-  clause's scope are modelled — the regulatory class (`scope`, used by fourteen of the twenty-nine
+  clause's scope are modelled — the regulatory class (`scope`, used by twenty-two of the thirty-seven
   duties) and the decision domain (`domains`, used by eight) — and both are gates about the *system*. A
   trigger *inside* a decision is not a gate at all: the two 12 CFR 1002.9(b)(2) duties carry their
   own in the property, at the price of being reported *not evaluated* where it never fires.
 
-## Two axes of reach are modelled, and the trigger is still not one
+## Three axes of reach are modelled, and the decision trigger is still not one
 
-A duty reaches a system when it passes two gates. `scope` is a *regulatory class* from the EU AI
-Act's own five-member vocabulary; fourteen duties use it — six `high-risk` (the four in
-`packs/eu_ai_act.toml` and the two Article 12 and 13 rows of Table 7) and the eight
-`general-purpose` duties of `packs/gpai.toml`, which are the first requirements in this repository
-to use that class at all. `domains` is
-the *kind of decision* the duty is about — the ECOA rows and the Table 7 ECOA and FDA rows use it,
-eight duties in all — and it is
-matched by intersection against what the system declares. A system that declares neither is reported
-`not_applicable` on every duty that limits either, never `satisfied`, and reasonsmith infers neither
-(`docs/semantics.md` §4).
+A duty reaches a system when it passes the applicable gates. `scope` is a *regulatory class* from the EU AI
+Act's own five-member vocabulary; twenty-two duties use it — six `high-risk` (the four in
+`packs/eu_ai_act.toml` and the two Article 12 and 13 rows of Table 7), the eight
+`general-purpose` duties of `packs/gpai.toml`, and the eight Seoul duties. `domains` is
+the *kind of decision* the duty is about — eight duties use it — and it is matched by intersection
+against what the system declares. A system that declares neither is reported `not_applicable` on
+every duty that limits either, never `satisfied`, and reasonsmith infers neither (`docs/semantics.md
+§4`). The Seoul pack adds a third, pack-level applicability gate: its adapter-declarable
+`frontier_ai_status` must be `frontier`; undeclared and `not-frontier` systems are reported not
+applicable. This declaration is self-asserted and not independently verified, so a wrong declaration
+is the audited system's overclaim.
 
 The domain gate closed a specific defect. An adverse-action notice duty under 12 CFR 1002.9 used to
 reach a graph-reachability benchmark that issues no credit and notifies nobody and report it
@@ -132,7 +133,7 @@ on a *different* requirement, arriving for the wrong reason. Those four ECOA dut
 not applicable against all five of that run's systems.
 
 **What the gate still does not do, and every row in the ECOA and GDPR tables below inherits it.**
-It is stated once, here, rather than twenty-nine times:
+It is stated once, here, rather than thirty-seven times:
 
 - **The vocabulary is this repository's, not any regulation's.** `DECISION_DOMAINS` is a coarse,
   openly-authored list, and it is wrong somewhere: no statute defines a list of decision domains,
@@ -171,7 +172,7 @@ The fourth column reads, over and over, as one sentence: *the general rule is fo
 exception is not*. Said often enough that looked like a single missing construct — a pack language
 built on prioritized defaults, the premise Catala is built on (Merigoux, Chataing & Protzenko, ICFP
 2021) and the shape defeasible deontic logic gives rules (Governatori's PCL / Regorous). Before
-rebuilding anything on that premise it is worth knowing how many of these twenty-nine entries the
+rebuilding anything on that premise it is worth knowing how many of these thirty-seven entries the
 premise is actually true of. This section is that count, and it is a count rather than an
 impression because every shipped requirement now carries the classification in its own
 `[[requirement]]` block: `deontic_type` and `defeasibility`, required fields with no default,
@@ -202,20 +203,22 @@ still named in its row above. A defeater counts only where the clause states it 
 requirement's own `verbatim_text` or in a source `docs/legal-sources.md` retrieved — the discipline
 every other claim about the law here is held to.
 
-**The count, over all twenty-nine shipped requirements:**
+**The count, over all thirty-seven shipped requirements:**
 
 | `defeasibility` | Requirements | What it says |
 |---|---|---|
-| `defeasible-unmodelled` | **3** | The law states an exception; the property does not carry it. |
+| `defeasible-unmodelled` | **6** | The law states an exception; the property does not carry it. |
 | `defeasible-modelled` | 2 | The law states an exception; the property carries it. |
-| `trigger-unmodelled` | 12 | No defeater. The clause's condition of application is not modelled. |
-| `strict` | 12 | No defeater, and the property's reach is the clause's. |
+| `trigger-unmodelled` | 13 | No defeater. The clause's condition of application is not modelled. |
+| `strict` | 16 | No defeater, and the property's reach is the clause's. |
 
-The three are `ecoa_reg_b_1002_9_a_1_timing_of_notice` (paragraph (c)'s incomplete-application
+The six are `ecoa_reg_b_1002_9_a_1_timing_of_notice` (paragraph (c)'s incomplete-application
 notice defeats the 30-day bound), `gdpr_art22_1_automated_decision_prohibition` (Article 22(2)'s
-three bases disapply paragraph 1) and `eu_ai_act_art53_1_b_downstream_documentation` (the clause's
-own *without prejudice to* proviso on intellectual property and trade secrets, which is why that
-property cannot tell documentation lawfully redacted from documentation simply missing). The two
+three bases disapply paragraph 1), `eu_ai_act_art53_1_b_downstream_documentation` (the clause's
+own *without prejudice to* proviso on intellectual property and trade secrets), and the Seoul
+`seoul_frontier_ii_thresholds_and_breach_assessment`, `seoul_frontier_iv_no_deployment_above_threshold`,
+and `seoul_frontier_vii_public_transparency` rows, whose stated exceptions remain outside their
+properties. The two
 that are modelled are `gdpr_art22_1_no_prohibited_decision_for_any_input` and
 `ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out`, and both are worth reading before deciding
 anything: **each carries its clause's exception as a disjunction, in the language as it stands.**
@@ -226,12 +229,12 @@ priority relation required. The `until` the second needed is a temporal shape ra
 priority between rules — the obligation has an end as well as a beginning — so it is no evidence
 for prioritized defaults either.
 
-**So the answer is three of twenty-nine, and the honest reading of it is that the rewrite is not
-justified by this evidence.** Twelve of the entries are triggers, and a trigger needs a signal, not
-a construct. Twelve more are strict, and their fourth columns are the other three gaps this
+**So the answer is six of thirty-seven, and the honest reading of it is that the rewrite is not
+justified by this evidence.** Thirteen of the entries are triggers, and a trigger needs a signal, not
+a construct. Sixteen more are strict, and their fourth columns are the other three gaps this
 document already names — presence is not adequacy, the trace is a sample, organisational facts are
 outside every engine. Both defeaters that were modelled were modelled without new machinery. What
-prioritized defaults would buy, on today's packs, is a cleaner statement of at most three duties,
+prioritized defaults would buy, on today's packs, is a cleaner statement of at most six duties,
 one of which — the *without prejudice* proviso — is not obviously a priority between rules at all.
 
 **Three limits of this count, stated rather than left to be discovered.**
@@ -247,7 +250,7 @@ one of which — the *without prejudice* proviso — is not obviously a priority
    paragraph no shipped requirement formalises, so it is counted nowhere.
 3. **`trigger-unmodelled` is not a lesser gap.** It is the largest single item in this document
    (*Two axes of reach are modelled, and the trigger is still not one*) and it is unchanged by
-   anything here. Twelve is the count of duties whose reach exceeds their clause's; the census
+   anything here. Thirteen is the count of duties whose reach exceeds their clause's; the census
    only says that a different construct is what would close it.
 
 ### What the deontic classification found
@@ -259,8 +262,8 @@ came out:
 
 | `deontic_type` | Requirements |
 |---|---|
-| `obligation` | 24 |
-| `prohibition` | 4 |
+| `obligation` | 31 |
+| `prohibition` | 5 |
 | `reparation` | 1 |
 | `permission` | **0** |
 
@@ -431,6 +434,38 @@ modelled* above.
 | 12 CFR 1002.9(b)(2)<br>`ecoa_reg_b_1002_9_b_2_principal_reasons_complete` | The same clause, read on the other half of its first sentence: the statement must indicate the principal reason**s** for the adverse action — all of them, not one of them. | `logical`: `present(artifact_logs_reason_explanation) -> (artifact_logs_deleted_reason_count <= 0)` | **Whether the reasons are the right ones.** The count is measured by `engines/certificate.py`, which enumerates the decision's reasons exactly from the inference artefact the system exposes through `artifact()`, switches each one off in turn, and counts the reasons the system's own answer turns out not to depend on. So the property captures *the notice states every reason this decision's inference used* and nothing beyond it: it does not check that those reasons are correct, that they are the reasons a person would call principal, or that the enumeration found the reasons a different depth bound would find. The threshold is zero and is not this pack's invention — the clause asks for the principal reason(s) for the action taken — but the bound on the enumeration is the artefact's own `exact_depth`, supplied by the system, and a reason lying past it is a reason nothing here looks for — but a bound that found *no* reason at all measures nothing rather than zero, so such a decision buys no verdict here and a run holding one is never reported satisfied. **A reason the probe could not isolate is counted neither way:** where every fact of a reason is shared with another reason it cannot be switched off alone, so dependency is neither shown nor assumed, and the result reports how many such reasons there were (`docs/semantics.md` §3, *certificate*). **What this row exists to remove:** the sibling `ecoa_reg_b_1002_9_b_2_specific_reasons` reads the same clause and answers a weaker question — that a statement is there and is none of the two wordings the clause calls insufficient — and on the demonstration's own decision `APP-1042` it is *satisfied* while four of five legally owed reasons are missing. This duty is what makes that decision report violated, and it is deliberately given a single-rung engine ladder so no trace, no replay and no proof over exposed rules can answer it in the weaker duty's place (`test_the_adequacy_duty_is_never_downgraded_to_the_presence_check`). **The cost:** a system that cannot expose an inference artefact is reported `unattainable` on it — every system a plain decision log describes, including the three shipped adapters of `docs/three-systems.md`, the language model of `docs/language-model.md` and all five nesyarena provenances — so this duty is checkable on strictly fewer systems than any other in the pack. That is the intended trade: unattainable says *this system cannot show me*, and the presence check it replaces said *satisfied*. **The trigger, retained from the sibling row:** the antecedent is the statement of reasons paragraph (a)(2)(i) requires, so a creditor lawfully on the (a)(2)(ii) disclosure branch is not held to it, at the cost of the duty being reported *not evaluated* where no statement exists rather than answered either way (`docs/semantics.md` §4). **Where only some decisions state reasons**, the verdict is about those and the summary says so: a certified decision whose trigger never fired is named in the satisfied summary along with the reasons the deletion probe measured deleted behind it and set aside, because a claim covering two decisions when one of them was measured dirty and excluded is false about the measurement even where it is right about the duty (`test_a_certified_decision_the_trigger_never_reached_is_named_in_the_satisfied_summary`). **And the monotonicity premise, which the artefact now declares:** the count comes from a one-directional probe — facts are switched off, never on — so *the notice states every reason this decision's inference used* is read off an engine assumed monotone in its inputs. That premise is no longer assumed. `artifacts.InferenceArtifact` requires the artefact to declare whether its inference is monotone, and an artefact that declares it is not, declares nothing at all, or declares that it is where the probe measured a deletion raising the system's answer is reported *not evaluated* naming the reason — never violated and never satisfied, and never handed down to the presence check that shares this clause (`docs/semantics.md` §3, *The inference artefact*; `test_an_artefact_declaring_non_monotone_inference_is_not_evaluated_and_names_why`). **What that leaves out** is the whole of the duty for such a system: reasonsmith has one definition of a reason and it does not survive defeat, so a creditor whose policy exceptions retract reasons is now neither accused nor cleared on this row. The refusal is *not evaluated* rather than *unattainable* deliberately — the gap is in this tool and not in that system. **And the declaration is a self-declaration**, of the same kind as `capabilities()`: it can be refuted by the measurement and never confirmed by it, since a defeater holding no fact of any enumerated reason is never switched off at all (`test_the_absence_of_the_fingerprint_is_not_evidence_of_monotonicity`). And the clause is triggered by adverse action, while the property runs over every decision the trace holds, approvals included. | Human sign-off: pending (gold set: `ecoa_reg_b_1002_9_b_2_principal_reasons_complete.toml`; no candidate approved).
 | 12 CFR 1002.9(c)(2)<br>`ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out` | Where a creditor sends a notice of incompleteness, its obligation runs from that notice and ends one of two ways: the designated period lapses without a response, after which the creditor has no further obligation, or the applicant supplies the information within the period and the creditor must then take action and notify under paragraph (a). | `temporal`: `always(present(artifact_logs_incompleteness_notice_sent) -> until(present(artifact_logs_incompleteness_notice_sent), present(artifact_logs_action_taken_notification) or present(artifact_logs_response_period_lapsed)))` | **The designated period itself, which is the clause's own measure and not a number.** The regulation says *a reasonable period of time* the creditor designates, so there is no length to check against and this pack invents none: the property reads whether the log says the period lapsed, never whether the period was reasonable, how long it was, or whether the response arrived inside it. Three further omissions. **Whether the notice said what (c)(2) requires it to say** — the information needed, the designated period, and that failure to respond ends consideration — is not read at all; `present()` says a notice was recorded, not what was in it. **The endings are read as recorded flags**, so a creditor that never records either one is reported violated for the shape of its log rather than for its conduct, and one that records `artifact_logs_response_period_lapsed` where the applicant did in fact respond is believed. **And the trace is a sequence of decision records, not an application timeline**: `until` reaches across the records the log holds in the order it holds them, so a log interleaving several applications is checked as though the endings of one could end another's notice. This is the first shipped duty whose obligation has an end as well as a beginning, and the second whose clause states a defeater the property carries — the *no further obligation* limb is the second branch of the disjunction, ordinary propositional structure inside a temporal operator rather than a priority between rules (*The defeasibility census*). | Human sign-off: pending (gold set: `ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out.toml`; no candidate approved).
 | 12 CFR 1002.4(a)<br>`ecoa_reg_b_1002_4_a_no_disparate_treatment` | A creditor must not discriminate against an applicant on a prohibited basis regarding any aspect of a credit transaction. | `counterfactual`: `counterfactually_invariant(artifact_logs_decision_record, applicant_prohibited_basis)` | **Every route to a discriminatory outcome that does not run through the named variable.** The property is invariance under one variable holding all others fixed, so a proxy — postcode, employer, an interaction term — is invisible to it: a rule set that never reads the prohibited basis and decides by postcode is `satisfied` here (`test_a_system_accepting_the_protected_variable_and_ignoring_it_is_satisfied` pins the verdict; nothing pins the proxy, because there is nothing to pin). It is a *treatment* property and says nothing about *effects*: disparate impact — the theory Regulation B's effects test and GDPR Recital 71's *discriminatory effects* limb are about — is a fact about outcomes across a population, is not a property of any pair of decisions, and remains unformalised in this repository, as the Recital 71 row above now says in narrowed form. It quantifies over the input space the system's own `constraints` declare, so **a narrowed constraint set narrows the claim**: a system that declares `640 <= credit_score <= 700` is proved fair over that band and over nothing else, and no engine here checks that the declared band is the deployed one (`docs/semantics.md` §3, *counterfactual*). In the degenerate case of that bound — a declaration admitting no pair that differs in the protected variable at all, because the constraints pin it or the rules assign it — the duty is reported *not evaluated* rather than satisfied, since an `unsat` meaning "no pair exists" is not evidence of "no pair disagrees" (`test_constraints_pinning_the_protected_variable_are_not_a_proof`, `test_rules_assigning_the_protected_variable_are_not_a_proof`). At `probed` the claim is narrower still — the pairs the budget names, built from the decisions the system logged and the values the constraints admit, and nothing outside them (`test_paired_replay_misses_what_the_trace_it_was_given_cannot_reach`). **It reaches exactly one variable.** 12 CFR 1002.2(z) lists nine prohibited bases — race, colour, religion, national origin, sex, marital status, age, public-assistance income and the good-faith exercise of a Consumer Credit Protection Act right — and this duty names one signal. A creditor answerable on several is answered here about the one it exposes under that name, and reasonsmith neither knows nor checks which basis that is. **Interactions are not reached either**: moving two protected variables together is a different property, and the atom is deliberately not composable (`test_the_atom_is_the_whole_spec_or_no_part_of_one`). **A system with no notion of the variable is `unattainable`, never satisfied** — unawareness is not a discharge of this duty, and telling the two apart is what the `computes` direction declaration is consulted for (`test_a_system_with_no_notion_of_the_protected_variable_is_unattainable`). **And the trigger, as everywhere else in this pack, is not modelled**: § 1002.4(a) governs a creditor in a credit transaction, and no gate here checks that the system under test is one. **`applicant_prohibited_basis` is the first shipped signal that is a fact about a natural person rather than about a system**, so it is outside the paper's four Section 6.3 categories (`sut.CAPABILITY_TAXONOMY`) and named as the sole exception by `test_exactly_one_shipped_signal_is_outside_the_paper_s_taxonomy`. It is an input the decision procedure accepts and **not** a field a decision record must carry: the duty asks whether the procedure uses it, and neither engine ever takes its value from the trace, so nothing here is a reason to log a prohibited basis for anybody. **And it must be declared as an integer.** A category declared over a sort that is not the integers is refused at both rungs and the duty reported *not evaluated* naming the variable and the sort, because the values between the categories are admissible too: the replay search would move the variable across fractions the system can never be given and report a clean verdict having reached no second category, and a pair the solver names may be one that does not exist (`test_a_protected_variable_not_typed_as_an_integer_is_not_evaluated`). What that costs is a duty answerable only on a system whose variable table says what its prohibited-basis codes are. | Human sign-off: pending (gold set: `ecoa_reg_b_1002_4_a_no_disparate_treatment.toml`; no candidate approved).
+
+
+## Seoul Frontier AI Safety Commitments 2024 — `src/reasonsmith/packs/seoul_frontier_ai_safety_2024.toml`
+
+All eight duties carry `binding = false`, `scope = "general-purpose"`, and `domains = []`.
+The source calls these commitments voluntary. This pack additionally requires the system to
+self-declare `frontier_ai_status = "frontier"`; undeclared and `not-frontier` systems are reported
+not applicable, and a wrong declaration is the audited system’s overclaim. The pinned edition is
+updated 7 February 2025. Later editions are separately addressable as
+`seoul_frontier_ai_safety_2024__updated_YYYY-MM-DD`; the sentinel opens review and never mutates
+this pack.
+
+Seven rows below are record-presence approximations. Presence does not establish adequacy,
+continuous operation, timing, completeness, truthfulness, or frontier applicability. Commitment IV
+is deliberately the depth anchor: its four-signal logical implication can reach `observed`,
+`probed`, and, through exposed rules with declared `computes`, `proved`.
+
+| The clause | The informal duty | The formal property | What was deliberately not captured |
+|---|---|---|---|
+| Seoul Commitment I<br>`seoul_frontier_i_lifecycle_risk_assessment` | Assess frontier-model/system risks across the AI lifecycle. | `record`: `present(artifact_logs_model_evaluation_results) and present(artifact_logs_training_and_testing_process)` | The record does not establish that all material risks were found, that assessment occurred before deployment or during training, that “as appropriate” was correctly applied, that external evaluation was independent, that the trace is complete, or that the model is frontier. The current vocabulary has no lifecycle-phase or cadence signal. The self-asserted frontier gate is not independent verification. | Human sign-off: pending (gold set: `seoul_frontier_i_lifecycle_risk_assessment.toml`; no candidate approved).
+| Seoul Commitment II<br>`seoul_frontier_ii_thresholds_and_breach_assessment` | Set and assess severe-risk thresholds and breaches. | `record`: `present(artifact_logs_systemic_risk_assessment)` | It does not establish that thresholds were set, measurable, legitimate, trusted-actor-informed, aligned with international agreements, breached, or monitored for proximity. “Adequately mitigated” and “intolerable” remain open-textured. | Human sign-off: pending (gold set: `seoul_frontier_ii_thresholds_and_breach_assessment.toml`; no candidate approved).
+| Seoul Commitment III<br>`seoul_frontier_iii_risk_mitigation_process` | Identify and implement safety and security mitigations. | `record`: `present(artifact_logs_systemic_risk_mitigation) and present(artifact_logs_corrective_measures)` | It does not establish that mitigations were identified or implemented, that they keep risk within thresholds, that security controls are robust, or that model-weight protection works in the world. | Human sign-off: pending (gold set: `seoul_frontier_iii_risk_mitigation_process.toml`; no candidate approved).
+| Seoul Commitment IV<br>`seoul_frontier_iv_no_deployment_above_threshold` | Do not develop or deploy when residual risk cannot be kept below thresholds. | `logical`: `(artifact_logs_frontier_risk_score >= scope_statements_frontier_risk_threshold and artifact_logs_mitigation_available < 0.5) -> (artifact_logs_deployment_decision < 0.5)` | It does not validate the risk score, threshold, mitigation truth, residual-risk assessment, shadow deployment routes, or conformity of exposed logic with operations. It formalises the four-signal contract only; it is not proof of real-world safety. | Human sign-off: pending (gold set: `seoul_frontier_iv_no_deployment_above_threshold.toml`; no candidate approved).
+| Seoul Commitment V<br>`seoul_frontier_v_continuing_mitigation_monitoring` | Continue investment in mitigation monitoring and emerging practice. | `record`: `present(artifact_logs_systemic_risk_mitigation) and present(artifact_logs_corrective_measures)` | It does not establish continuous investment, a cadence, adequacy, “as needed” correctness, mitigation effectiveness, that risk stayed below threshold, or that emerging science and standards were considered. | Human sign-off: pending (gold set: `seoul_frontier_v_continuing_mitigation_monitoring.toml`; no candidate approved).
+| Seoul Commitment VI<br>`seoul_frontier_vi_governance_review_and_resources` | Review governance, accountability, roles, responsibilities, and resources. | `record`: `present(reviews_and_sign_offs) and present(signer)` | It does not establish continuous review, accountability, role authority, responsibility assignment, sufficient resources, independence, or substantive adherence to I–V. “Sufficient resources” remains an open-textured refinement gap. | Human sign-off: pending (gold set: `seoul_frontier_vi_governance_review_and_resources.toml`; no candidate approved).
+| Seoul Commitment VII<br>`seoul_frontier_vii_public_transparency` | Provide public transparency, with the stated confidentiality exception. | `record`: `present(provenance_technical_documentation) and present(scope_statements_capabilities_and_limitations)` | It does not establish public availability, completeness, candour, trusted-actor sharing, proportionality of the confidentiality exception, or that withheld information truly increased risk or disclosed sensitive commercial information. | Human sign-off: pending (gold set: `seoul_frontier_vii_public_transparency.toml`; no candidate approved).
+| Seoul Commitment VIII<br>`seoul_frontier_viii_external_involvement_explanation` | Explain whether and how external actors are involved. | `record`: `present(scope_statements_explanation_scope)` | It does not establish that an external actor participated, that participation was meaningful or independent, that the framework was adequate, or that the explanation is complete. “If at all” permits an honest explanation of non-involvement. | Human sign-off: pending (gold set: `seoul_frontier_viii_external_involvement_explanation.toml`; no candidate approved).
+
+The words “adequately mitigated”, “intolerable”, and “sufficient resources” remain in this fourth
+column rather than becoming `undetermined()` or `degree()` atoms: the source supplies no adjudicative
+authority or scale for reasonsmith to invent. The pack's GOV.UK quotes and edition sentinel are
+recorded in [`legal-sources.md`](legal-sources.md).
 
 
 ## Table 7 — `src/reasonsmith/packs/table7.toml`

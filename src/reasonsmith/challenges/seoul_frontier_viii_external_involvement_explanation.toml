@@ -1,0 +1,26 @@
+formalism = "record"
+requirement = "seoul_frontier_viii_external_involvement_explanation"
+rationale = "Cases exercise the exact record-presence approximation for seoul_frontier_viii_external_involvement_explanation."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required evidence signal is present."
+[case.signals]
+scope_statements_explanation_scope = "recorded"
+
+[[case]]
+id = "missing-scope-statements-explanation-scope"
+kind = "violated"
+expected = "violated"
+description = "The required evidence is missing one signal."
+[case.signals]
+
+
+[[case]]
+id = "near-miss-scope-statements-explanation-scope"
+kind = "near-miss"
+expected = "violated"
+description = "A near-miss record still omits the required signal."
+[case.signals]

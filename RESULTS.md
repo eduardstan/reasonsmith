@@ -61,7 +61,7 @@ was:
 uv run python -m reasonsmith.proposer --claude --attempts 2
 ```
 
-The complete current corpus was measured: **29 requirements**, with **27/29 machine-cleared
+The pre-Seoul autoformalisation corpus was measured: **29 requirements**, with **27/29 machine-cleared
 agreements (93.10%)**. The outcome categories are deliberately separate: **27 agreed, 2 wrong,
 0 refused, 0 unavailable**. `wrong` means that at least one response was parseable but failed the
 independent round-trip or gold-challenge checks; `refused` is reserved for unparseable/empty model
@@ -599,3 +599,8 @@ that module's tests skip, which is the arrangement `pip install reasonsmith` has
 > machine, and a suite figure quoted for a configuration that was never run is what this file exists
 > not to do. Run `pytest -q` yourself for the current count, as the note under section 2's table
 > already says.
+
+
+## Current Seoul corpus note
+
+The shipped tree now contains 37 requirements, including eight Seoul challenge sets; the 29-row measurement above is retained as a historical pre-Seoul run.

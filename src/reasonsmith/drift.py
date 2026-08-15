@@ -2,7 +2,8 @@
 
 What this module is for:
   Re-fetches the official statutory documents recorded in `docs/legal-sources.md` and checks every
-  `verbatim_text` in the EU AI Act, GDPR and ECOA packs against them character-for-character. The
+  `verbatim_text` in the EU AI Act, GDPR, ECOA, and Seoul Frontier AI Safety Commitments packs
+  against them character-for-character. The
   check classifies each requirement as `match`, `differ` or `could-not-verify` and never edits a
   pack: a quote that no longer matches the print is reported, not silently fixed.
 
@@ -28,6 +29,8 @@ What a reader must not break:
     cannot be verified and must not look as though it was.
   - A source document is fetched once per run and reused for every provision that points at it, so
     a check of N provisions makes at most as many network calls as there are documents.
+  - GOV.UK HTML sources carry an edition sentinel. A changed update marker is a review finding and
+    never silently repoints an immutable pack.
   - PDF sources use the optional, exactly pinned `pdfminer.six` extra. Extraction is text-layer
     only:
     encrypted, scanned/image-only, tool-version-drifted, or otherwise unparseable PDFs are
@@ -42,6 +45,7 @@ import hashlib
 import importlib.metadata
 import io
 import json
+import re
 import sys
 import urllib.request
 from dataclasses import dataclass
@@ -54,7 +58,7 @@ from reasonsmith.spec import load_pack
 
 #: The packs whose quotes are verified against official statutory sources. `table7` is deliberately
 #: absent: its quotes come from the review paper itself, and no official document re-fetches them.
-STATUTORY_PACKS = ("eu_ai_act", "gpai", "gdpr", "ecoa")
+STATUTORY_PACKS = ("eu_ai_act", "gpai", "gdpr", "ecoa", "seoul_frontier_ai_safety_2024")
 
 #: Elements that carry no text and no end tag even in well-formed XHTML/XML, so the passage
 #: extractor must not count them when tracking element nesting depth.
@@ -97,7 +101,8 @@ class SourceDocument:
 
     key: str
     url: str
-    kind: Literal["cellar-xhtml", "ecfr-xml", "pdf"]
+    kind: Literal["cellar-xhtml", "ecfr-xml", "pdf", "govuk-html"]
+    edition_sentinel: str | None = None
 
 
 SOURCES = (
@@ -125,6 +130,12 @@ SOURCES = (
         "ecoa_general_rules",
         "https://www.ecfr.gov/api/versioner/v1/full/2023-08-29/title-12.xml?part=1002&section=1002.4",
         "ecfr-xml",
+    ),
+    SourceDocument(
+        "seoul_frontier_ai_safety_2024",
+        "https://www.gov.uk/government/publications/frontier-ai-safety-commitments-ai-seoul-summit-2024/frontier-ai-safety-commitments-ai-seoul-summit-2024",
+        "govuk-html",
+        "Updated 7 February 2025",
     ),
 )
 SOURCES_BY_KEY = {source.key: source for source in SOURCES}
@@ -157,6 +168,14 @@ PROVISIONS = {
     "12 CFR 1002.9(b)(2)": ("ecoa", None),
     "12 CFR 1002.9(c)(2)": ("ecoa", None),
     "12 CFR 1002.4(a)": ("ecoa_general_rules", None),
+    "Commitment I": ("seoul_frontier_ai_safety_2024", "I"),
+    "Commitment II": ("seoul_frontier_ai_safety_2024", "II"),
+    "Commitment III": ("seoul_frontier_ai_safety_2024", "III"),
+    "Commitment IV": ("seoul_frontier_ai_safety_2024", "IV"),
+    "Commitment V": ("seoul_frontier_ai_safety_2024", "V"),
+    "Commitment VI": ("seoul_frontier_ai_safety_2024", "VI"),
+    "Commitment VII": ("seoul_frontier_ai_safety_2024", "VII"),
+    "Commitment VIII": ("seoul_frontier_ai_safety_2024", "VIII"),
 }
 
 
@@ -243,7 +262,161 @@ class _PassageExtractor(HTMLParser):
         return "".join(self.chunks)
 
 
-def extract_passage(source_text: SourcePayload, *, selector: str | None) -> str | None:
+class _GovUkCommitmentExtractor(HTMLParser):
+    """Extract one numbered commitment paragraph from GOV.UK's govspeak HTML.
+
+    GOV.UK's publication page is not a statute XML document: the operative passages are ordinary
+    paragraphs under ``main .gem-c-govspeak`` and footnote links are presentation nodes. We keep
+    only that subtree, discard linked ``sup`` footnotes, and leave punctuation and Unicode text
+    untouched for the ordinary whitespace-only quote comparison.
+    """
+
+    def __init__(self, selector: str) -> None:
+        super().__init__(convert_charrefs=True)
+        self.selector = selector
+        self.main_depth = 0
+        self.govspeak_depth = 0
+        self.p_depth = 0
+        self.skip_sup_depth = 0
+        self.after_sup = False
+        self.chunks: list[str] = []
+        self.found: str | None = None
+        self._at_element_start = False
+
+    @staticmethod
+    def _attrs(attrs: list[tuple[str, str | None]]) -> dict[str, str]:
+        return {name: value or "" for name, value in attrs}
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attr = self._attrs(attrs)
+        if tag == "main":
+            self.main_depth += 1
+        target_container = (
+            self.main_depth
+            and tag in {"div", "section"}
+            and "gem-c-govspeak" in attr.get("class", "").split()
+        )
+        if target_container:
+            self.govspeak_depth = 1
+        elif self.govspeak_depth and tag not in VOID_ELEMENTS:
+            self.govspeak_depth += 1
+        if self.govspeak_depth and tag == "p" and self.p_depth == 0:
+            self.p_depth = 1
+            self.chunks = []
+            self._at_element_start = True
+        elif self.p_depth and tag == "p":
+            self.p_depth += 1
+        elif self.p_depth and tag == "sup":
+            self.skip_sup_depth = 1
+        elif self.skip_sup_depth and tag not in VOID_ELEMENTS:
+            self.skip_sup_depth += 1
+        elif self.p_depth:
+            self._at_element_start = True
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        # Footnote/self-closing nodes carry no operative text.
+        return
+
+    def handle_endtag(self, tag: str) -> None:
+        if self.skip_sup_depth:
+            if tag not in VOID_ELEMENTS:
+                self.skip_sup_depth -= 1
+            if self.skip_sup_depth == 0:
+                self.after_sup = True
+            return
+        if self.p_depth and tag == "p":
+            self.p_depth -= 1
+            if self.p_depth == 0:
+                text = normalize_whitespace("".join(self.chunks))
+                if text.startswith(f"{self.selector}."):
+                    self.found = text
+        if self.govspeak_depth and tag not in VOID_ELEMENTS:
+            self.govspeak_depth -= 1
+        if tag == "main" and self.main_depth:
+            self.main_depth -= 1
+        self._at_element_start = False
+
+    def handle_data(self, data: str) -> None:
+        if not self.p_depth or self.skip_sup_depth or self.found is not None:
+            return
+        if self.after_sup:
+            if re.match(r"^\s+[,.;:!?]", data):
+                data = data.lstrip()
+            self.after_sup = False
+        if self._at_element_start and self.chunks and not self.chunks[-1].endswith(" "):
+            self.chunks.append(" ")
+        self.chunks.append(data)
+        self._at_element_start = False
+
+
+class _GovUkEditionExtractor(HTMLParser):
+    """Collect rendered GOV.UK edition markers from the inverse header."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.depth = 0
+        self.chunks: list[str] = []
+        self.markers: list[str] = []
+        self._capturing = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attr = {name: value or "" for name, value in attrs}
+        if tag == "p" and "gem-c-inverse-header__subtext" in attr.get("class", "").split():
+            self._capturing = True
+            self.depth = 1
+            self.chunks = []
+        elif self._capturing and tag not in VOID_ELEMENTS:
+            self.depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if not self._capturing:
+            return
+        if tag not in VOID_ELEMENTS:
+            self.depth -= 1
+        if self.depth <= 0:
+            self.markers.append(normalize_whitespace("".join(self.chunks)))
+            self._capturing = False
+
+    def handle_data(self, data: str) -> None:
+        if self._capturing:
+            self.chunks.append(data)
+
+
+def extract_govuk_edition(source_text: str) -> str:
+    """Return the single rendered GOV.UK update marker, refusing an ambiguous page."""
+    parser = _GovUkEditionExtractor()
+    parser.feed(source_text)
+    if len(parser.markers) != 1:
+        raise DriftFetchError(
+            "GOV.UK edition sentinel could not be verified: expected exactly one rendered "
+            f"'gem-c-inverse-header__subtext' marker, found {len(parser.markers)}"
+        )
+    return parser.markers[0]
+
+
+def _validate_source_edition(source: SourceDocument, payload: SourcePayload) -> None:
+    if source.edition_sentinel is None:
+        return
+    if not isinstance(payload, str):
+        raise DriftFetchError(f"edition sentinel for {source.key} requires decoded text")
+    marker = extract_govuk_edition(payload)
+    if marker != source.edition_sentinel:
+        raise DriftFetchError(
+            f"GOV.UK edition sentinel mismatch for {source.key}: expected "
+            f"{source.edition_sentinel!r}, found {marker!r}; review the immutable pack edition"
+        )
+
+
+def extract_govuk_commitment(source_text: str, *, selector: str) -> str | None:
+    """Extract a Roman-numbered commitment paragraph from the GOV.UK govspeak subtree."""
+    parser = _GovUkCommitmentExtractor(selector)
+    parser.feed(source_text)
+    return parser.found
+
+
+def extract_passage(
+    source_text: SourcePayload, *, selector: str | None, kind: str | None = None
+) -> str | None:
     """Extract the passage a provision names, whitespace-normalized.
 
     For Cellar XHTML, `selector` is the `id` of the division holding the provision's text; for the
@@ -251,6 +424,15 @@ def extract_passage(source_text: SourcePayload, *, selector: str | None) -> str 
     selector and supplies its whole deterministic text layer. Returns None when an XHTML selector
     is missing from the document -- a structural move is `could-not-verify`, not a mismatch.
     """
+    if kind == "govuk-html":
+        if selector is None:
+            raise DriftFetchError("GOV.UK HTML provisions require a numbered paragraph selector")
+        if isinstance(source_text, bytes):
+            try:
+                source_text = source_text.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise DriftFetchError(f"could not decode GOV.UK HTML as UTF-8: {exc}") from exc
+        return extract_govuk_commitment(source_text, selector=selector)
     if isinstance(source_text, bytes):
         if selector is not None:
             raise DriftFetchError("PDF provision selectors are unsupported; the PDF is one passage")
@@ -377,8 +559,13 @@ def fetch_source(
     if source.kind == "ecfr-xml":
         url = _current_ecfr_url(source, timeout=timeout, max_bytes=max_bytes)
     if source.kind == "pdf":
-        return _fetch_url_bytes(url, timeout=timeout, max_bytes=max_bytes)
-    return _fetch_url(url, timeout=timeout, max_bytes=max_bytes)
+        payload: SourcePayload = _fetch_url_bytes(url, timeout=timeout, max_bytes=max_bytes)
+    else:
+        # Both XHTML/XML and GOV.UK HTML are UTF-8 text. Edition validation is performed after
+        # decoding, before a caller can mistake a changed immutable edition for quote drift.
+        payload = _fetch_url(url, timeout=timeout, max_bytes=max_bytes)
+    _validate_source_edition(source, payload)
+    return payload
 
 
 @dataclass(frozen=True)
@@ -519,6 +706,7 @@ def check_statute_drift(
                 try:
                     cache[source_key] = fetcher(source)
                     payload = cache[source_key]
+                    _validate_source_edition(source, payload)
                     raw = payload if isinstance(payload, bytes) else payload.encode("utf-8")
                     source_hashes[source_key] = hashlib.sha256(raw).hexdigest()
                 except DriftFetchError as exc:
@@ -538,7 +726,7 @@ def check_statute_drift(
                     )
                     continue
             try:
-                passage = extract_passage(cache[source_key], selector=selector)
+                passage = extract_passage(cache[source_key], selector=selector, kind=source.kind)
             except DriftFetchError as exc:
                 failed.add(source_key)
                 failure_notes[source_key] = str(exc)

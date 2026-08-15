@@ -1,0 +1,28 @@
+formalism = "record"
+requirement = "seoul_frontier_v_continuing_mitigation_monitoring"
+rationale = "Cases exercise the exact record-presence approximation for seoul_frontier_v_continuing_mitigation_monitoring."
+
+[[case]]
+id = "complete-record"
+kind = "satisfied"
+expected = "satisfied"
+description = "Every required evidence signal is present."
+[case.signals]
+artifact_logs_systemic_risk_mitigation = "recorded"
+artifact_logs_corrective_measures = "recorded"
+
+[[case]]
+id = "missing-artifact-logs-systemic-risk-mitigation"
+kind = "violated"
+expected = "violated"
+description = "The required evidence is missing one signal."
+[case.signals]
+artifact_logs_corrective_measures = "recorded"
+
+[[case]]
+id = "near-miss-artifact-logs-systemic-risk-mitigation"
+kind = "near-miss"
+expected = "violated"
+description = "A near-miss record still omits the required signal."
+[case.signals]
+artifact_logs_corrective_measures = "recorded"

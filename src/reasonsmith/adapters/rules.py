@@ -97,6 +97,7 @@ class RulesAdapter(BaseSUT):
         declared_capabilities: Optional[set[str] | Iterable[str]] = None,
         test_inputs: Optional[Iterable[dict[str, Any]]] = None,
         computes: Optional[Iterable[str]] = None,
+        frontier_ai_status: str | None = None,
     ):
         if isinstance(rules, str):
             rules = [r.strip() for r in rules.splitlines() if r.strip()]
@@ -164,7 +165,7 @@ class RulesAdapter(BaseSUT):
         else:
             caps = set(self._variables.keys()) | discovered_vars
 
-        super().__init__(caps)
+        super().__init__(caps, frontier_ai_status=frontier_ai_status)
         self._test_inputs = list(test_inputs) if test_inputs is not None else None
 
     def logic(self) -> dict[str, Any]:

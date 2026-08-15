@@ -5,7 +5,7 @@
 - **Date of Retrieval:** 2026-07-31
 
 ### Drift-check source formats
-The statute-drift checker supports the recorded Cellar XHTML and eCFR XML formats above, and a
+The statute-drift checker supports the recorded Cellar XHTML, eCFR XML, and GOV.UK HTML formats above, and a
 PDF route for future PDF-only sources. PDF retrieval keeps the fetched bytes and verifies the
 SHA-256 beside each result as corroboration, then uses the optional, exactly pinned `pdfminer.six`
 release to extract text deterministically. Only whitespace is normalized before the existing
@@ -290,3 +290,54 @@ Comments 1 and 4-7 concern how many reasons to give and how to select them from 
   - Operative phrase: *"shall not discriminate against an applicant on a prohibited basis regarding any aspect of a credit transaction"*.
 - **Why this clause and not GDPR Recital 71.** The recital's discrimination limb is *effects* language — *"prevents, inter alia, discriminatory effects on natural persons"*, recorded under Provision 2 above — and effects is disparate impact, which is a fact about outcomes across a population and not a property of any pair of decisions. § 1002.4(a) forbids discriminating *against an applicant* on a prohibited basis, which is disparate treatment, and treatment is the limb a counterfactual invariance property can see. Attaching the property to the recital would have been a refinement of a duty it does not formalise.
 - **What this record does not settle.** Whether Regulation B's effects test is codified in the regulation or lives in the Official Interpretation was not retrieved, and no shipped duty rests on it; `docs/refinement.md` records disparate impact as unformalised without relying on where the effects test is printed.
+
+
+---
+
+## Provision 6 — Frontier AI Safety Commitments, AI Seoul Summit 2024 (GOV.UK)
+
+### Metadata & Citation
+- **Document:** *Frontier AI Safety Commitments, AI Seoul Summit 2024*.
+- **Publisher:** UK Department for Science, Innovation and Technology, GOV.UK.
+- **Edition:** page updated **7 February 2025**; this pack freezes that edition. Later editions use
+  the immutable ID convention `seoul_frontier_ai_safety_2024__updated_YYYY-MM-DD` and open a review
+  finding rather than mutating this pack.
+- **Official source URL:** `https://www.gov.uk/government/publications/frontier-ai-safety-commitments-ai-seoul-summit-2024/frontier-ai-safety-commitments-ai-seoul-summit-2024`
+- **Retrieval:** 2026-08-15 08:47:47 UTC; recorded HTML SHA-256
+  `e19e0ecc72113970f63b03f08c269fe0dcc40da802815b1ae8d236c6d7c394ac` (81,418 bytes at retrieval).
+  GOV.UK HTML carries dynamic presentation tokens, so this digest corroborates the retrieval record;
+  the rendered edition marker is the immutable sentinel.
+- **Licence/status:** Open Government Licence v3.0; voluntary commitments by named organisations.
+- **Extraction:** `main .gem-c-govspeak p`, numbered paragraphs beginning `I.` through `VIII.`;
+  linked footnote `<sup>` nodes (`fnref:2`, `fnref:3`) and only their presentation whitespace
+  before punctuation are removed, then remaining whitespace is collapsed. Navigation, licence,
+  footnotes, and “Outcome” prose are excluded. The source kind is `govuk-html` and the sentinel is
+  `Updated 7 February 2025`.
+
+### Operative commitment passages
+
+> **Commitment I:** Assess the risks posed by their frontier models or systems across the AI lifecycle, including before deploying that model or system, and, as appropriate, before and during training. Risk assessments should consider model capabilities and the context in which they are developed and deployed, as well as the efficacy of implemented mitigations to reduce the risks associated with their foreseeable use and misuse. They should also consider results from internal and external evaluations as appropriate, such as by independent third-party evaluators, their home governments, and other bodies their governments deem appropriate.
+
+> **Commitment II:** Set out thresholds at which severe risks posed by a model or system, unless adequately mitigated, would be deemed intolerable. Assess whether these thresholds have been breached, including monitoring how close a model or system is to such a breach. These thresholds should be defined with input from trusted actors, including organisations’ respective home governments as appropriate. They should align with relevant international agreements to which their home governments are party. They should also be accompanied by an explanation of how thresholds were decided upon, and by specific examples of situations where the models or systems would pose intolerable risk.
+
+> **Commitment III:** Articulate how risk mitigations will be identified and implemented to keep risks within defined thresholds, including safety and security-related risk mitigations such as modifying system behaviours and implementing robust security controls for unreleased model weights.
+
+> **Commitment IV:** Set out explicit processes they intend to follow if their model or system poses risks that meet or exceed the pre-defined thresholds. This includes processes to further develop and deploy their systems and models only if they assess that residual risks would stay below the thresholds. In the extreme, organisations commit not to develop or deploy a model or system at all, if mitigations cannot be applied to keep risks below the thresholds.
+
+> **Commitment V:** Continually invest in advancing their ability to implement commitments i-iv, including risk assessment and identification, thresholds definition, and mitigation effectiveness. This should include processes to assess and monitor the adequacy of mitigations, and identify additional mitigations as needed to ensure risks remain below the pre-defined thresholds. They will contribute to and take into account emerging best practice, international standards, and science on AI risk identification, assessment, and mitigation.
+
+> **Commitment VI:** Adhere to the commitments outlined in I-V, including by developing and continuously reviewing internal accountability and governance frameworks and assigning roles, responsibilities and sufficient resources to do so.
+
+> **Commitment VII:** Provide public transparency on the implementation of the above (I-VI), except insofar as doing so would increase risk or divulge sensitive commercial information to a degree disproportionate to the societal benefit. They should still share more detailed information which cannot be shared publicly with trusted actors, including their respective home governments or appointed body, as appropriate.
+
+> **Commitment VIII:** Explain how, if at all, external actors, such as governments, civil society, academics, and the public are involved in the process of assessing the risks of their AI models and systems, the adequacy of their safety framework (as described under I-VI), and their adherence to that framework.
+
+### Findings & interpretation
+
+The commitments are voluntary. This pack uses `general-purpose` as the nearest existing scope
+class and adds an explicit, self-asserted `frontier_ai_status` applicability gate: undeclared and
+`not-frontier` systems are reported **not applicable**, not cleared or evaluated. A wrong
+`frontier` declaration remains the audited system’s overclaim; reasonsmith does not independently
+verify it. Commitment IV is formalised as a four-signal logical implication; the other seven rows
+are record-presence approximations. “Adequately mitigated”, “intolerable”, and “sufficient
+resources” remain refinement gaps, with no invented authority or open-textured engine.

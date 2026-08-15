@@ -35,8 +35,9 @@ class CallableAdapter(BaseSUT):
         test_inputs: Optional[Iterable[Any]] = None,
         decisions: Optional[Iterable[dict[str, Any]]] = None,
         input_space: DeclaredInputSpace | Mapping[str, Any] | None = None,
+        frontier_ai_status: str | None = None,
     ):
-        super().__init__(declared_capabilities)
+        super().__init__(declared_capabilities, frontier_ai_status=frontier_ai_status)
         if target is None:
             raise ValueError("CallableAdapter requires a non-None target model or function")
         self.target = target
