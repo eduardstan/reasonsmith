@@ -393,6 +393,8 @@ an omission: a general-purpose AI model is by definition not a model of a partic
 decision, and limiting these duties to a decision domain would be this pack author narrowing an
 Article that does not narrow itself.
 
+For navigation only, the non-executable [GPAI Code of Practice mapping appendix](gpai-code-of-practice-appendix.md) maps these eight duties to the Code and records the measures the pack does not formalise.
+
 **One caveat governs the whole table and is stated once here.** Every property below is a presence
 conjunction, and for these clauses that is the right refinement rather than a weak one — Article
 53(1) and Article 55(1) are duties to *produce artefacts*, and an artefact duty is discharged by the

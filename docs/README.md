@@ -10,6 +10,7 @@ Each line below points to the document that owns its subject. This index links r
 what those documents say.
 
 - [`semantics.md`](semantics.md) — report outcomes, evidence reading, audience projections, and operational boundaries.
+- [`assurance-crosswalk.md`](assurance-crosswalk.md) — navigation crosswalk to NIST AI RMF 1.0 and ISO/IEC 42001:2023.
 - [`adopting.md`](adopting.md) — user-facing commands and system surfaces.
 - [`authoring-packs.md`](authoring-packs.md) — pack schema and authoring rules.
 - [`authoring-engines.md`](authoring-engines.md) — installed engine contract.
