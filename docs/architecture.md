@@ -140,11 +140,11 @@ Statistical evidence is measurement-only. A declared plan produces simultaneous 
 ```mermaid
 flowchart TB
     verdict["Verdict — strongest evidence, pushed-to rung, evidence basis"]
-    developer["Developer — implementation"]
+    developer["Developer — detail"]
     deployer["Deployer — ceiling"]
     auditor["Auditor — finding"]
     regulator["Regulator — source"]
-    individual["Affected individual — account"]
+    individual["Affected individual"]
 
     verdict --> developer
     verdict --> deployer
@@ -158,4 +158,4 @@ flowchart TB
     class developer,deployer,auditor,regulator,individual audience
 ```
 
-The core produces one refusal-honest finding, then projects only what each reader needs. The report retains how far the claim was pushed and what evidence it is about; it does not fill an evidence gap with a stronger-sounding sentence. Read the operational [semantics](semantics.md).
+The core produces one refusal-honest finding, then projects only what each reader needs: implementation detail for the developer, the evidence ceiling for the deployer, finding and provenance for the auditor, clause and source for the regulator, and a plain account for the affected individual. The report retains how far the claim was pushed and what evidence it is about; it does not fill an evidence gap with a stronger-sounding sentence. Read the operational [semantics](semantics.md).
