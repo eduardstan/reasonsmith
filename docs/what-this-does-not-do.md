@@ -72,8 +72,8 @@ That is not an accident of laziness: `packs/gpai.toml`'s eight Article 53 and 55
 document-production duties, for which presence is the correct refinement and no stronger property
 exists to write. But the consequence is real and [`ROADMAP.md`](../ROADMAP.md) §4 states it in its
 own words: *"Breadth bought that way is real breadth and it is not depth."* A battery of engines
-that mostly agrees by construction differentiates few systems, and the ratio moved the wrong way
-when the fifth pack shipped — from 13 of 19 to 21 of 28.
+that mostly agrees by construction differentiates few systems. The current inventory is six packs
+and 37 duties; the fragment table above is the source of truth for its family tallies.
 
 Presence is also not adequacy, at the level of the individual duty: a reason field that is filled
 in is not a reason that is sufficient. Where a clause supplies its own list of insufficient
@@ -111,11 +111,14 @@ other, and comparing two of them raises rather than answering
 duty, and a report that showed it as an unfinished ladder was telling a reader to expose more of a
 system that could expose nothing further.
 
-This limit has a deliberately deferred path, and still stands until it lands. [`ROADMAP.md`](../ROADMAP.md)
-§10 records the reversal of the earlier disparate-impact refusal: a future `statistical` basis must
-carry its sampling assumption, confidence level and authority-named threshold, while a measurement
-without that authority remains *not evaluated*. It is second-wave work after objectives 7–9; no
-current result has acquired a population claim.
+A statistical measurement path now exists, but it deliberately does not become a verdict. A
+whole-spec `selection_rate_ratio(outcome, group)` records declared groups, raw rates, simultaneous
+Clopper–Pearson intervals, a ratio enclosure, the sampling plan and authority provenance. Its
+`EvidenceBasis` is `statistical`, its `decision_rule` is always `null`, and its result remains
+*not evaluated* rather than satisfied or violated. The first source anchor is the employment-selection
+four-fifths language in 29 CFR 1607.4(D); reasonsmith does not transplant that threshold into ECOA,
+GDPR, or another duty, and no shipped pack currently uses the statistical formalism. Proxies,
+causation, representativeness, disparate treatment, and other population claims remain outside it.
 
 ## 4. The strongest results need a system that exposes its inference, and most do not
 

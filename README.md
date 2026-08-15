@@ -27,21 +27,36 @@ flowchart TB
     log["a log of decisions"] --> exposed
     callable["a decide() you can re-run"] --> exposed
     rules["declared logic()"] --> exposed
+    neural["an ONNX artifact and declared input space"] --> exposed
     artefact["an inference artefact"] --> exposed
+    neural --> query["core-compiled VNN-LIB query"]
+    query --> verifier["Marabou or alpha-beta-CROWN subprocess"]
+    verifier --> neural_result["replayed witness or honest refusal"]
+    neural_result --> neural_boundary["separate neural oracle, no conformance verdict"]
     exposed["What the system exposes"] --> reach
 
-    clause(["A clause of law"]) --> quote(["Its verbatim text — retrieved and recorded"])
+    packs["Six packs and 37 duties"] --> clause(["A clause of law"])
+    clause --> quote(["Its verbatim text — retrieved and recorded"])
     quote --> formula(["A formal property — one recorded judgement per clause"])
     formula --> reach{"Does this duty reach this system?"}
+    formula --> statistical["Statistical measurement basis"]
+    statistical --> measurement["Clopper–Pearson intervals and limits, no verdict"]
 
     reach --> na{{"not applicable — nothing was declared to place it in scope"}}
     reach --> un[/"unattainable — the system cannot emit the evidence the duty needs"/]
-    reach --> ladder(["Every engine the property and the surface both allow"])
+    reach --> ladder["Every engine the property and the surface both allow"]
 
     ladder --> observed["observed — from a trace"]
     ladder --> recounted["recounted — reasons re-run"]
     ladder --> probed["probed — bounded replay"]
     ladder --> proved["proved — a solver over declared rules"]
+
+    byo["Installed BYO engine"] --> plugin["Plugin result at declared ceiling"]
+    plugin -.-> ladder
+    plugin --> witness["Trusted core replays violation witness"]
+    witness --> provenance["witness-checked or trusted-ceiling"]
+    provenance --> verdict
+    kit["verify-engine conformance kit"] --> byo
 
     observed --> verdict
     recounted --> verdict
@@ -59,10 +74,15 @@ flowchart TB
     classDef outcome fill:#ffffff,stroke:#16181d,color:#16181d
     classDef decision fill:#fff8e7,stroke:#9a6700,color:#16181d
     classDef collector fill:#e9e2f5,stroke:#5b4a8a,color:#16181d
+    classDef extension fill:#e5f2f8,stroke:#1f6f8f,color:#16181d
+    classDef measurement fill:#f6edf8,stroke:#8b4a8b,color:#16181d
 
     class clause,quote,formula law
-    class log,callable,rules,artefact surface
+    class log,callable,rules,neural,artefact surface
     class exposed collector
+    class query,verifier,neural_result,neural_boundary extension
+    class packs,kit,byo,plugin,witness,provenance extension
+    class statistical,measurement measurement
     class reach decision
     class na notapp
     class un unattainable
@@ -73,6 +93,13 @@ flowchart TB
 The evidence-strength chain is explicit: unattainable, observed trace, recounted reasons, bounded probe, and proof over declared rules. The strongest rung the property and surface both permit wins; an auditor cannot choose it. **Unattainable** means the system cannot emit the evidence the duty needs. **Not applicable** means the system has not declared the regulatory class or decision domain to which the duty is limited. They are different answers, not interchangeable failures.
 
 This tree ships **six packs**, **seven engines**, and **thirty-seven shipped requirements**. The machine-readable source and every destination are listed in [`docs/README.md`](docs/README.md).
+
+### Platform entry points
+
+- **Bring your own engine:** install a `reasonsmith.engines` entry point for a supported fragment. The trusted core enforces its declared ceiling, rechecks a supplied violation witness, and stamps `witness-checked` or `trusted-ceiling`; [`verify-engine`](docs/authoring-engines.md) exercises eight gold triples. Engine plug-ins run in-process, so the normal trusted-code warning still applies.
+- **Neural subject:** install `reasonsmith[neural]` to declare an embedded ONNX artifact and finite input space. The core compiles VNN-LIB 1.0 queries and can call optional Marabou or alpha-beta-CROWN subprocess adapters, replaying SAT witnesses; complete proof modes are refused by the current soundness gates, and this path does not yet create a conformance verdict ([neural verifier boundary](docs/neural-verifiers.md)).
+- **Statistical evidence:** `selection_rate_ratio(...)` produces a measurement-only `statistical` basis with simultaneous Clopper–Pearson intervals. `decision_rule` remains `null`, so no ratio becomes satisfied or violated; the employment-selection four-fifths source is an anchor, not a threshold transplanted to another duty ([evidence definition](docs/theory/08-evidence.md)).
+- **Packs and adoption:** six packs cover 37 duties, including the immutable Seoul Frontier AI Safety Commitments edition; use the GitHub Action, Docker image, `init pack|engine` scaffolds, JSON schema, and [registry](docs/registry.html) as the adoption surface.
 
 ## Five reading paths
 
@@ -287,7 +314,7 @@ validate the generated report envelope with the versioned
 - `unattainable`, `not applicable`, and `not evaluated` are distinct findings, not breaches or weaker satisfied results.
 - `observed` speaks only about supplied records; `probed` is bounded replay; `proved` covers the declared logic's admitted inputs. A rung is evidence strength, not a compliance grade or confidence score.
 - The system's declarations are trusted inputs. An inference artefact must declare monotonicity; a false declaration is reported not evaluated.
-- Group-statistical fairness, proxies, disparate impact, open-textured predicates, and legal interpretation beyond the formalised clause are outside this evidence model.
+- Statistical selection-rate support is measurement-only: it reports declared-sample rates and uncertainty, never a fairness or compliance verdict. Proxies, disparate impact, open-textured predicates, and legal interpretation beyond the formalised clause remain outside this evidence model.
 - The legal reading and formalisation are human assumptions: reasonsmith does not validate that the formal test is the correct legal interpretation or that it applies to your case.
 - The certificate measures reason deletion only when the system exposes a suitable inference artefact; a log-only system cannot be upgraded by its adapter.
 

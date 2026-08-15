@@ -44,6 +44,36 @@ a `Strength`: the coordinates answer different questions. Evidence about a diffe
 basis; evidence about the same object reached less deeply is a strength rung. Thus `recounted` is a
 rung on the `artifact` row, not a fifth basis.
 
+```mermaid
+flowchart LR
+    strength["Strength: how far a claim was pushed"] --> unattainable["unattainable"]
+    unattainable --> observed["observed"]
+    observed --> recounted["recounted"]
+    recounted --> probed["probed"]
+    probed --> proved["proved"]
+
+    basis["EvidenceBasis: what the claim is about"] -.-> behavioural["behavioural executions"]
+    basis -.-> relational["relational execution pairs"]
+    basis -.-> artifact["artifact inference model"]
+    basis -.-> assessment["assessment authority"]
+    basis -.-> statistical["statistical declared sample"]
+    statistical --> measurement["measurement beside verdict path"]
+    measurement --> no_verdict["decision_rule null, no verdict"]
+
+    classDef axis fill:#eef3fb,stroke:#1f4f8f,color:#16181d
+    classDef rung fill:#eaf6ef,stroke:#1d6b45,color:#16181d
+    classDef basis fill:#f4f1fa,stroke:#5b4a8a,color:#16181d
+    classDef measurement fill:#f6edf8,stroke:#8b4a8b,color:#16181d
+    class strength,basis axis
+    class unattainable,observed,recounted,probed,proved rung
+    class behavioural,relational,artifact,assessment,statistical basis
+    class measurement,no_verdict measurement
+```
+
+The two coordinates are deliberately drawn as separate paths: the strength chain is ordered, while
+basis branches classify the object of a claim. The statistical branch stops at a measurement and
+never enters the verdict chain.
+
 ## 8.3 Admissibility
 
 Let `EvidenceBasis` and `Strength` be the two sets named above. The admissibility relation is
