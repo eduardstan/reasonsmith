@@ -94,8 +94,8 @@ omit = ["*/reasonsmith/examples/*"]
 # not fail — while pytest-cov's own end-of-run summary compares the unrounded total and prints
 # "FAIL Required test coverage of 93% not reached", so the log said FAIL and the job exited 0.
 # Two digits makes the comparison the one the printed figure states, which is also what makes a
-# fractional floor mean anything: `.github/workflows/ci.yml` carries 92.5 and the decision behind
-# it. Set here rather than as a flag so both workflows inherit it, along with a local run.
+# fractional floor mean anything: `.github/workflows/ci.yml` carries the 95% floor. Set here rather
+# than as a flag so both workflows inherit the precision, along with a local run.
 precision = 2
 
 [tool.mypy]

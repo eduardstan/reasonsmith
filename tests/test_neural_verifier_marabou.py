@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+from dataclasses import fields, replace
 
 import pytest
 
@@ -207,3 +208,111 @@ def test_real_marabou_known_unsat_fixture() -> None:
     result = MarabouVerifier().verify(_query(constant=True), timeout=30)
     assert result.status == "unsat"
     assert result.provenance["verdict_eligible"] is False
+
+
+def test_resource_limits_are_serialized_and_validate_values() -> None:
+    limits = ResourceLimits(cpu_seconds=2, memory_bytes=4096, gpu="cuda:0")
+    details = limits.as_dict(1.5)
+    assert details["wall_seconds"] == 1.5
+    assert details["enforcement"]["gpu"] == "declaration-only"
+    assert details["enforcement"]["cpu"] == "RLIMIT_CPU"
+    for kwargs in (
+        {"cpu_seconds": 0},
+        {"memory_bytes": 0},
+        {"gpu": ""},
+    ):
+        with pytest.raises(ValueError):
+            ResourceLimits(**kwargs)
+
+
+@pytest.mark.parametrize("timeout", [0, -1, float("nan"), float("inf")])
+def test_invalid_timeouts_never_start_the_onnx_verifier(monkeypatch, timeout) -> None:
+    query = _query()
+    monkeypatch.setattr(
+        "reasonsmith.neural_verifiers.marabou.subprocess.Popen",
+        lambda *args, **kwargs: pytest.fail("invalid timeout started a child"),
+    )
+    result = MarabouVerifier(check_version=False).verify(query, timeout=timeout)
+    assert result.status == "error"
+    assert result.provenance["failure"] == "invalid_timeout"
+
+
+def _artifact_with_metadata(artifact, **changes):
+    clone = object.__new__(type(artifact))
+    for field in fields(artifact):
+        object.__setattr__(
+            clone, field.name, changes.get(field.name, getattr(artifact, field.name))
+        )
+    return clone
+
+
+def test_unsupported_artifact_metadata_is_refused_before_process(monkeypatch) -> None:
+    query = _query()
+    cases = [
+        (
+            _artifact_with_metadata(query.artifact, schema_version=99),
+            "unsupported_artifact_schema",
+        ),
+        (
+            _artifact_with_metadata(query.artifact, vnnlib_version="2.0"),
+            "unsupported_vnnlib_version",
+        ),
+        (_artifact_with_metadata(query.artifact, onnx_ir_version=99), "unsupported_onnx_ir"),
+        (
+            _artifact_with_metadata(query.artifact, opset_imports=(("", 99),)),
+            "unsupported_onnx_opset",
+        ),
+    ]
+
+    def fail(*args, **kwargs):
+        pytest.fail("metadata refusal started a child")
+
+    monkeypatch.setattr("reasonsmith.neural_verifiers.marabou.subprocess.Popen", fail)
+    for artifact, failure in cases:
+        result = MarabouVerifier(check_version=False).verify(replace(query, artifact=artifact))
+        assert result.status == "unsupported"
+        assert result.provenance["failure"] == failure
+
+    binding = replace(query.artifact.inputs[0], dtype="uint8")
+    result = MarabouVerifier(check_version=False).verify(
+        replace(query, artifact=_artifact_with_metadata(query.artifact, inputs=(binding,)))
+    )
+    assert result.status == "unsupported"
+    assert result.provenance["failure"] == "unsupported_dtype"
+
+
+def test_malformed_query_is_refused_and_process_failures_are_errors(monkeypatch) -> None:
+    query = _query()
+    mutant = replace(
+        query,
+        vnnlib=query.vnnlib.replace(f"(assert {query.required_assertions[0]})\n", "", 1),
+    )
+    result = MarabouVerifier(check_version=False).verify(mutant)
+    assert result.status == "unsupported"
+    assert result.provenance["failure"] == "unsupported_query"
+
+    verifier = MarabouVerifier(executable="/no/such/marabou", check_version=False)
+    result = verifier.verify(query)
+    assert result.status == "error"
+    assert result.provenance["failure"] == "crash"
+
+    _patch_process(monkeypatch, _Process("", "fatal", returncode=3))
+    result = MarabouVerifier(check_version=False).verify(query)
+    assert result.status == "error"
+    assert result.provenance["failure"] == "crash"
+    assert result.diagnostic == "fatal"
+
+
+@pytest.mark.parametrize(
+    "output",
+    [
+        "sat\nx_a_0 = nan\n",
+        "sat\nx_a_0 = 0\nx_a_0 = 1\n",
+    ],
+)
+def test_sat_nonfinite_or_conflicting_assignments_are_rejected(monkeypatch, output) -> None:
+    _patch_process(monkeypatch, _Process("Marabou 2.0.0\n"), _Process(output))
+    result = MarabouVerifier().verify(_query())
+    assert result.status == "error"
+    assert result.provenance["failure"] == "malformed_assignment"
+    assert result.assignment is None

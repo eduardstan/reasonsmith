@@ -183,3 +183,93 @@ def test_query_mutants_and_fake_oracle_are_checked() -> None:
         FakeOracle(VerifierRun("sat", assignment)),
     )
     assert result.witness is not None and result.witness.valid
+
+
+def test_nested_assignments_and_replay_adapters_are_checked_against_onnx() -> None:
+    query = compile_counterfactual_query(_artifact(), outcome_signal="record")
+    assignment = {
+        "a": {"feature": 0, "1": 0},
+        "b": {"x_b_0": 0, "applicant_prohibited_basis": 1},
+    }
+
+    def replay(values):
+        return {"record": "yes" if values["applicant_prohibited_basis"] else "no"}
+
+    witness = check_witness(query, assignment, replay=replay)
+    assert witness.valid
+    assert witness.inputs["a"]["feature"] == 0
+    assert witness.decoded["b"]["record"] == "yes"
+
+    class Sut:
+        def decide(self, values):
+            return {"record": "yes" if values["applicant_prohibited_basis"] else "no"}
+
+    assert check_witness(query, assignment, sut=Sut()).valid
+    assert not check_witness(query, assignment, sut=object()).valid
+
+
+def test_monotonicity_nonincreasing_and_local_numeric_tolerance_are_replayed() -> None:
+    decreasing = compile_monotonicity_query(
+        _artifact(mode="negative"),
+        feature="feature",
+        outcome_signal="outcome",
+        direction="nonincreasing",
+    )
+    result = check_witness(
+        decreasing, {"x_a_0": 0, "x_a_1": 0, "x_b_0": 1, "x_b_1": 0}
+    )
+    assert not result.valid
+    assert "did not reproduce" in (result.reason or "")
+
+    local = compile_local_robustness_query(
+        _artifact(),
+        centre={"feature": 0.5, "applicant_prohibited_basis": 0},
+        radius={"feature": 0.2, "applicant_prohibited_basis": 0},
+        outcome_signal="outcome",
+        output_tolerance=0.05,
+    )
+    witness = check_witness(
+        local, {"x_a_0": 0.5, "x_a_1": 0, "x_b_0": 0.6, "x_b_1": 0}
+    )
+    assert witness.valid
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"feature": "missing", "outcome_signal": "outcome"}, "unknown monotonicity feature"),
+        ({"feature": "feature", "outcome_signal": "missing"}, "unknown decoded output"),
+    ],
+)
+def test_query_compilers_reject_unknown_signals(kwargs, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        compile_monotonicity_query(_artifact(), **kwargs)
+
+
+def test_local_query_rejects_malformed_centres_radii_and_tolerance() -> None:
+    base = {"feature": 0, "applicant_prohibited_basis": 0}
+    with pytest.raises(ValueError, match="centre must be a mapping"):
+        compile_local_robustness_query(_artifact(), centre=None, radius=1, outcome_signal="outcome")
+    with pytest.raises(ValueError, match="missing"):
+        compile_local_robustness_query(
+            _artifact(), centre={"feature": 0}, radius=1, outcome_signal="outcome"
+        )
+    with pytest.raises(ValueError, match="outside bounds"):
+        compile_local_robustness_query(
+            _artifact(), centre={**base, "feature": 2}, radius=1, outcome_signal="outcome"
+        )
+    with pytest.raises(ValueError, match="cover exactly"):
+        compile_local_robustness_query(
+            _artifact(), centre=base, radius={"feature": 1}, outcome_signal="outcome"
+        )
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        compile_local_robustness_query(
+            _artifact(),
+            centre=base,
+            radius={"feature": 1, "applicant_prohibited_basis": float("nan")},
+            outcome_signal="outcome",
+        )
+    with pytest.raises(ValueError, match="output_tolerance"):
+        compile_local_robustness_query(
+            _artifact(), centre=base, radius=1, outcome_signal="outcome", output_tolerance=-1
+        )
