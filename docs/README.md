@@ -9,6 +9,7 @@ tests. `semantics.md` remains the operational report-reading contract.
 Each line below points to the document that owns its subject. This index links rather than repeating
 what those documents say.
 
+- [`architecture.md`](architecture.md) — orientation map from regulation and system surfaces through the trusted core to the five report projections.
 - [`semantics.md`](semantics.md) — report outcomes, evidence reading, audience projections, and operational boundaries.
 - [`assurance-crosswalk.md`](assurance-crosswalk.md) — navigation crosswalk to NIST AI RMF 1.0 and ISO/IEC 42001:2023.
 - [`gpai-code-of-practice-appendix.md`](gpai-code-of-practice-appendix.md) — non-executable mapping from the GPAI duties to the EU AI Office Code of Practice.

@@ -24,71 +24,31 @@ Start with a clause of law and the evidence your system actually exposes. reason
 
 ```mermaid
 flowchart TB
-    log["a log of decisions"] --> exposed
-    callable["a decide() you can re-run"] --> exposed
-    rules["declared logic()"] --> exposed
-    neural["an ONNX artifact and declared input space"] --> exposed
-    artefact["an inference artefact"] --> exposed
-    neural --> query["core-compiled VNN-LIB query"]
-    query --> verifier["Marabou or alpha-beta-CROWN subprocess"]
-    verifier --> neural_result["replayed witness or honest refusal"]
-    neural_result --> neural_boundary["separate neural oracle, no conformance verdict"]
-    exposed["What the system exposes"] --> reach
+    reg["Your regulation — a pack: statute, quote, formal duty"]
+    sut["Your system — log, decide(), logic(), neural model, inference artefact"]
+    engine["Your engine — plug-in; core rechecks violation witness"]
+    core["Trusted core — applicability first, then strongest evidence permitted"]
+    ladder["Evidence ladder — unattainable → observed → recounted → probed → proved"]
+    report["Refusal-honest report — holds, evidence, refusals"]
+    five["Five projections — developer · deployer · auditor · regulator · affected individual"]
 
-    packs["Six packs and 37 duties"] --> clause(["A clause of law"])
-    clause --> quote(["Its verbatim text — retrieved and recorded"])
-    quote --> formula(["A formal property — one recorded judgement per clause"])
-    formula --> reach{"Does this duty reach this system?"}
-    formula --> statistical["Statistical measurement basis"]
-    statistical --> measurement["Clopper–Pearson intervals and limits, no verdict"]
+    reg --> core
+    sut --> core
+    engine --> core
+    core --> ladder --> report --> five
 
-    reach --> na{{"not applicable — nothing was declared to place it in scope"}}
-    reach --> un[/"unattainable — the system cannot emit the evidence the duty needs"/]
-    reach --> ladder["Every engine the property and the surface both allow"]
-
-    ladder --> observed["observed — from a trace"]
-    ladder --> recounted["recounted — reasons re-run"]
-    ladder --> probed["probed — bounded replay"]
-    ladder --> proved["proved — a solver over declared rules"]
-
-    byo["Installed BYO engine"] --> plugin["Plugin result at declared ceiling"]
-    plugin -.-> ladder
-    plugin --> witness["Trusted core replays violation witness"]
-    witness --> provenance["witness-checked or trusted-ceiling"]
-    provenance --> verdict
-    kit["verify-engine conformance kit"] --> byo
-
-    observed --> verdict
-    recounted --> verdict
-    probed --> verdict
-    proved --> verdict
-
-    verdict[["The strongest evidence wins — how far it was pushed, and what it is about"]]
-    verdict --> five[["Five projections: developer · deployer · auditor · regulator · affected individual"]]
-
-    classDef law fill:#eef3fb,stroke:#1f4f8f,color:#16181d
-    classDef surface fill:#f4f1fa,stroke:#5b4a8a,color:#16181d
-    classDef notapp fill:#fff4d6,stroke:#9a6700,color:#16181d
-    classDef unattainable fill:#fde2e2,stroke:#a33a3a,color:#16181d
+    classDef open fill:#e5f2f8,stroke:#1f6f8f,color:#16181d
+    classDef core fill:#ffffff,stroke:#16181d,color:#16181d
     classDef rung fill:#eaf6ef,stroke:#1d6b45,color:#16181d
-    classDef outcome fill:#ffffff,stroke:#16181d,color:#16181d
-    classDef decision fill:#fff8e7,stroke:#9a6700,color:#16181d
-    classDef collector fill:#e9e2f5,stroke:#5b4a8a,color:#16181d
-    classDef extension fill:#e5f2f8,stroke:#1f6f8f,color:#16181d
-    classDef measurement fill:#f6edf8,stroke:#8b4a8b,color:#16181d
+    classDef report fill:#fff8e7,stroke:#9a6700,color:#16181d
 
-    class clause,quote,formula law
-    class log,callable,rules,neural,artefact surface
-    class exposed collector
-    class query,verifier,neural_result,neural_boundary extension
-    class packs,kit,byo,plugin,witness,provenance extension
-    class statistical,measurement measurement
-    class reach decision
-    class na notapp
-    class un unattainable
-    class observed,recounted,probed,proved rung
-    class ladder,verdict,five outcome
+    class reg,sut,engine open
+    class core core
+    class ladder rung
+    class report,five report
 ```
+
+Zoom into any component in the [architecture guide](docs/architecture.md).
 
 The evidence-strength chain is explicit: unattainable, observed trace, recounted reasons, bounded probe, and proof over declared rules. The strongest rung the property and surface both permit wins; an auditor cannot choose it. **Unattainable** means the system cannot emit the evidence the duty needs. **Not applicable** means the system has not declared the regulatory class or decision domain to which the duty is limited. They are different answers, not interchangeable failures.
 

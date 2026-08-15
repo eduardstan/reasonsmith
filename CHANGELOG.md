@@ -8,6 +8,14 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-08-15
+
+### Changed
+
+- **Architecture documentation is split for faster comprehension.** The README now opens with a
+  macro overview, while `docs/architecture.md` provides granular diagrams for the pack, system
+  surfaces, trusted core, engine boundary, statistical measurement, and report projections.
+
 ## [0.10.0] - 2026-08-15
 
 ### Added
@@ -1580,5 +1588,6 @@ for the log's directory.
   applicable. `reasonsmith` never infers a system's decision domain.
   ([#63](https://github.com/eduardstan/reasonsmith/pull/63))
 
-[Unreleased]: https://github.com/eduardstan/reasonsmith/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/eduardstan/reasonsmith/compare/v0.10.1...HEAD
+[0.10.1]: https://github.com/eduardstan/reasonsmith/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/eduardstan/reasonsmith/compare/v0.9.2...v0.10.0
