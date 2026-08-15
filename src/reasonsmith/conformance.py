@@ -16,11 +16,9 @@ What a reader must not break:
     the fraction of the exact answer's value the engine's answer still carries, catches the
     relative value loss absolute fidelity misses. The two disagree, and the disagreement is
     informative.
-  - A certificate whose reason enumeration found nothing must not enter this module's measured
-    cohort.
-    Why this matters: Every Table 19 metric here shares one reason-enumeration cohort, so an
-    unmeasured certificate cannot inflate coverage or fidelity, and the cohort cannot vary by
-    metric.
+  - Fidelity and retained share use the independent engine/exact value cohort; enumeration
+    metrics use the reason-enumeration cohort. Every metric reports its own cohort size, so an
+    enumeration failure does not discard a measured value gap.
   - Per-group comparisons carry explicit disclaimers regarding cohort size limits.
     Why this matters: Per-group figures are only as representative as the cases behind them.
 """
@@ -36,30 +34,25 @@ LIMITS = (
 )
 
 
-def measured(cert) -> bool:
-    """Whether this certificate measured anything at all.
+def value_measured(cert) -> bool:
+    """Whether the engine and exact-inference values were measured for this case."""
+    return all(isinstance(value, (int, float)) and value == value for value in
+               (cert.exact_value, cert.engine_value, cert.value_gap))
 
-    For this module's conformance metrics, exact inference that enumerated no reason produced no
-    deletion-probe result: nothing was probed, so every metric here reports None rather than a
-    score. There is one predicate for that, and every metric is gated on it, so all Table 19 metrics
-    use one cohort rather than silently ranging over different cases. The certificate engine's
-    separate value-gap duty reads its unperturbed comparison independently of this gate.
-    """
+
+def measured(cert) -> bool:
+    """Whether reason enumeration produced probe verdicts."""
     return bool(cert.verdicts)
 
 
 def fidelity(cert) -> float | None:
-    """Table 19 'fidelity to base model', per nesyarena's metrics.fidelity: 1 - |error|, clamped.
-    None outside the shared reason-enumeration cohort: even zero error is not scored as fidelity
-    when no reason was enumerated, so Table 19 metrics cannot silently use different cases."""
-    return max(0.0, min(1.0, 1.0 - abs(cert.value_gap))) if measured(cert) else None
+    """Table 19 fidelity over every case with measured engine/exact values."""
+    return max(0.0, min(1.0, 1.0 - abs(cert.value_gap))) if value_measured(cert) else None
 
 
 def retained_share(cert) -> float | None:
-    """The fraction of the exact answer's value the engine still carries (1.0 = nothing lost).
-    Reasons enumerated but an exact value of zero is a case with nothing to lose, reported as 1.0;
-    no reason enumerated at all is outside the shared metric cohort, reported as None."""
-    if not measured(cert):
+    """Exact-answer value retained by the engine, over the value-measured cohort."""
+    if not value_measured(cert):
         return None
     return 1.0 if cert.exact_value == 0.0 else cert.engine_value / cert.exact_value
 
@@ -113,17 +106,25 @@ def _mean(values) -> float | None:
 
 
 def group_stats(certs) -> dict:
-    scored = [c for c in certs if measured(c)]
+    values = [c for c in certs if value_measured(c)]
+    enumerated = [c for c in certs if measured(c)]
     return {
         "n": len(certs),
-        "measured": len(scored),
-        "fidelity": _mean(fidelity(c) for c in scored),
-        "retained_share": _mean(retained_share(c) for c in scored),
-        "coverage": _mean(coverage(c) for c in scored),
-        "reasons_found": _mean(len(c.verdicts) for c in scored),
-        "reasons_used": _mean(reason_set_size(c) for c in scored),
-        "reasons_deleted": _mean(len(c.deleted) for c in scored),
-        "reason_diversity": reason_diversity(scored),
+        # Backwards-compatible alias for the enumeration cohort.
+        "measured": len(enumerated),
+        "value_measured": len(values),
+        "enumerated": len(enumerated),
+        "fidelity": _mean(fidelity(c) for c in values),
+        "retained_share": _mean(retained_share(c) for c in values),
+        "coverage": _mean(coverage(c) for c in enumerated),
+        "reasons_found": _mean(len(c.verdicts) for c in enumerated),
+        "reasons_used": _mean(reason_set_size(c) for c in enumerated),
+        "reasons_deleted": _mean(len(c.deleted) for c in enumerated),
+        "reason_diversity": reason_diversity(enumerated),
+        "cohort_sizes": {"fidelity": len(values), "retained_share": len(values),
+                         "coverage": len(enumerated), "reasons_found": len(enumerated),
+                         "reasons_used": len(enumerated), "reasons_deleted": len(enumerated),
+                         "reason_diversity": len(enumerated)},
     }
 
 
@@ -155,6 +156,8 @@ def render(strat: dict, size_cap: int | None = None) -> str:
     out = ["CONFORMANCE CHECKS (Table 19: fidelity, coverage, reason-set size,",
            "                    stratified per-group checks, reason diversity;",
            "                    stability is reported separately, over windows)",
+           "  Fidelity and retained share use value-measured cases; enumeration metrics use cases",
+           "  with reason enumeration (their cohorts can differ). Each metric's n is shown below.",
            "",
            f"  {'group':<12}" + "".join(f"{c:>17}" for c in cols)]
     for name, s in strat["per_group"].items():
@@ -165,7 +168,12 @@ def render(strat: dict, size_cap: int | None = None) -> str:
             out.append(f"    {metric:<18} not measured   "
                        f"(fewer than two groups produced this metric)")
         else:
-            out.append(f"    {metric:<18} {g['gap']:+.4f}   (best {g['best']}, worst {g['worst']})")
+            cohorts = {name: s["cohort_sizes"][metric] for name, s in strat["per_group"].items()}
+            cohort_text = ", ".join(f"{name} n={n}" for name, n in cohorts.items())
+            out.append(
+                f"    {metric:<18} {g['gap']:+.4f}   "
+                f"(best {g['best']}, worst {g['worst']}; {cohort_text})"
+            )
     if size_cap is not None:
         out.append("")
         out.append(f"  reason-set size cap {size_cap}: " + "; ".join(
