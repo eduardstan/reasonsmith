@@ -129,13 +129,17 @@ The optional finite-trace analysis keeps the three-valued runtime-verification d
 ## 5.7 Plug-in violation witnesses
 
 An installed engine may report a violation with a trace position, an absent-presence witness, an
-input valuation, or an execution pair. `reasonsmith.witness` dispatches by fragment and rung and
-re-derives that witness using the reference interpreter and the system's own replay surface. A
-confirmed witness is marked `witness-checked`; a missing witness or one the checker cannot read
-remains `trusted-ceiling`. This is deliberately incomplete: an unknown interpreter value is
-`uncheckable`, not a refutation, and satisfied results at a proved ceiling have no checked object.
+input valuation, an execution pair, or — for a genuine `until`/`since` shape — a finite trace
+prefix and the position(s) where its obligation ran out. `reasonsmith.witness` dispatches by
+fragment and rung and re-derives that witness using the reference interpreter and the system's own
+replay surface. A confirmed witness is marked `witness-checked`; a missing witness or one the
+checker cannot read remains `trusted-ceiling`. This is deliberately incomplete: an unknown
+interpreter value is `uncheckable`, not a refutation, and satisfied results at a proved ceiling
+have no checked object.
 If the witness is refuted, the result is demoted to `not evaluated`, retaining the unverified
-payload under `details.witness` rather than presenting it as a finding. The checks are
+payload under `details.witness` rather than presenting it as a finding. The prefix emission and
+three checker outcomes are pinned by `test_observed_until_violation_emits_recheckable_prefix` and
+`test_temporal_prefix_witness_is_confirmed_refuted_or_uncheckable`; the other checks are
 `test_a_rechecked_plugin_violation_is_witness_checked`,
 `test_a_witnessless_plugin_violation_is_trusted_at_its_ceiling`, and
 `test_a_refuted_plugin_witness_demotes_without_flipping`.

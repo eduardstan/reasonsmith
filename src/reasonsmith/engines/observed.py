@@ -105,6 +105,7 @@ from reasonsmith.rulelang import (
     is_present,
     is_unknown,
     kleene_and,
+    kleene_value,
     parse_property,
     string_literal_mask,
     validate_temporal_property,
@@ -126,6 +127,36 @@ PRESENCE_THRESHOLD = FLAG_THRESHOLD
 #: one-sample dataset raises out of its own internals. That is a limit of what was observed,
 #: not a defect in the formula, and it is reported as one rather than blamed on the pack.
 MINIMUM_TRACE_LENGTH = 2
+
+
+def _has_prefix_temporal_shape(node: ast.AST) -> bool:
+    """Whether a formula contains a genuine finite-trace obligation (`until` or `since`)."""
+    return any(
+        isinstance(current, ast.Call)
+        and isinstance(current.func, ast.Name)
+        and current.func.id in BINARY_TEMPORAL_OPERATORS
+        for current in ast.walk(node)
+    )
+
+
+def _prefix_witness(property_node: ast.AST, records: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Find the shortest trace prefix whose reference semantics reproduces the violation."""
+    if not _has_prefix_temporal_shape(property_node):
+        return None
+    for end in range(1, len(records) + 1):
+        prefix = records[:end]
+        values = eval_temporal_trace(property_node, prefix)
+        if not values or kleene_value(values[0]) is not False:
+            continue
+        positions = [index for index, value in enumerate(values) if kleene_value(value) is False]
+        if not positions:
+            positions = [end - 1]
+        return {
+            "trace": [dict(record) for record in prefix],
+            "positions": positions,
+            "position": end - 1,
+        }
+    return None
 
 
 def _property_noun(req: Requirement, noun: str = "property") -> str:
@@ -671,6 +702,21 @@ class ObservedEngine:
                 violation_indices = [0]
 
             offending_segment = [records[t] for t in violation_indices]
+            details: dict[str, Any] = {
+                "offending_trace_segment": offending_segment,
+                "violation_step_indices": violation_indices,
+                "evaluation_scores": res,
+            }
+            prefix = _prefix_witness(property_node, records)
+            if prefix is not None:
+                # The boolean verdict above already came from the reference interpreter. Keep
+                # that independently re-checkable prefix explicit for consumers of the result.
+                details["witness"] = {
+                    "kind": "trace_prefix",
+                    "provenance": "witness-checked",
+                    "checker": "reasonsmith.witness._trace_prefix_check",
+                    "payload": prefix,
+                }
             return RequirementResult(
                 requirement_id=req.id,
                 source_clause=clause,
@@ -682,11 +728,7 @@ class ObservedEngine:
                     f"{_property_noun(req)} {req.spec!r} "
                     f"failed at decision step(s) {violation_indices}."
                 ),
-                details={
-                    "offending_trace_segment": offending_segment,
-                    "violation_step_indices": violation_indices,
-                    "evaluation_scores": res,
-                },
+                details=details,
                 binding=req.binding,
                 scope=req.scope,
             )

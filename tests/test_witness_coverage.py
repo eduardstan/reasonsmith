@@ -9,6 +9,7 @@ import z3
 
 from reasonsmith import witness
 from reasonsmith.adapters.rules import RulesAdapter
+from reasonsmith.engines.observed import ObservedEngine
 from reasonsmith.report import RequirementResult
 from reasonsmith.spec import Requirement
 from reasonsmith.verdict import EvidenceBasis, Strength, Verdict
@@ -485,3 +486,52 @@ def test_pair_checker_refuses_unchanged_protected_input_and_missing_replay(monke
         req, sut, [{"protected": 0}, {"protected": 1}]
     )
     assert status == "uncheckable" and "no replay surface" in reason
+
+
+def test_temporal_prefix_witness_is_confirmed_refuted_or_uncheckable() -> None:
+    req = _req("temporal", "until(present(start), present(end))")
+    confirmed_records = [{"start": "sent"}]
+    payload = {"trace": confirmed_records, "positions": [0], "position": 0}
+    assert witness._trace_prefix_check(req, confirmed_records, payload)[0] == "confirmed"
+
+    refuted_records = [{"start": "sent", "end": "done"}]
+    assert witness._trace_prefix_check(req, refuted_records, payload)[0] == "refuted"
+
+    unknown_req = _req("temporal", "until(present(start), end >= 1)")
+    unknown_records = [{"start": "sent"}]
+    # A missing magnitude makes the reference interpreter unable to decide rather than evidence
+    # that the witness is wrong.
+    status, _ = witness._trace_prefix_check(
+        unknown_req, unknown_records, {"trace": unknown_records}
+    )
+    assert status == "uncheckable"
+
+
+def test_temporal_prefix_dispatches_through_plugin_witness_checker() -> None:
+    req = _req("temporal", "until(present(start), present(end))")
+    records = [{"start": "sent"}]
+    result = _result(
+        details={
+            "witness": {
+                "kind": "trace_prefix",
+                "provenance": "trusted-ceiling",
+                "payload": {"trace": records, "positions": [0]},
+            }
+        }
+    )
+    checked = witness.check_plugin_result(req, object(), records, result)
+    assert checked.details["witness"]["provenance"] == "witness-checked"
+
+
+
+def test_observed_until_violation_emits_recheckable_prefix() -> None:
+    req = _req("temporal", "until(present(start), present(end))")
+    records = [{"start": "sent"}, {"start": "still sent"}]
+    result = ObservedEngine.evaluate(req, object(), records)
+
+    assert result.verdict is Verdict.VIOLATED
+    witness_record = result.details["witness"]
+    assert witness_record["kind"] == "trace_prefix"
+    prefix = witness_record["payload"]["trace"]
+    assert witness._trace_prefix_check(req, records, witness_record["payload"])[0] == "confirmed"
+    assert prefix == records[: len(prefix)]
