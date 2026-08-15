@@ -49,6 +49,8 @@ proposer = []
 # Typed neural exposures validate ONNX bytes but do not bundle a verifier. The import remains lazy,
 # so the base install retains the repository's light dependency surface.
 neural = ["onnx==1.22.0"]
+# Deterministic statute-drift PDF extraction. The route refuses any other pdfminer.six release.
+pdf = ["pdfminer.six==20250506"]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",

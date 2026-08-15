@@ -28,12 +28,19 @@ What a reader must not break:
     cannot be verified and must not look as though it was.
   - A source document is fetched once per run and reused for every provision that points at it, so
     a check of N provisions makes at most as many network calls as there are documents.
+  - PDF sources use the optional, exactly pinned `pdfminer.six` extra. Extraction is text-layer
+    only:
+    encrypted, scanned/image-only, tool-version-drifted, or otherwise unparseable PDFs are
+    `could-not-verify`. No OCR is attempted. The SHA-256 of fetched bytes travels beside each PDF
+    result as corroboration; it never replaces quotation matching.
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
+import io
 import json
 import sys
 import urllib.request
@@ -41,7 +48,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Callable, Iterable, Literal
+from typing import Callable, Iterable, Literal, cast
 
 from reasonsmith.spec import load_pack
 
@@ -74,6 +81,9 @@ VOID_ELEMENTS = frozenset(
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_MAX_BYTES = 20 * 1024 * 1024
 ECFR_VERSIONS_URL = "https://www.ecfr.gov/api/versioner/v1/versions/title-12.json"
+#: Exact extractor release accepted by the deterministic PDF route. Keep this in lockstep with the
+#: optional `pdf` extra; a different installed release is a refusal, not an unmeasured pass.
+PDFMINER_SIX_VERSION = "20250506"
 
 
 @dataclass(frozen=True)
@@ -87,7 +97,7 @@ class SourceDocument:
 
     key: str
     url: str
-    kind: Literal["cellar-xhtml", "ecfr-xml"]
+    kind: Literal["cellar-xhtml", "ecfr-xml", "pdf"]
 
 
 SOURCES = (
@@ -233,14 +243,18 @@ class _PassageExtractor(HTMLParser):
         return "".join(self.chunks)
 
 
-def extract_passage(source_text: str, *, selector: str | None) -> str | None:
+def extract_passage(source_text: SourcePayload, *, selector: str | None) -> str | None:
     """Extract the passage a provision names, whitespace-normalized.
 
     For Cellar XHTML, `selector` is the `id` of the division holding the provision's text; for the
-    eCFR response it is None and the whole document is the passage. Returns None when the selector
-    is missing from the document -- the source has moved structurally, which is `could-not-verify`,
-    not a mismatch.
+    eCFR response it is None and the whole document is the passage. A PDF has no structural
+    selector and supplies its whole deterministic text layer. Returns None when an XHTML selector
+    is missing from the document -- a structural move is `could-not-verify`, not a mismatch.
     """
+    if isinstance(source_text, bytes):
+        if selector is not None:
+            raise DriftFetchError("PDF provision selectors are unsupported; the PDF is one passage")
+        return extract_pdf_text(source_text)
     parser = _PassageExtractor(selector)
     parser.feed(source_text)
     text = parser.text()
@@ -253,7 +267,61 @@ class DriftFetchError(RuntimeError):
     """The official source could not be safely resolved, retrieved, or decoded."""
 
 
-def _fetch_url(url: str, *, timeout: float, max_bytes: int) -> str:
+SourcePayload = str | bytes
+
+
+def extract_pdf_text(data: bytes) -> str:
+    """Extract and normalize a PDF text layer with the pinned pdfminer.six release.
+
+    This deliberately does not fall back to OCR. Encryption, a missing text layer, an unavailable
+    or different extractor release, and every parser failure are explicit refusals.
+    """
+    try:
+        installed = importlib.metadata.version("pdfminer.six")
+    except importlib.metadata.PackageNotFoundError as exc:
+        raise DriftFetchError(
+            "pdf extraction requires the optional pdf extra (pdfminer.six is not installed)"
+        ) from exc
+    except Exception as exc:  # noqa: BLE001 - an unknown tool cannot be trusted
+        raise DriftFetchError(f"could not determine the pdfminer.six version: {exc}") from exc
+    if installed != PDFMINER_SIX_VERSION:
+        raise DriftFetchError(
+            "PDF extraction tool version drift: expected pdfminer.six "
+            f"{PDFMINER_SIX_VERSION}, found {installed}"
+        )
+    try:
+        from pdfminer.high_level import extract_text
+        from pdfminer.pdfdocument import PDFDocument
+        from pdfminer.pdfparser import PDFParser
+
+        stream = io.BytesIO(data)
+        document = PDFDocument(PDFParser(stream))
+        if document.encryption is not None:
+            raise DriftFetchError(
+                "encrypted PDFs are refused; no password or decryption is attempted"
+            )
+        if not document.is_extractable:
+            raise DriftFetchError("PDF text extraction is not permitted by the document")
+        stream.seek(0)
+        extracted = extract_text(stream)
+        text = normalize_whitespace(extracted)
+    except DriftFetchError:
+        raise
+    except Exception as exc:  # noqa: BLE001 - every extraction failure is a loud refusal
+        if exc.__class__.__name__ in {"PDFEncryptionError", "PDFPasswordIncorrect"}:
+            raise DriftFetchError(
+                "encrypted PDFs are refused; no password or decryption is attempted"
+            ) from exc
+        raise DriftFetchError(f"could not extract PDF text: {exc}") from exc
+    if not text:
+        raise DriftFetchError(
+            "PDF has no extractable text layer; scanned/image-only sources are refused "
+            "(OCR is not used)"
+        )
+    return text
+
+
+def _fetch_url_bytes(url: str, *, timeout: float, max_bytes: int) -> bytes:
     request = urllib.request.Request(
         url,
         headers={
@@ -267,6 +335,11 @@ def _fetch_url(url: str, *, timeout: float, max_bytes: int) -> str:
         raise DriftFetchError(f"could not fetch {url}: {exc}") from exc
     if len(data) > max_bytes:
         raise DriftFetchError(f"{url} exceeded the {max_bytes}-byte size guard")
+    return cast(bytes, data)
+
+
+def _fetch_url(url: str, *, timeout: float, max_bytes: int) -> str:
+    data = _fetch_url_bytes(url, timeout=timeout, max_bytes=max_bytes)
     try:
         return data.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -293,8 +366,8 @@ def _current_ecfr_url(source: SourceDocument, *, timeout: float, max_bytes: int)
 
 def fetch_source(
     source: SourceDocument, *, timeout: float = DEFAULT_TIMEOUT, max_bytes: int = DEFAULT_MAX_BYTES
-) -> str:
-    """Fetch the live version of a recorded source document as text.
+) -> SourcePayload:
+    """Fetch a recorded source as UTF-8 text, or raw bytes for the PDF route.
 
     The eCFR versioner requires a published issue date, so its current date is resolved from
     official title metadata at run time. Raises `DriftFetchError` on any resolution or retrieval
@@ -303,6 +376,8 @@ def fetch_source(
     url = source.url
     if source.kind == "ecfr-xml":
         url = _current_ecfr_url(source, timeout=timeout, max_bytes=max_bytes)
+    if source.kind == "pdf":
+        return _fetch_url_bytes(url, timeout=timeout, max_bytes=max_bytes)
     return _fetch_url(url, timeout=timeout, max_bytes=max_bytes)
 
 
@@ -323,8 +398,9 @@ class DriftResult:
     quote: str
     passage: str
     note: str = ""
+    source_sha256: str = ""
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, object]:
         return {
             "pack_id": self.pack_id,
             "requirement_id": self.requirement_id,
@@ -334,6 +410,7 @@ class DriftResult:
             "quote": self.quote,
             "passage": self.passage,
             "note": self.note,
+            **({"source_sha256": self.source_sha256} if self.source_sha256 else {}),
         }
 
 
@@ -378,7 +455,7 @@ class DriftReport:
         ]
         return "\n".join(lines)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, object]:
         return {
             "checked_at": self.checked_at.isoformat(),
             "counts": self.counts,
@@ -388,7 +465,7 @@ class DriftReport:
         }
 
 
-Fetcher = Callable[[SourceDocument], str]
+Fetcher = Callable[[SourceDocument], SourcePayload]
 
 
 def check_statute_drift(
@@ -403,8 +480,10 @@ def check_statute_drift(
     unreachable; the live fetch is the default, and tests substitute recorded fixtures.
     """
     results: list[DriftResult] = []
-    cache: dict[str, str] = {}
+    cache: dict[str, SourcePayload] = {}
+    source_hashes: dict[str, str] = {}
     failed: set[str] = set()
+    failure_notes: dict[str, str] = {}
     for pack_name in packs:
         pack = load_pack(pack_name)
         for requirement in pack.requirements:
@@ -427,15 +506,24 @@ def check_statute_drift(
                         status="could-not-verify",
                         quote=requirement.verbatim_text,
                         passage="",
-                        note=f"source could not be fetched; see the first finding for {source.url}",
+                        note=failure_notes.get(
+                            source_key,
+                            "source could not be verified; see the first finding for "
+                            f"{source.url}",
+                        ),
+                        source_sha256=source_hashes.get(source_key, ""),
                     )
                 )
                 continue
             if source_key not in cache:
                 try:
                     cache[source_key] = fetcher(source)
+                    payload = cache[source_key]
+                    raw = payload if isinstance(payload, bytes) else payload.encode("utf-8")
+                    source_hashes[source_key] = hashlib.sha256(raw).hexdigest()
                 except DriftFetchError as exc:
                     failed.add(source_key)
+                    failure_notes[source_key] = str(exc)
                     results.append(
                         DriftResult(
                             pack_id=pack.id,
@@ -449,7 +537,25 @@ def check_statute_drift(
                         )
                     )
                     continue
-            passage = extract_passage(cache[source_key], selector=selector)
+            try:
+                passage = extract_passage(cache[source_key], selector=selector)
+            except DriftFetchError as exc:
+                failed.add(source_key)
+                failure_notes[source_key] = str(exc)
+                results.append(
+                    DriftResult(
+                        pack_id=pack.id,
+                        requirement_id=requirement.id,
+                        article_clause=requirement.article_clause,
+                        source_url=source.url,
+                        status="could-not-verify",
+                        quote=requirement.verbatim_text,
+                        passage="",
+                        note=str(exc),
+                        source_sha256=source_hashes.get(source_key, ""),
+                    )
+                )
+                continue
             if passage is None:
                 results.append(
                     DriftResult(
@@ -461,6 +567,7 @@ def check_statute_drift(
                         quote=requirement.verbatim_text,
                         passage="",
                         note=f"selector {selector!r} not found in {source.url}",
+                        source_sha256=source_hashes.get(source_key, ""),
                     )
                 )
                 continue
@@ -474,6 +581,7 @@ def check_statute_drift(
                     status=status,
                     quote=requirement.verbatim_text,
                     passage=passage if status == "differ" else "",
+                    source_sha256=source_hashes.get(source_key, ""),
                 )
             )
     return DriftReport(

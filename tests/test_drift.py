@@ -7,6 +7,7 @@ the drift check's commit message): the AI Act Article 12, 13, 53 and 55 division
 fixture fetcher for the network, so the suite never touches the live sources.
 """
 
+import hashlib
 import json
 from datetime import datetime, timezone
 from io import BytesIO
@@ -30,6 +31,8 @@ from reasonsmith.drift import (
 from reasonsmith.spec import load_pack
 
 FIXTURE_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "drift"
+PDF_TEXT_FIXTURE = FIXTURE_DIR / "statute_text.pdf"
+PDF_NO_TEXT_FIXTURE = FIXTURE_DIR / "statute_no_text.pdf"
 
 FIXTURE_BY_KEY = {
     "ai_act": "eu_ai_act_art12_13_53_55.xhtml",
@@ -135,6 +138,56 @@ class TestExtractPassage:
         passage = extract_passage(source, selector=None)
         assert passage is not None
         assert "A creditor shall notify an applicant of action taken within: (i) 30 days" in passage
+
+
+class TestPdfExtraction:
+    def test_text_layer_extracts_and_verifies_with_whitespace_normalization(self):
+        source = drift.extract_pdf_text(PDF_TEXT_FIXTURE.read_bytes())
+        assert source == "A deterministic PDF statute quote."
+        assert classify("A deterministic PDF\nstatute quote.", source) == "match"
+
+    def test_quote_mismatch_is_differ_and_records_fetched_bytes_hash(self, tmp_path, monkeypatch):
+        source = drift.SourceDocument("pdf_fixture", "https://example.invalid/source.pdf", "pdf")
+        monkeypatch.setitem(drift.SOURCES_BY_KEY, source.key, source)
+        monkeypatch.setitem(drift.PROVISIONS, "Article 12(1)", (source.key, None))
+        pack = _minimal_pack(
+            tmp_path,
+            clause="Article 12(1)",
+            verbatim="A rewritten PDF statute quote.",
+        )
+        payload = PDF_TEXT_FIXTURE.read_bytes()
+        report = check_statute_drift(lambda _source: payload, packs=[pack])
+        result = report.results[0]
+        assert result.status == "differ"
+        assert result.source_sha256 == hashlib.sha256(payload).hexdigest()
+        assert result.to_dict()["source_sha256"] == result.source_sha256
+
+    def test_no_text_layer_is_refused_without_ocr(self):
+        with pytest.raises(DriftFetchError, match="no extractable text layer"):
+            drift.extract_pdf_text(PDF_NO_TEXT_FIXTURE.read_bytes())
+
+    def test_pdf_selector_is_refused(self):
+        with pytest.raises(DriftFetchError, match="selectors are unsupported"):
+            drift.extract_passage(PDF_TEXT_FIXTURE.read_bytes(), selector="page-1")
+
+    def test_malformed_pdf_is_refused(self):
+        with pytest.raises(DriftFetchError, match="could not extract PDF text"):
+            drift.extract_pdf_text(b"not a PDF")
+
+    def test_fetch_source_pdf_preserves_bytes(self, monkeypatch):
+        payload = PDF_TEXT_FIXTURE.read_bytes()
+        monkeypatch.setattr(
+            drift.urllib.request,
+            "urlopen",
+            lambda request, timeout: BytesIO(payload),
+        )
+        source = drift.SourceDocument("pdf", "https://example.invalid/source.pdf", "pdf")
+        assert drift.fetch_source(source) == payload
+
+    def test_extractor_version_drift_is_refused(self, monkeypatch):
+        monkeypatch.setattr(drift.importlib.metadata, "version", lambda _name: "0.0.0")
+        with pytest.raises(DriftFetchError, match="version drift"):
+            drift.extract_pdf_text(PDF_TEXT_FIXTURE.read_bytes())
 
 
 class TestFetchSource:

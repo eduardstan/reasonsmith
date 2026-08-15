@@ -4,6 +4,15 @@
 - **Purpose:** Provide exact, verbatim statutory texts for Reasonsmith's regulation packs from official legal sources, along with citation metadata, retrieval timestamps, notes on statutory hierarchy, and verbatim operative demands.
 - **Date of Retrieval:** 2026-07-31
 
+### Drift-check source formats
+The statute-drift checker supports the recorded Cellar XHTML and eCFR XML formats above, and a
+PDF route for future PDF-only sources. PDF retrieval keeps the fetched bytes and verifies the
+SHA-256 beside each result as corroboration, then uses the optional, exactly pinned `pdfminer.six`
+release to extract text deterministically. Only whitespace is normalized before the existing
+character-for-character quote match; encrypted PDFs, PDFs without an extractable text layer,
+extractor-version drift, and every extraction error are refused as `could-not-verify`. The route
+never performs OCR, and a digest never substitutes for quotation matching.
+
 ---
 
 ## Provision 1: EU AI Act — Regulation (EU) 2024/1689
