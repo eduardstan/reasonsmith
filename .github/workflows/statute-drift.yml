@@ -123,6 +123,12 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      # The publication job regenerates the site-facing counts after installing the package, so
+      # the manifest's verification date is reflected in the committed counts as well.
+      - run: pip install -e .
       - name: Download the verification manifest
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -139,10 +145,11 @@ jobs:
           git fetch origin "$DEFAULT_BRANCH"
           git checkout -B "$MANIFEST_BRANCH" "origin/$DEFAULT_BRANCH"
           cp "$MANIFEST" docs/legal-verification.json
+          reasonsmith published-counts -o docs/published-counts.json
 
           open_pr="$(gh pr list --head "$MANIFEST_BRANCH" --state open --json number --jq '.[0].number // empty')"
-          if git diff --quiet -- docs/legal-verification.json; then
-            echo "verification manifest unchanged"
+          if git diff --quiet -- docs/legal-verification.json docs/published-counts.json; then
+            echo "verification manifest and published counts unchanged"
             if [ -n "$open_pr" ]; then
               gh pr close "$open_pr" --delete-branch
             elif git ls-remote --exit-code --heads origin "$MANIFEST_BRANCH" >/dev/null 2>&1; then
@@ -153,15 +160,16 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/legal-verification.json
+          git add docs/legal-verification.json docs/published-counts.json
           git commit -m "chore: record the statute verification of $(date -u +%Y-%m-%d)"
           # The bot branch is intentionally force-updated so one recurring run owns one PR.
           git push --force origin "HEAD:$MANIFEST_BRANCH"
 
           read -r -d '' body <<'EOF' || true
           This updates `docs/legal-verification.json`, the machine-readable manifest recording the
-          date and quote-corpus digest from a successful scheduled statute-drift verification run.
-          It was produced by the scheduled workflow and is published here for review rather than
+          date and quote-corpus digest from a successful scheduled statute-drift verification run,
+          and `docs/published-counts.json`, which publishes that verification status for the site.
+          They were produced by the scheduled workflow and are published here for review rather than
           pushed to the default branch. The pinned official artifact actions only transfer the
           report and manifest between the read-only check and write-scoped publication jobs; no
           third-party runtime or action dependency was added.
