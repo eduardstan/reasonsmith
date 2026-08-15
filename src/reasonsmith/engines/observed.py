@@ -149,8 +149,6 @@ def _prefix_witness(property_node: ast.AST, records: list[dict[str, Any]]) -> di
         if not values or kleene_value(values[0]) is not False:
             continue
         positions = [index for index, value in enumerate(values) if kleene_value(value) is False]
-        if not positions:
-            positions = [end - 1]
         return {
             "trace": [dict(record) for record in prefix],
             "positions": positions,

@@ -362,8 +362,6 @@ def _pair_check(req: Any, sut: Any, payload: Any) -> tuple[str, str]:
     changed = {name for name in names if left.get(name) != right.get(name)}
     if changed != {protected}:
         return _REFUTED, f"the pair changes {sorted(changed)}, not only {protected!r}"
-    if left.get(protected) == right.get(protected):
-        return _REFUTED, f"the pair does not change protected input {protected!r}"
     try:
         logic_data = sut.logic() if callable(getattr(sut, "logic", None)) else None
     except Exception as exc:
