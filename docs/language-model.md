@@ -36,11 +36,11 @@ or coverage of deployment inputs; it is bounded replay of this template space on
 
 | duty | outcome | why that one |
 |---|---|---|
-| `1002.9(a)(1)` timing of notice | `observed` | temporal property — the one rung above `observed` for a temporal duty reduces `always(f)` against exposed `logic()`, and a model you can only call exposes none ([`semantics.md`](semantics.md) §3.5) |
+| `1002.9(a)(1)` timing of notice | `observed` | temporal property — the one rung above `observed` for a temporal duty reduces `always(f)` against exposed `logic()`, and a model you can only call exposes none ([`theory/05-decision-procedures.md`](theory/05-decision-procedures.md) §5.1) |
 | `1002.9(a)(2)` written statement | `observed` | same |
 | `1002.9(b)(2)` specific reasons | `probed`, carrying its budget | a state property, and the model is callable, so the replay search runs |
 | `1002.9(b)(2)` principal reasons complete | `unattainable` | needs an inference artefact the system has none of |
-| `1002.4(a)` no disparate treatment | `probed`, carrying its declared finite values and pair budget | callable replay compares twin prompts while changing only the synthetic protected slot; this is bounded template-space evidence, not a proof or a population claim ([`semantics.md`](semantics.md) §3, *counterfactual*) |
+| `1002.4(a)` no disparate treatment | `probed`, carrying its declared finite values and pair budget | callable replay compares twin prompts while changing only the synthetic protected slot; this is bounded template-space evidence, not a proof or a population claim ([`theory/04-decision-problems.md`](theory/04-decision-problems.md) §4.4, *counterfactual*) |
 
 ## The system
 
@@ -124,14 +124,14 @@ The tempting repair is the one to refuse. A system author could declare
 `artifact_logs_deleted_reason_count` and emit whatever the model says about its own reasons. That
 would make the row evaluate, and it would be exactly the substitution the duty exists to reject —
 a notice that names *a* reason standing in for one that names *the* reasons, and a self-report
-standing in for a measurement. [`semantics.md`](semantics.md) §3 is the argument in full.
+standing in for a measurement. [`theory/07-explanation.md`](theory/07-explanation.md) §7.7 is the argument in full.
 
 Raising this ceiling means changing the *system*, and there are now two ways to do it and no third.
 Exposing an inference artefact the reasons can be enumerated from reaches `probed`. Exposing the
 reasons the model **recounts** for a decision, together with a way to re-run it with a fact
 withheld, reaches `recounted` — the rung below, held there because a probe over a recounted set can
 show the answer does not depend on a reason the model named and can never show the set was all of
-them (`artifacts/reason_trace.py`; [`semantics.md`](semantics.md) §3, *The inference artefact*).
+them (`artifacts/reason_trace.py`; [`theory/07-explanation.md`](theory/07-explanation.md) §7.1, *The inference artefact*).
 Neither is a number the model writes about itself, which is the repair refused above. Nothing in the
 adapter can do either, and nothing in the adapter should try — this system as shipped does neither,
 which is why the row above is still `unattainable`.

@@ -11,9 +11,12 @@ what those documents say.
 
 - [`semantics.md`](semantics.md) — report outcomes, evidence reading, audience projections, and operational boundaries.
 - [`assurance-crosswalk.md`](assurance-crosswalk.md) — navigation crosswalk to NIST AI RMF 1.0 and ISO/IEC 42001:2023.
+- [`gpai-code-of-practice-appendix.md`](gpai-code-of-practice-appendix.md) — non-executable mapping from the GPAI duties to the EU AI Office Code of Practice.
 - [`adopting.md`](adopting.md) — user-facing commands and system surfaces.
 - [`authoring-packs.md`](authoring-packs.md) — pack schema and authoring rules.
-- [`authoring-engines.md`](authoring-engines.md) — installed engine contract.
+- [`authoring-engines.md`](authoring-engines.md) — installed engine contract, witness provenance, and the `verify-engine` conformance kit.
+- [`neural-verifiers.md`](neural-verifiers.md) — optional ONNX query/oracle adapters and their refusal-first subprocess boundary.
+- [`neural-soundness-corpus.md`](neural-soundness-corpus.md) — pinned Marabou and alpha-beta-CROWN soundness-gate evidence.
 - [`registry.html`](registry.html) — generated pack and engine discovery registry.
 - [`refinement.md`](refinement.md) — one row for every clause-to-property refinement.
 - [`legal-sources.md`](legal-sources.md) — statutory retrieval record.
