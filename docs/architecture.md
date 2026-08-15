@@ -140,11 +140,11 @@ Statistical evidence is measurement-only. A declared plan produces simultaneous 
 ```mermaid
 flowchart TB
     verdict["Verdict — strongest evidence, pushed-to rung, evidence basis"]
-    developer["Developer — implementation detail"]
-    deployer["Deployer — evidence ceiling"]
-    auditor["Auditor — finding and provenance"]
-    regulator["Regulator — clause and source"]
-    individual["Affected individual — plain account"]
+    developer["Developer — implementation"]
+    deployer["Deployer — ceiling"]
+    auditor["Auditor — finding"]
+    regulator["Regulator — source"]
+    individual["Affected individual — account"]
 
     verdict --> developer
     verdict --> deployer
