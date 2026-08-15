@@ -743,9 +743,11 @@ against N and pytest-cov defaults `precision` to 0, so a real 92.79% rounded to 
 exited 0 while its own summary printed `FAIL`. `[tool.coverage.report] precision = 2` in
 `pyproject.toml` is what makes the floor real — for both workflows and a local run — and
 `test_the_coverage_floor_fails_a_total_below_it` asks `should_fail_under` itself rather than a
-literal. The floor is **95%**, a measured credibility gate rather than a rendering convention;
-do not lower it or weaken the measurement without an explicit decision, and do not "fix" a
-coverage shortfall by moving it.
+literal. The canonical Linux floor is **95%**, a measured credibility gate rather than a rendering
+convention. Windows has runner-specific measured floors (`95.10%`, `95.10%`, and `95.16%` for
+Python 3.11, 3.12, and 3.13) because platform-only optional paths are skipped there; do not lower
+any floor or weaken the measurement without an explicit decision, and do not "fix" a shortfall by
+moving it.
 
 `analysis.py` is the only module that reads a **pack** rather than a system's evidence, reached
 through `validate-pack --analyse`: joint satisfiability with an unsatisfiable core, entailment and

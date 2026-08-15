@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from dataclasses import fields, replace
@@ -215,7 +216,7 @@ def test_resource_limits_are_serialized_and_validate_values() -> None:
     details = limits.as_dict(1.5)
     assert details["wall_seconds"] == 1.5
     assert details["enforcement"]["gpu"] == "declaration-only"
-    assert details["enforcement"]["cpu"] == "RLIMIT_CPU"
+    assert details["enforcement"]["cpu"] == ("RLIMIT_CPU" if os.name == "posix" else "none")
     for kwargs in (
         {"cpu_seconds": 0},
         {"memory_bytes": 0},
