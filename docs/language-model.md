@@ -29,8 +29,10 @@ count is measured, never read — `engines/certificate.py` enumerates a decision
 inference artefact and switches each off in turn — and a decoder has no such artefact. So the row
 comes back `unattainable`, naming `artifact_logs_deleted_reason_count` as the signal it lacks.
 
-Everyone else reports *we evaluated the LLM*. This reports: checked on a sampled region of 200
-inputs, not proved; and here is the duty it could not answer at all.
+The counterfactual row is now checked at `probed`: each logged file is replayed through the callable
+on twin prompts from a finite declared synthetic category set. The budget carries the declared
+values, pairs attempted, facts switched, calls made and termination. This is not a fairness claim
+or coverage of deployment inputs; it is bounded replay of this template space only.
 
 | duty | outcome | why that one |
 |---|---|---|
@@ -38,7 +40,7 @@ inputs, not proved; and here is the duty it could not answer at all.
 | `1002.9(a)(2)` written statement | `observed` | same |
 | `1002.9(b)(2)` specific reasons | `probed`, carrying its budget | a state property, and the model is callable, so the replay search runs |
 | `1002.9(b)(2)` principal reasons complete | `unattainable` | needs an inference artefact the system has none of |
-| `1002.4(a)` no disparate treatment | *not evaluated* | a counterfactual property, and the model declares no input space, so there is no admissible value of the protected variable to replay a twin decision against — and no engine reads one out of the log ([`semantics.md`](semantics.md) §3, *counterfactual*) |
+| `1002.4(a)` no disparate treatment | `probed`, carrying its declared finite values and pair budget | callable replay compares twin prompts while changing only the synthetic protected slot; this is bounded template-space evidence, not a proof or a population claim ([`semantics.md`](semantics.md) §3, *counterfactual*) |
 
 ## The system
 
@@ -52,7 +54,8 @@ model is a two-line substitution at the call site, spelled out in the module doc
 
 The block below is stdout pasted unedited from a real run.
 `tests/test_docs_language_model.py` re-runs the command and holds the committed block to its real
-stdout, and asserts the ceiling separately.
+stdout, and asserts the ceiling separately. The counterfactual row records the finite synthetic
+category values and paired-replay budget; it does not establish fairness beyond those calls.
 
 ```sh
 python -m reasonsmith.examples.language_model_notices
@@ -64,7 +67,7 @@ system: notice-writer (language model, called through one text completion)
 declared scope: undeclared
 declared domains: consumer-credit
 pack: ecoa
-headline: 6 requirements · 6 binding: 1 probed, 2 observed, 1 not evaluated, 2 unattainable
+headline: 6 requirements · 6 binding: 2 probed, 2 observed, 2 unattainable
 
 REQUIREMENT FINDINGS:
   [OBSERVED] ecoa_reg_b_1002_9_a_1_timing_of_notice (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(a)(1)): satisfied
@@ -95,11 +98,14 @@ REQUIREMENT FINDINGS:
     domain limit: consumer-credit
     MISSING SIGNALS: artifact_logs_incompleteness_notice_sent
     summary: Unattainable as built: the system declares no capability to emit artifact_logs_incompleteness_notice_sent, so no amount of testing can discharge this requirement. Determined from declared capabilities alone; the system was not executed.
-  [NOT EVALUATED] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): inconclusive
+  [PROBED] ecoa_reg_b_1002_4_a_no_disparate_treatment (ECOA / Regulation B (12 CFR 1002.4) 12 CFR 1002.4(a)): satisfied
     evidence basis: relational — this duty is a property of a pair of executions, and a decision record holds one. No length of decision log observes it, so the rungs it can reach are probed and proved; a system exposing only a log cannot discharge it, and that is a fact about the kind of property and not about how much the system exposed.
     requires: artifact_logs_decision_record, applicant_prohibited_basis
     domain limit: consumer-credit
-    summary: Not evaluated: the system declares no input space, so there is no admissible value of 'applicant_prohibited_basis' to replay a decision against. This search never takes a protected value from the trace — a decision record is what happened to one applicant, and reading a counterfactual value out of it would make this duty a reason to log a protected attribute. Limit of this duty: it is invariance under one named variable holding all others fixed, so it is a property of treatment and says nothing about effects. A proxy is invisible to it — a rule set that never reads the protected variable and decides by postcode is satisfied here — and a disparate impact is not a thing it can find. It also reaches exactly one variable: a system answerable on several prohibited bases is answered here about the one this duty names.
+    summary: Probed over 4 pair(s): no recorded decision changed its 'artifact_logs_decision_record' when 'applicant_prohibited_basis' was moved across every one of the 3 values the declared constraints admit ('synthetic-category-a', 'synthetic-category-b', 'synthetic-category-c') and nothing else was changed. This is a bounded search over the decisions the system logged and the values the budget below names, not a proof: the property is unchecked for every input outside it. Limit of this duty: it is invariance under one named variable holding all others fixed, so it is a property of treatment and says nothing about effects. A proxy is invisible to it — a rule set that never reads the protected variable and decides by postcode is satisfied here — and a disparate impact is not a thing it can find. It also reaches exactly one variable: a system answerable on several prohibited bases is answered here about the one this duty names.
+    Scope of this positive result: this formal property was satisfied only on the bounded search (4 input(s) replayed, seed none — the base cases are the recorded decisions in the order the system returned them, and the protected values are those the declared constraints admit, sorted, input space: base decisions (2 values), declared values (['synthetic-category-a', 'synthetic-category-b', 'synthetic-category-c'] values), pairs planned (4 values), protected values used (['synthetic-category-a', 'synthetic-category-b', 'synthetic-category-c'] values), protected variable (applicant_prohibited_basis values); strategy: each decision the system logged is replayed through its own decide() once per admissible value of the protected variable, with every other field of the recorded input left exactly as it was, and the outcomes compared. The admissible values are enumerated from the system's declared input space (or its declared constraints and sort), never from the trace: the values recorded for a protected attribute are the one place this search must not look. Each value is compared against the first, which finds any disagreement among them without replaying every pair) at the probed evidence rung; this run did not establish that the searched inputs are complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside that search.
+    Formalized subset only — see explain ecoa_reg_b_1002_4_a_no_disparate_treatment rationale.
+    probe budget: 4 input(s) replayed, seed none — the base cases are the recorded decisions in the order the system returned them, and the protected values are those the declared constraints admit, sorted, input space: base decisions (2 values), declared values (['synthetic-category-a', 'synthetic-category-b', 'synthetic-category-c'] values), pairs planned (4 values), protected values used (['synthetic-category-a', 'synthetic-category-b', 'synthetic-category-c'] values), protected variable (applicant_prohibited_basis values). Strategy: each decision the system logged is replayed through its own decide() once per admissible value of the protected variable, with every other field of the recorded input left exactly as it was, and the outcomes compared. The admissible values are enumerated from the system's declared input space (or its declared constraints and sort), never from the trace: the values recorded for a protected attribute are the one place this search must not look. Each value is compared against the first, which finds any disagreement among them without replaying every pair
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of two independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about. This tool infers neither the class nor the domain, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope and domain lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against.
@@ -110,9 +116,9 @@ LIMITS OF THIS REPORT
 `logic()` is `None` here, so `proved` is not merely unreached — it is structurally unreachable. A
 prompt is not a rule set and a decoder is not a formula; handing the solver a hand-written
 paraphrase of either would prove a property of the paraphrase, and the system nobody deployed. The
-test asserts that on the mechanism, not on the printed word: `logic()` returns `None`, and the
-adequacy duty reports `unattainable` naming its missing signal rather than falling back to the
-presence check that shares its clause.
+separate `input_space()` hook supplies only finite replay values; it never becomes symbolic logic.
+The test asserts both facts on the mechanism, not on the printed words, and the adequacy duty still
+reports `unattainable` naming its missing signal.
 
 The tempting repair is the one to refuse. A system author could declare
 `artifact_logs_deleted_reason_count` and emit whatever the model says about its own reasons. That

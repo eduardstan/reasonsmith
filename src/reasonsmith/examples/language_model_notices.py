@@ -13,6 +13,8 @@ What this module is for:
     - `observed` on the two duties about the notice's timing and contents, read off its log;
     - `probed` on 12 CFR 1002.9(b)(2)'s specific-reasons duty, because the model can be called
       again on inputs it has never seen — a bounded search, carrying its budget;
+    - `probed` on 12 CFR 1002.4(a)'s counterfactual duty, because its callable adapter declares
+      a finite synthetic template slot for the protected variable;
     - `unattainable` on 12 CFR 1002.9(b)(2)'s *principal reasons* duty, naming the one signal it
       lacks, because that duty is measured from an inference artefact and a language model has
       none to give.
@@ -47,6 +49,8 @@ What a reader must not break:
     standing in for one that names *the* reasons.
   - `stub_model` must stay deterministic. The committed transcript is compared byte for byte, and a
     generated document that changes between runs is worse than no document.
+  - `logic()` remains `None`; `INPUT_SPACE` is replay metadata, not a symbolic implementation, and
+    its protected categories are synthetic rather than facts collected from people.
 """
 
 from __future__ import annotations
@@ -55,6 +59,7 @@ import re
 from typing import Any, Callable
 
 from reasonsmith.adapters.callable import CallableAdapter
+from reasonsmith.neural import DeclaredInputSpace, render_template
 from reasonsmith.report import check_conformance
 from reasonsmith.spec import load_pack
 
@@ -85,11 +90,33 @@ Applicant file:
 - debt_to_income: {debt_to_income}
 - delinquencies_24m: {delinquencies_24m}
 - credit_history_months: {credit_history_months}
+- applicant_prohibited_basis: {applicant_prohibited_basis}
 
 Answer with exactly two lines:
 DECISION: <adverse action|approved>
 PRINCIPAL REASON: <one standardised ECOA reason code and its wording>
 """
+
+#: Synthetic categories only: this example never collects or uses a real person's protected
+#: attribute. The values exercise the declared finite prompt space and nothing more.
+PROTECTED_VALUES = ("synthetic-category-a", "synthetic-category-b", "synthetic-category-c")
+
+INPUT_SPACE = DeclaredInputSpace(
+    [
+        {"signal": "credit_score", "type": "integer", "lower": 300, "upper": 850},
+        {"signal": "debt_to_income", "type": "real", "lower": 0, "upper": 1},
+        {"signal": "delinquencies_24m", "type": "integer", "lower": 0, "upper": 20},
+        {"signal": "credit_history_months", "type": "integer", "lower": 0, "upper": 120},
+        {
+            "signal": "applicant_prohibited_basis",
+            "type": "string-enum",
+            "values": PROTECTED_VALUES,
+            "value_to_token": {value: value for value in PROTECTED_VALUES},
+        },
+    ],
+    template={"text": PROMPT, "escaping": "literal"},
+    outcomes={"notice": "artifact_logs_decision_record"},
+)
 
 #: The reason the notice states, in the order the deployed prompt's few-shot examples establish.
 _LADDER: list[tuple[str, Callable[[dict[str, float]], bool]]] = [
@@ -132,16 +159,28 @@ def stub_model(prompt: str) -> str:
 class NoticeWriter:
     """Prompts a language model for a notice and records what came back."""
 
+    template = PROMPT
+
     def __init__(self, complete: Callable[[str], str]):
         self.complete = complete
 
     def decide(self, case: dict[str, Any]) -> dict[str, Any]:
         file = {
             key: case.get(key, 0)
-            for key in ("credit_score", "debt_to_income", "delinquencies_24m",
-                        "credit_history_months")
+            for key in (
+                "credit_score",
+                "debt_to_income",
+                "delinquencies_24m",
+                "credit_history_months",
+                "applicant_prohibited_basis",
+            )
         }
-        answer = self.complete(PROMPT.format(**file))
+        file["applicant_prohibited_basis"] = case.get(
+            "applicant_prohibited_basis", PROTECTED_VALUES[0]
+        )
+        # The same renderer described by INPUT_SPACE constructs every prompt, including replay
+        # twins. The protected value is synthetic and is never read from a returned decision.
+        answer = self.complete(render_template(INPUT_SPACE, file, validate=False))
         stated = dict(re.findall(r"^([A-Z ]+): (.*)$", answer, re.MULTILINE))
         return {
             **case,
@@ -185,6 +224,7 @@ def system_under_test(complete: Callable[[str], str] = stub_model) -> CallableAd
         NoticeWriter(complete),
         declared_capabilities=DECLARED_CAPABILITIES,
         test_inputs=NOTIFIED_FILES,
+        input_space=INPUT_SPACE,
     )
     sut.system_domains = DECLARED_DOMAINS
     return sut

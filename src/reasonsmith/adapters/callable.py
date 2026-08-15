@@ -18,9 +18,10 @@ What a reader must not break:
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any, Optional
 
+from reasonsmith.neural import DeclaredInputSpace
 from reasonsmith.sut import BaseSUT
 
 
@@ -33,6 +34,7 @@ class CallableAdapter(BaseSUT):
         declared_capabilities: set[str] | Iterable[str],
         test_inputs: Optional[Iterable[Any]] = None,
         decisions: Optional[Iterable[dict[str, Any]]] = None,
+        input_space: DeclaredInputSpace | Mapping[str, Any] | None = None,
     ):
         super().__init__(declared_capabilities)
         if target is None:
@@ -40,6 +42,29 @@ class CallableAdapter(BaseSUT):
         self.target = target
         self._test_inputs = list(test_inputs) if test_inputs is not None else None
         self._precomputed_decisions = list(decisions) if decisions is not None else None
+        self._input_space = (
+            None if input_space is None else DeclaredInputSpace.from_value(input_space)
+        )
+        self._validate_input_template()
+
+    def _validate_input_template(self) -> None:
+        """Reject a declaration that disagrees with a target-owned prompt template."""
+        if self._input_space is None:
+            return
+        target_template = getattr(self.target, "template", None)
+        if target_template is None:
+            target_template = getattr(self.target, "prompt_template", None)
+        declared = self._input_space.template
+        if target_template is None or declared is None or declared.text is None:
+            return
+        if target_template != declared.text:
+            raise ValueError(
+                "CallableAdapter input_space template does not match the target's actual template"
+            )
+
+    def input_space(self) -> DeclaredInputSpace | None:
+        """Return the optional finite input space declared for active replay."""
+        return self._input_space
 
     def decide(self, case: Any) -> Any:
         """Execute decision on a single case using target's decide, predict, or call method."""

@@ -308,11 +308,13 @@ witness-checked.
 
 **The gap.** [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md) §4 pins the shipped
 neural scorer to `observed`: a log-only system cannot rise further, while the strongest results need
-an exposed inference. Objective 3 records the separate counterfactual limit: the language-model run
-has no declared input space over which to vary the protected variable. The committed transcript in
-[`docs/language-model.md`](docs/language-model.md) therefore reports the no-disparate-treatment duty
-*not evaluated*; that line, and `test_the_neural_system_cannot_be_raised_above_observed`, are the
-checks that fail today.
+an exposed inference. Objective 3 records the separate counterfactual limit. The language-model
+adapter now declares a finite synthetic input space over which to vary the protected variable, and
+the committed transcript
+in [`docs/language-model.md`](docs/language-model.md) reports the no-disparate-treatment duty at
+`probed`; `test_the_language_model_cannot_be_raised_above_probed` pins that ceiling. The remaining
+checks that fail today are the external-verifier path for a neural artifact and the unchanged
+log-only scorer ceiling, `test_the_neural_system_cannot_be_raised_above_observed`.
 
 **Measurable outcome.** One shipped duty is discharged above `observed` against a neural system
 under test by an external verifier, through a neural `artifact()` exposure with a declared ONNX or
