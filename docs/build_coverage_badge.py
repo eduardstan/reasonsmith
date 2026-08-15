@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from decimal import ROUND_HALF_UP, Decimal
 from html import escape
 from pathlib import Path
 
@@ -17,7 +18,11 @@ def build_badge(source: Path, destination: Path) -> None:
         raise ValueError(f"coverage JSON has no usable totals.percent_covered: {exc}") from exc
     if not 0 <= percent <= 100:
         raise ValueError("coverage percentage must be between 0 and 100")
-    value = f"{percent:.1f}%"
+    # Coverage.py reports two decimal places in its terminal output.  Round that displayed
+    # measurement half-up before reducing it to the badge's single decimal place, so 95.15 is
+    # represented as 95.2 rather than being lost to binary-float/banker's rounding at 95.1.
+    displayed = Decimal(str(percent)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    value = f'{displayed.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP):.1f}%'
     color = "#2da44e" if percent >= 95.0 else "#cf222e"
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="20" role="img" '
