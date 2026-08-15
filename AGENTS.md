@@ -823,6 +823,10 @@ Record/logical cases carry `signals`, temporal cases carry finite `trace` record
 counterfactual case carries `pairs` of left/right executions; `autoformalize.check_challenges` is the
 model-free checker and `proposer._challenge_prompt` presents each shape. Update the manifest,\`docs/autoformalization.md`, and the measured corpus note in `RESULTS.md` when coverage changes.
 
+## Neural verifier boundary
+
+The optional Marabou bridge is `src/reasonsmith/neural_verifiers/marabou.py`, documented in `docs/neural-verifiers.md`: it is an out-of-process oracle pinned to Marabou 2.0.0/VNN-LIB 1.0, bounded-search only, and never a verdict engine. SAT must pass the existing `neural_queries.verify_query` witness replay; bounded UNSAT is provenance only. Keep this boundary intact until the design’s slice-4 soundness gate.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.
