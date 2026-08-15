@@ -162,6 +162,23 @@ class TestPdfExtraction:
         assert result.source_sha256 == hashlib.sha256(payload).hexdigest()
         assert result.to_dict()["source_sha256"] == result.source_sha256
 
+    def test_pdf_extraction_refusal_becomes_could_not_verify(self, tmp_path, monkeypatch):
+        source = drift.SourceDocument("pdf_failure", "https://example.invalid/source.pdf", "pdf")
+        monkeypatch.setitem(drift.SOURCES_BY_KEY, source.key, source)
+        monkeypatch.setitem(drift.PROVISIONS, "Article 12(1)", (source.key, None))
+        pack = _minimal_pack(tmp_path, clause="Article 12(1)", verbatim="quoted text")
+
+        def refuse(_payload: bytes) -> str:
+            raise DriftFetchError("encrypted PDFs are refused")
+
+        monkeypatch.setattr(drift, "extract_pdf_text", refuse)
+        payload = PDF_TEXT_FIXTURE.read_bytes()
+        report = check_statute_drift(lambda _source: payload, packs=[pack])
+        result = report.results[0]
+        assert result.status == "could-not-verify"
+        assert result.note == "encrypted PDFs are refused"
+        assert result.source_sha256 == hashlib.sha256(payload).hexdigest()
+
     def test_no_text_layer_is_refused_without_ocr(self):
         with pytest.raises(DriftFetchError, match="no extractable text layer"):
             drift.extract_pdf_text(PDF_NO_TEXT_FIXTURE.read_bytes())
