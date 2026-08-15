@@ -266,14 +266,67 @@ def _state_spec(req: Any) -> str:
     return req.spec
 
 
+def _declared_input_partition(logic_data: Any) -> tuple[set[str], set[str]] | tuple[None, str]:
+    """Read the exact input/output split a declared logic exposes to replay."""
+    try:
+        from reasonsmith.engines.proved import read_declared_logic
+
+        _rules, variables, _constraints, computes = read_declared_logic(logic_data)
+    except Exception as exc:
+        return None, (
+            "the declared input/output directions could not be read: "
+            f"{type(exc).__name__}: {exc}"
+        )
+    if computes is None:
+        return None, (
+            "the system declared no computes directions, so the witness checker cannot distinguish "
+            "inputs from computed outputs"
+        )
+    if not isinstance(variables, Mapping):
+        return None, "sut.logic() declared variables in a non-mapping form"
+    if any(not isinstance(name, str) for name in variables):
+        return None, "sut.logic() declared a non-string variable name"
+    variable_names = set(variables)
+    computed_names = set(computes)
+    unknown = computed_names - variable_names
+    if unknown:
+        return None, f"sut.logic() computes undeclared names: {sorted(unknown)!r}"
+    return variable_names - computed_names, computed_names
+
+
 def _valuation_check(req: Any, sut: Any, payload: Any) -> tuple[str, str]:
     if not isinstance(payload, Mapping):
         return _REFUTED, "the input-valuation witness is not a mapping"
-    logic_data = None
+    try:
+        parse_property(_state_spec(req))
+    except Exception as exc:
+        return _UNCHECKABLE, (
+            "reference interpreter refused the property: "
+            f"{type(exc).__name__}: {exc}"
+        )
     try:
         logic_data = sut.logic() if callable(getattr(sut, "logic", None)) else None
     except Exception as exc:
         return _UNCHECKABLE, f"sut.logic() raised {type(exc).__name__}: {exc}"
+    partition = _declared_input_partition(logic_data)
+    if partition[0] is None:
+        return _UNCHECKABLE, partition[1]
+    input_names, _computed_names = partition
+    if any(not isinstance(name, str) for name in payload):
+        return _REFUTED, "the input-valuation witness contains a non-string name"
+    supplied = set(payload)
+    if supplied != input_names:
+        extra = sorted(supplied - input_names)
+        missing = sorted(input_names - supplied)
+        pieces = []
+        if extra:
+            pieces.append(f"names not declared as inputs: {extra!r}")
+        if missing:
+            pieces.append(f"missing declared inputs: {missing!r}")
+        return _REFUTED, "the witness is not a complete input valuation (" + "; ".join(pieces) + ")"
+    admitted, reason = _admissible(logic_data, payload)
+    if not admitted:
+        return _REFUTED, f"the witness valuation is inadmissible: {reason}"
     runner = decision_runner(sut, logic_data)
     if runner is None:
         return _UNCHECKABLE, "the system exposes no decide() or declared rule replay surface"
@@ -356,18 +409,39 @@ def _pair_check(req: Any, sut: Any, payload: Any) -> tuple[str, str]:
         return _REFUTED, "the execution-pair witness is not a pair of valuations for the atom"
     left, right = pair
     outcome, protected = atom
-    names = set(left) | set(right)
-    if outcome in names:
-        names.remove(outcome)
-    changed = {name for name in names if left.get(name) != right.get(name)}
-    if changed != {protected}:
-        return _REFUTED, f"the pair changes {sorted(changed)}, not only {protected!r}"
+    if any(not isinstance(name, str) for name in (*left, *right)):
+        return _REFUTED, "the execution-pair witness contains a non-string name"
+    raw_names = (set(left) | set(right)) - {outcome}
+    raw_changed = {name for name in raw_names if left.get(name) != right.get(name)}
+    if raw_changed != {protected}:
+        return _REFUTED, f"the pair changes {sorted(raw_changed)}, not only {protected!r}"
     try:
         logic_data = sut.logic() if callable(getattr(sut, "logic", None)) else None
     except Exception as exc:
         return _UNCHECKABLE, f"sut.logic() raised {type(exc).__name__}: {exc}"
-    if logic_data is None:
-        return _UNCHECKABLE, "the system exposes no declared input domain"
+    partition = _declared_input_partition(logic_data)
+    if partition[0] is None:
+        return _UNCHECKABLE, partition[1]
+    input_names, computed_names = partition
+    if protected not in input_names:
+        return _REFUTED, f"protected variable {protected!r} is not a declared input"
+    if outcome not in computed_names:
+        return _REFUTED, f"outcome {outcome!r} is not a declared computed output"
+    expected_keys = input_names | {outcome}
+    for side, values in (("left", left), ("right", right)):
+        extras = set(values) - expected_keys
+        missing = input_names - set(values)
+        if extras or missing:
+            pieces = []
+            if extras:
+                pieces.append(f"names not inputs or outcome: {sorted(extras)!r}")
+            if missing:
+                pieces.append(f"missing declared inputs: {sorted(missing)!r}")
+            return _REFUTED, (
+                f"the {side} witness is not a complete input valuation ("
+                + "; ".join(pieces)
+                + ")"
+            )
     left_values = {name: value for name, value in left.items() if name != outcome}
     right_values = {name: value for name, value in right.items() if name != outcome}
     for side, values in (("left", left_values), ("right", right_values)):

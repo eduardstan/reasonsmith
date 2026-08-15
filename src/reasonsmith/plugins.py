@@ -30,6 +30,8 @@ What a reader must not break:
     engine answering the same duty — the refusal is the point.
   - Every result a plug-in produces carries the plug-in's name, in `details` and in the evidence
     summary.
+  - An installed engine receives a deep-copied trace, and witness re-checking uses a pristine core
+    copy. A plug-in cannot mutate the evidence a lower rung or the core re-derives.
   - A violated result with a checkable witness is re-derived by the core; a witness the core
     refutes demotes the result to not evaluated and records the unverified payload. It must never
     silently become a trusted-ceiling violation.
@@ -46,6 +48,7 @@ What this module deliberately does not do:
 
 from __future__ import annotations
 
+import copy
 import warnings
 from dataclasses import replace
 from importlib.metadata import entry_points
@@ -117,17 +120,31 @@ def _not_evaluated(req: Any, name: str, ceiling: Strength, why: str) -> Any:
         details={ENGINE_PLUGIN_KEY: _plugin_details(name, ceiling)},
         binding=req.binding,
         scope=req.scope,
+        domains=getattr(req, "domains", ()),
+        verbatim_text=getattr(req, "verbatim_text", ""),
     )
 
 
 def _run(
-    req: Any, sut: Any, trace: Callable[[], Any], name: str, engine: Any, ceiling: Strength
+    req: Any,
+    sut: Any,
+    trace: Callable[[], Any],
+    name: str,
+    engine: Any,
+    ceiling: Strength,
+    capability_missing: tuple[str, ...] | None = None,
 ) -> Any:
     from reasonsmith.report import ENGINE_PLUGIN_KEY, RequirementResult
 
     try:
+        # The trace cache belongs to the core. Give an installed engine an isolated deep copy, and
+        # retain a separate pristine copy for witness re-checking. A plug-in that mutates its input
+        # must never be able to change either the lower built-in rung or the evidence the core uses
+        # to confirm its witness.
         records = trace()
-        result = engine.evaluate(req, sut, records)
+        pristine = copy.deepcopy(records)
+        plugin_records = copy.deepcopy(pristine)
+        result = engine.evaluate(req, sut, plugin_records)
         if not isinstance(result, RequirementResult):
             raise TypeError(
                 f"evaluate() must return a RequirementResult, got {type(result).__name__}"
@@ -137,23 +154,52 @@ def _run(
                 f"evaluate() answered requirement {result.requirement_id!r} when asked about "
                 f"{req.id!r}"
             )
-        # `replace` re-runs `RequirementResult.__post_init__`, which is where a strength above the
-        # declared ceiling is refused. The refusal lands in the `except` below and is reported not
-        # evaluated, like every other way a plug-in can misbehave.
+        if result.verdict is Verdict.NOT_APPLICABLE:
+            raise ValueError("an installed engine cannot produce a not_applicable result")
+
+        from reasonsmith.report import analyze_unattainable, evidence_basis
+
+        if capability_missing is None:
+            expected_unattainable, expected_missing = analyze_unattainable(req, sut)
+        else:
+            expected_missing = tuple(capability_missing)
+            expected_unattainable = bool(expected_missing)
+        claimed_unattainable = result.strength is Strength.UNATTAINABLE
+        if (
+            claimed_unattainable != expected_unattainable
+            or tuple(result.signals_missing) != expected_missing
+        ):
+            raise ValueError(
+                "the plug-in's unattainable/missing-signal claim contradicts the core capability "
+                f"gate (expected {expected_missing!r}, got {tuple(result.signals_missing)!r})"
+            )
+        # Restore all identity and legal metadata from the duty before any core-owned witness or
+        # evidence checks. In particular, a forged artifact basis must not bypass witness replay.
         stamped = replace(
             result,
+            source_clause=f"{req.source_document} {req.article_clause}",
+            signals_required=tuple(req.requires),
+            signals_missing=expected_missing,
+            binding=req.binding,
+            scope=req.scope,
+            domains=req.domains,
+            verbatim_text=req.verbatim_text,
+            basis=evidence_basis(req),
             details={**result.details, ENGINE_PLUGIN_KEY: _plugin_details(name, ceiling)},
             evidence_summary=f"[engine plug-in {name!r}] {result.evidence_summary}",
         )
         from reasonsmith.witness import check_plugin_result
 
-        return check_plugin_result(req, sut, records, stamped)
+        return check_plugin_result(req, sut, pristine, stamped)
     except Exception as exc:  # noqa: BLE001 - a broken plug-in must not move a verdict
         return _not_evaluated(req, name, ceiling, f"{type(exc).__name__}: {exc}")
 
 
 def engine_rungs(
-    req: Any, sut: Any, trace: Callable[[], Any]
+    req: Any,
+    sut: Any,
+    trace: Callable[[], Any],
+    capability_missing: tuple[str, ...] | None = None,
 ) -> list[tuple[Strength, Callable[[], Any]]]:
     """The ladder rungs installed engine plug-ins contribute, each at its declared ceiling.
 
@@ -175,7 +221,9 @@ def engine_rungs(
         rungs.append(
             (
                 ceiling,
-                lambda n=name, e=engine, c=ceiling: _run(req, sut, trace, n, e, c),
+                lambda n=name, e=engine, c=ceiling, m=capability_missing: _run(
+                    req, sut, trace, n, e, c, m
+                ),
             )
         )
     return rungs

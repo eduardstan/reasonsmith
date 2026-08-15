@@ -214,6 +214,25 @@ def _result_for(
                 f"evaluate() answered requirement {result.requirement_id!r} when asked about "
                 f"{req.id!r}"
             )
+        if result.verdict is Verdict.SATISFIED and result.strength is Strength.PROVED:
+            expected_identity = {
+                "source_clause": f"{req.source_document} {req.article_clause}",
+                "signals_required": tuple(req.requires),
+                "signals_missing": (),
+                "binding": req.binding,
+                "scope": req.scope,
+                "domains": req.domains,
+                "verbatim_text": req.verbatim_text,
+            }
+            mismatches = [
+                name for name, expected in expected_identity.items()
+                if getattr(result, name) != expected
+            ]
+            if mismatches:
+                raise ValueError(
+                    "engine result forged audited requirement identity: "
+                    + ", ".join(mismatches)
+                )
         stamped = replace(
             result,
             details={

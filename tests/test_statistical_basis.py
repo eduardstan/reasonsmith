@@ -4,6 +4,8 @@ import math
 
 import pytest
 
+from reasonsmith.report import evaluate_requirement
+from reasonsmith.spec import Requirement
 from reasonsmith.statistical import (
     AUTHORITY_REQUIRED_FIELDS,
     PROXY_BLINDNESS_LIMIT,
@@ -14,6 +16,7 @@ from reasonsmith.statistical import (
     validate_measurement_payload,
     validate_sampling_plan,
 )
+from reasonsmith.sut import BaseSUT
 
 
 def plan():
@@ -356,3 +359,149 @@ def test_statistical_numeric_and_refusal_edges():
         assert measured["confidence"]["ratio_interval"] is None
     finally:
         statistical.ratio_enclosure = original
+
+
+@pytest.mark.parametrize(
+    "threshold",
+    [
+        {"value": "", "meaning": "", "comparison": ""},
+        {"value": False, "meaning": 0, "comparison": []},
+        {"value": float("nan"), "meaning": "threshold", "comparison": "strict"},
+        {"value": 0.8, "meaning": "", "comparison": "strict"},
+    ],
+)
+def test_threshold_provenance_rejects_empty_nonsemantic_and_nonfinite_values(threshold):
+    with pytest.raises(ValueError):
+        measure_selection_rates(
+            rows(),
+            groups=("a", "b"),
+            group_field="group",
+            outcome_field="outcome",
+            sampling_assumption=plan(),
+            authority_provenance=authority(),
+            threshold=threshold,
+        )
+
+
+def test_authority_provenance_rejects_garbage_even_when_all_keys_are_present():
+    bad = authority()
+    bad.update(
+        authority=True,
+        citation=42,
+        official_url=object(),
+        retrieval_timestamp=float("nan"),
+        quoted_passage=[],
+        scope=False,
+    )
+    with pytest.raises(ValueError):
+        measure_selection_rates(
+            rows(),
+            groups=("a", "b"),
+            group_field="group",
+            outcome_field="outcome",
+            sampling_assumption=plan(),
+            authority_provenance=bad,
+        )
+
+
+class _StatisticalSUT(BaseSUT):
+    def __init__(self):
+        super().__init__({"group", "outcome"})
+
+    def decisions(self):
+        return rows()
+
+
+@pytest.mark.parametrize(
+    "malformed_plan",
+    [
+        {"groups": 3},
+        {"groups": None},
+        {"groups": ["a", "b"], "sampling_assumption": "bad"},
+        {"groups": ["a", "b"], "authority_provenance": "bad"},
+        {"groups": ["a", "b"], "threshold": "bad"},
+        {"groups": [["a"], "b"]},
+    ],
+)
+def test_malformed_statistical_plan_is_a_closed_refusal_not_an_audit_exception(malformed_plan):
+    req = Requirement(
+        id="stat-malformed",
+        source_document="Guide",
+        article_clause="29 CFR 1607.4(D)",
+        verbatim_text="quoted",
+        stakeholder="employer",
+        formalism="statistical",
+        spec="selection_rate_ratio(outcome, group)",
+        rationale="Measure selection rates.",
+        requires=("outcome", "group"),
+        binding=True,
+        scope="",
+        domains=(),
+        deontic_type="obligation",
+        defeasibility="strict",
+    )
+    result = evaluate_requirement(req, _StatisticalSUT(), statistical_plan=malformed_plan)
+    payload = result.details["statistical_measurement"]
+    assert result.verdict.value == "inconclusive" and result.strength is None
+    assert payload["status"] == "refused"
+    validate_measurement_payload(payload)
+
+
+
+def test_statistical_refusal_builder_survives_hostile_plan_mappings_and_bad_atoms():
+    from dataclasses import replace
+
+    from reasonsmith.report import _evaluate_statistical_requirement
+
+    req = replace(
+        Requirement(
+            id="stat-hostile",
+            source_document="Guide",
+            article_clause="29 CFR 1607.4(D)",
+            verbatim_text="quoted",
+            stakeholder="employer",
+            formalism="statistical",
+            spec="selection_rate_ratio(outcome, group)",
+            rationale="Measure selection rates.",
+            requires=("outcome", "group"),
+            binding=True,
+            scope="",
+            domains=(),
+            deontic_type="obligation",
+            defeasibility="strict",
+        ),
+        spec="present(group)",
+    )
+    bad_atom = _evaluate_statistical_requirement(req, rows(), {})
+    assert bad_atom.details["statistical_measurement"]["status"] == "refused"
+    bad_plan_type = _evaluate_statistical_requirement(
+        replace(req, spec="selection_rate_ratio(outcome, group)"), rows(), 3
+    )
+    assert bad_plan_type.details["statistical_measurement"]["status"] == "refused"
+
+    class HostilePlan(dict):
+        def get(self, _key, _default=None):
+            raise RuntimeError("plan mapping failed")
+
+    hostile = _evaluate_statistical_requirement(
+        replace(req, spec="selection_rate_ratio(outcome, group)"), rows(), HostilePlan(groups=["a"])
+    )
+    assert hostile.details["statistical_measurement"]["status"] == "refused"
+
+
+
+def test_statistical_validator_checks_optional_authority_aliases_and_threshold_shape():
+    from reasonsmith.statistical import _authority_complete
+
+    optional_none = authority()
+    optional_none["official_url"] = None
+    assert _authority_complete(optional_none)
+    bad_scope = authority()
+    bad_scope["scope"] = False
+    with pytest.raises(ValueError):
+        _authority_complete(bad_scope)
+    measurement = measure_selection_rates(
+        rows(), groups=("a", "b"), group_field="group", outcome_field="outcome"
+    )
+    with pytest.raises(ValueError):
+        validate_measurement_payload({**measurement, "threshold": "bad"})

@@ -507,3 +507,152 @@ def test_a_refuted_plugin_witness_demotes_without_flipping(tmp_path, monkeypatch
     assert result.strength is None
     assert result.details[WITNESS_KEY]["provenance"] == "refuted"
     assert "unverified_payload" in result.details[WITNESS_KEY]
+
+
+# --------------------------------------------------------------------------------------
+# Installed engines receive isolated evidence and cannot forge core-owned result fields
+# --------------------------------------------------------------------------------------
+
+
+def test_a_plugin_cannot_mutate_the_trace_used_for_witnesses_or_lower_rungs(tmp_path, monkeypatch):
+    source = _engine_source(
+        """
+records[0]["signal_a"] = ""
+return RequirementResult(
+    requirement_id=req.id,
+    source_clause=f"{req.source_document} {req.article_clause}",
+    verdict=Verdict.VIOLATED,
+    strength=Strength.PROVED,
+    signals_required=tuple(req.requires),
+    evidence_summary="forged",
+    details={
+        "witness": {
+            "kind": "trace_position",
+            "provenance": "trusted-ceiling",
+            "payload": {"index": 0},
+        }
+    },
+    binding=req.binding,
+    scope=req.scope,
+)
+""",
+        max_strength="proved",
+    )
+    _install(tmp_path, monkeypatch, source, ENGINE_GROUP, "mutator", "Engine")
+    result = _evaluate()
+    assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.OBSERVED)
+    assert result.witness_provenance == "trusted-ceiling"
+    assert ENGINE_PLUGIN_KEY not in result.details
+
+
+def test_a_plugin_exception_after_mutating_the_trace_cannot_move_a_builtin_verdict(
+    tmp_path, monkeypatch
+):
+    source = _engine_source(
+        """
+records[0]["signal_a"] = ""
+raise RuntimeError("boom")
+""",
+        max_strength="proved",
+    )
+    _install(tmp_path, monkeypatch, source, ENGINE_GROUP, "mutator-raises", "Engine")
+    result = _evaluate()
+    assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.OBSERVED)
+    assert ENGINE_PLUGIN_KEY not in result.details
+
+
+def test_a_plugin_cannot_suppress_core_applicability_or_capability_gate(tmp_path, monkeypatch):
+    not_applicable = _engine_source(
+        """
+return RequirementResult(
+    requirement_id=req.id,
+    source_clause="forged",
+    verdict=Verdict.NOT_APPLICABLE,
+    strength=None,
+    signals_required=tuple(req.requires),
+    binding=req.binding,
+    scope=req.scope,
+)
+"""
+    )
+    _install(tmp_path, monkeypatch, not_applicable, ENGINE_GROUP, "not-applicable", "Engine")
+    result = _evaluate()
+    assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.OBSERVED)
+    assert result.verdict is not Verdict.NOT_APPLICABLE
+
+    unattainable = _engine_source(
+        """
+return RequirementResult(
+    requirement_id=req.id,
+    source_clause="forged",
+    verdict=Verdict.INCONCLUSIVE,
+    strength=Strength.UNATTAINABLE,
+    signals_required=tuple(req.requires),
+    signals_missing=tuple(req.requires),
+    binding=req.binding,
+    scope=req.scope,
+)
+"""
+    )
+    _install(tmp_path, monkeypatch, unattainable, ENGINE_GROUP, "unattainable-forge", "Engine")
+    result = _evaluate()
+    assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.OBSERVED)
+    assert result.signals_missing == ()
+
+
+def test_plugin_identity_metadata_is_restored_from_the_audited_requirement(tmp_path, monkeypatch):
+    source = _engine_source(
+        """
+return RequirementResult(
+    requirement_id=req.id,
+    source_clause="FORGED",
+    verdict=Verdict.SATISFIED,
+    strength=Strength.PROBED,
+    signals_required=(),
+    signals_missing=(),
+    evidence_summary="positive",
+    details={"probe_budget": {"trials": 1, "strategy": "dummy", "seed": 0, "input_space": "none"}},
+    binding=False,
+    scope="forged-scope",
+    domains=("consumer-credit",),
+    verbatim_text="forged",
+    basis="artifact",
+    formalized_subset_only=True,
+)
+"""
+    )
+    _install(tmp_path, monkeypatch, source, ENGINE_GROUP, "identity-forge", "Engine")
+    result = _evaluate()
+    req = _requirement()
+    assert result.requirement_id == req.id
+    assert result.source_clause == f"{req.source_document} {req.article_clause}"
+    assert result.signals_required == req.requires
+    assert result.signals_missing == ()
+    assert result.binding is req.binding
+    assert result.scope == req.scope
+    assert result.domains == req.domains
+    assert result.verbatim_text == req.verbatim_text
+    assert result.basis.value == "behavioural"
+    assert result.formalized_subset_only is False
+
+
+def test_a_probed_plugin_with_an_empty_budget_is_refused(tmp_path, monkeypatch):
+    source = _engine_source(
+        """
+return RequirementResult(
+    requirement_id=req.id,
+    source_clause=f"{req.source_document} {req.article_clause}",
+    verdict=Verdict.SATISFIED,
+    strength=Strength.PROBED,
+    signals_required=tuple(req.requires),
+    evidence_summary="forged",
+    details={"probe_budget": {"trials": 0, "strategy": "", "seed": None, "input_space": None}},
+    binding=req.binding,
+    scope=req.scope,
+)
+"""
+    )
+    _install(tmp_path, monkeypatch, source, ENGINE_GROUP, "bad-budget", "Engine")
+    result = _evaluate()
+    assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.OBSERVED)
+    assert ENGINE_PLUGIN_KEY not in result.details

@@ -9,7 +9,7 @@ import pytest
 from reasonsmith.adapters.callable import CallableAdapter
 from reasonsmith.examples.frontier_risk_rules import system_under_test as rules_system
 from reasonsmith.examples.frontier_risk_scorer import system_under_test as scorer_system
-from reasonsmith.report import check_conformance
+from reasonsmith.report import check_conformance, evaluate_requirement
 from reasonsmith.spec import load_pack
 from reasonsmith.verdict import Strength, Verdict
 
@@ -114,3 +114,37 @@ def test_frontier_status_normalizes_empty_and_refuses_non_string():
     assert sut.frontier_ai_status is None
     with pytest.raises(TypeError, match="frontier AI status"):
         _counting(1)  # type: ignore[arg-type]
+
+
+
+def test_direct_requirement_evaluation_keeps_the_loaded_pack_frontier_gate():
+    sut, target = _counting(None)
+    req = PACK.get_requirement("seoul_frontier_iv_no_deployment_above_threshold")
+    result = evaluate_requirement(req, sut, system_scope="general-purpose")
+    assert result.verdict is Verdict.NOT_APPLICABLE
+    assert result.strength is None
+    assert target.calls == 0
+
+
+def test_pack_context_propagates_frontier_gate_to_manually_constructed_requirements():
+    from dataclasses import replace
+
+    from reasonsmith.spec import Pack
+
+    req = replace(PACK.requirements[0], frontier_trigger="")
+    pack = Pack(
+        id="manual-frontier",
+        title="manual",
+        description="manual",
+        requirements=(req,),
+        frontier_trigger=PACK.frontier_trigger,
+    )
+    assert pack.requirements[0].frontier_trigger == PACK.frontier_trigger
+
+
+def test_conflicting_frontier_context_cannot_disable_the_pack_gate():
+    sut, target = _counting(None)
+    req = PACK.get_requirement("seoul_frontier_iv_no_deployment_above_threshold")
+    with pytest.raises(ValueError, match="unsupported frontier trigger"):
+        evaluate_requirement(req, sut, frontier_trigger="other-gate")
+    assert target.calls == 0

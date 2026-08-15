@@ -52,7 +52,7 @@ from __future__ import annotations
 
 import tomllib
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -398,6 +398,9 @@ class Requirement:
     deontic_type: str
     defeasibility: str
     algebra: str = ""
+    # Pack-level applicability context copied onto a requirement so direct evaluation cannot
+    # silently discard a frontier gate. It is intentionally not part of the TOML requirement row.
+    frontier_trigger: str = ""
 
     def __post_init__(self) -> None:
         if not isinstance(self.binding, bool):
@@ -476,6 +479,11 @@ class Requirement:
                 f"{type(self.algebra).__name__}"
             )
         object.__setattr__(self, "algebra", self.algebra.strip().lower())
+        if self.frontier_trigger not in ("", FRONTIER_TRIGGER):
+            raise ValueError(
+                f"Requirement {self.id!r}: unsupported frontier_trigger {self.frontier_trigger!r}; "
+                f"the only supported gate is {FRONTIER_TRIGGER!r}"
+            )
         if self.formalism == "graded":
             if not self.algebra:
                 raise ValueError(
@@ -543,6 +551,20 @@ class Pack:
                 f"Pack {self.id!r}: unsupported frontier_trigger {self.frontier_trigger!r}; "
                 f"the only supported gate is {FRONTIER_TRIGGER!r}"
             )
+        requirements = tuple(self.requirements)
+        requirement_triggers = {req.frontier_trigger for req in requirements}
+        if self.frontier_trigger == "" and requirement_triggers - {""}:
+            raise ValueError(
+                f"Pack {self.id!r}: a requirement carries frontier context but the pack does not; "
+                "the gate must remain attached to the pack"
+            )
+        if self.frontier_trigger:
+            requirements = tuple(
+                req if req.frontier_trigger == self.frontier_trigger
+                else replace(req, frontier_trigger=self.frontier_trigger)
+                for req in requirements
+            )
+            object.__setattr__(self, "requirements", requirements)
         if not self.requirements:
             raise ValueError(f"Pack {self.id!r} contains no requirements")
         ids = [r.id for r in self.requirements]
@@ -741,6 +763,7 @@ def load_pack(name_or_path: str | Path) -> Pack:
                 domains=tuple(rdata["domains"]),
                 deontic_type=rdata["deontic_type"],
                 defeasibility=rdata["defeasibility"],
+                frontier_trigger=frontier_trigger,
                 # Handed to a graded requirement and to no other, which is the whole of the
                 # guarantee that a pack shipping one graded duty leaves its two-valued duties
                 # two-valued: `Requirement._check_algebra` refuses a non-graded duty carrying one.

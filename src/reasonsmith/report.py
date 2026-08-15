@@ -33,6 +33,7 @@ What a reader must not break:
 from __future__ import annotations
 
 import json
+import math
 from collections import Counter
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, fields, replace
@@ -144,6 +145,11 @@ TRUTH_DEGREE_FIELDS = ("degree", "algebra", "atoms", "source")
 PROBE_BUDGET_KEY = "probe_budget"
 PROBE_BUDGET_FIELDS = ("trials", "strategy", "seed", "input_space")
 _UNREAD = object()
+
+
+def jsonable_finite(value: float) -> bool:
+    """Whether a numeric search datum is finite and JSON-safe."""
+    return math.isfinite(value)
 
 #: Where a not-applicable result records that the *system* said nothing, rather than that it said
 #: something else. The two are not the same finding: a declared domain that does not meet the
@@ -618,6 +624,43 @@ class RequirementResult:
             raise ValueError(
                 f"{self.requirement_id}: the probe budget must name "
                 f"{', '.join(PROBE_BUDGET_FIELDS)}; missing {', '.join(missing_fields)}"
+            )
+        trials = budget["trials"]
+        if isinstance(trials, bool) or not isinstance(trials, int) or trials <= 0:
+            raise ValueError(
+                f"{self.requirement_id}: a probed result must report a positive integer number "
+                f"of trials, got {trials!r}"
+            )
+        strategy = budget["strategy"]
+        if not isinstance(strategy, str) or not strategy.strip():
+            raise ValueError(
+                f"{self.requirement_id}: a probed result must name a non-empty search strategy, "
+                f"got {strategy!r}"
+            )
+        seed = budget["seed"]
+        if isinstance(seed, bool) or not isinstance(seed, (int, float, str)):
+            raise ValueError(
+                f"{self.requirement_id}: a probed result must carry a serialisable search seed, "
+                f"got {seed!r}"
+            )
+        if isinstance(seed, float) and not jsonable_finite(seed):
+            raise ValueError(
+                f"{self.requirement_id}: a probed result must carry a finite search seed, "
+                f"got {seed!r}"
+            )
+        if isinstance(seed, str) and not seed.strip():
+            raise ValueError(
+                f"{self.requirement_id}: a probed result must carry a non-empty search seed, "
+                f"got {seed!r}"
+            )
+        input_space = budget["input_space"]
+        if not (
+            isinstance(input_space, Mapping)
+            or (isinstance(input_space, str) and bool(input_space.strip()))
+        ):
+            raise ValueError(
+                f"{self.requirement_id}: a probed result must describe its input space with a "
+                f"mapping or non-empty string, got {input_space!r}"
             )
 
     def _validate_vacuous_trigger(self) -> None:
@@ -1756,6 +1799,23 @@ def _inapplicability(
     return None
 
 
+def _effective_frontier_trigger(req: Requirement, frontier_trigger: str | None) -> str:
+    """Keep a pack-level frontier gate attached when a requirement is evaluated alone."""
+    requirement_trigger = getattr(req, "frontier_trigger", "")
+    supplied = frontier_trigger or ""
+    if supplied not in ("", FRONTIER_TRIGGER):
+        raise ValueError(
+            f"unsupported frontier trigger {supplied!r}; the only supported gate is "
+            f"{FRONTIER_TRIGGER!r}"
+        )
+    if requirement_trigger and supplied not in ("", requirement_trigger):
+        raise ValueError(
+            f"Requirement {req.id!r} carries frontier gate {requirement_trigger!r}, but the "
+            f"evaluation supplied conflicting gate {supplied!r}"
+        )
+    return requirement_trigger or supplied
+
+
 def evaluate_requirement(
     req: Requirement,
     sut: SystemUnderTest,
@@ -1763,7 +1823,7 @@ def evaluate_requirement(
     system_scope: str | None = None,
     system_domains: Iterable[str] | None = None,
     grading: Any | None = None,
-    frontier_trigger: str = "",
+    frontier_trigger: str | None = None,
     frontier_ai_status: str | None = None,
     statistical_plan: Mapping[str, Any] | None = None,
     *,
@@ -1786,6 +1846,7 @@ def evaluate_requirement(
     None the trace is fetched from the SUT, so callers holding a trace already can avoid
     re-running the system once per requirement.
     """
+    frontier_trigger = _effective_frontier_trigger(req, frontier_trigger)
     result = _evaluate_requirement(
         req,
         sut,
@@ -1832,6 +1893,7 @@ def _evaluate_requirement(
     _resources: _EvaluationResources | None,
 ) -> RequirementResult:
     resources = _resources or _EvaluationResources(sut)
+    frontier_trigger = _effective_frontier_trigger(req, frontier_trigger)
 
     system_scope = _declared_scope(sut, system_scope)
     sys_scope_norm = normalize_scope(system_scope, "declared system scope")
@@ -1896,7 +1958,7 @@ def _evaluate_requirement(
             req, records if records is not None else resources.trace(), grading
         )
 
-    candidates = _engine_ladder(req, sut, records, resources)
+    candidates = _engine_ladder(req, sut, records, resources, capability_missing=missing)
     if not candidates:
         raise NotImplementedError(
             f"{req.formalism!r} is listed in SUPPORTED_FORMALISMS but no engine here evaluates "
@@ -1925,6 +1987,47 @@ def _evaluate_requirement(
     return cast(RequirementResult, fallback)
 
 
+def _statistical_refusal_payload(plan: Any, reason: str) -> dict[str, Any]:
+    """Build a closed refusal payload without trusting any malformed plan field."""
+    raw_groups: Any = None
+    if isinstance(plan, Mapping):
+        try:
+            raw_groups = plan.get("groups")
+        except Exception:
+            raw_groups = None
+    groups: list[str] = ["undeclared"]
+    if isinstance(raw_groups, (list, tuple)) and raw_groups:
+        candidate = list(raw_groups)
+        if (
+            all(isinstance(group, str) and group.strip() for group in candidate)
+            and len(set(candidate)) == len(candidate)
+        ):
+            groups = candidate
+    return {
+        "groups": groups,
+        "sampling_assumption": {
+            "status": "absent",
+            "description": "no valid sampling plan could be read",
+        },
+        "n": 0,
+        "counts": {},
+        "metric": {"formula": "min_g(p_hat_g) / max_h(p_hat_h)", "status": "refused"},
+        "confidence": {
+            "level": None,
+            "interval_method": None,
+            "tail_allocation": None,
+            "intervals": None,
+            "ratio_interval": None,
+        },
+        "threshold": None,
+        "authority_provenance": None,
+        "decision_rule": None,
+        "status": "refused",
+        "refusal": reason,
+        "proxy_blindness_limit": PROXY_BLINDNESS_LIMIT,
+    }
+
+
 def _evaluate_statistical_requirement(
     req: Requirement, records: list[dict[str, Any]], plan: Mapping[str, Any] | None
 ) -> RequirementResult:
@@ -1935,7 +2038,9 @@ def _evaluate_statistical_requirement(
         if atom is None:
             raise ValueError("statistical requirement must be one selection_rate_ratio() atom")
         outcome_field, group_field = atom
-        config = dict(plan or {})
+        if not isinstance(plan, Mapping):
+            raise TypeError("statistical plan must be a mapping")
+        config = dict(plan)
         groups = config.pop("groups", None)
         if not groups:
             raise ValueError("statistical plan must declare the fixed duty group set")
@@ -1954,28 +2059,8 @@ def _evaluate_statistical_requirement(
             "Statistical measurement only: the sample estimate and uncertainty interval are "
             "reported under the declared plan; this first wave makes no conformance verdict."
         )
-    except (TypeError, ValueError) as exc:
-        payload = {
-            "groups": list((plan or {}).get("groups", ())) or ["undeclared"],
-            "sampling_assumption": (plan or {}).get("sampling_assumption")
-            or {"status": "absent", "description": "no valid sampling plan"},
-            "n": 0,
-            "counts": {},
-            "metric": {"formula": "min_g(p_hat_g) / max_h(p_hat_h)", "status": "refused"},
-            "confidence": {
-                "level": None,
-                "interval_method": None,
-                "tail_allocation": None,
-                "intervals": None,
-                "ratio_interval": None,
-            },
-            "threshold": (plan or {}).get("threshold"),
-            "authority_provenance": (plan or {}).get("authority_provenance"),
-            "decision_rule": None,
-            "status": "refused",
-            "refusal": str(exc),
-            "proxy_blindness_limit": PROXY_BLINDNESS_LIMIT,
-        }
+    except Exception as exc:  # malformed plans are a refused measurement, never an audit abort
+        payload = _statistical_refusal_payload(plan, f"{type(exc).__name__}: {exc}")
         validate_measurement_payload(payload)
         summary = f"Statistical measurement not evaluated: {exc}."
     return RequirementResult(
@@ -2053,6 +2138,7 @@ def _engine_ladder(
     sut: SystemUnderTest,
     records: list[dict[str, Any]] | None,
     resources: _EvaluationResources,
+    capability_missing: tuple[str, ...] | None = None,
 ) -> list[tuple[Strength, Any]]:
     """Every engine that could discharge this requirement, strongest first.
 
@@ -2240,7 +2326,12 @@ def _engine_ladder(
     from reasonsmith.plugins import engine_rungs
 
     ladder.extend(
-        engine_rungs(req, sut, lambda: records if records is not None else resources.trace())
+        engine_rungs(
+            req,
+            sut,
+            lambda: records if records is not None else resources.trace(),
+            capability_missing=capability_missing,
+        )
     )
 
     return ladder

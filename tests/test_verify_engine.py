@@ -290,3 +290,25 @@ def test_witness_vocabulary_and_trace_checker_cover_declined_shapes():
     )
     assert witness._trace_check(req_record, [{}], "unknown", {"indices": [0]})[0] == "uncheckable"
     assert witness._trace_check(req_record, [{}], "trace_position", True)[0] == "refuted"
+
+
+
+def test_verify_engine_rejects_forged_positive_requirement_identity():
+    class Forged:
+        def evaluate(self, req, sut, records):
+            return RequirementResult(
+                requirement_id=req.id,
+                source_clause="FORGED",
+                verdict=Verdict.SATISFIED,
+                strength=Strength.PROVED,
+                signals_required=(),
+                evidence_summary="positive",
+                binding=False,
+                scope="forged-scope",
+                domains=("consumer-credit",),
+                verbatim_text="forged",
+            )
+
+    row = _one(GOLD_TRIPLES[0], Forged(), "forged", Strength.PROVED)
+    assert not row.passed
+    assert "forged audited requirement identity" in row.reason

@@ -161,7 +161,12 @@ class _Replay:
         self.value = value
 
     def logic(self):
-        return None
+        return {
+            "rules": ["approved = x >= 0"],
+            "variables": {"x": "int", "approved": "bool"},
+            "constraints": ["x >= 0"],
+            "computes": ["approved"],
+        }
 
     def decide(self, _payload):
         if isinstance(self.value, BaseException):
@@ -654,3 +659,105 @@ def test_temporal_prefix_work_does_not_hide_unsupported_domain_sorts(monkeypatch
     )
     admitted, reason = witness._admissible(object(), {"x": 1})
     assert admitted is False and "unsupported declared sort" in reason
+
+
+
+def test_valuation_witness_requires_complete_admissible_declared_inputs():
+    sut = RulesAdapter(
+        rules=["approved = x >= 0"],
+        variables={"x": "int", "approved": "bool"},
+        constraints=["x >= 0"],
+    )
+    req = _req("logical", "approved == True")
+    assert witness._valuation_check(req, sut, {"x": -1})[0] == "refuted"
+    assert witness._valuation_check(req, sut, {"approved": False})[0] == "refuted"
+    assert witness._valuation_check(req, sut, {"x": 0, "approved": False})[0] == "refuted"
+    assert witness._valuation_check(req, sut, {})[0] == "refuted"
+
+
+def test_execution_pair_witness_requires_complete_input_maps_and_admissible_values():
+    sut = RulesAdapter(
+        rules=["outcome = (protected == 1) and (age >= 0)"],
+        variables={"protected": "int", "age": "int", "outcome": "bool"},
+        constraints=["0 <= protected", "protected <= 1", "age >= 0"],
+    )
+    req = _req("counterfactual", "counterfactually_invariant(outcome, protected)")
+    complete = [
+        {"protected": 0, "age": 30},
+        {"protected": 1, "age": 30},
+    ]
+    assert witness._pair_check(req, sut, complete)[0] == "confirmed"
+    assert witness._pair_check(req, sut, {"left": {}, "right": {"protected": 1}})[0] == "refuted"
+    assert witness._pair_check(
+        req,
+        sut,
+        {"left": {"protected": 0, "age": 30, "outcome": False},
+         "right": {"protected": 1, "age": 30, "outcome": True}},
+    )[0] == "confirmed"
+    assert witness._pair_check(
+        req,
+        sut,
+        {"left": {"protected": 0, "age": 30, "other_output": False},
+         "right": {"protected": 1, "age": 30, "other_output": True}},
+    )[0] == "refuted"
+    assert witness._pair_check(
+        req,
+        sut,
+        [{"protected": 0, "age": 30}, {"protected": 2, "age": 30}],
+    )[0] == "refuted"
+
+
+
+def test_witness_direction_boundary_refuses_malformed_and_unreplayable_declarations():
+    assert witness._declared_input_partition(
+        {"variables": [], "computes": []}
+    )[0] is None
+    assert witness._declared_input_partition(
+        {"variables": {1: "int"}, "computes": []}
+    )[0] is None
+    assert witness._declared_input_partition(
+        {"variables": {"x": "int"}, "computes": ["missing"]}
+    )[0] is None
+
+    req = _req("logical", "approved == True")
+    sut = RulesAdapter(
+        rules=["approved = x >= 0"],
+        variables={"x": "int", "approved": "bool"},
+        constraints=["x >= 0"],
+    )
+    assert witness._valuation_check(req, sut, {1: 0})[0] == "refuted"
+
+    class NoDecide:
+        def logic(self):
+            return {
+                "variables": {"x": "int", "approved": "bool"},
+                "constraints": ["x >= 0"],
+                "computes": ["approved"],
+            }
+
+    assert witness._valuation_check(req, NoDecide(), {"x": 0})[0] == "uncheckable"
+
+    pair_req = _req("counterfactual", "counterfactually_invariant(outcome, protected)")
+    assert witness._pair_check(
+        pair_req, sut, [{1: 0}, {1: 1}]
+    )[0] == "refuted"
+    not_protected = RulesAdapter(
+        rules=["protected = 1", "outcome = protected"],
+        variables={"protected": "int", "outcome": "int"},
+    )
+    assert witness._pair_check(
+        pair_req, not_protected,
+        [{"protected": 0}, {"protected": 1}],
+    )[0] == "refuted"
+    not_computed = RulesAdapter(
+        rules=["other = protected"],
+        variables={"protected": "int", "other": "int", "outcome": "bool"},
+        constraints=["protected >= 0", "protected <= 1"],
+    )
+    assert witness._pair_check(
+        pair_req, not_computed, [{"protected": 0}, {"protected": 1}]
+    )[0] == "refuted"
+    assert witness._pair_check(
+        pair_req, _counterfactual_sut(),
+        [{"protected": 0, "junk": 1}, {"protected": 1, "junk": 1}],
+    )[0] == "refuted"

@@ -60,4 +60,4 @@ reached in the following order:
 An undeclared class or domain therefore cannot reach `satisfied`. These gates do not model a trigger
 inside a decision; that is a separate property-level question.
 
-**Definition 1.9 (requirement record).** A loaded requirement carries exactly fifteen fields, as specified by `spec.Requirement`.
+**Definition 1.9 (requirement record).** A loaded requirement carries exactly sixteen fields, as specified by `spec.Requirement`.

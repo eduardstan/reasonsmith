@@ -802,3 +802,30 @@ def test_probed_trace_validation_handles_boolean_name_and_cycles():
     assert probed._shared_mutable_path(cyclic, cyclic) == "input"
     key = []
     assert probed._shared_mutable_path({"k": key}, {"k": key}) == "input['k']"
+
+
+@pytest.mark.parametrize(
+    "budget",
+    [
+        {"trials": 0, "strategy": "search", "seed": 0, "input_space": "x"},
+        {"trials": -1, "strategy": "search", "seed": 0, "input_space": "x"},
+        {"trials": True, "strategy": "search", "seed": 0, "input_space": "x"},
+        {"trials": 1, "strategy": "", "seed": 0, "input_space": "x"},
+        {"trials": 1, "strategy": 7, "seed": 0, "input_space": "x"},
+        {"trials": 1, "strategy": "search", "seed": None, "input_space": "x"},
+        {"trials": 1, "strategy": "search", "seed": object(), "input_space": "x"},
+        {"trials": 1, "strategy": "search", "seed": float("nan"), "input_space": "x"},
+        {"trials": 1, "strategy": "search", "seed": 0, "input_space": None},
+        {"trials": 1, "strategy": "search", "seed": 0, "input_space": []},
+    ],
+)
+def test_probed_result_refuses_invalid_search_budget(budget):
+    with pytest.raises(ValueError):
+        RequirementResult(
+            requirement_id="budget",
+            source_clause="source clause",
+            verdict=Verdict.SATISFIED,
+            strength=Strength.PROBED,
+            signals_required=("signal",),
+            details={PROBE_BUDGET_KEY: budget},
+        )

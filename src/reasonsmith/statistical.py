@@ -9,6 +9,7 @@ second kind of confidence interval.
 
 from __future__ import annotations
 
+import json
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
@@ -179,21 +180,66 @@ def _authority_complete(authority: Mapping[str, Any] | None) -> bool:
         return False
     if not isinstance(authority, Mapping):
         raise TypeError("authority_provenance must be a mapping")
+    try:
+        json.dumps(dict(authority), allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"authority provenance must be JSON-serialisable and finite: {exc}"
+        ) from exc
+
+    known = set(AUTHORITY_REQUIRED_FIELDS) | {
+        "official_api_endpoint",
+        "quote_hash",
+    }
+    for name in sorted(known & set(authority)):
+        value = authority[name]
+        if value is None:
+            continue
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                f"authority provenance field {name!r} must be a non-empty string, got {value!r}"
+            )
     required = ("authority", "citation", "retrieval_timestamp", "scope")
-    missing = [name for name in required if not str(authority.get(name, "")).strip()]
+    missing = [
+        name for name in required
+        if not isinstance(authority.get(name), str) or not authority[name].strip()
+    ]
     if not any(
-        str(authority.get(name, "")).strip()
+        isinstance(authority.get(name), str) and authority[name].strip()
         for name in ("official_url", "api_endpoint", "official_api_endpoint")
     ):
         missing.append("official_url or api_endpoint")
     if not any(
-        str(authority.get(name, "")).strip()
+        isinstance(authority.get(name), str) and authority[name].strip()
         for name in ("quoted_passage", "source_hash", "quote_hash")
     ):
         missing.append("quoted_passage or source_hash")
     if missing:
         raise ValueError("authority provenance is incomplete; missing " + ", ".join(missing))
     return True
+
+
+def _validate_threshold(threshold: Mapping[str, Any]) -> None:
+    """Validate threshold provenance without turning a measurement into a legal decision."""
+    if not isinstance(threshold, Mapping):
+        raise ValueError("threshold must carry value, meaning and comparison")
+    missing = [field for field in THRESHOLD_REQUIRED_FIELDS if field not in threshold]
+    if missing:
+        raise ValueError("threshold must carry value, meaning and comparison")
+    value = threshold["value"]
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        raise ValueError(
+            f"threshold value must be a finite number or non-empty string, got {value!r}"
+        )
+    if isinstance(value, str):
+        if not value.strip():
+            raise ValueError("threshold value must be a finite number or non-empty string")
+    elif not math.isfinite(float(value)):
+        raise ValueError(f"threshold value must be finite, got {value!r}")
+    for field in ("meaning", "comparison"):
+        field_value = threshold[field]
+        if not isinstance(field_value, str) or not field_value.strip():
+            raise ValueError(f"threshold {field} must be a non-empty string, got {field_value!r}")
 
 
 def validate_measurement_payload(
@@ -219,8 +265,13 @@ def validate_measurement_payload(
     if missing:
         raise ValueError("statistical measurement is missing " + ", ".join(missing))
     groups = payload["groups"]
-    if isinstance(groups, (str, bytes)) or not isinstance(groups, Sequence) or not groups:
-        raise ValueError("statistical measurement groups must be a non-empty sequence")
+    if (
+        isinstance(groups, (str, bytes))
+        or not isinstance(groups, Sequence)
+        or not groups
+        or any(not isinstance(group, str) or not group.strip() for group in groups)
+    ):
+        raise ValueError("statistical measurement groups must be a non-empty sequence of names")
     if len(set(groups)) != len(groups):
         raise ValueError("statistical measurement groups must be unique")
     counts = payload["counts"]
@@ -278,10 +329,7 @@ def validate_measurement_payload(
     if future_verdict and (payload["threshold"] is None or payload["authority_provenance"] is None):
         raise ValueError("a future statistical verdict requires authority and threshold provenance")
     if payload["threshold"] is not None:
-        if not isinstance(payload["threshold"], Mapping) or any(
-            payload["threshold"].get(k) is None for k in THRESHOLD_REQUIRED_FIELDS
-        ):
-            raise ValueError("threshold must carry value, meaning and comparison")
+        _validate_threshold(payload["threshold"])
     if payload["authority_provenance"] is not None:
         _authority_complete(payload["authority_provenance"])
 
