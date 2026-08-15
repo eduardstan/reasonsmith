@@ -243,7 +243,7 @@ def test_compatibility_module_exports_adapter() -> None:
 
 
 def test_resource_limit_child_serializes_without_changing_parent_limits(monkeypatch) -> None:
-    import resource
+    resource = pytest.importorskip("resource")
 
     calls = []
     monkeypatch.setattr(resource, "setrlimit", lambda *args: calls.append(args))
@@ -272,3 +272,42 @@ def test_differential_valid_checks_return_the_raw_comparison() -> None:
     right = OracleCheck(_run("unsat", native="safe", eligible=True), None)
     result = compare_checks(left, right)
     assert result.agreement and result.stronger_allowed
+
+
+def test_windows_safe_status_mapping_remains_distinct() -> None:
+    mapped = {
+        native: map_abcrown_status(native)
+        for native in (
+            "unsafe-pgd",
+            "unsafe-bab",
+            "safe-incomplete",
+            "complete-safe",
+            "timeout",
+            "unknown",
+        )
+    }
+    assert mapped["unsafe-pgd"][0] == "sat"
+    assert mapped["unsafe-bab"][0] == "sat"
+    assert mapped["safe-incomplete"] == ("unsat", False, "incomplete-bound")
+    assert mapped["complete-safe"] == ("unsat", True, "complete-proof-candidate")
+    assert mapped["timeout"][0] == "timeout"
+    assert mapped["unknown"][0] == "unknown"
+
+
+def test_windows_provenance_keeps_pin_and_replay_boundary() -> None:
+    provenance = ABCROWNVerifier()._base_provenance(_query(), "bounded-search", 4)
+    assert provenance["tool"] == "alpha-beta-crown"
+    assert provenance["commit"] == ABCROWNVerifier.commit
+    assert provenance["requires_replay"] is True
+    assert provenance["verdict_eligible"] is False
+    assert provenance["configuration"]["proprietary_solvers"] == {"gurobi": False, "cplex": False}
+
+
+def test_differential_nonverdict_statuses_remain_diagnostic() -> None:
+    for status in ("timeout", "unknown", "error"):
+        result = compare_runs(
+            _run(status, native=status, eligible=False), _run(status, native=status, eligible=False)
+        )
+        assert result.agreement
+        assert not result.stronger_allowed
+        assert "not verdict-eligible" in (result.diagnostic or "")
