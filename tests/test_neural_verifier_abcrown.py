@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import fields, replace
 from pathlib import Path
 
 import pytest
@@ -142,13 +143,31 @@ def test_resource_limits_and_proprietary_configuration_are_enforced() -> None:
     details = limits.as_dict(3)
     assert details["wall_seconds"] == 3
     assert details["enforcement"]["gpu"] == "declaration-only"
-    for kwargs in ({"cpu_seconds": 0}, {"memory_bytes": 0}, {"gpu": ""}):
+    for kwargs in (
+        {"cpu_seconds": 0},
+        {"memory_bytes": 0},
+        {"cpu_seconds": 1.5},
+        {"memory_bytes": 1.5},
+        {"cpu_seconds": "1"},
+        {"memory_bytes": "1"},
+        {"gpu": ""},
+    ):
         with pytest.raises(ValueError):
             ABCROWNResourceLimits(**kwargs)
-    with pytest.raises(ValueError, match="gurobi"):
-        ABCROWNVerifier(configuration={"solver": "gurobi", "use": True})
-    with pytest.raises(ValueError, match="cplex"):
-        ABCROWNVerifier(extra_args=("--cplex", "true"))
+    for kwargs, name in (
+        ({"configuration": {"solver": "gurobi"}}, "gurobi"),
+        ({"configuration": {"solver": "cplex"}}, "cplex"),
+        ({"extra_args": ("--solver", "gurobi")}, "gurobi"),
+        ({"extra_args": ("--solver", "cplex")}, "cplex"),
+        ({"extra_args": ("--gurobi",)}, "gurobi"),
+        ({"configuration": {"gurobi": False}}, "gurobi"),
+    ):
+        with pytest.raises(ValueError, match=name):
+            ABCROWNVerifier(**kwargs)
+    clean = ABCROWNVerifier(configuration={"solver": "builtin"})
+    assert clean._base_provenance(_query(), "bounded-search", 1)["configuration"][
+        "proprietary_solvers"
+    ] == {"gurobi": False, "cplex": False}
 
 
 def test_assignment_parser_rejects_bad_and_missing_witnesses() -> None:
@@ -311,3 +330,101 @@ def test_differential_nonverdict_statuses_remain_diagnostic() -> None:
         assert result.agreement
         assert not result.stronger_allowed
         assert "not verdict-eligible" in (result.diagnostic or "")
+
+
+def _artifact_with_metadata(artifact, **changes):
+    clone = object.__new__(type(artifact))
+    for field in fields(artifact):
+        object.__setattr__(
+            clone, field.name, changes.get(field.name, getattr(artifact, field.name))
+        )
+    return clone
+
+
+def test_unsupported_artifact_profile_is_refused_before_abcrown(monkeypatch) -> None:
+    query = _query()
+    monkeypatch.setattr(
+        "reasonsmith.neural_verifiers.abcrown.subprocess.Popen",
+        lambda *args, **kwargs: pytest.fail("unsupported artifact must not start a child"),
+    )
+    cases = [
+        (_artifact_with_metadata(query.artifact, onnx_ir_version=99), "unsupported_onnx_ir"),
+        (
+            _artifact_with_metadata(query.artifact, opset_imports=(("", 99),)),
+            "unsupported_onnx_opset",
+        ),
+    ]
+    for artifact, failure in cases:
+        result = ABCROWNVerifier(check_version=False).verify(replace(query, artifact=artifact))
+        assert result.status == "unsupported"
+        assert result.provenance["failure"] == failure
+    binding = replace(query.artifact.inputs[0], dtype="uint8")
+    result = ABCROWNVerifier(check_version=False).verify(
+        replace(query, artifact=_artifact_with_metadata(query.artifact, inputs=(binding,)))
+    )
+    assert result.status == "unsupported"
+    assert result.provenance["failure"] == "unsupported_dtype"
+
+
+def test_timeout_is_one_total_budget_across_probe_and_solver(monkeypatch) -> None:
+    query = _query()
+    verifier = ABCROWNVerifier()
+    clock = [100.0]
+    calls = []
+    monkeypatch.setattr("reasonsmith.neural_verifiers.abcrown.time.monotonic", lambda: clock[0])
+
+    def run(command, cwd, timeout):
+        calls.append(timeout)
+        clock[0] += 0.2
+        if len(calls) == 1:
+            return "0.7.0\n", "", 0, None
+        return "Result: safe-incomplete\n", "", 0, None
+
+    monkeypatch.setattr(verifier, "_run_command", run)
+    result = verifier.verify(query, timeout=0.3)
+    assert result.status == "timeout"
+    assert len(calls) == 2
+    assert calls[0] == pytest.approx(0.3)
+    assert 0 < calls[1] < calls[0]
+    assert result.provenance["resource_limits"]["wall_seconds"] == 0.3
+
+
+def test_timeout_expiry_after_version_probe_skips_solver(monkeypatch) -> None:
+    query = _query()
+    verifier = ABCROWNVerifier()
+    clock = [100.0]
+    calls = []
+    monkeypatch.setattr("reasonsmith.neural_verifiers.abcrown.time.monotonic", lambda: clock[0])
+
+    def run(command, cwd, timeout):
+        calls.append(timeout)
+        clock[0] += 0.4
+        return "0.7.0\n", "", 0, None
+
+    monkeypatch.setattr(verifier, "_run_command", run)
+    result = verifier.verify(query, timeout=0.3)
+    assert result.status == "timeout"
+    assert len(calls) == 1
+
+
+def test_timeout_expiry_before_probe_or_solver_starts(monkeypatch) -> None:
+    query = _query()
+    values = iter((100.0, 100.4))
+    monkeypatch.setattr(
+        "reasonsmith.neural_verifiers.abcrown.time.monotonic",
+        lambda: next(values, 100.4),
+    )
+    verifier = ABCROWNVerifier()
+    monkeypatch.setattr(verifier, "_run_command", lambda *args: pytest.fail("child started"))
+    result = verifier.verify(query, timeout=0.3)
+    assert result.status == "timeout"
+
+    values = iter((200.0, 200.4))
+    monkeypatch.setattr(
+        "reasonsmith.neural_verifiers.abcrown.time.monotonic",
+        lambda: next(values, 200.4),
+    )
+    verifier = ABCROWNVerifier(check_version=False)
+    monkeypatch.setattr(verifier, "_run_command", lambda *args: pytest.fail("child started"))
+    result = verifier.verify(query, timeout=0.3)
+    assert result.status == "timeout"

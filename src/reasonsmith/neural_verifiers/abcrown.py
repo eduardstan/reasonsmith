@@ -12,6 +12,7 @@ reasonsmith itself.
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import math
@@ -190,11 +191,15 @@ class ABCROWNResourceLimits:
 
     def __post_init__(self) -> None:
         if self.cpu_seconds is not None and (
-            isinstance(self.cpu_seconds, bool) or self.cpu_seconds < 1
+            isinstance(self.cpu_seconds, bool)
+            or not isinstance(self.cpu_seconds, int)
+            or self.cpu_seconds < 1
         ):
             raise ValueError("cpu_seconds must be a positive integer or None")
         if self.memory_bytes is not None and (
-            isinstance(self.memory_bytes, bool) or self.memory_bytes < 1
+            isinstance(self.memory_bytes, bool)
+            or not isinstance(self.memory_bytes, int)
+            or self.memory_bytes < 1
         ):
             raise ValueError("memory_bytes must be a positive integer or None")
         if self.gpu is not None and (not isinstance(self.gpu, str) or not self.gpu):
@@ -247,6 +252,8 @@ class ABCROWNVerifier:
     supported_vnnlib_versions = (VNNLIB_VERSION,)
     supported_query_shapes = tuple(item.value for item in QueryShape)
     supported_dtypes = ("float32", "float64", "int32", "int64")
+    supported_onnx_ir_versions = tuple(range(7, 14))
+    supported_onnx_opsets = tuple(range(7, 22))
     supported_onnx_domains = ("", "ai.onnx")
 
     def __init__(
@@ -279,7 +286,7 @@ class ABCROWNVerifier:
         self.expected_version = expected_version
         self.version_args = tuple(version_args)
         self.extra_args = tuple(extra_args)
-        self.configuration = dict(configuration or {})
+        self.configuration = copy.deepcopy(dict(configuration or {}))
         self._reject_proprietary_configuration()
         self.resource_limits = resource_limits or ABCROWNResourceLimits()
         self.supported_operators = frozenset(supported_operators)
@@ -288,12 +295,16 @@ class ABCROWNVerifier:
         if self.admit_complete:
             self.modes = frozenset((BOUNDED_SEARCH_MODE, COMPLETE_MODE))
 
-    def _reject_proprietary_configuration(self) -> None:
+    def _proprietary_solver_state(self) -> dict[str, bool]:
         serialized = repr(self.configuration).lower() + " " + " ".join(self.extra_args).lower()
-        for name in ("gurobi", "cplex"):
-            if name in serialized and (
-                "true" in serialized or "enable" in serialized or "use" in serialized
-            ):
+        return {
+            name: bool(re.search(rf"(?<![a-z0-9]){name}(?![a-z0-9])", serialized))
+            for name in ("gurobi", "cplex")
+        }
+
+    def _reject_proprietary_configuration(self) -> None:
+        for name, selected in self._proprietary_solver_state().items():
+            if selected:
                 raise ValueError(f"proprietary solver mode {name} is disabled")
 
     def _base_provenance(
@@ -313,7 +324,7 @@ class ABCROWNVerifier:
                 "version_args": self.version_args,
                 "extra_args": self.extra_args,
                 "settings": self.configuration,
-                "proprietary_solvers": {"gurobi": False, "cplex": False},
+                "proprietary_solvers": self._proprietary_solver_state(),
                 "supported_operators": tuple(sorted(self.supported_operators)),
             },
             "resource_limits": self.resource_limits.as_dict(timeout),
@@ -370,6 +381,7 @@ class ABCROWNVerifier:
         timeout: float | None = None,
         mode: str = BOUNDED_SEARCH_MODE,
     ) -> VerifierRun:
+        self._reject_proprietary_configuration()
         provenance = self._base_provenance(query, mode, timeout)
         if timeout is not None and (not math.isfinite(timeout) or timeout <= 0):
             provenance["failure"] = "invalid_timeout"
@@ -394,6 +406,29 @@ class ABCROWNVerifier:
                 raise ValueError("unsupported VNN-LIB version")
             if query.shape.value not in self.supported_query_shapes:
                 raise ValueError("unsupported neural query shape")
+            artifact = query.artifact
+            if artifact.onnx_ir_version not in self.supported_onnx_ir_versions:
+                provenance["failure"] = "unsupported_onnx_ir"
+                return self._result(
+                    "unsupported", query, provenance, diagnostic="unsupported ONNX IR version"
+                )
+            if any(
+                binding.dtype not in self.supported_dtypes
+                for binding in (*artifact.inputs, *artifact.outputs)
+            ):
+                provenance["failure"] = "unsupported_dtype"
+                return self._result(
+                    "unsupported", query, provenance, diagnostic="unsupported ONNX tensor dtype"
+                )
+            if any(
+                domain not in self.supported_onnx_domains
+                or version not in self.supported_onnx_opsets
+                for domain, version in artifact.opset_imports
+            ):
+                provenance["failure"] = "unsupported_onnx_opset"
+                return self._result(
+                    "unsupported", query, provenance, diagnostic="unsupported ONNX opset"
+                )
             import onnx
 
             graph = onnx.load_model_from_string(query.product_model).graph
@@ -412,6 +447,16 @@ class ABCROWNVerifier:
             return self._result("unsupported", query, provenance, diagnostic=str(exc))
 
         started = time.monotonic()
+        deadline = None if timeout is None else started + timeout
+
+        def remaining_timeout() -> float | None:
+            if deadline is None:
+                return None
+            return max(0.0, deadline - time.monotonic())
+
+        def budget_expired() -> bool:
+            return deadline is not None and time.monotonic() >= deadline
+
         with tempfile.TemporaryDirectory(prefix="reasonsmith-abcrown-") as raw_dir:
             workdir = Path(raw_dir)
             model_path, vnnlib_path = workdir / "query.onnx", workdir / "query.vnnlib"
@@ -425,7 +470,7 @@ class ABCROWNVerifier:
                     "enable_incomplete_verification": mode != COMPLETE_MODE,
                 },
                 "attack": {"pgd_order": "skip"},
-                **self.configuration,
+                **copy.deepcopy(self.configuration),
             }
             if mode == COMPLETE_MODE:
                 config["general"]["complete_verifier"] = "bab"
@@ -437,8 +482,18 @@ class ABCROWNVerifier:
             provenance["hashes"]["query_file_sha256"] = _sha256(vnnlib_path.read_bytes())
             observed_version = self.expected_version
             if self.check_version:
+                remaining = remaining_timeout()
+                if remaining is not None and remaining <= 0:
+                    provenance["failure"] = "timeout"
+                    provenance["duration_seconds"] = round(time.monotonic() - started, 6)
+                    return self._result(
+                        "timeout",
+                        query,
+                        provenance,
+                        diagnostic="alpha-beta-CROWN exceeded the wall-clock limit",
+                    )
                 version_out, version_err, version_code, failure = self._run_command(
-                    (*self.executable, *self.version_args), self.working_directory, timeout
+                    (*self.executable, *self.version_args), self.working_directory, remaining
                 )
                 observed_version = _version_from_output(version_out + "\n" + version_err)
                 provenance["version_probe"] = {
@@ -447,6 +502,8 @@ class ABCROWNVerifier:
                     "stdout_sha256": _sha256(version_out),
                     "stderr_sha256": _sha256(version_err),
                 }
+                if budget_expired() and failure != "crash":
+                    failure = "timeout"
                 if failure is not None:
                     provenance["failure"] = failure
                     return self._result(
@@ -501,10 +558,23 @@ class ABCROWNVerifier:
                 "--device",
                 "cpu",
             )
+            remaining = remaining_timeout()
+            if remaining is not None and remaining <= 0:
+                provenance["failure"] = "timeout"
+                provenance["duration_seconds"] = round(time.monotonic() - started, 6)
+                return self._result(
+                    "timeout",
+                    query,
+                    provenance,
+                    diagnostic="alpha-beta-CROWN exceeded the wall-clock limit",
+                    version=observed_version,
+                )
             stdout, stderr, returncode, failure = self._run_command(
-                command, self.working_directory, timeout
+                command, self.working_directory, remaining
             )
             provenance["duration_seconds"] = round(time.monotonic() - started, 6)
+            if budget_expired() and failure != "crash":
+                failure = "timeout"
             provenance["returncode"] = returncode
             provenance["hashes"]["stdout_sha256"] = _sha256(stdout)
             provenance["hashes"]["stderr_sha256"] = _sha256(stderr)
