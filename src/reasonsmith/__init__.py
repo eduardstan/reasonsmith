@@ -45,7 +45,7 @@ What a reader must not break:
     Why this matters: Technical record checks cannot replace legal determination or guarantees.
 """
 
-__version__ = "0.9.2"
+__version__ = "0.10.0"
 
 
 # Slice-1 typed neural exposure types. They validate declarations only; no engine is routed here.

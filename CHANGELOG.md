@@ -8,6 +8,151 @@ releases before it predate the file and are not reconstructed here.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-08-15
+
+### Added
+
+- **Installed engines can bring witness-checked violations.** A plug-in's violated result is no
+  longer accepted on the plug-in's word alone: the trusted core re-derives it from the witness the
+  engine supplies. The core writes the provenance, distinguishing `witness-checked` from a
+  `trusted-ceiling` result where no witness was available; a witness the checker refutes is not
+  silently retained as a violation. The `verify-engine` conformance kit runs the same boundary
+  rather than offering a second engine. ([#209](https://github.com/eduardstan/reasonsmith/pull/209),
+  [#210](https://github.com/eduardstan/reasonsmith/pull/210),
+  [#219](https://github.com/eduardstan/reasonsmith/pull/219),
+  [#232](https://github.com/eduardstan/reasonsmith/pull/232))
+
+- **Neural systems are first-class subjects, with an explicit ceiling.** The optional `neural` extra
+  admits an ONNX artefact and a declared input space; the core compiles VNN-LIB queries and provides
+  Marabou and α,β-CROWN adapters. Complete and proof modes are refused with their evidence where the
+  pinned installs could not be made feasible on the runner. The adapters therefore remain at a
+  bounded `probed` ceiling, rather than presenting incomplete search as proof. A language model's
+  declared input space can also reach the counterfactual duty; it does not create another evidence
+  rung. ([#211](https://github.com/eduardstan/reasonsmith/pull/211),
+  [#214](https://github.com/eduardstan/reasonsmith/pull/214),
+  [#215](https://github.com/eduardstan/reasonsmith/pull/215),
+  [#217](https://github.com/eduardstan/reasonsmith/pull/217),
+  [#220](https://github.com/eduardstan/reasonsmith/pull/220),
+  [#221](https://github.com/eduardstan/reasonsmith/pull/221),
+  [#231](https://github.com/eduardstan/reasonsmith/pull/231))
+
+- **Statistical evidence is measurement-only.** `selection_rate_ratio(...)` reports simultaneous
+  Clopper–Pearson intervals under a declared sampling plan. `decision_rule` remains `null`, so no
+  ratio is turned into a verdict here; the employment-selection four-fifths rule is an anchor for
+  the measurement, not a threshold transplanted into every setting.
+  ([#222](https://github.com/eduardstan/reasonsmith/pull/222),
+  [#224](https://github.com/eduardstan/reasonsmith/pull/224),
+  [#232](https://github.com/eduardstan/reasonsmith/pull/232))
+
+- **The Seoul Frontier AI Safety Commitments pack is the sixth pack.** Its editions are immutable,
+  its frontier-status gate is explicit rather than inferred, and Commitment IV supplies a
+  logical-depth deployment anchor. The shipped corpus is now six packs and 37 duties.
+  ([#225](https://github.com/eduardstan/reasonsmith/pull/225))
+
+- **The platform has a wider adoption surface.** A GitHub Action and Docker image package the
+  checks; `init pack` and `init engine` provide scaffolds; the report JSON schema is versioned; a
+  static registry page exposes the installed catalogue; and the coverage floor is 95%, with badges.
+  These surfaces do not change what a verdict means.
+  ([#212](https://github.com/eduardstan/reasonsmith/pull/212),
+  [#213](https://github.com/eduardstan/reasonsmith/pull/213),
+  [#216](https://github.com/eduardstan/reasonsmith/pull/216),
+  [#218](https://github.com/eduardstan/reasonsmith/pull/218))
+
+- **The autoformalization agreement study is recorded rather than promoted to authority.** Against
+  the hand-authored packs as gold, 31 of 37 candidates were exact and 36 of 37 semantically
+  equivalent. The AI-assisted authoring path has a worked example, but a machine-cleared proposal
+  remains a proposal for human sign-off and changes no shipped duty.
+  ([#228](https://github.com/eduardstan/reasonsmith/pull/228))
+
+- **The assurance crosswalks are navigation, not execution.** NIST AI RMF 1.0 and ISO/IEC 42001 are
+  mapped in the assurance crosswalk, and the GPAI Code of Practice has a mapping appendix. Neither
+  document is an additional engine or compliance determination.
+  ([#226](https://github.com/eduardstan/reasonsmith/pull/226),
+  [#227](https://github.com/eduardstan/reasonsmith/pull/227))
+
+### Changed
+
+- **The operational outcome vocabulary now names unresolved work.** Reports expose five
+  reader-facing outcomes, including `not evaluated`, `unattainable` and `not applicable`; the formal
+  `inconclusive` spelling remains in the result model. The default `check` exit policy is unchanged,
+  while `--strict-unresolved` lets an adopter fail a run containing an unresolved outcome without
+  calling it a violation. ([#206](https://github.com/eduardstan/reasonsmith/pull/206))
+
+- **`Requirement` gained `frontier_trigger`.** The required field count is now sixteen rather than
+  fifteen, so a pack's frontier gate remains attached when a single requirement is evaluated through
+  the direct API. The evidence basis now has five members and the property language seven fragments;
+  neither is a new strength rung. ([#230](https://github.com/eduardstan/reasonsmith/pull/230),
+  [#232](https://github.com/eduardstan/reasonsmith/pull/232))
+
+- **Positive results carry their evidence boundary.** A satisfied result states whether it rests on
+  supplied records, a bounded search or declared logic and assumptions, and says what that evidence
+  does not establish. A formalized subset is marked as such rather than presented as the whole legal
+  question. ([#201](https://github.com/eduardstan/reasonsmith/pull/201),
+  [#205](https://github.com/eduardstan/reasonsmith/pull/205))
+
+- **The certificate value-gap measure is independent of reason enumeration.** Exact and engine
+  values can be compared at the unperturbed interpretation even when no reason was enumerated;
+  deleted-reason measures retain their own enumeration requirement. An exposed finite decision
+  threshold supplies the measured margin, while malformed or non-finite thresholds are refused
+  rather than guessed. ([#168](https://github.com/eduardstan/reasonsmith/pull/168),
+  [#201](https://github.com/eduardstan/reasonsmith/pull/201))
+
+- **Statute drift now has a deterministic PDF route and a pull-request handoff.** Text-layer
+  extraction uses the exactly pinned optional `pdfminer.six` extra; encrypted, scanned, image-only,
+  unparseable or tool-version-drifted PDFs are `could-not-verify`, not silently OCR'd or cleared.
+  The scheduled workflow publishes its verification manifest through a pull request rather than
+  pushing directly. ([#223](https://github.com/eduardstan/reasonsmith/pull/223),
+  [#229](https://github.com/eduardstan/reasonsmith/pull/229))
+
+- **Table 19 value metrics use their own measured cohort.** Fidelity and retained share no longer
+  disappear merely because a certificate enumerated no reasons; enumeration metrics retain the
+  separate enumeration cohort, and each metric reports its cohort size.
+  ([#222](https://github.com/eduardstan/reasonsmith/pull/222))
+
+- **The theory and authoring surface was rebuilt around explicit boundaries.** The numbered theory
+  chapters now own the notation, language, decision-problem, decision-procedure, refinement and
+  explanation mathematics; the authoring and adopting documents state their operational contracts,
+  and the affected-individual front door is explicit. The LTLf `next` mapping follows the language's
+  weak boundary (`wX`), not strong next.
+  ([#169](https://github.com/eduardstan/reasonsmith/pull/169),
+  [#172](https://github.com/eduardstan/reasonsmith/pull/172),
+  [#173](https://github.com/eduardstan/reasonsmith/pull/173),
+  [#174](https://github.com/eduardstan/reasonsmith/pull/174),
+  [#175](https://github.com/eduardstan/reasonsmith/pull/175),
+  [#176](https://github.com/eduardstan/reasonsmith/pull/176),
+  [#178](https://github.com/eduardstan/reasonsmith/pull/178),
+  [#199](https://github.com/eduardstan/reasonsmith/pull/199),
+  [#203](https://github.com/eduardstan/reasonsmith/pull/203),
+  [#204](https://github.com/eduardstan/reasonsmith/pull/204),
+  [#207](https://github.com/eduardstan/reasonsmith/pull/207))
+
+### Fixed / Security
+
+- **The plug-in and neural trust boundaries were hardened before release.** A pre-release audit
+  found eight adversarial breaks: an installed engine could mutate the shared evidence trace;
+  present a witness outside the declared input domain; forge applicability or unattainability;
+  rewrite a proof's legal identity; claim a search that never ran; bypass the frontier gate on the
+  single-requirement API; get a false neural witness accepted through an unsupported-dtype cast; or
+  bypass the `proprietary solver disabled` claim. Each is now refused at the boundary and pinned by
+  a regression test. ([#231](https://github.com/eduardstan/reasonsmith/pull/231),
+  [#232](https://github.com/eduardstan/reasonsmith/pull/232))
+
+- **The release's supply-chain checks are pinned and exercised.** GitHub Actions are pinned to
+  commits, CodeQL and Dependabot are configured, the action update paths are kept coherent, type
+  checking covers the semantics modules, and the terminal harness tests name the blocks that need a
+  terminal. These are maintenance boundaries, not claims about a system's conformance.
+  ([#170](https://github.com/eduardstan/reasonsmith/pull/170),
+  [#171](https://github.com/eduardstan/reasonsmith/pull/171),
+  [#179](https://github.com/eduardstan/reasonsmith/pull/179),
+  [#188](https://github.com/eduardstan/reasonsmith/pull/188),
+  [#189](https://github.com/eduardstan/reasonsmith/pull/189),
+  [#190](https://github.com/eduardstan/reasonsmith/pull/190),
+  [#191](https://github.com/eduardstan/reasonsmith/pull/191),
+  [#193](https://github.com/eduardstan/reasonsmith/pull/193),
+  [#194](https://github.com/eduardstan/reasonsmith/pull/194),
+  [#197](https://github.com/eduardstan/reasonsmith/pull/197),
+  [#198](https://github.com/eduardstan/reasonsmith/pull/198))
+
 ## [0.9.2] - 2026-08-12
 
 ### Fixed
@@ -1434,3 +1579,6 @@ for the log's directory.
   so an existing ECOA run without the flag now checks nothing and reports every duty not
   applicable. `reasonsmith` never infers a system's decision domain.
   ([#63](https://github.com/eduardstan/reasonsmith/pull/63))
+
+[Unreleased]: https://github.com/eduardstan/reasonsmith/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/eduardstan/reasonsmith/compare/v0.9.2...v0.10.0
