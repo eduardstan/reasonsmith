@@ -218,6 +218,30 @@ class TestPdfExtraction:
 
 
 class TestFetchSource:
+    def test_govuk_edition_sentinel_is_validated_and_scoped(self):
+        html = '<p class="gem-c-inverse-header__subtext">Updated <span>7 February 2025</span></p>'
+        source = drift.SourceDocument(
+            "seoul_test",
+            "https://example.invalid/seoul",
+            "govuk-html",
+            edition_sentinel="Updated 7 February 2025",
+        )
+
+        assert drift.extract_govuk_edition(html) == "Updated 7 February 2025"
+        assert drift.extract_passage(html.encode(), selector="I", kind="govuk-html") is None
+        drift._validate_source_edition(source, html)
+        with pytest.raises(DriftFetchError, match="sentinel mismatch"):
+            drift._validate_source_edition(
+                source,
+                '<p class="gem-c-inverse-header__subtext">Updated 1 January 2025</p>',
+            )
+        with pytest.raises(DriftFetchError, match="requires decoded text"):
+            drift._validate_source_edition(source, html.encode())
+        with pytest.raises(DriftFetchError, match="expected exactly one"):
+            drift.extract_govuk_edition("<main></main>")
+        with pytest.raises(DriftFetchError, match="require a numbered"):
+            drift.extract_passage(html, selector=None, kind="govuk-html")
+
     def test_ecfr_fetch_uses_source_specific_versions_endpoint(self, monkeypatch):
         urls: list[str] = []
         responses = iter(
