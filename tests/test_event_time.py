@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import timezone
+from datetime import datetime, timezone
 
 import pytest
 
-from reasonsmith.engines.observed import ObservedEngine
+import reasonsmith.event_time as event_time
+from reasonsmith.engines.observed import ObservedEngine, to_stl
 from reasonsmith.event_time import (
+    Duration,
     EventTimeError,
     add_calendar_months,
     deadline_for,
@@ -399,3 +401,152 @@ def test_a_single_record_violation_names_that_record_once() -> None:
         time_domain="event",
     )
     assert "offending record: decision d-1 (step 0)" in render_text(report)
+
+
+def test_event_arithmetic_refuses_naive_and_unrepresentable_inputs() -> None:
+    with pytest.raises(EventTimeError, match="timestamp must be a string"):
+        parse_timestamp(None)  # type: ignore[arg-type]
+    with pytest.raises(EventTimeError, match="unknown"):
+        parse_timestamp("2026-01-01T00:00:00-00:00")
+    with pytest.raises(EventTimeError, match="aware timestamp"):
+        deadline_for(datetime(2026, 1, 1), parse_duration("1h"))
+    with pytest.raises(EventTimeError, match="calendar duration"):
+        add_calendar_months(parse_timestamp("2026-01-01T00:00:00Z"), -1)
+    with pytest.raises(EventTimeError, match="representable range"):
+        deadline_for(parse_timestamp("9999-12-31T23:59:59Z"), parse_duration("1d"))
+    with pytest.raises(EventTimeError, match="representable range"):
+        add_calendar_months(parse_timestamp("9999-12-31T23:59:59Z"), 1)
+
+
+def test_event_pair_rejects_unaware_or_reversed_observations() -> None:
+    with pytest.raises(EventTimeError, match="aware timestamp"):
+        measure_pair(
+            "case",
+            datetime(2026, 1, 1),
+            parse_timestamp("2026-01-01T01:00:00Z"),
+            parse_duration("1h"),
+            anchor_record_index=0,
+            end_record_index=1,
+        )
+    with pytest.raises(EventTimeError, match="before its anchor in the trace"):
+        measure_pair(
+            "case",
+            parse_timestamp("2026-01-01T01:00:00Z"),
+            parse_timestamp("2026-01-01T00:00:00Z"),
+            parse_duration("1h"),
+            anchor_record_index=1,
+            end_record_index=0,
+        )
+    with pytest.raises(EventTimeError, match="before its anchor timestamp"):
+        measure_pair(
+            "case",
+            parse_timestamp("2026-01-01T01:00:00Z"),
+            parse_timestamp("2026-01-01T00:00:00Z"),
+            parse_duration("1h"),
+            anchor_record_index=0,
+            end_record_index=1,
+        )
+
+
+def test_duration_properties_cover_elapsed_and_calendar_units() -> None:
+    assert parse_duration("2h").elapsed is not None
+    assert parse_duration("1d").elapsed is not None
+    assert parse_duration("1mo").elapsed is None
+    assert Duration(2, "hours").text == "2h"
+
+
+def test_timestamp_parser_defends_against_backend_naive_and_normalization_failures(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class NaiveFactory:
+        @staticmethod
+        def fromisoformat(value: str) -> datetime:
+            return datetime(2026, 1, 1)
+
+    monkeypatch.setattr(event_time, "datetime", NaiveFactory)
+    with pytest.raises(EventTimeError, match="naive"):
+        event_time.parse_timestamp("2026-01-01T00:00:00Z")
+
+    class BrokenAware:
+        tzinfo = timezone.utc
+
+        @staticmethod
+        def utcoffset():
+            return timezone.utc.utcoffset(None)
+
+        @staticmethod
+        def astimezone(zone):
+            raise ValueError("normalization failed")
+
+    class BrokenFactory:
+        @staticmethod
+        def fromisoformat(value: str) -> BrokenAware:
+            return BrokenAware()
+
+    monkeypatch.setattr(event_time, "datetime", BrokenFactory)
+    with pytest.raises(EventTimeError, match="cannot be normalised"):
+        event_time.parse_timestamp("2026-01-01T00:00:00Z")
+
+
+def test_duration_parser_rejects_non_text_values() -> None:
+    with pytest.raises(EventTimeError, match="duration must be a string"):
+        parse_duration(None)  # type: ignore[arg-type]
+
+
+def test_event_metric_refuses_reserved_case_identifier() -> None:
+    result = _evaluate(
+        _trace("2026-01-01T00:00:00Z", "2026-01-01T01:00:00Z", case_id="<unnamed record 0>")
+    )
+    assert result.verdict is Verdict.INCONCLUSIVE
+    assert "reserved" in result.evidence_summary
+
+
+def test_event_metric_refuses_an_endpoint_without_its_timestamp() -> None:
+    result = _evaluate(
+        [
+            {
+                "case_id": "c",
+                "aware": True,
+                TIME_DOMAIN_KEY: {"other": "2026-01-01T00:00:00Z"},
+            },
+            {
+                "case_id": "c",
+                "report": True,
+                TIME_DOMAIN_KEY: {"other": "2026-01-01T01:00:00Z"},
+            },
+        ]
+    )
+    assert result.verdict is Verdict.INCONCLUSIVE
+    assert result.details["missing_event_timestamps"] == [
+        {"record_index": 0, "events": ["aware"]},
+        {"record_index": 1, "events": ["report"]},
+    ]
+
+
+def test_event_metric_rejects_duplicate_endpoints_and_empty_cases() -> None:
+    records = [
+        {
+            "case_id": "complete",
+            "aware": True,
+            TIME_DOMAIN_KEY: {"aware": "2026-01-01T00:00:00Z"},
+        },
+        {
+            "case_id": "complete",
+            "report": True,
+            TIME_DOMAIN_KEY: {"report": "2026-01-01T01:00:00Z"},
+        },
+        {
+            "case_id": "complete",
+            "report": True,
+            TIME_DOMAIN_KEY: {"report": "2026-01-01T02:00:00Z"},
+        },
+        {"case_id": "empty", TIME_DOMAIN_KEY: {}},
+    ]
+    result = _evaluate(records)
+    assert result.verdict is Verdict.INCONCLUSIVE
+    assert "correlation is ambiguous" in result.evidence_summary
+
+
+def test_event_metric_is_not_rendered_on_the_ordinal_monitor() -> None:
+    with pytest.raises(UnsupportedConstructError, match="event-time metric evaluator"):
+        to_stl(_req().spec)
