@@ -496,7 +496,6 @@ def _event_metric_result(
     # refused a malformed trace against.
     cases: dict[tuple[str, object], dict[str, list[tuple[int, Any, dict[str, Any]]]]] = {}
     missing_event_timestamps: list[dict[str, Any]] = []
-    orphan_event = False
     for index, record in enumerate(records):
         raw_case = record.get("case_id")
         if raw_case is None:
@@ -576,7 +575,6 @@ def _event_metric_result(
         case_anchors = bucket["anchor"]
         case_endpoints = bucket["endpoint"]
         if not case_anchors and case_endpoints:
-            orphan_event = True
             problems.append(f"case {case_id!r} has an endpoint but no anchor")
             continue
         if not case_anchors:
@@ -611,22 +609,18 @@ def _event_metric_result(
         except EventTimeError as exc:
             problems.append(f"case {case_id!r}: {exc}")
 
-    if problems or orphan_event or not pairs:
+    if problems or not pairs:
         return inconclusive(
             "event correlation was incomplete or out of order — " + "; ".join(problems),
             {"correlation_problems": problems},
         )
 
-    pair_payloads = [pair.payload(duration) for pair in pairs]
-    common["event_pairs"] = pair_payloads
-    common["all_required_anchors_present"] = True
+    common["event_pairs"] = [pair.payload(duration) for pair in pairs]
     violations = [pair for pair in pairs if not pair.within_bound]
     if violations:
         witness = violations[0].payload(duration)
-        offending = [
-            records[violations[0].anchor_record_index],
-            records[violations[0].end_record_index],
-        ]
+        indices = [violations[0].anchor_record_index, violations[0].end_record_index]
+        offending = [records[index] for index in indices]
         return RequirementResult(
             requirement_id=req.id,
             source_clause=clause,
@@ -641,6 +635,7 @@ def _event_metric_result(
             details={
                 **common,
                 "offending_trace_segment": offending,
+                "violation_step_indices": indices,
                 "violation_event_pair": witness,
                 "witness": {
                     "kind": "event_pair",

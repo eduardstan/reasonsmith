@@ -11,6 +11,25 @@ releases before it predate the file and are not reconstructed here.
 ### Added
 
 - Add the EU AI Act Article 86(1) duty `eu_ai_act_art86_1_main_elements_of_the_decision` to the `eu_ai_act` pack. ([#202](https://github.com/eduardstan/reasonsmith/pull/202))
+- **Event-time bounded response.** A new property-language construct `within_after(present(anchor),
+  present(endpoint), "24h")` measures the elapsed time between two independently timestamped
+  events under closed semantics `0 <= end - start <= bound`, correlated by `case_id`. The new
+  `reasonsmith.event_time` module owns the arithmetic — explicit-offset ISO-8601 timestamps
+  normalised to UTC, elapsed `h`/`d` bounds and calendar `mo` bounds with end-of-month clamping —
+  and the `observed` engine reports a re-checkable `event_pair` witness. Missing, duplicate,
+  uncorrelated, malformed or out-of-order events are *not evaluated*, never a pass.
+- Add the `cra` pack with Cyber Resilience Act (Regulation (EU) 2024/2847) Article 14(2)(a),
+  `cra_art14_2_a_early_warning_within_24_hours`, the first duty written on the event clock. The
+  pack joins the statutory drift check.
+
+### Changed
+
+- **A `__time_domain__` timestamp without an explicit ISO-8601 offset is now refused rather than
+  recorded.** `read_time_domain` parses every event timestamp it reads and raises for a naive,
+  date-only or otherwise malformed value; a trace carrying one is reported *not evaluated* on the
+  duty that needed the clock instead of being answered off an ambiguous instant. `TimeDomain`
+  gained an `instants` field carrying those parsed UTC instants, so the engine and the trace
+  contract cannot disagree about what a record's clock says.
 
 ## [0.10.2] - 2026-08-15
 

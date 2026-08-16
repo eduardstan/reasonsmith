@@ -233,6 +233,24 @@ _TEMPORAL = st.one_of(
     ),
 )
 
+#: The bounded-response construct in both positions §1.4 admits: alone, and under the one enclosing
+#: shape whose trigger is the anchor it measures. The two event names are drawn distinct because a
+#: repeated name is a refusal rather than a production.
+_BOUNDED_RESPONSE = st.tuples(
+    st.lists(st.sampled_from(RECORD_SIGNALS), min_size=2, max_size=2, unique=True),
+    st.sampled_from(["24h", "3d", "1mo", "12hours", "2days", "6months"]),
+    st.booleans(),
+).map(
+    lambda item: (
+        f'{BOUNDED_RESPONSE_CALL}(present({item[0][0]}), present({item[0][1]}), "{item[1]}")'
+        if not item[2]
+        else (
+            f"always(implies(present({item[0][0]}), "
+            f'{BOUNDED_RESPONSE_CALL}(present({item[0][0]}), present({item[0][1]}), "{item[1]}")))'
+        )
+    )
+)
+
 _PREDICATES = st.sampled_from(["meaningful", "adequate"])
 
 _DEGREE = st.tuples(st.sampled_from(RECORD_SIGNALS), _PREDICATES).map(
@@ -259,6 +277,7 @@ GENERATORS = {
     "state": (_STATE, {"record", "logical"}),
     "record": (_RECORD, {"record"}),
     "temporal": (_TEMPORAL, {"temporal"}),
+    "bounded_response": (_BOUNDED_RESPONSE, {"temporal"}),
     "graded": (_GRADED, {"graded"}),
     "undetermined": (_UNSETTLED, {"undetermined"}),
     "counterfactual": (_COUNTERFACTUAL, {"counterfactual"}),
@@ -332,6 +351,23 @@ REFUSALS = {
     "R-BARE-BOOLEAN-CONSTANT": "present(reason_a) and True",
     "R-CONFLICTING-ROLES": "count_a and count_a > 1",
     "R-TEMPORAL-BOOLEAN-COMPARISON": "always(flag_a == True)",
+    "R-BOUNDED-RESPONSE-OPERAND": (
+        f'{BOUNDED_RESPONSE_CALL}(contains(reason_a, "aware"), present(notice_a), "24h")'
+    ),
+    "R-BOUNDED-RESPONSE-SAME-EVENT": (
+        f'{BOUNDED_RESPONSE_CALL}(present(reason_a), present(reason_a), "24h")'
+    ),
+    "R-BOUNDED-RESPONSE-DURATION": (
+        f'{BOUNDED_RESPONSE_CALL}(present(reason_a), present(notice_a), "1y")'
+    ),
+    "R-BOUNDED-RESPONSE-COMPOSED": (
+        f'{BOUNDED_RESPONSE_CALL}(present(reason_a), present(notice_a), "24h") '
+        "and present(reason_b)"
+    ),
+    "R-BOUNDED-RESPONSE-TRIGGER": (
+        f"always(implies(present(reason_b), "
+        f'{BOUNDED_RESPONSE_CALL}(present(reason_a), present(notice_a), "24h")))'
+    ),
 }
 
 

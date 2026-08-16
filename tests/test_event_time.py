@@ -15,6 +15,8 @@ from reasonsmith.event_time import (
     parse_duration,
     parse_timestamp,
 )
+from reasonsmith.render import render_html, render_text
+from reasonsmith.report import ConformanceReport
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
     classify_fragment,
@@ -214,6 +216,37 @@ def test_cra_pack_lands_the_event_time_duty() -> None:
         ],
     )
     assert one_second_late.verdict is Verdict.VIOLATED
+
+
+def test_a_metric_violation_names_its_offending_records_in_both_renderings() -> None:
+    """A witness that reaches only the JSON is a witness no reader of a report ever sees."""
+    anchor_record = {
+        "case_id": "v-1",
+        "decision_id": "d-aware",
+        "aware": True,
+        TIME_DOMAIN_KEY: {"aware": "2026-01-01T00:00:00Z"},
+    }
+    endpoint_record = {
+        "case_id": "v-1",
+        "decision_id": "d-notify",
+        "report": True,
+        TIME_DOMAIN_KEY: {"report": "2026-01-02T00:00:01Z"},
+    }
+    result = _evaluate([anchor_record, endpoint_record])
+    assert result.verdict is Verdict.VIOLATED
+    assert result.details["violation_step_indices"] == [0, 1]
+
+    report = ConformanceReport(
+        pack_id="test",
+        system_name="SUT",
+        system_scope=None,
+        system_domains=(),
+        results=(result,),
+        time_domain="event",
+    )
+    text = render_text(report)
+    assert "offending records: decision d-aware (step 0), decision d-notify (step 1)" in text
+    assert "d-notify" in render_html(report)
 
 
 def test_an_unnamed_record_never_merges_with_a_case_spelled_like_its_index() -> None:
