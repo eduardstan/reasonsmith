@@ -113,6 +113,7 @@ from functools import lru_cache
 from typing import Sequence
 
 from reasonsmith.rulelang import (
+    BOUNDED_RESPONSE_CALL,
     CONTAINS_CALL,
     COUNTERFACTUAL_CALL,
     EQUIVALENCE_CALL,
@@ -314,6 +315,13 @@ def _render(node: ast.AST, abstraction: Abstraction) -> str:
             left = _render(node.args[0], abstraction)
             right = _render(node.args[1], abstraction)
             return f"(({left} -> {right}) & ({right} -> {left}))"
+        if name == BOUNDED_RESPONSE_CALL:
+            raise UnsupportedConstructError(
+                f"{BOUNDED_RESPONSE_CALL} bounds an elapsed duration on the event clock, and "
+                "LTLf keeps every position while abstracting every magnitude, so the installed "
+                "decision procedure has no spelling for it; rendering it into a count of "
+                "positions would be implementing a metric semantics it does not have"
+            )
         if name == COUNTERFACTUAL_CALL:
             raise UnsupportedConstructError(
                 f"{COUNTERFACTUAL_CALL} is a property of a pair of executions and not of any "

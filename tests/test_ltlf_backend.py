@@ -31,11 +31,13 @@ from reasonsmith import ltlf
 from reasonsmith.analysis import analyse_pack
 from reasonsmith.engines.observed import MINIMUM_TRACE_LENGTH, ObservedEngine
 from reasonsmith.rulelang import (
+    BOUNDED_RESPONSE_CALL,
     CONTAINS_CALL,
     PRESENCE_CALL,
     UnsupportedConstructError,
     eval_expression,
     eval_temporal_trace,
+    has_bounded_response,
     measured_magnitude_names,
     parse_property,
     signal_names,
@@ -52,12 +54,32 @@ INCOMPLETENESS_DUTY = "ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out"
 
 
 def temporal_requirements() -> list[Requirement]:
+    """Every shipped temporal duty this backend has a spelling for.
+
+    A bounded-response duty bounds an elapsed duration on the event clock, which LTLf cannot
+    express and `ltlf._render` refuses by name. It is excluded here rather than skipped inside
+    the differential, so the exclusion is one named rule and not a swallowed exception.
+    """
     return [
         req
         for pack_id in list_packs()
         for req in load_pack(pack_id).requirements
-        if req.formalism == "temporal"
+        if req.formalism == "temporal" and not has_bounded_response(parse_property(req.spec))
     ]
+
+
+def test_a_bounded_response_duty_is_refused_by_name_rather_than_rendered():
+    """Every backend must refuse the metric operator, not spell it as a count of positions."""
+    req = load_pack("cra").requirements[0]
+    assert has_bounded_response(parse_property(req.spec))
+    with pytest.raises(UnsupportedConstructError) as refusal:
+        ltlf.to_ltlf(req.spec, ltlf.Abstraction())
+    assert BOUNDED_RESPONSE_CALL in str(refusal.value)
+    assert req not in temporal_requirements()
+
+    analysis = analyse_pack(load_pack("cra"))
+    assert analysis.temporal is not None
+    assert any(req.id in note for note in analysis.skipped)
 
 
 # --------------------------------------------------------------------------------------------

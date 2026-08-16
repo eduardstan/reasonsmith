@@ -45,7 +45,6 @@ from reasonsmith.rulelang import (
     STATE_FRAGMENTS,
     UnsupportedConstructError,
     counterfactual_atom,
-    has_bounded_response,
     is_present,
     parse_property,
     statistical_atom,
@@ -68,7 +67,7 @@ from reasonsmith.statistical import (
     STATISTICAL_MEASUREMENT_KEY as STATISTICAL_PAYLOAD_KEY,
 )
 from reasonsmith.sut import (
-    EVENT_DOMAIN,
+    EVENT_TIME,
     ORDINAL_TIME,
     TIME_DOMAIN_KEY,
     SystemUnderTest,
@@ -2081,16 +2080,6 @@ def _evaluate_statistical_requirement(
     )
 
 
-def _requests_event_metric(spec: str) -> bool:
-    """Whether a syntactically valid spec explicitly selects the event-time metric path."""
-    try:
-        return has_bounded_response(parse_property(spec))
-    except UnsupportedConstructError:
-        # The ordinary engine refusal owns malformed specs; choosing an event axis must not make
-        # that refusal an exception before the fallback engine can report it.
-        return False
-
-
 #: Tags a proof-rung result produced without any logic to reason over — `logic()` absent, returning
 #: None, or raising. Such a result is not an account of this evaluation, only of an interface that
 #: was never there, so `evaluate_requirement` lets a lower rung's not-evaluated result displace it.
@@ -2328,14 +2317,7 @@ def _engine_ladder(
             (
                 Strength.OBSERVED,
                 lambda: ObservedEngine.evaluate(
-                    req,
-                    sut,
-                    records if records is not None else resources.trace(),
-                    time_domain=(
-                        EVENT_DOMAIN
-                        if _requests_event_metric(req.spec)
-                        else None
-                    ),
+                    req, sut, records if records is not None else resources.trace()
                 ),
             )
         )
@@ -2407,7 +2389,7 @@ def check_conformance(
         # the rest of an otherwise useful report. Preserve the fact that the trace attempted to
         # state event time without claiming that its instants were valid.
         stated_time_domain = (
-            "event" if any(TIME_DOMAIN_KEY in record for record in trace) else ORDINAL_TIME
+            EVENT_TIME if any(TIME_DOMAIN_KEY in record for record in trace) else ORDINAL_TIME
         )
     return ConformanceReport(
         pack_id=pack.id,
