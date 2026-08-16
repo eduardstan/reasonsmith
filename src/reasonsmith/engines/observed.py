@@ -75,7 +75,7 @@ import re
 import sys
 import types
 import typing
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 # antlr4-python3-runtime 4.7 (hard-pinned by rtamt) runs `from typing.io import TextIO`, and
@@ -481,6 +481,26 @@ def correlation_key(record: Mapping[str, Any], index: int) -> tuple[str, object]
             "this engine correlates with nothing; a named case cannot take it"
         )
     return ("case", case_id)
+
+
+def case_occurrences(
+    records: Sequence[Mapping[str, Any]], key: tuple[str, object], event_name: str
+) -> list[int]:
+    """The records of one case that make `event_name` present, in trace order.
+
+    Exactly one is what the metric evaluator requires of an anchor and of an endpoint before it
+    measures anything: a duplicate occurrence is ambiguous even when its timestamps agree. This
+    sits beside `correlation_key` because `witness._event_pair_check` asks the same question of a
+    plug-in's pair, and the two halves of one rule kept apart is how a plug-in came to be
+    confirmed on a case the built-in engine reports not evaluated.
+
+    Raises `ValueError` naming why a `case_id` in the trace cannot be a case name.
+    """
+    return [
+        index
+        for index, record in enumerate(records)
+        if correlation_key(record, index) == key and is_present(record.get(event_name))
+    ]
 
 
 def _event_metric_result(

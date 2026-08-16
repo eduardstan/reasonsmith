@@ -488,16 +488,18 @@ def _event_pair_check(
 
     Nothing here is taken on the plug-in's word. The two event names and the deadline come from
     `req.spec`, the two instants come from the records the payload names, the two records must be
-    one case under `observed.correlation_key` — the rule the metric evaluator itself correlates
-    by, imported rather than restated so a plug-in cannot be confirmed on a pair the built-in
-    engine declines to measure — and the arithmetic is `event_time.measure_pair`, the checker that
-    engine already names. A plug-in therefore cannot pick its own deadline, cannot cite an instant
-    the log does not record, cannot claim a deadline started at a record whose anchor predicate is
-    absent, and cannot run one across two cases, which is the same rule `_prefix_parts` applies to
-    a trace prefix. A payload this checker cannot read is uncheckable and keeps the plug-in's
-    ceiling; a payload it reads and disagrees with is refuted.
+    one case with one occurrence of each event under `observed.correlation_key` and
+    `observed.case_occurrences` — the rules the metric evaluator itself correlates by, imported
+    rather than restated so a plug-in cannot be confirmed on a pair the built-in engine declines
+    to measure — and the arithmetic is `event_time.measure_pair`, the checker that engine already
+    names. A plug-in therefore cannot pick its own deadline, cannot cite an instant the log does
+    not record, cannot claim a deadline started at a record whose anchor predicate is absent,
+    cannot run one across two cases, and cannot choose which of a case's duplicate occurrences to
+    measure from, which is the same rule `_prefix_parts` applies to a trace prefix. A payload this
+    checker cannot read is uncheckable and keeps the plug-in's ceiling; a payload it reads and
+    disagrees with is refuted.
     """
-    from reasonsmith.engines.observed import case_label, correlation_key
+    from reasonsmith.engines.observed import case_label, case_occurrences, correlation_key
     from reasonsmith.event_time import (
         EventTimeError,
         format_timestamp,
@@ -566,6 +568,24 @@ def _event_pair_check(
             f"the event-pair witness names case {payload['case_id']!r} and the trace makes those "
             f"records case {case_label(anchor_key)!r}"
         )
+    try:
+        occurrences = {
+            role: case_occurrences(records, anchor_key, event_name)
+            for role, event_name in (("anchor", anchor_event), ("endpoint", endpoint_event))
+        }
+    except ValueError as exc:
+        return _REFUTED, f"the trace does not correlate the witnessed records: {exc}"
+    for role, event_name, index in (
+        ("anchor", anchor_event, anchor_index),
+        ("endpoint", endpoint_event, end_index),
+    ):
+        found = occurrences[role]
+        if found != [index]:
+            return _REFUTED, (
+                f"case {case_label(anchor_key)!r} makes {event_name!r} present in "
+                f"{len(found)} record(s) {found}, and the witness measures from record {index}; "
+                "exactly one occurrence is required"
+            )
 
     try:
         stated = read_time_domain(records)
