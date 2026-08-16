@@ -83,6 +83,8 @@ jobs:
           Add-Content -Path $env:GITHUB_PATH -Value "$env:RUNNER_TEMP\black_install\BLACK"
       - name: Verify BLACK solver
         run: black --version
+      - name: Execute demonstration notebooks
+        run: pytest --nbmake notebooks
       - run: ruff check .
       # Scoped by `[tool.mypy]` in pyproject.toml to the two modules whose types are the semantics,
       # so this is seconds and its output is short enough to read.

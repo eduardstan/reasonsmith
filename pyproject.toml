@@ -57,6 +57,7 @@ dev = [
     "ruff>=0.4",
     "hypothesis>=6.100",
     "mypy>=1.10",
+    "nbmake==1.5.5",
 ]
 
 [project.scripts]

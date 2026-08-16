@@ -14,6 +14,7 @@ what those documents say.
 - [`assurance-crosswalk.md`](assurance-crosswalk.md) — navigation crosswalk to NIST AI RMF 1.0 and ISO/IEC 42001:2023.
 - [`gpai-code-of-practice-appendix.md`](gpai-code-of-practice-appendix.md) — non-executable mapping from the GPAI duties to the EU AI Office Code of Practice.
 - [`adopting.md`](adopting.md) — user-facing commands and system surfaces.
+- [`../notebooks/`](../notebooks/) — runnable quickstart, evidence-rung, and contributor demos.
 - [`authoring-packs.md`](authoring-packs.md) — pack schema and authoring rules.
 - [`authoring-engines.md`](authoring-engines.md) — installed engine contract, witness provenance, and the `verify-engine` conformance kit.
 - [`neural-verifiers.md`](neural-verifiers.md) — optional ONNX query/oracle adapters and their refusal-first subprocess boundary.
