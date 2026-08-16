@@ -50,7 +50,7 @@ flowchart LR
     class drift,edition boundary
 ```
 
-A pack keeps the legal path inspectable: the quote is retrieved and pinned before it becomes a formal property, and a refinement row records what that formalisation does not decide. Editions are immutable rather than silently rewritten. The repository currently carries six packs and 38 duties. See [pack authoring](authoring-packs.md), the [legal retrieval record](legal-sources.md), and the [refinement record](refinement.md).
+A pack keeps the legal path inspectable: the quote is retrieved and pinned before it becomes a formal property, and a refinement row records what that formalisation does not decide. Editions are immutable rather than silently rewritten. The repository currently carries seven packs and 39 duties. See [pack authoring](authoring-packs.md), the [legal retrieval record](legal-sources.md), and the [refinement record](refinement.md).
 
 ## What the system exposes
 

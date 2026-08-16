@@ -219,7 +219,7 @@ monthly evidence.
 ## A predicate the law states without a boundary — two ways to write it
 
 Most of what a shipped pack has left out is not a construct. It is a *predicate*: *meaningful*,
-*sufficiently detailed*, *adequate*, *appropriate*. Twenty-eight of the thirty-eight shipped
+*sufficiently detailed*, *adequate*, *appropriate*. Twenty-eight of the thirty-nine shipped
 requirements are presence checks and the fourth column of [`refinement.md`](refinement.md) says so
 row after row. There are two ways to write one, and they are the sixth and seventh fragments.
 

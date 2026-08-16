@@ -17,8 +17,9 @@ What a reader must not break:
     Why this matters: a system that started recording when things happened must not thereby lose
     a verdict it had. Richer evidence never costs an answer.
   - A duty asked for on any other domain is not evaluated, and never satisfied.
-    Why this matters: no metric or interval semantics exists here. Answering such a duty off the
-    record index would be a verdict about decisions presented as a verdict about days.
+    Why this matters: `within_after` is the one operator reading the event clock, and a property
+    without it has no metric semantics here. Answering such a duty off the record index would be
+    a verdict about decisions presented as a verdict about days.
 """
 
 from __future__ import annotations
@@ -203,7 +204,7 @@ def test_the_refusal_says_which_of_the_two_gaps_it_hit() -> None:
     assert timeless.details["time_domain_stated_by_trace"] == ORDINAL_TIME
     assert "no event times at all" in timeless.evidence_summary
     assert clocked.details["time_domain_stated_by_trace"] == EVENT_TIME
-    assert "no metric or interval semantics reads them yet" in clocked.evidence_summary
+    assert "no bounded-response operator to read them with" in clocked.evidence_summary
 
 
 # --- What the envelope says -------------------------------------------------------------------

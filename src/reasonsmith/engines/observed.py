@@ -509,9 +509,10 @@ def _event_metric_result(
         bucket = cases.setdefault(key, {"anchor": [], "endpoint": []})
         stamps = stated.instants[index] if index < len(stated.instants) else None
         if stamps is None:
-            if is_present(record.get(anchor)) or is_present(record.get(endpoint)):
+            unstamped = [name for name in (anchor, endpoint) if is_present(record.get(name))]
+            if unstamped:
                 missing_event_timestamps.append(
-                    {"record_index": index, "events": [anchor, endpoint]}
+                    {"record_index": index, "events": unstamped}
                 )
             continue
         for role, event_name in (("anchor", anchor), ("endpoint", endpoint)):
@@ -806,8 +807,9 @@ class ObservedEngine:
                 "this trace records no event times at all, so there is no clock to count on"
                 if stated.is_ordinal
                 else (
-                    "this trace records event times, but the monitor's only time axis is the "
-                    "record index: no metric or interval semantics reads them yet"
+                    "this trace records event times, but this property carries no bounded-response "
+                    "operator to read them with, and the monitor's only time axis is the record "
+                    "index"
                 )
             )
             return RequirementResult(

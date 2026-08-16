@@ -141,6 +141,20 @@ def test_incomplete_or_ambiguous_event_evidence_is_not_evaluated(records) -> Non
     assert result.strength is None
 
 
+def test_the_missing_timestamp_diagnostic_names_only_the_events_the_record_claimed() -> None:
+    """A record is told it lacks a timestamp for what it asserted, never for what it never did."""
+    result = _evaluate(
+        [
+            {"case_id": "c", "aware": True, TIME_DOMAIN_KEY: {"aware": "2026-01-01T00:00:00Z"}},
+            {"case_id": "c", "report": True},
+        ]
+    )
+    assert result.verdict is Verdict.INCONCLUSIVE
+    assert result.details["missing_event_timestamps"] == [
+        {"record_index": 1, "events": ["report"]}
+    ]
+
+
 def test_no_trigger_is_not_a_false_pass() -> None:
     result = _evaluate([{"case_id": "c", TIME_DOMAIN_KEY: {}}])
     assert result.verdict is Verdict.INCONCLUSIVE
