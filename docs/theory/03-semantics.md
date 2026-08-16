@@ -164,6 +164,19 @@ unknown record values as ordinary falsity `[@kleene-1952]`.
 deliberately documented when the LTLf abstraction rendered `next` as strong `X`; on 2026-08-14 ([pull request 199](https://github.com/eduardstan/reasonsmith/pull/199)), `ltlf.py` was aligned with the runtime by rendering source `next` as BLACK's weak
 `wX` (strong `X` remains only in the characteristic-trace pin), so the two readings now agree.
 
+**Definition 3.9 (relational atom).** `counterfactually_invariant(o, p)` is the whole
+`counterfactual` fragment. Over a declaration model, its value is $1$ exactly when every pair of
+records arising from admissible inputs, agreeing on every input except $p$, has equal outcome at
+$o$:
+
+$$
+r(o)=r'(o)
+$$
+
+for every such pair $r,r'$ in traces of $T$. This is a 2-safety property. On an observation model
+$O(\sigma)$ the atom is $\uparrow$: a log supplies no certified pair differing only in $p$.
+The admissible values of $p$ come from declaration constraints, never from a trace.
+
 **Definition 3.9a (bounded response on the event clock).**
 `within_after(present(a), present(b), Δ)` is the partial, Boolean event-time property for a finite
 case trace. For each case with exactly one timestamped anchor event `a`, it requires exactly one
@@ -183,19 +196,6 @@ bounds use calendar arithmetic with end-of-month clamping. The construct stands 
 `always(implies(present(a), within_after(present(a), ...)))`, whose trigger the loader refuses
 unless it is the same named anchor the metric measures; no other position is accepted.
 This is a behavioural observed capability, not a proof over a system's possible event times.
-
-**Definition 3.9 (relational atom).** `counterfactually_invariant(o, p)` is the whole
-`counterfactual` fragment. Over a declaration model, its value is $1$ exactly when every pair of
-records arising from admissible inputs, agreeing on every input except $p$, has equal outcome at
-$o$:
-
-$$
-r(o)=r'(o)
-$$
-
-for every such pair $r,r'$ in traces of $T$. This is a 2-safety property. On an observation model
-$O(\sigma)$ the atom is $\uparrow$: a log supplies no certified pair differing only in $p$.
-The admissible values of $p$ come from declaration constraints, never from a trace.
 
 **Remark 3.2 (where factoring fails).** The relational atom does not factor through individual
 traces, because its truth quantifies over pairs of executions and their agreement on all inputs

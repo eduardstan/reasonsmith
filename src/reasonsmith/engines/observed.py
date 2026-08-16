@@ -444,7 +444,7 @@ def _magnitude_vars(spec: str) -> set[str]:
 ANONYMOUS_CASE_LABEL = "<unnamed record {index}>"
 
 
-def _case_label(key: tuple[str, object]) -> str:
+def case_label(key: tuple[str, object]) -> str:
     """The reader-facing name of a correlation key, which is not the key itself."""
     if key[0] == "case":
         return str(key[1])
@@ -454,6 +454,33 @@ def _case_label(key: tuple[str, object]) -> str:
 def _reserved_case_id(case_id: str) -> bool:
     """Whether an author-supplied id takes the spelling reserved for an uncorrelated record."""
     return case_id.startswith("<unnamed record ") and case_id.endswith(">")
+
+
+def correlation_key(record: Mapping[str, Any], index: int) -> tuple[str, object]:
+    """The case a record belongs to, under the one rule this package correlates events by.
+
+    A record naming no case is its own case, in a keyspace disjoint from the author-supplied ids,
+    so two records are never merged on the strength of carrying the same event names. This is one
+    function rather than two because `witness._event_pair_check` must refuse exactly the pairs the
+    metric evaluator declines to measure; a second copy of the rule would let a plug-in be
+    confirmed on a pair the built-in engine reports not evaluated.
+
+    Raises `ValueError` naming why a `case_id` cannot be a case name.
+    """
+    raw_case = record.get("case_id")
+    if raw_case is None:
+        return ("record", index)
+    if not isinstance(raw_case, str) or not raw_case.strip():
+        raise ValueError(
+            f"record {index} has an empty or non-string case_id; event correlation is ambiguous"
+        )
+    case_id = raw_case.strip()
+    if _reserved_case_id(case_id):
+        raise ValueError(
+            f"record {index} has a case_id of {case_id!r}, the spelling reserved for a record "
+            "this engine correlates with nothing; a named case cannot take it"
+        )
+    return ("case", case_id)
 
 
 def _event_metric_result(
@@ -543,20 +570,10 @@ def _event_metric_result(
     cases: dict[tuple[str, object], dict[str, list[tuple[int, Any, dict[str, Any]]]]] = {}
     missing_event_timestamps: list[dict[str, Any]] = []
     for index, record in enumerate(records):
-        raw_case = record.get("case_id")
-        if raw_case is None:
-            key: tuple[str, object] = ("record", index)
-        elif not isinstance(raw_case, str) or not raw_case.strip():
-            return inconclusive(
-                f"record {index} has an empty or non-string case_id; event correlation is ambiguous"
-            )
-        elif _reserved_case_id(raw_case.strip()):
-            return inconclusive(
-                f"record {index} has a case_id of {raw_case.strip()!r}, the spelling reserved for "
-                "a record this engine correlates with nothing; a named case cannot take it"
-            )
-        else:
-            key = ("case", raw_case.strip())
+        try:
+            key = correlation_key(record, index)
+        except ValueError as exc:
+            return inconclusive(str(exc))
         bucket = cases.setdefault(key, {"anchor": [], "endpoint": []})
         stamps = stated.instants[index] if index < len(stated.instants) else None
         if stamps is None:
@@ -623,7 +640,7 @@ def _event_metric_result(
     pairs = []
     problems: list[str] = []
     for key, bucket in cases.items():
-        case_id = _case_label(key)
+        case_id = case_label(key)
         case_anchors = bucket["anchor"]
         case_endpoints = bucket["endpoint"]
         if not case_anchors and case_endpoints:
@@ -671,7 +688,11 @@ def _event_metric_result(
     violations = [pair for pair in pairs if not pair.within_bound]
     if violations:
         witness = violations[0].payload(duration)
-        indices = [violations[0].anchor_record_index, violations[0].end_record_index]
+        indices = list(
+            dict.fromkeys(
+                (violations[0].anchor_record_index, violations[0].end_record_index)
+            )
+        )
         offending = [records[index] for index in indices]
         return RequirementResult(
             requirement_id=req.id,

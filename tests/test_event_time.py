@@ -369,3 +369,33 @@ def test_an_uncorrelated_record_cannot_be_named_by_a_case_id() -> None:
     assert reserved.verdict is Verdict.INCONCLUSIVE
     assert "reserved" in reserved.evidence_summary
     assert "event_pairs" not in reserved.details
+
+
+def test_a_single_record_violation_names_that_record_once() -> None:
+    """The anchor and endpoint can share a record, and a reader is shown one, not two."""
+    result = _evaluate(
+        [
+            {
+                "decision_id": "d-1",
+                "aware": True,
+                "report": True,
+                TIME_DOMAIN_KEY: {
+                    "aware": "2026-01-01T00:00:00Z",
+                    "report": "2026-01-02T00:00:01Z",
+                },
+            }
+        ]
+    )
+    assert result.verdict is Verdict.VIOLATED
+    assert result.details["violation_step_indices"] == [0]
+    assert len(result.details["offending_trace_segment"]) == 1
+
+    report = ConformanceReport(
+        pack_id="test",
+        system_name="SUT",
+        system_scope=None,
+        system_domains=(),
+        results=(result,),
+        time_domain="event",
+    )
+    assert "offending record: decision d-1 (step 0)" in render_text(report)

@@ -487,13 +487,17 @@ def _event_pair_check(
     """Re-derive a claimed bounded-response breach from the duty and the trace.
 
     Nothing here is taken on the plug-in's word. The two event names and the deadline come from
-    `req.spec`, the two instants come from the records the payload names, and the arithmetic is
-    `event_time.measure_pair` — the checker the built-in engine already names. A plug-in therefore
-    cannot pick its own deadline, cannot cite an instant the log does not record, and cannot claim
-    a deadline started at a record whose anchor predicate is absent, which is the same rule
-    `_prefix_parts` applies to a trace prefix. A payload this checker cannot read is uncheckable
-    and keeps the plug-in's ceiling; a payload it reads and disagrees with is refuted.
+    `req.spec`, the two instants come from the records the payload names, the two records must be
+    one case under `observed.correlation_key` — the rule the metric evaluator itself correlates
+    by, imported rather than restated so a plug-in cannot be confirmed on a pair the built-in
+    engine declines to measure — and the arithmetic is `event_time.measure_pair`, the checker that
+    engine already names. A plug-in therefore cannot pick its own deadline, cannot cite an instant
+    the log does not record, cannot claim a deadline started at a record whose anchor predicate is
+    absent, and cannot run one across two cases, which is the same rule `_prefix_parts` applies to
+    a trace prefix. A payload this checker cannot read is uncheckable and keeps the plug-in's
+    ceiling; a payload it reads and disagrees with is refuted.
     """
+    from reasonsmith.engines.observed import case_label, correlation_key
     from reasonsmith.event_time import (
         EventTimeError,
         format_timestamp,
@@ -548,6 +552,22 @@ def _event_pair_check(
         )
 
     try:
+        anchor_key = correlation_key(records[anchor_index], anchor_index)
+        end_key = correlation_key(records[end_index], end_index)
+    except ValueError as exc:
+        return _REFUTED, f"the trace does not correlate the witnessed records: {exc}"
+    if anchor_key != end_key:
+        return _REFUTED, (
+            f"records {anchor_index} and {end_index} are case {case_label(anchor_key)!r} and "
+            f"case {case_label(end_key)!r}, so no deadline runs from one to the other"
+        )
+    if str(payload["case_id"]) != case_label(anchor_key):
+        return _REFUTED, (
+            f"the event-pair witness names case {payload['case_id']!r} and the trace makes those "
+            f"records case {case_label(anchor_key)!r}"
+        )
+
+    try:
         stated = read_time_domain(records)
     except (TypeError, ValueError) as exc:
         return _UNCHECKABLE, f"the trace states no readable event clock: {exc}"
@@ -579,7 +599,7 @@ def _event_pair_check(
 
     try:
         pair = measure_pair(
-            str(payload["case_id"]),
+            case_label(anchor_key),
             measured["anchor"],
             measured["endpoint"],
             bound,

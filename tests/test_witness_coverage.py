@@ -770,10 +770,15 @@ def _event_pair_req(spec: str = _EVENT_PAIR_SPEC):
     return _req("temporal", spec)
 
 
-def _event_pair_records(anchor="2026-01-01T00:00:00Z", end="2026-01-02T00:00:01Z", **record):
+def _event_pair_records(
+    anchor="2026-01-01T00:00:00Z",
+    end="2026-01-02T00:00:01Z",
+    anchor_case="c1",
+    end_case="c1",
+):
     return [
-        {"aware": True, "__time_domain__": {"aware": anchor}, **record.pop("anchor_record", {})},
-        {"report": True, "__time_domain__": {"report": end}, **record.pop("end_record", {})},
+        {"case_id": anchor_case, "aware": True, "__time_domain__": {"aware": anchor}},
+        {"case_id": end_case, "report": True, "__time_domain__": {"report": end}},
     ]
 
 
@@ -828,9 +833,56 @@ def test_an_event_pair_witness_may_not_bring_its_own_deadline() -> None:
     assert "1h" in reason and "24h" in reason
 
 
+def test_an_event_pair_witness_may_not_run_a_deadline_across_two_cases() -> None:
+    """Correlation is the whole basis of the measurement, so the checker applies the engine's."""
+    status, reason = witness._event_pair_check(
+        _event_pair_req(),
+        _event_pair_records(anchor_case="A", end_case="B"),
+        _event_pair_payload(case_id="A"),
+    )
+    assert status == "refuted"
+    assert "'A'" in reason and "'B'" in reason
+
+
+def test_two_uncorrelated_records_are_no_pair_for_a_plugin_either() -> None:
+    """Records naming no case are their own cases, exactly as the metric evaluator keys them."""
+    unnamed = [
+        {"aware": True, "__time_domain__": {"aware": "2026-01-01T00:00:00Z"}},
+        {"report": True, "__time_domain__": {"report": "2026-01-02T00:00:01Z"}},
+    ]
+    assert witness._event_pair_check(
+        _event_pair_req(), unnamed, _event_pair_payload()
+    )[0] == "refuted"
+
+    one_record = [
+        {
+            "aware": True,
+            "report": True,
+            "__time_domain__": {
+                "aware": "2026-01-01T00:00:00Z",
+                "report": "2026-01-02T00:00:01Z",
+            },
+        }
+    ]
+    assert witness._event_pair_check(
+        _event_pair_req(),
+        one_record,
+        _event_pair_payload(
+            case_id="<unnamed record 0>", anchor_record_index=0, end_record_index=0
+        ),
+    )[0] == "confirmed"
+
+
+def test_an_event_pair_witness_may_not_rename_the_case_the_trace_states() -> None:
+    status, reason = witness._event_pair_check(
+        _event_pair_req(), _event_pair_records(), _event_pair_payload(case_id="somewhere-else")
+    )
+    assert status == "refuted" and "somewhere-else" in reason
+
+
 def test_an_event_pair_witness_may_not_cite_an_instant_the_log_does_not_record() -> None:
     """A timestamp absent from the named record is a manufactured pair, not a witnessed one."""
-    unclocked = [{"aware": True}, {"report": True}]
+    unclocked = [{"case_id": "c1", "aware": True}, {"case_id": "c1", "report": True}]
     assert witness._event_pair_check(
         _event_pair_req(), unclocked, _event_pair_payload()
     )[0] == "refuted"
