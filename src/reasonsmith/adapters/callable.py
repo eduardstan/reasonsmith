@@ -1,4 +1,4 @@
-"""Callable wrapper adapter for reasonsmith v0.2.
+"""Callable wrapper adapter for reasonsmith v0.10.2.
 
 What this module is for:
   Wraps any Python callable or model object (e.g. scikit-learn, PyTorch, custom function) into a

@@ -1,4 +1,4 @@
-"""Specification structures and pack loader for reasonsmith v0.2.
+"""Specification structures and pack loader for reasonsmith v0.10.2.
 
 What this module is for:
   Defines `Requirement` and `Pack` data structures and the loader for TOML regulation packs

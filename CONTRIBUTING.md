@@ -19,16 +19,22 @@ pip install -e ".[dev]"
 
 ## Running Tests and Linters
 
-Before submitting a pull request, run all three verification commands:
+Before submitting a pull request, run the verification commands relevant to your change:
 
 ```sh
 ruff check .
 pytest
 python -m reasonsmith.demo
+reasonsmith init pack example_pack
+reasonsmith init engine example_engine
+reasonsmith validate-pack ecoa --analyse
+reasonsmith verify-engine my_engine:engine
 ```
 
-All three must pass cleanly with zero errors or warnings. Continuous integration
-(`.github/workflows/ci.yml`) runs exactly these steps for every pull request and for pushes to
+The scaffold commands write their named directories; remove those directories after inspection.
+Replace `my_engine:engine` with the module and attribute for the engine you are verifying. All
+commands must pass cleanly with zero errors or warnings. Continuous integration
+(`.github/workflows/ci.yml`) runs the lint and test suite for every pull request and for pushes to
 `main`; a push to a pull-request branch is covered by the pull-request run rather than a duplicate
 push run.
 
@@ -43,7 +49,7 @@ that are not objectives in their own right.
 
 | Category | Status | Details |
 |---|---|---|
-| **What is built** | Complete (v0.2 Core) | The package modules live under [`src/reasonsmith/`](src/reasonsmith/), and [`docs/README.md`](docs/README.md) indexes the documents that explain them. The HTML report is published as part of the website (separate `reasonsmith-site` repo on Vercel, see [#35](https://github.com/eduardstan/reasonsmith/pull/35)), and [`src/reasonsmith/demo.py`](src/reasonsmith/demo.py) is the end-to-end demonstration of all six Table 7 rows. |
+| **What is built** | Current release (v0.10.2) | The package has witness-checked engine boundaries, neural systems as first-class subjects with an honest bounded ceiling, measurement-only statistical evidence, the Seoul Frontier AI Safety Commitments pack, and the EU AI Act Article 86 duty contributed externally. Event-time bounded response is now supported, including the Cyber Resilience Act Article 14(2)(a) 24-hour duty landed in PR [#247](https://github.com/eduardstan/reasonsmith/pull/247). The package modules live under [`src/reasonsmith/`](src/reasonsmith/), and [`docs/README.md`](docs/README.md) indexes the documents that explain them. |
 | **Deliberately NOT done** | Out of Scope | Web/GUI dashboards — the `--html` report is one static offline file, not a served application — reimplementing `nesyarena` IR or oracle engines, generating automated legal opinions, or making un-hedged legal compliance guarantees. |
 
 ### Concrete Open Work for Contributors
@@ -51,10 +57,10 @@ that are not objectives in their own right.
 The demonstrations **Issue 6** asked for — rows 1, 2, 5 and 6 — have landed, so every Table 7 row now has one. What is still open:
 
 - **The open objectives in [`ROADMAP.md`](ROADMAP.md)**, which is where the substantial work is.
-- **Wider temporal monitor rule sets** for the `observed` rtamt engine — smaller than an objective, and a good way into the property language.
-- **Anything labelled [`good first issue`](https://github.com/eduardstan/reasonsmith/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)**, each one self-contained and stating what "done" looks like.
+- **The live issue board, [issues 237–244](https://github.com/eduardstan/reasonsmith/issues)**, including the temporal-rule-set work now tracked by [#237](https://github.com/eduardstan/reasonsmith/issues/237).
+- **Anything labelled [`good first issue`](https://github.com/eduardstan/reasonsmith/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)** or [`help wanted`](https://github.com/eduardstan/reasonsmith/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).
 
-Extending an engine, rather than adding another demo, is now the concrete, high-impact contribution.
+For new regulation packs, use the [pack proposal form](.github/ISSUE_TEMPLATE/pack_proposal.yml). For engines and verifiers, use the [engine proposal form](.github/ISSUE_TEMPLATE/engine_proposal.yml); for a system or model, use the [system/model proposal form](.github/ISSUE_TEMPLATE/sut_model_proposal.yml). Extending an engine or bringing a well-described system, rather than adding another demo, is now the concrete, high-impact contribution.
 
 ## Standing Rules for Changes
 
@@ -103,10 +109,10 @@ build a release whose tag is not `v` plus that version.
 
 **A suspected vulnerability is not a bug report.** Do not open a discussion, an issue, or a pull request for one. Report it privately, to the email address in [SECURITY.md](SECURITY.md), which owns the reporting process, the scope, and the response times for security reports.
 
-For a bug, question, or pack proposal:
-1. **Questions go to [GitHub Discussions](https://github.com/eduardstan/reasonsmith/discussions)**; issues are for bugs and pack proposals.
+For a bug, question, proposal, or help request:
+1. **Questions go to [GitHub Discussions](https://github.com/eduardstan/reasonsmith/discussions)**; issues use the available forms for bugs, packs, engines, and systems/models. Good-first-issue and help-wanted work is also listed on the issue board.
 2. Check the existing discussions or issues before starting a new one.
-3. Pick a template from `.github/ISSUE_TEMPLATE/` — GitHub offers them automatically when you open an issue, and each applies its own label (see [Labels](#labels)). **Bug report** asks for the exact command you ran and the output you saw; **Pack proposal** is how a new regulation pack gets started (which regulation, which official source, which duty). A proposal is the fastest way to go from interested reader to contributor.
+3. Pick the matching template from `.github/ISSUE_TEMPLATE/` — GitHub offers it automatically, and each form applies its own label (see [Labels](#labels)). The **Bug report**, **Pack proposal**, **Engine proposal**, and **System or model proposal** forms each describe the evidence needed to make the work actionable.
 
 ## Response times
 
@@ -128,7 +134,7 @@ Commit messages, pull-request bodies, and pull-request comments should not inclu
 
 Every issue and pull request carries at least one label. A label is how a reader filters a list they did not write; an unlabelled item is findable only by whoever remembers it.
 
-Issues opened through a form are labelled automatically — **Bug report** carries `bug`, **Pack proposal** carries `pack`. An issue opened through the API or `gh issue create` bypasses the form and arrives with none, so add one or say which it should have.
+Issues opened through a form are labelled automatically — **Bug report** carries `bug`, **Pack proposal** carries `pack`, **Engine proposal** carries `wanted: engine`, and **System or model proposal** carries `wanted: model/SUT`. An issue opened through the API or `gh issue create` bypasses the form and arrives with none, so add one or say which it should have.
 
 A pull request has no form and no automatic label, and **applying a label needs triage permission, which an outside contributor does not have**. So the convention is: name the intended label under *Intended label* in the pull-request description, and a maintainer applies it. Dependabot labels its own.
 

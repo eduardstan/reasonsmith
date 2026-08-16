@@ -121,7 +121,7 @@ variable, and that it cannot see a disparate impact.
   provable-non-discrimination case lives in `tests/test_counterfactual_invariance.py` rather than
   in a transcript.
 
-## 4. Breadth: more regulations than five
+## 4. Breadth: more regulations than five — **closed for the current breadth target**
 
 **The gap, and what a seventh pack did and did not settle.** Seven packs now ship — Table 7, EU AI Act
 (Art. 12, 13 & 86), GPAI (EU AI Act Art. 53 & 55), GDPR, ECOA/Reg B, the Cyber Resilience Act
@@ -139,7 +139,9 @@ of nineteen, because Article 53 and Article 55 are document-production duties fo
 the correct refinement and no stronger property exists to write
 ([`docs/refinement.md`](docs/refinement.md), *presence is not adequacy*). Breadth bought that way is
 real breadth and it is not depth. **The Seoul pack adds seven record approximations and one logical Commitment IV depth anchor, so it meets
-this bar while retaining the explicit limits in `docs/refinement.md`.**
+this bar while retaining the explicit limits in [`docs/refinement.md`](docs/refinement.md). The CRA pack
+and its Article 14(2)(a) 24-hour event-time duty, landed in PR [#247](https://github.com/eduardstan/reasonsmith/pull/247), bring the inventory to seven packs
+and add a bounded event-time capability; they do not claim a stronger temporal rung.**
 
 There is now a measurement beside that count rather than only the count.
 `reasonsmith validate-pack <pack> --analyse --system-module …` mutates a system's declared rules
@@ -157,10 +159,14 @@ and one `docs/refinement.md` row per requirement, whose fourth column names a sp
 than saying "some aspects are not captured".
 
 **Depends on.** Proposals, which is the one item on this list a stranger unblocks rather than
-waits on. The intake is the Discussion
+waits on. The intake is the [pack proposal form](.github/ISSUE_TEMPLATE/pack_proposal.yml), with questions in
+[GitHub Discussions](https://github.com/eduardstan/reasonsmith/discussions) and the live issue board
+([issues 237–244](https://github.com/eduardstan/reasonsmith/issues)). Engine proposals use the
+[engine proposal form](.github/ISSUE_TEMPLATE/engine_proposal.yml); system and model proposals use
+the [system/model proposal form](.github/ISSUE_TEMPLATE/sut_model_proposal.yml).
+The earlier discussion
 [*Which regulation should the next pack cover?*](https://github.com/eduardstan/reasonsmith/discussions/54)
-and the [pack proposal template](.github/ISSUE_TEMPLATE/pack_proposal.yml); the rules a pack must
-satisfy are in [`docs/authoring-packs.md`](docs/authoring-packs.md).
+is background; the rules a pack must satisfy are in [`docs/authoring-packs.md`](docs/authoring-packs.md).
 
 ## 5. Evidence that a system's inference is the semantics it claims — closed, for one artefact family
 
@@ -277,34 +283,19 @@ rungs and the certificate engine's single one — **has since been designed**, o
 graded duty inherits the `assessment` basis and is counted apart from a duty an engine failed to
 settle; nothing about it now waits on that design.
 
-## 7. Witness-checked plug-in engines
+## 7. Witness-checked plug-in engines — **closed**
 
-**The gap.** [`src/reasonsmith/plugins.py`](src/reasonsmith/plugins.py) says exactly what the
-installed-engine path does not provide: no bound on a plug-in's runtime, no subprocess boundary or
-serialisation contract with which to impose one, and no check of the reasoning behind a result below
-the plug-in's self-declared ceiling. [`docs/authoring-engines.md`](docs/authoring-engines.md), *What
-this is worth*, consequently says that a `proved` result from an unfamiliar engine is worth the
-installer's trust in that package. Provenance makes that trust visible; it does not turn it into a
-checked proof.
+**What closed it.** Installed engines now report only at their declared ceiling. When a plug-in
+supplies a violation witness, the trusted core independently re-checks it and records
+`witness-checked`; without a usable witness the result remains `trusted-ceiling`, naming the engine
+and the limit rather than borrowing a built-in claim. The `verify-engine` conformance kit exercises
+this boundary, including adversarial witnesses and refusals. The implementation and tests landed in
+PRs [#209](https://github.com/eduardstan/reasonsmith/pull/209), [#210](https://github.com/eduardstan/reasonsmith/pull/210), [#219](https://github.com/eduardstan/reasonsmith/pull/219), and [#232](https://github.com/eduardstan/reasonsmith/pull/232).
 
-**Measurable outcome.** An external engine's `proved` verdict is accepted as witness-checked only
-when the witness it returns re-checks against reasonsmith's core: a counterexample is replayed by the
-reference interpreter, and a proof or invariant is checked by the corresponding core checker. A
-result with no checkable witness remains visible as a trusted-ceiling result, naming both the engine
-and that provenance rather than borrowing the built-in engine's claim. No test today distinguishes a
-witness-checked plug-in result from one trusted up to its declared ceiling; that is the check that
-fails now and must pass for this objective to close. This is the certifying-algorithm discipline of
-[McConnell et al. (2011)](https://doi.org/10.1016/j.cosrev.2010.09.009) — the answer travels with
-evidence a simpler checker can validate — applied to the extension point. The witness validation of
-[Beyer et al. (2015)](https://doi.org/10.1145/2786805.2786867) is the relevant SV-COMP interchange
-precedent, not a claim that its format can be adopted unchanged.
-
-**Depends on.** The witness-format design now under way: which fragments have a checkable witness,
-how that witness serialises, and what the core checker is allowed to assume. That design is also the
-precondition for moving a plug-in call into a bounded subprocess. A witness format cannot make an
-arbitrary engine safe to execute, and a universal result whose proof language the core does not
-understand remains trusted at its visible ceiling; neither case is silently promoted to
-witness-checked.
+**What remains outside this objective.** Plug-ins still run in-process and have no wall-clock
+runtime bound; [`docs/authoring-engines.md`](docs/authoring-engines.md) states that limit. A witness
+format cannot make an arbitrary engine safe to execute, so a result the core cannot check remains
+trusted only at its visible ceiling.
 
 ## 8. Neural systems above `observed`
 

@@ -1,4 +1,4 @@
-"""Tests for the HTML conformance report renderer in reasonsmith v0.2.
+"""Tests for the HTML conformance report renderer in reasonsmith v0.10.2.
 
 What this module is for:
   Verifies that `ConformanceReport.render_html()` produces a self-contained, offline HTML report

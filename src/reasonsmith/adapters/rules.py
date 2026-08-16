@@ -1,4 +1,4 @@
-"""Rule-based decision system adapter for reasonsmith v0.2.
+"""Rule-based decision system adapter for reasonsmith v0.10.2.
 
 What this module is for:
   Adapts rule-based decision systems exposing explicit decision logic into a SystemUnderTest for

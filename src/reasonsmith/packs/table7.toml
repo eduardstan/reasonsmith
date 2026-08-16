@@ -1,5 +1,5 @@
 ####################################################################################################
-# Table 7 regulation pack for reasonsmith v0.2.
+# Table 7 regulation pack for reasonsmith v0.10.2.
 #
 # This pack re-expresses Table 7 of "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
 # (Stan, Sciavicco & Napoletano, JAIR 2026, p. 36:22) as formal requirements with signal dependencies.

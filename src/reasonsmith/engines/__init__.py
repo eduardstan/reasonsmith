@@ -1,4 +1,4 @@
-"""Verification engines for reasonsmith v0.2.
+"""Verification engines for reasonsmith v0.10.2.
 
 What this module is for:
   Exports verification engines (`RecordEngine`, `ObservedEngine`, `ProbedEngine`, `ProvedEngine`,

@@ -1,4 +1,4 @@
-"""Observed engine for reasonsmith v0.2.
+"""Observed engine for reasonsmith v0.10.2.
 
 What this module is for:
   Evaluates properties over decision traces using an rtamt discrete-time STL monitor: `temporal`

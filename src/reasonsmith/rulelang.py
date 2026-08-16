@@ -1,4 +1,4 @@
-"""Shared rule and specification mini-language for reasonsmith v0.2.
+"""Shared rule and specification mini-language for reasonsmith v0.10.2.
 
 What this module is for:
   Rule text and requirement specs arrive as strings from pack TOML files and from adapter

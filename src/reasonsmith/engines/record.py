@@ -1,4 +1,4 @@
-"""Record engine for reasonsmith v0.2.
+"""Record engine for reasonsmith v0.10.2.
 
 What this module is for:
   Evaluates record-keeping requirements (`formalism = "record"`) over decision traces. The
