@@ -54,6 +54,7 @@ from reasonsmith.engines.observed import (
     to_stl,
 )
 from reasonsmith.rulelang import (
+    BOUNDED_RESPONSE_CALL,
     CONTAINS_CALL,
     COUNTERFACTUAL_CALL,
     DEGREE_CALL,
@@ -110,7 +111,14 @@ def _ebnf_block() -> str:
 
 def _language_call_names() -> set[str]:
     return (
-        {PRESENCE_CALL, CONTAINS_CALL, COUNTERFACTUAL_CALL, UNDETERMINED_CALL, DEGREE_CALL}
+        {
+            BOUNDED_RESPONSE_CALL,
+            PRESENCE_CALL,
+            CONTAINS_CALL,
+            COUNTERFACTUAL_CALL,
+            UNDETERMINED_CALL,
+            DEGREE_CALL,
+        }
         | set(TEMPORAL_OPERATORS)
         | set(VALUE_CALLS)
     )

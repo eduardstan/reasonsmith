@@ -468,6 +468,23 @@ statistic three times, not three measurements, and the violated finding reads `f
 step(s) [0, 1, 2]` — three breaching decisions, when there was one number. The step indices in a
 parity finding count records, not findings, and they will overstate the breach every time.
 
+## Bounded-response event deadlines
+
+The property language has one metric temporal construct, `within_after(present(anchor),
+present(endpoint), "24h")`. It is intentionally narrow: the two named predicates must be
+timestamped independently under `sut.TIME_DOMAIN_KEY`, and records must carry a non-empty
+`case_id` when an incident spans records (a record with no id is one case by itself). The observed
+engine normalises explicit-offset ISO-8601 timestamps to UTC and checks the closed bound
+`0 <= t_end - t_start <= Δ`; it does not convert record positions or read a logged latency. Missing,
+duplicate, malformed, out-of-order, or ambiguously correlated events are **not evaluated**, never a
+pass. `h` and `d` are elapsed units; `mo` is calendar arithmetic with end-of-month clamping, not
+a 30-day approximation.
+
+The operator does not settle open-textured legal limbs such as “without undue delay”, “actively
+exploited”, “timely”, or “severe incident”. Keep those limbs visible in the rationale/refinement
+record or as separate `undetermined()` requirements; do not replace them with a number merely to
+make a deadline property parse. The CRA Article 14 pack is the worked example.
+
 ## Internal-policy sources: provenance, not legal authority
 
 Internal documents are accepted as pack sources. The loader checks that the metadata and exact

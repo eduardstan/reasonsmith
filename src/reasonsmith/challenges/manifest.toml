@@ -1,6 +1,7 @@
 schema_version = 2
 # Gold coverage includes every shipped requirement; temporal traces and counterfactual pairs use the dedicated model-free checker.
 requirements = [
+  "cra_art14_2_a_early_warning_within_24_hours",
   "eu_ai_act_art12_1_automatic_logging",
   "ecoa_reg_b_1002_9_b_2_specific_reasons",
   "gdpr_art22_1_no_prohibited_decision_for_any_input",

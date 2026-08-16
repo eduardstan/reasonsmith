@@ -52,7 +52,7 @@ credit** ([`docs/findings-nesyarena.md`](findings-nesyarena.md), finding 3;
 
 ## 2. Depth is uneven, and here is the shape of it
 
-Six packs ship, with 38 requirements between them. Counted by the fragment each property is
+Seven packs ship, with 39 requirements between them. Counted by the fragment each property is
 written in:
 
 | formalism | requirements | what it asks |
@@ -73,8 +73,8 @@ That is not an accident of laziness: `packs/gpai.toml`'s eight Article 53 and 55
 document-production duties, for which presence is the correct refinement and no stronger property
 exists to write. But the consequence is real and [`ROADMAP.md`](../ROADMAP.md) §4 states it in its
 own words: *"Breadth bought that way is real breadth and it is not depth."* A battery of engines
-that mostly agrees by construction differentiates few systems. The current inventory is six packs
-and 38 duties; the fragment table above is the source of truth for its family tallies.
+that mostly agrees by construction differentiates few systems. The current inventory is seven packs
+and 39 duties; the fragment table above is the source of truth for its family tallies.
 
 Presence is also not adequacy, at the level of the individual duty: a reason field that is filled
 in is not a reason that is sufficient. Where a clause supplies its own list of insufficient

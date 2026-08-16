@@ -164,6 +164,24 @@ unknown record values as ordinary falsity `[@kleene-1952]`.
 deliberately documented when the LTLf abstraction rendered `next` as strong `X`; on 2026-08-14 ([pull request 199](https://github.com/eduardstan/reasonsmith/pull/199)), `ltlf.py` was aligned with the runtime by rendering source `next` as BLACK's weak
 `wX` (strong `X` remains only in the characteristic-trace pin), so the two readings now agree.
 
+**Definition 3.9a (bounded response on the event clock).**
+`within_after(present(a), present(b), Δ)` is the partial, Boolean event-time property for a finite
+case trace. For each case with exactly one timestamped anchor event `a`, it requires exactly one
+timestamped endpoint event `b` in the same case and uses the closed deadline
+
+$$
+0 ≤ t_b - t_a ≤ Δ.
+$$
+
+The timestamps must be explicit-offset ISO-8601 values normalised to UTC; the operator never turns
+record positions or a logged latency into time. Records without `case_id` are independent cases,
+while records sharing a non-empty `case_id` may form one case. Missing, duplicate, malformed,
+out-of-order, or ambiguously correlated events make the formula undefined (reported not evaluated),
+and a trace with no anchor is not a vacuous pass. Hour/day bounds are elapsed durations; month
+bounds use calendar arithmetic with end-of-month clamping. The only accepted enclosing temporal
+shape is `always(implies(present(a), within_after(...)))`, whose trigger is the same named anchor.
+This is a behavioural observed capability, not a proof over a system's possible event times.
+
 **Definition 3.9 (relational atom).** `counterfactually_invariant(o, p)` is the whole
 `counterfactual` fragment. Over a declaration model, its value is $1$ exactly when every pair of
 records arising from admissible inputs, agreeing on every input except $p$, has equal outcome at

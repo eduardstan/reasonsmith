@@ -3,7 +3,7 @@
 Every requirement in this repository was written by someone reading a clause of law and deciding
 what formula stands for it. That step — refinement — is where the legal meaning is either preserved
 or quietly lost, and it is the step no pack file records. `docs/authoring-packs.md` documents the
-*fields* of a requirement. This document is the record of the *judgement*: for each of the 38 shipped
+*fields* of a requirement. This document is the record of the *judgement*: for each of the 39 shipped
 requirements, the clause, the duty it states, the property it became, and — the column that matters —
 what the refinement deliberately did not capture.
 
@@ -31,7 +31,7 @@ flowchart LR
 
 ## Autoformalisation challenge sets and sign-off
 
-Thirty-eight duties have executable, lawyer-readable gold challenge sets under
+Thirty-nine duties have executable, lawyer-readable gold challenge sets under
 [`autoformalization.md`](autoformalization.md) and `src/reasonsmith/challenges/`. They cover all shipped record and logical duties plus four temporal traces and one counterfactual
 pair corpus. Open-textured and certificate duties remain outside this model-free benchmark rather
 than being silently approximated here. The
@@ -49,7 +49,7 @@ duty is different for every requirement, and column four is where it is written 
 
 Four kinds of gap recur, and naming them once keeps the table short:
 
-- **Presence is not adequacy.** Twenty-eight of the thirty-eight shipped duties are `record` duties:
+- **Presence is not adequacy.** Twenty-eight of the thirty-nine shipped duties are `record` duties:
   conjunctions of `present(signal)` atoms. The remaining logical, temporal, counterfactual,
   certificate, and other fragments do not turn a presence claim into an adequacy finding. A reason field containing `"n/a"` is present
   ([`docs/theory/03-semantics.md`](theory/03-semantics.md) §3.5, *record*). Every clause whose content is an adjective — *meaningful*,
@@ -203,13 +203,13 @@ still named in its row above. A defeater counts only where the clause states it 
 requirement's own `verbatim_text` or in a source `docs/legal-sources.md` retrieved — the discipline
 every other claim about the law here is held to.
 
-**The count, over all thirty-eight shipped requirements:**
+**The count, over all thirty-nine shipped requirements:**
 
 | `defeasibility` | Requirements | What it says |
 |---|---|---|
 | `defeasible-unmodelled` | **7** | The law states an exception; the property does not carry it. |
 | `defeasible-modelled` | 2 | The law states an exception; the property carries it. |
-| `trigger-unmodelled` | 13 | No defeater. The clause's condition of application is not modelled. |
+| `trigger-unmodelled` | 14 | No defeater. The clause's condition of application is not modelled. |
 | `strict` | 16 | No defeater, and the property's reach is the clause's. |
 
 The seven are `ecoa_reg_b_1002_9_a_1_timing_of_notice` (paragraph (c)'s incomplete-application
@@ -274,7 +274,7 @@ came out:
 
 | `deontic_type` | Requirements |
 |---|---|
-| `obligation` | 32 |
+| `obligation` | 33 |
 | `prohibition` | 5 |
 | `reparation` | 1 |
 | `permission` | **0** |
@@ -509,6 +509,8 @@ Its rows are transcribed from Table 7 of *Symbols and Neurons* (Stan, Sciavicco 
 | ECOA / Reg B 12 CFR 1002.9<br>`ecoa_reg_b_adverse_action` | Adverse action reasons in credit decisions. | `record`: presence of `stored_reasons_per_decision`, `model_version`, `score_factors`, `audit_ids`, `retention_for_regulatory_lookback` | Specificity, as in the statutory ECOA rows: `score_factors` present is not a check that the factors stored are the *principal* reasons for the action. `retention_for_regulatory_lookback` present means the record names a retention arrangement, not that a record actually survives the 25-month period of 1002.12(b). The adverse-action trigger is not modelled, so the row is checked over approvals too. And this row carries `domains = ["consumer-credit"]`, so it no longer reaches a system that has not said it decides in consumer credit — but the adverse-action trigger it does not model is the part of the clause's reach that gate cannot recover. | Human sign-off: pending (gold set: `ecoa_reg_b_adverse_action.toml`; no candidate approved).
 | FDA GMLP, agency transparency guidance<br>`fda_gmlp_samd` | Good Machine Learning Practice and transparency for Software as a Medical Device. | `record`: `present(design_history_links) and present(verification_logs) and present(change_control)` | The guidance itself. GMLP is a set of guiding principles, not a rule with a compliance test, which is what `binding = false` records; none of the ten principles — multidisciplinary expertise, good software engineering practice, representative data sets, independence of training and test sets, and the rest — is formalised. `article_clause` here is a description, not a citation: there is no clause to quote, so `verbatim_text` cannot be verified against a print and the drift check has no source to re-fetch. `change_control` present means a field is filled, not that a change went through a predetermined change control plan. This row carries `domains = ["healthcare"]` — the paper's Table 7 has no such column, so the classification is this pack author's, and it means a system that has not declared a healthcare decision domain is reported not applicable here rather than judged against guidance for medical-device software. | Human sign-off: pending (gold set: `fda_gmlp_samd.toml`; no candidate approved).
 | NIST AI RMF 1.0<br>`nist_ai_rmf_risk_evidence` | Risk evidence and continuous monitoring. | `record`: presence of `continuous_monitoring_logs`, `metric_thresholds_and_alerts`, `reviews_and_sign_offs`, `incident_tickets` | *Continuous*, and the framework's structure. The AI RMF is voluntary and organised around the GOVERN, MAP, MEASURE and MANAGE functions rather than testable duties, so `article_clause = "1.0"` is a framework version, not a clause — the same non-citation problem as the row above, and `binding = false` records the voluntariness. `metric_thresholds_and_alerts` present means thresholds were declared, not that any of them is appropriate or that an alert ever fired; `reviews_and_sign_offs` present means a sign-off field is non-empty, not that a reviewer with authority read anything. Continuity cannot be established from a supplied trace at all ([`docs/semantics.md`](semantics.md) §4). | Human sign-off: pending (gold set: `nist_ai_rmf_risk_evidence.toml`; no candidate approved).
+
+| Cyber Resilience Act (Regulation (EU) 2024/2847)<br>`cra_art14_2_a_early_warning_within_24_hours` | A manufacturer submits an early warning notification within 24 hours of becoming aware of an actively exploited vulnerability. | `temporal`: `always(implies(present(cra_manufacturer_awareness), within_after(present(cra_manufacturer_awareness), present(cra_early_warning_notification), "24h")))` | **The explicit 24-hour outer bound only.** The event-time metric reads independently timestamped awareness and early-warning events, correlates them by `case_id` (or treats one record as one case), normalises explicit-offset timestamps to UTC, and uses closed semantics `0 <= end - start <= 24h`. Missing, duplicate, uncorrelated, malformed or out-of-order events are not evaluated. The clause's **actively exploited** condition and **without undue delay** limb remain unmodelled; this property does not invent a predicate or a shorter number for either. Calendar arithmetic is available to the shared metric layer but is not used by this 24-hour duty. | Human sign-off: pending (gold set: `cra_art14_2_a_early_warning_within_24_hours.toml`; no candidate approved).
 
 ---
 

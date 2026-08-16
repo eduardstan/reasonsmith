@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import ast
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -28,6 +28,7 @@ from reasonsmith.rulelang import (
     contains_literal,
     counterfactual_atom,
     eval_temporal_trace,
+    has_bounded_response,
     has_temporal_operator,
     is_present,
     kleene_and,
@@ -427,9 +428,25 @@ def _direction(
     return False, _model_witness(solver.model(), scope)
 
 
-def _challenge_result(candidate: str, case: ChallengeCase) -> str:
-    """Classify one case without importing an engine or constructing a verdict."""
+def _challenge_result(candidate: str, case: ChallengeCase, requirement: Requirement) -> str:
+    """Classify one case without running a system or constructing a conformance verdict.
+
+    The bounded-response construct is an observed event-time semantics rather than a Z3 state
+    formula, so its challenge cases reuse the same pure trace evaluator as the observed rung with a
+    synthetic capability declaration and no system execution.
+    """
     node = _node(candidate)
+    if case.shape == "trace" and has_bounded_response(node):
+        from reasonsmith.engines.observed import ObservedEngine
+        from reasonsmith.sut import BaseSUT
+
+        metric_req = replace(requirement, spec=candidate)
+        result = ObservedEngine.evaluate(
+            metric_req, BaseSUT(set(requirement.requires)), list(case.trace or ())
+        )
+        if result.verdict.value in {"satisfied", "violated"}:
+            return result.verdict.value
+        raise ValueError("candidate has no settled event-time outcome on this trace")
     if case.shape == "trace":
         validate_temporal_property(node)
         values = eval_temporal_trace(node, list(case.trace or ()))
@@ -504,7 +521,7 @@ def check_challenges(
     checks: list[CaseCheck] = []
     for case in challenge.cases:
         try:
-            actual = _challenge_result(candidate, case)
+            actual = _challenge_result(candidate, case, req)
             checks.append(CaseCheck(case.id, case.expected, actual, actual == case.expected))
         except Exception as exc:
             checks.append(CaseCheck(case.id, case.expected, None, False, str(exc)))

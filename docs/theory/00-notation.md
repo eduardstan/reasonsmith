@@ -49,6 +49,7 @@ GitHub LaTeX; implementation identifiers remain code spans.
 | $x, y, z$ | `x, y, z` | element of $A$ | Algebra elements. | 03 Semantics | `manyvalued.Algebra` |
 | $c$ | `c` | class | Regulatory class. | 01 Models | `spec.Requirement.scope` |
 | $k$ | `k` | constant | Comparison constant. | 02 Syntax | `rulelang.parse_property` |
+| $t_a, t_b$ | `t_a, t_b` | instant | UTC instants of an event-time anchor and endpoint. | 03 Semantics | `reasonsmith.event_time` |
 | $P$ | `declared_pairs` | set of pairs | Pair set admitted by the declaration. | 04 Decision problems | `engines.counterfactual` |
 | $R$ | `replay_pairs` | set of pairs | Replay set, preserving the relation $R \subseteq P$. | 04 Decision problems | `engines.counterfactual.cross_rung_signal` |
 | $\Pi$ | `Pi` | program | Program, only where a mathematical name is unavoidable. | 01 Models | `program` |

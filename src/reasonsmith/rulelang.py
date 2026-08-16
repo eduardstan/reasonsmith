@@ -44,6 +44,8 @@ import math
 import tokenize
 from typing import Any, Iterable, Mapping
 
+from reasonsmith.event_time import EventTimeError, parse_duration
+
 _EQUIVALENCE_TOKENS = ("<=>", "<->")
 _IMPLICATION_TOKENS = ("=>", "->", " implies ")
 
@@ -118,6 +120,10 @@ UNDETERMINED_CALL = "undetermined"
 #: Nothing here turns a degree into a verdict. See `manyvalued` and `docs/semantics.md` §9.
 DEGREE_CALL = "degree"
 
+#: The sole metric-temporal construct. Its operands are named event predicates and its bound is
+#: a fixed duration string (for example ``"24h"`` or ``"1mo"``), never a logged latency.
+BOUNDED_RESPONSE_CALL = "within_after"
+
 #: Every atom whose first argument is a signal *name* the engine binds to a field or a variable,
 #: rather than an expression to be computed. Named once because two walkers ask the same question of
 #: it — `_bare_boolean_parts`, deciding which names are read as flags, and `_value_signal_names`,
@@ -158,7 +164,9 @@ UNARY_TEMPORAL_OPERATORS = frozenset(
 #: already depends on does.
 BINARY_TEMPORAL_OPERATORS = frozenset({"until", "since"})
 
-#: Every temporal operator of the language.
+#: The positional temporal operators. ``within_after`` is kept outside this legacy vocabulary
+#: because it is metric event-time semantics rather than an ordinal operator;
+#: ``has_temporal_operator`` still recognises it as temporal for classification and proof refusal.
 TEMPORAL_OPERATORS = UNARY_TEMPORAL_OPERATORS | BINARY_TEMPORAL_OPERATORS
 
 #: The call the arrow rewriter emits for `<=>` and `<->`, on the footing `Implies(...)` already has.
@@ -744,6 +752,114 @@ def _require_kind(kind: str, expected: str, node: ast.AST) -> None:
         )
 
 
+def bounded_response_arguments(node: ast.AST) -> tuple[str, str, str]:
+    """Return the two named event signals and duration of a ``within_after`` call.
+
+    The construct is intentionally not a general interval expression: both event predicates must
+    be exactly ``present(name)`` and the finite window must be a string accepted by the shared
+    event-time parser.
+    """
+    if not (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == BOUNDED_RESPONSE_CALL
+    ):
+        raise UnsupportedConstructError(
+            f"Expected {BOUNDED_RESPONSE_CALL}() call, got {ast.unparse(node)!r}"
+        )
+    if node.keywords or len(node.args) != 3:
+        raise UnsupportedConstructError(
+            f"{BOUNDED_RESPONSE_CALL} takes anchor, endpoint and duration: {ast.unparse(node)!r}"
+        )
+
+    names: list[str] = []
+    for role, argument in zip(("anchor", "endpoint"), node.args[:2], strict=True):
+        if not (
+            isinstance(argument, ast.Call)
+            and isinstance(argument.func, ast.Name)
+            and argument.func.id == PRESENCE_CALL
+            and len(argument.args) == 1
+            and isinstance(argument.args[0], ast.Name)
+            and not argument.keywords
+        ):
+            raise UnsupportedConstructError(
+                f"{BOUNDED_RESPONSE_CALL}() {role} must be present(event_name), got "
+                f"{ast.unparse(argument)!r}"
+            )
+        names.append(argument.args[0].id)
+    if names[0] == names[1]:
+        raise UnsupportedConstructError(
+            f"{BOUNDED_RESPONSE_CALL}() needs distinct anchor and endpoint events, got "
+            f"{names[0]!r} twice"
+        )
+    duration = node.args[2]
+    if not isinstance(duration, ast.Constant) or not isinstance(duration.value, str):
+        raise UnsupportedConstructError(
+            f"{BOUNDED_RESPONSE_CALL}() duration must be a quoted fixed duration such as '24h' "
+            f"or '1mo', got {ast.unparse(duration)!r}"
+        )
+    try:
+        parse_duration(duration.value)
+    except EventTimeError as exc:
+        raise UnsupportedConstructError(
+            f"{BOUNDED_RESPONSE_CALL}() has an invalid duration: {exc}"
+        ) from exc
+    return names[0], names[1], duration.value
+
+
+def bounded_response_calls(node: ast.AST) -> tuple[ast.Call, ...]:
+    """Return every metric-temporal call in an AST, in source order."""
+    return tuple(
+        child
+        for child in ast.walk(node)
+        if isinstance(child, ast.Call)
+        and isinstance(child.func, ast.Name)
+        and child.func.id == BOUNDED_RESPONSE_CALL
+    )
+
+
+def has_bounded_response(node: ast.AST) -> bool:
+    """Whether a parsed property explicitly requests event-time bounded-response semantics."""
+    return bool(bounded_response_calls(node))
+
+
+def _validate_bounded_response_shape(node: ast.AST) -> None:
+    """Keep the metric extension to one named bounded-response shape."""
+    calls = bounded_response_calls(node)
+    if not calls:
+        return
+    if len(calls) != 1:
+        raise UnsupportedConstructError(
+            f"A property may contain exactly one {BOUNDED_RESPONSE_CALL}() obligation; "
+            f"got {len(calls)}"
+        )
+    bounded_response_arguments(calls[0])
+    body = node.body if isinstance(node, ast.Expression) else node
+    allowed = (
+        isinstance(body, ast.Call)
+        and isinstance(body.func, ast.Name)
+        and body.func.id == BOUNDED_RESPONSE_CALL
+    )
+    if not allowed:
+        allowed = (
+            isinstance(body, ast.Call)
+            and isinstance(body.func, ast.Name)
+            and body.func.id == ALWAYS_OPERATOR
+            and len(body.args) == 1
+            and isinstance(body.args[0], ast.Call)
+            and isinstance(body.args[0].func, ast.Name)
+            and body.args[0].func.id in IMPLICATION_CALLS
+            and len(body.args[0].args) == 2
+            and isinstance(body.args[0].args[1], ast.Call)
+            and body.args[0].args[1] is calls[0]
+        )
+    if not allowed:
+        raise UnsupportedConstructError(
+            f"{BOUNDED_RESPONSE_CALL}() is only supported alone or as "
+            f"always(implies(present(anchor), {BOUNDED_RESPONSE_CALL}(...)))"
+        )
+
+
 def expression_kind(node: ast.AST) -> str:
     """Return the language-level kind of an expression, checking its typed positions."""
     if isinstance(node, ast.Expression):
@@ -829,6 +945,9 @@ def expression_kind(node: ast.AST) -> str:
             return "boolean"
         if name == UNDETERMINED_CALL:
             undetermined_arguments(node)
+            return "boolean"
+        if name == BOUNDED_RESPONSE_CALL:
+            bounded_response_arguments(node)
             return "boolean"
         if name == DEGREE_CALL:
             # Boolean in the *type* system of this language, and a degree only under the graded
@@ -937,6 +1056,7 @@ def validate_property(node: ast.AST) -> None:
                 "stands under the boolean connectives and under an implication, and nowhere else "
                 "(docs/semantics.md §9)"
             )
+    _validate_bounded_response_shape(node)
     kind = expression_kind(node)
     if kind not in ("boolean", "unknown"):
         raise UnsupportedConstructError(
@@ -1214,11 +1334,11 @@ def measured_magnitude_names(node: ast.AST) -> tuple[str, ...]:
 
 
 def has_temporal_operator(node: ast.AST) -> bool:
-    """True when a property reaches across records with one of `TEMPORAL_OPERATORS`."""
+    """True when a property reaches across records or requests event-time metric semantics."""
     return any(
         isinstance(child, ast.Call)
         and isinstance(child.func, ast.Name)
-        and child.func.id in TEMPORAL_OPERATORS
+        and child.func.id in (TEMPORAL_OPERATORS | {BOUNDED_RESPONSE_CALL})
         for child in ast.walk(node)
     )
 
@@ -1605,6 +1725,10 @@ def eval_temporal_trace(node: ast.AST, records: list[dict[str, Any]]) -> list[An
             left = eval_temporal_trace(node.args[0], records)
             right = eval_temporal_trace(node.args[1], records)
             return [kleene_iff(left[i], right[i]) for i in range(n)]
+        if name == BOUNDED_RESPONSE_CALL:
+            raise UnsupportedConstructError(
+                f"{BOUNDED_RESPONSE_CALL}() requires the observed event-time metric evaluator"
+            )
         if name in TEMPORAL_OPERATORS:
             if name == "always":
                 sub = eval_temporal_trace(node.args[0], records)

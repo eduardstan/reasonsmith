@@ -1,0 +1,33 @@
+requirement = "cra_art14_2_a_early_warning_within_24_hours"
+formalism = "temporal"
+rationale = "The cases exercise the closed 24-hour boundary, a one-second breach, and a one-second near-miss with independently timestamped events correlated by case_id."
+
+[[case]]
+id = "exact-24-hour-boundary"
+kind = "satisfied"
+expected = "satisfied"
+description = "The early warning arrives exactly 24 hours after awareness."
+trace = [
+  { case_id = "c1", cra_manufacturer_awareness = true, __time_domain__ = { cra_manufacturer_awareness = "2026-01-01T00:00:00Z" } },
+  { case_id = "c1", cra_early_warning_notification = true, __time_domain__ = { cra_early_warning_notification = "2026-01-02T00:00:00Z" } },
+]
+
+[[case]]
+id = "one-second-over"
+kind = "violated"
+expected = "violated"
+description = "The notification arrives one second after the inclusive 24-hour bound."
+trace = [
+  { case_id = "c2", cra_manufacturer_awareness = true, __time_domain__ = { cra_manufacturer_awareness = "2026-01-01T00:00:00Z" } },
+  { case_id = "c2", cra_early_warning_notification = true, __time_domain__ = { cra_early_warning_notification = "2026-01-02T00:00:01Z" } },
+]
+
+[[case]]
+id = "one-second-under"
+kind = "near-miss"
+expected = "satisfied"
+description = "The notification arrives one second before the boundary."
+trace = [
+  { case_id = "c3", cra_manufacturer_awareness = true, __time_domain__ = { cra_manufacturer_awareness = "2026-01-01T00:00:00Z" } },
+  { case_id = "c3", cra_early_warning_notification = true, __time_domain__ = { cra_early_warning_notification = "2026-01-01T23:59:59Z" } },
+]

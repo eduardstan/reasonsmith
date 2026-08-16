@@ -399,3 +399,26 @@ class and adds an explicit, self-asserted `frontier_ai_status` applicability gat
 verify it. Commitment IV is formalised as a four-signal logical implication; the other seven rows
 are record-presence approximations. “Adequately mitigated”, “intolerable”, and “sufficient
 resources” remain refinement gaps, with no invented authority or open-textured engine.
+
+---
+
+## Provision 8: Cyber Resilience Act — Regulation (EU) 2024/2847
+
+### Metadata & Citation
+- **Document Title:** Regulation (EU) 2024/2847 of the European Parliament and of the Council of 23 October 2024 on horizontal cybersecurity requirements for products with digital elements and amending Regulations (EU) No 168/2013 and (EU) 2019/1020 and Directive (EU) 2020/1828 (Cyber Resilience Act)
+- **CELEX Identifier:** `32024R2847` (consolidated version: `02024R2847-20241120`)
+- **Official Source URL:** [EUR-Lex Regulation (EU) 2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng)
+- **Direct EU Cellar XHTML Endpoint:** `http://publications.europa.eu/resource/cellar/21b7d4eb-a6e2-11ef-85f0-01aa75ed71a1.0006.03/DOC_1`
+- **Publication date:** 20 November 2024 (OJ L, 2024/2847)
+- **Retrieval date:** 16 August 2026
+- **Uncertainty / status flag:** Retrieved from the official EUR-Lex page and verified against the official EU Publications Cellar XHTML endpoint.
+
+### Verbatim Text
+
+#### Article 14(2)(a)
+
+an early warning notification of an actively exploited vulnerability, without undue delay and in any event within 24 hours of the manufacturer becoming aware of it, indicating, where applicable, the Member States on the territory of which the manufacturer is aware that their product with digital elements has been made available;
+
+### Factual Summary of Demands (Law's Operative Words)
+- The bounded event-time property measures only the explicit **within 24 hours of awareness** limb.
+- **Actively exploited** and **without undue delay** remain open-textured or applicability predicates; the pack does not replace either with an invented test or number.

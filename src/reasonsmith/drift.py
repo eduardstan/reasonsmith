@@ -58,7 +58,7 @@ from reasonsmith.spec import load_pack
 
 #: The packs whose quotes are verified against official statutory sources. `table7` is deliberately
 #: absent: its quotes come from the review paper itself, and no official document re-fetches them.
-STATUTORY_PACKS = ("eu_ai_act", "gpai", "gdpr", "ecoa", "seoul_frontier_ai_safety_2024")
+STATUTORY_PACKS = ("eu_ai_act", "gpai", "gdpr", "ecoa", "cra", "seoul_frontier_ai_safety_2024")
 
 #: Elements that carry no text and no end tag even in well-formed XHTML/XML, so the passage
 #: extractor must not count them when tracking element nesting depth.
@@ -133,6 +133,11 @@ SOURCES = (
         "ecfr-xml",
     ),
     SourceDocument(
+        "cra",
+        "http://publications.europa.eu/resource/cellar/21b7d4eb-a6e2-11ef-85f0-01aa75ed71a1.0006.03/DOC_1",
+        "cellar-xhtml",
+    ),
+    SourceDocument(
         "seoul_frontier_ai_safety_2024",
         "https://www.gov.uk/government/publications/frontier-ai-safety-commitments-ai-seoul-summit-2024/frontier-ai-safety-commitments-ai-seoul-summit-2024",
         "govuk-html",
@@ -168,6 +173,7 @@ PROVISIONS = {
     "Article 55(1)(c)": ("ai_act", "055.001"),
     "Article 55(1)(d)": ("ai_act", "055.001"),
     "Article 86(1)": ("ai_act", "086.001"),
+    "Article 14(2)(a)": ("cra", "014.002"),
     "Article 22(1)": ("gdpr_consolidated", "art_22"),
     "Article 22(3)": ("gdpr_consolidated", "art_22"),
     "Recital 71": ("gdpr_original", "rct_71"),

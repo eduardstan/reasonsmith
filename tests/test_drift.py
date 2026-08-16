@@ -40,6 +40,7 @@ FIXTURE_BY_KEY = {
     "gdpr_original": "gdpr_original_rct71.xhtml",
     "ecoa": "ecoa_1002_9.xml",
     "ecoa_general_rules": "ecoa_1002_4.xml",
+    "cra": "cra_art14.xhtml",
     "seoul_frontier_ai_safety_2024": "ai_seoul_frontier_commitments.html",
 }
 
@@ -398,6 +399,7 @@ class TestCheckStatuteDrift:
             "gdpr_original",
             "ecoa",
             "ecoa_general_rules",
+            "cra",
             "seoul_frontier_ai_safety_2024",
         ]
 

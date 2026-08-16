@@ -20,6 +20,11 @@ than silently removing them from the denominator; the second run completed exact
 `semantic-equivalent` includes exact matches; it is the round-trip relation established by the
 existing checker, not a human judgement.
 
+The executable gold corpus now contains **39** challenge sets: the CRA Article 14(2)(a) event-time
+set was added with the duty, including exact-boundary, one-second-over, and one-second-under cases.
+It is a coverage addition, not a retroactive claim about the 2026-08-15 provider measurement above;
+the historical rates remain denominated over the 37-duty cohort measured before Article 86.
+
 ## Results
 
 | Duty family | Duties | Exact-match | Semantic-equivalent (including exact) | Machine-cleared | Refused | Unavailable | Exact rate | Semantic rate |

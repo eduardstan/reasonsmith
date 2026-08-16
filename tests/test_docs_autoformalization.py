@@ -16,7 +16,7 @@ def test_the_study_publishes_the_historical_37_duty_cohort_and_rates():
     requirements = {
         req.id: req for name in list_packs() for req in load_pack(name).requirements
     }
-    assert len(requirements) == len(challenge_requirements()) == 38
+    assert len(requirements) == len(challenge_requirements()) == 39
     assert "measured before Article 86: 37 challenge sets" in document
     for phrase in ("28 record-presence", "4 logical", "temporal, and", "1 counterfactual"):
         assert phrase in document

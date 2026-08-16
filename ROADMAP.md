@@ -10,10 +10,10 @@ check that fails today and would pass when the objective is met; a closed object
 same check now passes. Where the honest answer is that an objective is blocked, or deliberately not
 started, that is written down rather than left as an implied "soon".
 
-Current state, for scale: **6 packs, 38 requirements, 7 engines** (`record`, `observed`, `probed`,
+Current state, for scale: **7 packs, 39 requirements, 7 engines** (`record`, `observed`, `probed`,
 `certificate` — also at `probed` — `proved`, the temporal proof engine, also at `proved`, and the
 counterfactual engine, which spans both `proved` and `probed`).
-`reasonsmith validate-pack ecoa eu_ai_act gdpr gpai seoul_frontier_ai_safety_2024 table7` prints what each contains.
+`reasonsmith validate-pack cra ecoa eu_ai_act gdpr gpai seoul_frontier_ai_safety_2024 table7` prints what each contains.
 
 ---
 
@@ -123,7 +123,7 @@ variable, and that it cannot see a disparate impact.
 
 ## 4. Breadth: more regulations than five
 
-**The gap, and what a sixth pack did and did not settle.** Six packs now ship — Table 7, EU AI Act
+**The gap, and what a seventh pack did and did not settle.** Seven packs now ship — Table 7, EU AI Act
 (Art. 12, 13 & 86), GPAI (EU AI Act Art. 53 & 55), GDPR, ECOA/Reg B, and the Seoul Frontier AI
 Safety Commitments — and five of them quote an official source.
 The GPAI pack met the outcome below in full and closed one thing the objective did not ask for: the
@@ -133,7 +133,7 @@ first to exercise it.
 
 **What it did not settle, and the honest cost of it.** The judgement this objective names — whether
 another pack is worth more than depth on the ones that ship — is *less* settled than before, not
-more. Twenty-eight of the thirty-eight shipped requirements are now presence checks, up from thirteen
+more. Twenty-eight of the thirty-nine shipped requirements are now presence checks, up from thirteen
 of nineteen, because Article 53 and Article 55 are document-production duties for which presence is
 the correct refinement and no stronger property exists to write
 ([`docs/refinement.md`](docs/refinement.md), *presence is not adequacy*). Breadth bought that way is
@@ -236,7 +236,7 @@ evaluated*, never compared against exact WMC as though it had claimed distributi
 ## 6. The first duty written with an open-textured predicate
 
 **The gap.** [`docs/refinement.md`](docs/refinement.md) (*presence is not adequacy*) opens by stating it: twenty-eight of the
-thirty-eight shipped requirements are presence checks, and the fourth column of that document says the same
+thirty-nine shipped requirements are presence checks, and the fourth column of that document says the same
 thing row after row — *meaningful*, *sufficiently detailed*, *adequate*, *appropriate*, *without undue delay*
 were not modelled. Presence is not a bad proxy for those predicates; it is a refusal to model them at
 all. [`docs/theory/08-evidence.md`](docs/theory/08-evidence.md) §8.4 states what is now true and what

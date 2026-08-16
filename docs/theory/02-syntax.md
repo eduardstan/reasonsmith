@@ -53,7 +53,8 @@ relational_atom   = "counterfactually_invariant" , "(" , name , "," , name , ")"
 open_texture_atom = "undetermined" , "(" , name , "," , string , "," , string , ")"
                   | "degree" , "(" , name , "," , string , ")" ;
 temporal_call     = unary_temporal , "(" , arrow_expr , ")"
-                  | binary_temporal , "(" , arrow_expr , "," , arrow_expr , ")" ;
+                  | binary_temporal , "(" , arrow_expr , "," , arrow_expr , ")"
+                  | "within_after" , "(" , record_atom , "," , record_atom , "," , string , ")" ;
 unary_temporal    = "always" | "eventually" | "once" | "historically"
                   | "next" | "prev" | "rise" | "fall" ;
 binary_temporal   = "until" | "since" ;
@@ -75,6 +76,9 @@ implication and equivalence calls. Numeric positions are operands of unary signs
 
 - the first argument of `present`, `contains`, `counterfactually_invariant`, `undetermined`, and
   `degree` is a signal name;
+- `within_after` has exactly two named `present()` event predicates and one fixed duration string;
+  it is supported alone or in `always(implies(present(anchor), within_after(...)))`, and reads the
+  event-time contract rather than ordinal positions;
 - a `contains` phrase is nonempty and ASCII;
 - `counterfactually_invariant` has two distinct names and is the whole `spec`;
 - `undetermined` and `degree` cannot occur together;

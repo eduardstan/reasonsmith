@@ -99,9 +99,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from datetime import datetime
 from functools import lru_cache
 from typing import Any, Optional, Protocol, runtime_checkable
 
+from reasonsmith.event_time import EventTimeError, parse_timestamp
 from reasonsmith.neural import DeclaredInputSpace
 from reasonsmith.spec import Pack, load_pack, normalize_frontier_ai_status
 
@@ -137,9 +139,8 @@ TIME_DOMAIN_KEY = "__time_domain__"
 #: order the trace supplied them (`docs/semantics.md` §2, *Time is the record index*).
 ORDINAL_TIME = "ordinal"
 
-#: The time domain of a trace whose records carry `TIME_DOMAIN_KEY`. Recording it is all this
-#: repository does with it: no metric or interval semantics reads those timestamps, and a duty
-#: asked for on this domain is *not evaluated* rather than answered off the record index.
+#: The time domain of a trace whose records carry `TIME_DOMAIN_KEY`. The bounded-response metric
+#: operator is the sole reader of these timestamps; other temporal duties remain positional.
 EVENT_TIME = "event"
 
 #: The domains a trace may declare and a duty may be asked for on.
@@ -168,14 +169,16 @@ class TimeDomain:
     entry per record — that record's event-kind-to-timestamp mapping, or None for a record that
     carries none.
 
-    `ticks` is deliberately the only way the axis is produced, and it refuses every domain but the
-    ordinal one. That refusal is the seam: a metric or interval semantics is a new `kind` and a new
-    branch here, and until one exists a caller asking for a real clock is told so rather than
-    handed record indices wearing a clock's name.
+    `ticks` is deliberately the only way a positional monitor axis is produced, and it refuses every
+    domain but the ordinal one. The bounded-response event-time evaluator does not use a synthetic
+    axis: it reads and subtracts the parsed timestamp maps directly.
     """
 
     kind: str
     events: tuple[Mapping[str, str] | None, ...] = ()
+    # Parsed UTC instants are populated for event traces. The raw ``events`` mapping remains
+    # untouched for backwards-compatible report/debug output.
+    instants: tuple[Mapping[str, datetime] | None, ...] = ()
 
     @property
     def is_ordinal(self) -> bool:
@@ -191,9 +194,13 @@ class TimeDomain:
         return list(range(length))
 
 
-#: The domain of every trace that states no clock, and the domain every shipped duty is asked for
+#: The domain of every trace that states no clock, and the domain every positional duty is asked
 #: on. Shared because it carries no per-record state.
 ORDINAL_DOMAIN = TimeDomain(ORDINAL_TIME)
+
+#: Explicit selection for the bounded-response operator. Metric evaluation does not turn this into
+#: an rtamt axis: the event-time engine reads the timestamp maps directly.
+EVENT_DOMAIN = TimeDomain(EVENT_TIME)
 
 
 def read_time_domain(records: Iterable[Mapping[str, Any]]) -> TimeDomain:
@@ -204,25 +211,33 @@ def read_time_domain(records: Iterable[Mapping[str, Any]]) -> TimeDomain:
     stated once here rather than assumed at every reader.
     """
     events: list[Mapping[str, str] | None] = []
+    instants: list[Mapping[str, datetime] | None] = []
     clocked = False
     for record in records:
         stamps = record.get(TIME_DOMAIN_KEY)
         if stamps is None:
             events.append(None)
+            instants.append(None)
             continue
         if not isinstance(stamps, Mapping):
             raise TypeError(
                 f"{TIME_DOMAIN_KEY} must map an event-kind name to a timestamp, got "
                 f"{type(stamps).__name__}"
             )
+        parsed: dict[str, datetime] = {}
         for kind, stamp in stamps.items():
             if not isinstance(kind, str) or not kind.strip():
                 raise ValueError(f"Event kind must be a non-empty name, got {kind!r}")
             if not isinstance(stamp, str) or not stamp.strip():
                 raise ValueError(f"Event {kind!r} must carry a timestamp, got {stamp!r}")
+            try:
+                parsed[kind] = parse_timestamp(stamp)
+            except EventTimeError as exc:
+                raise ValueError(f"Event {kind!r} has an invalid timestamp: {exc}") from exc
         clocked = True
         events.append(dict(stamps))
-    return TimeDomain(EVENT_TIME, tuple(events)) if clocked else ORDINAL_DOMAIN
+        instants.append(parsed)
+    return TimeDomain(EVENT_TIME, tuple(events), tuple(instants)) if clocked else ORDINAL_DOMAIN
 
 
 def _validate_capability_collection(declared: Any, subject: str) -> None:

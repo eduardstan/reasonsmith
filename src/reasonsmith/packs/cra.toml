@@ -1,0 +1,25 @@
+[pack]
+id = "cra"
+title = "Cyber Resilience Act (Regulation (EU) 2024/2847): Article 14"
+description = "Article 14(2)(a) for manufacturers: this pack checks the explicit 24-hour event-time limb from manufacturer awareness to an early-warning notification. It does not decide whether a vulnerability is actively exploited or whether a notification was made without undue delay; those open-textured/applicability limbs remain outside this formalized subset. Each timestamped record is one case unless records carry the same non-empty case_id. This is not a compliance guarantee."
+
+[source]
+document = "Regulation (EU) 2024/2847 (Cyber Resilience Act)"
+publication = "Official Journal of the European Union, OJ L, 2024/2847, 20.11.2024"
+url = "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng"
+
+[[requirement]]
+id = "cra_art14_2_a_early_warning_within_24_hours"
+source_document = "Cyber Resilience Act (Regulation (EU) 2024/2847)"
+article_clause = "Article 14(2)(a)"
+verbatim_text = "an early warning notification of an actively exploited vulnerability, without undue delay and in any event within 24 hours of the manufacturer becoming aware of it, indicating, where applicable, the Member States on the territory of which the manufacturer is aware that their product with digital elements has been made available;"
+stakeholder = "manufacturer"
+formalism = "temporal"
+spec = "always(implies(present(cra_manufacturer_awareness), within_after(present(cra_manufacturer_awareness), present(cra_early_warning_notification), \"24h\")))"
+rationale = "Formalized subset only: the event-time trace measures the closed 24-hour outer bound from manufacturer awareness to early-warning notification. The open-textured \"without undue delay\" limb and the actively-exploited applicability condition are not evaluated here."
+requires = ["cra_manufacturer_awareness", "cra_early_warning_notification"]
+binding = true
+scope = ""
+domains = []
+deontic_type = "obligation"
+defeasibility = "trigger-unmodelled"
