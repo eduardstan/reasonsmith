@@ -53,7 +53,7 @@ description, a `kind` (`satisfied`, `violated` or `near-miss`), an expected form
 and concrete evidence. The descriptions are for a lawyer reviewing the boundary; the parser is not
 the authority for the legal clause, which remains the referenced pack and its refinement row.
 
-The corpus covers all 38 shipped requirements: record and logical cases, four temporal finite traces,
+The corpus covers all 39 shipped requirements: record and logical cases, five temporal finite traces,
 and the one counterfactual paired-execution duty. Open-textured and certificate duties are not
 approximated merely to increase coverage. Temporal round-trip equivalence still refuses without the
 optional BLACK procedure, while the gold checker uses the shared finite-trace interpreter and does

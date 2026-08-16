@@ -178,8 +178,10 @@ record positions or a logged latency into time. Records without `case_id` are in
 while records sharing a non-empty `case_id` may form one case. Missing, duplicate, malformed,
 out-of-order, or ambiguously correlated events make the formula undefined (reported not evaluated),
 and a trace with no anchor is not a vacuous pass. Hour/day bounds are elapsed durations; month
-bounds use calendar arithmetic with end-of-month clamping. The only accepted enclosing temporal
-shape is `always(implies(present(a), within_after(...)))`, whose trigger is the same named anchor.
+bounds use calendar arithmetic with end-of-month clamping. The construct stands alone as the whole
+`spec`, or under the one accepted enclosing temporal shape
+`always(implies(present(a), within_after(present(a), ...)))`, whose trigger the loader refuses
+unless it is the same named anchor the metric measures; no other position is accepted.
 This is a behavioural observed capability, not a proof over a system's possible event times.
 
 **Definition 3.9 (relational atom).** `counterfactually_invariant(o, p)` is the whole

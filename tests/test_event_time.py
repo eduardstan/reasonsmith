@@ -15,6 +15,11 @@ from reasonsmith.event_time import (
     parse_duration,
     parse_timestamp,
 )
+from reasonsmith.rulelang import (
+    UnsupportedConstructError,
+    classify_fragment,
+    parse_property,
+)
 from reasonsmith.spec import Requirement, load_pack
 from reasonsmith.sut import EVENT_DOMAIN, TIME_DOMAIN_KEY, BaseSUT
 from reasonsmith.verdict import Strength, Verdict
@@ -183,8 +188,98 @@ def test_existing_ordinal_property_is_unchanged_when_timestamps_are_added() -> N
 
 def test_cra_pack_lands_the_event_time_duty() -> None:
     req = load_pack("cra").requirements[0]
-    assert "within_after" in req.spec
     assert req.article_clause == "Article 14(2)(a)"
+    assert classify_fragment(req.spec) == "temporal"
+    anchor, endpoint = req.requires
+    sut = BaseSUT(set(req.requires))
+
+    on_the_boundary = ObservedEngine.evaluate(
+        req,
+        sut,
+        [
+            {"case_id": "v-1", anchor: True, TIME_DOMAIN_KEY: {anchor: "2026-01-01T00:00:00Z"}},
+            {"case_id": "v-1", endpoint: True, TIME_DOMAIN_KEY: {endpoint: "2026-01-02T00:00:00Z"}},
+        ],
+    )
+    assert on_the_boundary.verdict is Verdict.SATISFIED
+    assert on_the_boundary.strength is Strength.OBSERVED
+    assert on_the_boundary.details["event_pairs"][0]["delta_seconds"] == 86400.0
+
+    one_second_late = ObservedEngine.evaluate(
+        req,
+        sut,
+        [
+            {"case_id": "v-1", anchor: True, TIME_DOMAIN_KEY: {anchor: "2026-01-01T00:00:00Z"}},
+            {"case_id": "v-1", endpoint: True, TIME_DOMAIN_KEY: {endpoint: "2026-01-02T00:00:01Z"}},
+        ],
+    )
+    assert one_second_late.verdict is Verdict.VIOLATED
+
+
+def test_an_unnamed_record_never_merges_with_a_case_spelled_like_its_index() -> None:
+    result = _evaluate(
+        [
+            {"aware": True, TIME_DOMAIN_KEY: {"aware": "2026-01-01T00:00:00Z"}},
+            {
+                "case_id": "record-0",
+                "report": True,
+                TIME_DOMAIN_KEY: {"report": "2026-01-02T00:00:00Z"},
+            },
+        ]
+    )
+    assert result.verdict is Verdict.INCONCLUSIVE
+    assert result.strength is None
+    assert "event_pairs" not in result.details
+
+
+def test_a_bound_naming_an_unrepresentable_instant_is_refused_not_raised() -> None:
+    with pytest.raises(EventTimeError):
+        deadline_for(parse_timestamp("2026-01-01T00:00:00Z"), parse_duration("1000000000d"))
+    with pytest.raises(EventTimeError):
+        deadline_for(parse_timestamp("2026-01-01T00:00:00Z"), parse_duration("999999mo"))
+
+    result = ObservedEngine.evaluate(
+        _req(
+            'always(implies(present(aware), '
+            'within_after(present(aware), present(report), "1000000000d")))'
+        ),
+        BaseSUT({"aware", "report"}),
+        _trace("2026-01-01T00:00:00Z", "2026-01-02T00:00:00Z"),
+    )
+    assert result.verdict is Verdict.INCONCLUSIVE
+    assert result.strength is None
+
+
+def test_an_enclosing_trigger_that_is_not_the_anchor_is_refused_at_load() -> None:
+    with pytest.raises(UnsupportedConstructError):
+        parse_property(
+            'always(implies(present(other), '
+            'within_after(present(aware), present(report), "24h")))'
+        )
+    assert (
+        classify_fragment(
+            'always(implies(present(aware), '
+            'within_after(present(aware), present(report), "24h")))'
+        )
+        == "temporal"
+    )
+
+
+def test_a_malformed_clock_is_refused_rather_than_raised_on_a_positional_duty() -> None:
+    req = Requirement(
+        id="ordinal", source_document="Test", article_clause="§2", verbatim_text="x",
+        stakeholder="s", formalism="temporal", spec="always(latency <= 30)",
+        rationale="A positional latency check.", requires=("latency",), binding=True, scope="",
+        domains=(), deontic_type="obligation", defeasibility="strict",
+    )
+    result = ObservedEngine.evaluate(
+        req,
+        BaseSUT({"latency"}),
+        [{"latency": 3, TIME_DOMAIN_KEY: {"aware": "2026-01-01"}}],
+        time_domain=EVENT_DOMAIN,
+    )
+    assert result.verdict is Verdict.INCONCLUSIVE
+    assert result.strength is None
 
 
 def test_timestamp_and_duration_refuse_naive_or_invalid_values() -> None:

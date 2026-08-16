@@ -833,30 +833,48 @@ def _validate_bounded_response_shape(node: ast.AST) -> None:
             f"A property may contain exactly one {BOUNDED_RESPONSE_CALL}() obligation; "
             f"got {len(calls)}"
         )
-    bounded_response_arguments(calls[0])
+    anchor = bounded_response_arguments(calls[0])[0]
     body = node.body if isinstance(node, ast.Expression) else node
-    allowed = (
+    if (
         isinstance(body, ast.Call)
         and isinstance(body.func, ast.Name)
         and body.func.id == BOUNDED_RESPONSE_CALL
+    ):
+        return
+    enclosed = (
+        isinstance(body, ast.Call)
+        and isinstance(body.func, ast.Name)
+        and body.func.id == ALWAYS_OPERATOR
+        and len(body.args) == 1
+        and isinstance(body.args[0], ast.Call)
+        and isinstance(body.args[0].func, ast.Name)
+        and body.args[0].func.id in IMPLICATION_CALLS
+        and len(body.args[0].args) == 2
+        and isinstance(body.args[0].args[1], ast.Call)
+        and body.args[0].args[1] is calls[0]
     )
-    if not allowed:
-        allowed = (
-            isinstance(body, ast.Call)
-            and isinstance(body.func, ast.Name)
-            and body.func.id == ALWAYS_OPERATOR
-            and len(body.args) == 1
-            and isinstance(body.args[0], ast.Call)
-            and isinstance(body.args[0].func, ast.Name)
-            and body.args[0].func.id in IMPLICATION_CALLS
-            and len(body.args[0].args) == 2
-            and isinstance(body.args[0].args[1], ast.Call)
-            and body.args[0].args[1] is calls[0]
-        )
-    if not allowed:
+    if not enclosed:
         raise UnsupportedConstructError(
             f"{BOUNDED_RESPONSE_CALL}() is only supported alone or as "
             f"always(implies(present(anchor), {BOUNDED_RESPONSE_CALL}(...)))"
+        )
+    # The enclosing trigger must be the metric's own anchor. Any other trigger leaves two
+    # different signals deciding one duty: the metric measures the anchor, while the no-anchor
+    # path reports an unreachable trigger naming a signal the measurement never read.
+    trigger = body.args[0].args[0]
+    if not (
+        isinstance(trigger, ast.Call)
+        and isinstance(trigger.func, ast.Name)
+        and trigger.func.id == PRESENCE_CALL
+        and len(trigger.args) == 1
+        and not trigger.keywords
+        and isinstance(trigger.args[0], ast.Name)
+        and trigger.args[0].id == anchor
+    ):
+        raise UnsupportedConstructError(
+            f"{BOUNDED_RESPONSE_CALL}() under always(implies(...)) requires the trigger "
+            f"{PRESENCE_CALL}({anchor}), the same named anchor it measures; got "
+            f"{ast.unparse(trigger)!r}"
         )
 
 

@@ -162,18 +162,36 @@ def add_calendar_months(start: datetime, months: int) -> datetime:
     month_index = utc.year * 12 + (utc.month - 1) + months
     year, month_index = divmod(month_index, 12)
     month = month_index + 1
-    day = min(utc.day, calendar.monthrange(year, month)[1])
-    return utc.replace(year=year, month=month, day=day)
+    try:
+        day = min(utc.day, calendar.monthrange(year, month)[1])
+        return utc.replace(year=year, month=month, day=day)
+    except (OverflowError, ValueError) as exc:
+        raise EventTimeError(
+            f"a deadline {months} calendar month(s) after {utc.isoformat()} is outside the "
+            f"representable range of an instant: {exc}"
+        ) from exc
 
 
 def deadline_for(start: datetime, duration: Duration) -> datetime:
-    """Return the inclusive end instant for a duration from ``start``."""
+    """Return the inclusive end instant for a duration from ``start``.
+
+    A bound the duration grammar accepts can still name an instant no :class:`datetime` can hold.
+    That is an evidence refusal about this pair, reported as an :class:`EventTimeError` like every
+    other one, rather than an arithmetic exception escaping the engine that called it.
+    """
 
     if duration.is_calendar:
         return add_calendar_months(start, duration.amount)
-    elapsed = duration.elapsed
-    assert elapsed is not None
-    return _utc_instant(start) + elapsed
+    anchor = _utc_instant(start)
+    try:
+        elapsed = duration.elapsed
+        assert elapsed is not None
+        return anchor + elapsed
+    except OverflowError as exc:
+        raise EventTimeError(
+            f"a deadline {duration.text} after {anchor.isoformat()} is outside the representable "
+            f"range of an instant: {exc}"
+        ) from exc
 
 
 def measure_pair(

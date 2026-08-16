@@ -59,14 +59,14 @@ written in:
 |---|---:|---|
 | `record` | 28 | a conjunction of `present(signal)` — the field is there |
 | `logical` | 5 | any other property of one decision record |
-| `temporal` | 4 | a property over the trace |
+| `temporal` | 5 | a property over the trace |
 | `counterfactual` | 1 | invariance under one named protected variable |
 | `statistical` | 0 | a declared-sample selection-rate measurement with uncertainty |
 | `undetermined` | 0 | a predicate no engine here settles, and who does |
 | `graded` | 0 | a truth degree over an algebra the pack declares |
 
 **Most of the shipped duties are presence checks.** Reproduce the count with
-`reasonsmith validate-pack ecoa eu_ai_act gdpr gpai seoul_frontier_ai_safety_2024 table7`, which prints each requirement's
+`reasonsmith validate-pack cra ecoa eu_ai_act gdpr gpai seoul_frontier_ai_safety_2024 table7`, which prints each requirement's
 formalism.
 
 That is not an accident of laziness: `packs/gpai.toml`'s eight Article 53 and 55 duties are

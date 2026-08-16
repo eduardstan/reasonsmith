@@ -29,7 +29,7 @@ This is the evidence artifact for `reasonsmith`'s own claims: an environment was
 This is a **historical smoke measurement, not an agreement-rate claim about autoformalisation**.
 It was run before the challenge schema v2 expansion. PR 150 expanded the installed gold manifest to
 **24 challenge sets** covering all 21 record and all 3 logical requirements; the current tree carries
-38 sets, adding four temporal traces, one counterfactual pair corpus, the Article 86(1) duty and eight Seoul duties. The earlier three-duty run
+39 sets, adding five temporal traces, one counterfactual pair corpus, the Article 86(1) duty and eight Seoul duties. The earlier three-duty run
 was only a demonstration. The exact command was:
 
 ```sh
@@ -608,4 +608,4 @@ that module's tests skip, which is the arrangement `pip install reasonsmith` has
 
 ## Current Seoul corpus note
 
-The shipped tree now contains 38 requirements, including eight Seoul challenge sets; the 29-row measurement above is retained as a historical pre-Seoul run.
+The shipped tree now contains 39 requirements, including eight Seoul challenge sets; the 29-row measurement above is retained as a historical pre-Seoul run.

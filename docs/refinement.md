@@ -32,7 +32,7 @@ flowchart LR
 ## Autoformalisation challenge sets and sign-off
 
 Thirty-nine duties have executable, lawyer-readable gold challenge sets under
-[`autoformalization.md`](autoformalization.md) and `src/reasonsmith/challenges/`. They cover all shipped record and logical duties plus four temporal traces and one counterfactual
+[`autoformalization.md`](autoformalization.md) and `src/reasonsmith/challenges/`. They cover all shipped record and logical duties plus five temporal traces and one counterfactual
 pair corpus. Open-textured and certificate duties remain outside this model-free benchmark rather
 than being silently approximated here. The
 sets are benchmark data derived from the requirement rows, not new requirements. A candidate must
@@ -107,7 +107,7 @@ Four kinds of gap recur, and naming them once keeps the table short:
 - **The property's reach is not the clause's scope.** Most clauses below are triggered — by adverse
   action, by a decision under Article 22(2)(a) or (c), by the system being high-risk. A property
   evaluated over every record in a trace is checked outside that trigger too. Two axes of a
-  clause's scope are modelled — the regulatory class (`scope`, used by twenty-three of the thirty-eight
+  clause's scope are modelled — the regulatory class (`scope`, used by twenty-three of the thirty-nine
   duties) and the decision domain (`domains`, used by eight) — and both are gates about the *system*. A
   trigger *inside* a decision is not a gate at all: the two 12 CFR 1002.9(b)(2) duties carry their
   own in the property, at the price of being reported *not evaluated* where it never fires.
@@ -133,7 +133,7 @@ on a *different* requirement, arriving for the wrong reason. Those four ECOA dut
 not applicable against all five of that run's systems.
 
 **What the gate still does not do, and every row in the ECOA and GDPR tables below inherits it.**
-It is stated once, here, rather than thirty-eight times:
+It is stated once, here, rather than thirty-nine times:
 
 - **The vocabulary is this repository's, not any regulation's.** `DECISION_DOMAINS` is a coarse,
   openly-authored list, and it is wrong somewhere: no statute defines a list of decision domains,
@@ -172,7 +172,7 @@ The fourth column reads, over and over, as one sentence: *the general rule is fo
 exception is not*. Said often enough that looked like a single missing construct — a pack language
 built on prioritized defaults, the premise Catala is built on (Merigoux, Chataing & Protzenko, ICFP
 2021) and the shape defeasible deontic logic gives rules (Governatori's PCL / Regorous). Before
-rebuilding anything on that premise it is worth knowing how many of these thirty-eight entries the
+rebuilding anything on that premise it is worth knowing how many of these thirty-nine entries the
 premise is actually true of. This section is that count, and it is a count rather than an
 impression because every shipped requirement now carries the classification in its own
 `[[requirement]]` block: `deontic_type` and `defeasibility`, required fields with no default,
@@ -241,8 +241,8 @@ priority relation required. The `until` the second needed is a temporal shape ra
 priority between rules — the obligation has an end as well as a beginning — so it is no evidence
 for prioritized defaults either.
 
-**So the answer is seven of thirty-eight, and the honest reading of it is that the rewrite is not
-justified by this evidence.** Thirteen of the entries are triggers, and a trigger needs a signal, not
+**So the answer is seven of thirty-nine, and the honest reading of it is that the rewrite is not
+justified by this evidence.** Fourteen of the entries are triggers, and a trigger needs a signal, not
 a construct. Sixteen more are strict, and their fourth columns are the other three gaps this
 document already names — presence is not adequacy, the trace is a sample, organisational facts are
 outside every engine. Both defeaters that were modelled were modelled without new machinery. What
@@ -262,7 +262,7 @@ one of which — the *without prejudice* proviso — is not obviously a priority
    paragraph no shipped requirement formalises, so it is counted nowhere.
 3. **`trigger-unmodelled` is not a lesser gap.** It is the largest single item in this document
    (*Two axes of reach are modelled, and the trigger is still not one*) and it is unchanged by
-   anything here. Thirteen is the count of duties whose reach exceeds their clause's; the census
+   anything here. Fourteen is the count of duties whose reach exceeds their clause's; the census
    only says that a different construct is what would close it.
 
 ### What the deontic classification found

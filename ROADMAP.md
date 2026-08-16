@@ -124,8 +124,9 @@ variable, and that it cannot see a disparate impact.
 ## 4. Breadth: more regulations than five
 
 **The gap, and what a seventh pack did and did not settle.** Seven packs now ship — Table 7, EU AI Act
-(Art. 12, 13 & 86), GPAI (EU AI Act Art. 53 & 55), GDPR, ECOA/Reg B, and the Seoul Frontier AI
-Safety Commitments — and five of them quote an official source.
+(Art. 12, 13 & 86), GPAI (EU AI Act Art. 53 & 55), GDPR, ECOA/Reg B, the Cyber Resilience Act
+(Art. 14(2)(a)), and the Seoul Frontier AI Safety Commitments — and six of them quote an official
+source.
 The GPAI pack met the outcome below in full and closed one thing the objective did not ask for: the
 `general-purpose` member of `spec.REGULATORY_CLASSES` was wired and used by zero shipped
 requirements, so the class gate had a member no run had ever exercised, and its eight duties are the
