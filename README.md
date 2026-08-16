@@ -17,6 +17,9 @@ On decision `APP-1042`, the system stated one reason while its inference used fi
 
 > **Demonstration only:** This is a demonstration on frozen synthetic data — not evidence about any real decision.
 
+## The limit we publish
+
+In the committed conformance finding, reasonsmith could not tell two systems with wrong decisions apart from the correct `exact-wmc` system: it gave both the same conformance verdicts as the exact oracle — satisfied on every duty then checkable. `top-1-proofs` disagreed with its claimed semantics on **8 of 16 instances** and with `exact-wmc`'s decisions on **8 of 16**, while `min-max-prob` disagreed with its claimed semantics on **16 of 16** and with `exact-wmc`'s decisions on **4 of 16**. The current report is more honest: the approximation-error duty now measures what an exposed model encoding supports, so these systems are **unattainable** on it — not falsely cleared, and not yet caught. Closing that gap requires the adapter to expose its declarative model encoding through `artifact()`. Read the full record in [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) and [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md); the planned change is tracked in [`ROADMAP.md`](ROADMAP.md) §5.
 
 ## The organising question
 
