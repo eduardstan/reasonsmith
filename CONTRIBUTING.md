@@ -1,6 +1,6 @@
 # Contributing to reasonsmith
 
-Thank you for your interest in contributing to `reasonsmith`.
+Thank you for your interest in contributing to `reasonsmith`. See [`GOVERNANCE.md`](GOVERNANCE.md) for contributor governance and compensation commitments.
 
 The terminal interface and recording harness were contributed by **nikomatt69**.
 
