@@ -1,4 +1,4 @@
-"""Command-line interface for reasonsmith v0.2.
+"""Command-line interface for reasonsmith v0.10.2.
 
 What this module is for:
   Provides the CLI entry point (`reasonsmith`, also runnable as `python -m reasonsmith.cli`) to run

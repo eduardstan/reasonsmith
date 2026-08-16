@@ -1,4 +1,4 @@
-"""System Under Test (SUT) protocol and reference implementations for reasonsmith v0.2.
+"""System Under Test (SUT) protocol and reference implementations for reasonsmith v0.10.2.
 
 What this module is for:
   Defines the required `SystemUnderTest` protocol interface (`capabilities()`, `decisions()`,

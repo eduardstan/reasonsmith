@@ -1,4 +1,4 @@
-"""Certificate engine for reasonsmith v0.2.
+"""Certificate engine for reasonsmith v0.10.2.
 
 What this module is for:
   Evaluates the duties settled against the inference artefact behind a decision, by running

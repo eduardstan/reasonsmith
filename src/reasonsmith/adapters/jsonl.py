@@ -1,4 +1,4 @@
-"""JSONL decision-log adapter for reasonsmith v0.2.
+"""JSONL decision-log adapter for reasonsmith v0.10.2.
 
 What this module is for:
   Adapts JSONL decision log files/streams into a SystemUnderTest for language-agnostic

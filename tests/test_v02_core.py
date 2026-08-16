@@ -1,4 +1,4 @@
-"""Tests for reasonsmith v0.2 core foundations (Stage 1)."""
+"""Tests for reasonsmith v0.10.2 core foundations (Stage 1)."""
 
 from __future__ import annotations
 

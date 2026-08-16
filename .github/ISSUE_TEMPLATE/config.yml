@@ -2,4 +2,4 @@ blank_issues_enabled: false
 contact_links:
   - name: Question
     url: https://github.com/eduardstan/reasonsmith/discussions
-    about: Questions go to GitHub Discussions; issues are for bugs and pack proposals.
+    about: Questions go to GitHub Discussions; issues use the bug, pack, engine, and system/model proposal forms.

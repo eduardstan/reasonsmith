@@ -1,4 +1,4 @@
-"""Conformance report skeleton and unattainable analysis for reasonsmith v0.2.
+"""Conformance report skeleton and unattainable analysis for reasonsmith v0.10.2.
 
 What this module is for:
   Constructs `ConformanceReport` instances carrying per-requirement verdicts, strengths, source
