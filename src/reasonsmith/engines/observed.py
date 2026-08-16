@@ -436,9 +436,24 @@ def _magnitude_vars(spec: str) -> set[str]:
     return magnitude
 
 
+#: How an uncorrelated record names itself in a problem string or an event pair. The angle
+#: brackets are the reserved spelling: `_reserved_case_id` refuses an author-supplied `case_id`
+#: that takes it, so the reader-facing name is disjoint the way the correlation key already is.
+#: Without that, an unnamed record 0 and a `case_id` of `record-0` were two cases under one name,
+#: and the `case_id` a reader re-checks a witness by no longer said which case was measured.
+ANONYMOUS_CASE_LABEL = "<unnamed record {index}>"
+
+
 def _case_label(key: tuple[str, object]) -> str:
     """The reader-facing name of a correlation key, which is not the key itself."""
-    return str(key[1]) if key[0] == "case" else f"record-{key[1]}"
+    if key[0] == "case":
+        return str(key[1])
+    return ANONYMOUS_CASE_LABEL.format(index=key[1])
+
+
+def _reserved_case_id(case_id: str) -> bool:
+    """Whether an author-supplied id takes the spelling reserved for an uncorrelated record."""
+    return case_id.startswith("<unnamed record ") and case_id.endswith(">")
 
 
 def _event_metric_result(
@@ -534,6 +549,11 @@ def _event_metric_result(
         elif not isinstance(raw_case, str) or not raw_case.strip():
             return inconclusive(
                 f"record {index} has an empty or non-string case_id; event correlation is ambiguous"
+            )
+        elif _reserved_case_id(raw_case.strip()):
+            return inconclusive(
+                f"record {index} has a case_id of {raw_case.strip()!r}, the spelling reserved for "
+                "a record this engine correlates with nothing; a named case cannot take it"
             )
         else:
             key = ("case", raw_case.strip())

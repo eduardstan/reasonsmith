@@ -763,6 +763,20 @@ def test_witness_direction_boundary_refuses_malformed_and_unreplayable_declarati
     )[0] == "refuted"
 
 
+_EVENT_PAIR_SPEC = 'within_after(present(aware), present(report), "24h")'
+
+
+def _event_pair_req(spec: str = _EVENT_PAIR_SPEC):
+    return _req("temporal", spec)
+
+
+def _event_pair_records(anchor="2026-01-01T00:00:00Z", end="2026-01-02T00:00:01Z", **record):
+    return [
+        {"aware": True, "__time_domain__": {"aware": anchor}, **record.pop("anchor_record", {})},
+        {"report": True, "__time_domain__": {"report": end}, **record.pop("end_record", {})},
+    ]
+
+
 def _event_pair_payload(**overrides):
     payload = {
         "case_id": "c1",
@@ -779,13 +793,8 @@ def _event_pair_payload(**overrides):
     return payload
 
 
-def _event_pair_records():
-    return [{"aware": True}, {"report": True}]
-
-
-def test_an_event_pair_witness_is_re_derived_rather_than_trusted() -> None:
-    """The core re-measures the deadline with the same contract the built-in engine names."""
-    req = _req("temporal", 'within_after(present(aware), present(report), "24h")')
+def test_an_event_pair_witness_is_re_derived_from_the_duty_and_the_trace() -> None:
+    """The core re-measures the log's own instants against the deadline the duty states."""
     result = _result(
         details={
             "witness": {
@@ -795,25 +804,59 @@ def test_an_event_pair_witness_is_re_derived_rather_than_trusted() -> None:
             }
         }
     )
-    checked = witness.check_plugin_result(req, _NoReplay(), _event_pair_records(), result)
+    checked = witness.check_plugin_result(
+        _event_pair_req(), _NoReplay(), _event_pair_records(), result
+    )
     assert checked.details["witness"]["provenance"] == "witness-checked"
     assert checked.details["witness"]["checker"].endswith("_event_pair_check")
+
+
+def test_an_event_pair_witness_may_not_bring_its_own_deadline() -> None:
+    """The bound is the duty's. A plug-in that picks a shorter one manufactures the breach."""
+    records = _event_pair_records(end="2026-01-01T02:00:00Z")
+    status, reason = witness._event_pair_check(
+        _event_pair_req(),
+        records,
+        _event_pair_payload(
+            end_timestamp="2026-01-01T02:00:00Z",
+            bound="1h",
+            delta_seconds=7200.0,
+            deadline_timestamp="2026-01-01T01:00:00Z",
+        ),
+    )
+    assert status == "refuted"
+    assert "1h" in reason and "24h" in reason
+
+
+def test_an_event_pair_witness_may_not_cite_an_instant_the_log_does_not_record() -> None:
+    """A timestamp absent from the named record is a manufactured pair, not a witnessed one."""
+    unclocked = [{"aware": True}, {"report": True}]
+    assert witness._event_pair_check(
+        _event_pair_req(), unclocked, _event_pair_payload()
+    )[0] == "refuted"
+
+    disagreeing = _event_pair_records(end="2026-01-01T06:00:00Z")
+    status, reason = witness._event_pair_check(
+        _event_pair_req(), disagreeing, _event_pair_payload()
+    )
+    assert status == "refuted" and "2026-01-01T06:00:00Z" in reason
+
+
+def test_an_event_pair_witness_may_not_start_a_deadline_at_an_absent_anchor() -> None:
+    records = _event_pair_records()
+    del records[0]["aware"]
+    status, reason = witness._event_pair_check(
+        _event_pair_req(), records, _event_pair_payload()
+    )
+    assert status == "refuted" and "aware" in reason
 
 
 @pytest.mark.parametrize(
     ("overrides", "expected"),
     [
-        # The pair re-measures inside the bound, so it witnesses no breach at all.
-        ({"end_timestamp": "2026-01-01T12:00:00Z", "delta_seconds": 43200.0,
-          "within_bound": True}, "refuted"),
-        # The arithmetic the plug-in reported is not the arithmetic this package derives.
         ({"delta_seconds": 999.0}, "refuted"),
         ({"deadline_timestamp": "2026-03-01T00:00:00Z"}, "refuted"),
-        # The endpoint precedes its anchor, so no measurable pair exists.
-        ({"anchor_timestamp": "2026-01-03T00:00:00Z"}, "refuted"),
-        # A record the trace does not hold.
         ({"end_record_index": 7}, "refuted"),
-        # Unreadable rather than wrong: the ceiling stands, the claim is not called false.
         ({"anchor_timestamp": "2026-01-01"}, "uncheckable"),
         ({"bound": "1y"}, "uncheckable"),
         ({"anchor_record_index": "first"}, "uncheckable"),
@@ -821,16 +864,39 @@ def test_an_event_pair_witness_is_re_derived_rather_than_trusted() -> None:
 )
 def test_an_event_pair_witness_the_core_disagrees_with_is_refuted(overrides, expected) -> None:
     status, _reason = witness._event_pair_check(
-        _event_pair_records(), _event_pair_payload(**overrides)
+        _event_pair_req(), _event_pair_records(), _event_pair_payload(**overrides)
     )
     assert status == expected
 
 
-def test_an_event_pair_witness_missing_its_fields_keeps_the_plugins_ceiling() -> None:
-    assert witness._event_pair_check(_event_pair_records(), ["not", "a", "mapping"])[0] == (
-        "uncheckable"
+def test_an_event_pair_that_re_measures_inside_the_bound_witnesses_nothing() -> None:
+    records = _event_pair_records(end="2026-01-01T12:00:00Z")
+    status, reason = witness._event_pair_check(
+        _event_pair_req(),
+        records,
+        _event_pair_payload(
+            end_timestamp="2026-01-01T12:00:00Z",
+            delta_seconds=43200.0,
+            within_bound=True,
+        ),
     )
+    assert status == "refuted" and "inside the 24h bound" in reason
+
+
+def test_an_event_pair_witness_without_a_bounded_response_duty_keeps_the_ceiling() -> None:
+    status, reason = witness._event_pair_check(
+        _req("temporal", "always(present(aware))"), _event_pair_records(), _event_pair_payload()
+    )
+    assert status == "uncheckable" and "bounded response" in reason
+
+
+def test_an_event_pair_witness_missing_its_fields_keeps_the_plugins_ceiling() -> None:
+    assert witness._event_pair_check(
+        _event_pair_req(), _event_pair_records(), ["not", "a", "mapping"]
+    )[0] == "uncheckable"
     partial = _event_pair_payload()
     del partial["bound"]
-    status, reason = witness._event_pair_check(_event_pair_records(), partial)
+    status, reason = witness._event_pair_check(
+        _event_pair_req(), _event_pair_records(), partial
+    )
     assert status == "uncheckable" and "bound" in reason

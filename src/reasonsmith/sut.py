@@ -83,10 +83,13 @@ What a reader must not break:
     counted on — so a timeless log never acquires a clock by having been read.
     Why this matters: a deadline duty today reads one latency number the system computes about
     itself, and which event it was counted from is that system's own claim (`docs/refinement.md`,
-    the `ecoa_reg_b_1002_9_a_1_timing_of_notice` row). The recorded events are what would let an
-    engine check it. Nothing does yet: `TimeDomain.ticks` refuses every domain but the ordinal one,
-    so a duty asked for on a real clock is reported not evaluated rather than answered off record
-    indices relabelled as time.
+    the `ecoa_reg_b_1002_9_a_1_timing_of_notice` row). The recorded events are what lets an engine
+    check such a bound against the log instead, and one engine now does: the bounded-response
+    evaluator in `engines/observed` reads the parsed instants of `TimeDomain.instants` directly.
+    `TimeDomain.ticks` still refuses every domain but the ordinal one, because the rtamt axis is
+    positional and nothing else may be relabelled as time, so a duty needing a real clock and
+    written without that operator is still reported not evaluated rather than answered off record
+    indices.
   - `CAPABILITY_TAXONOMY` documents the four Section 6.3 categories that signal names are
     conventionally prefixed with (`provenance_`, `artifact_logs_`, ...). It is a reference for pack
     and adapter authors, not a validator: nothing here checks a name against it, and a pack is free

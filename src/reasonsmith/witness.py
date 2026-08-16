@@ -14,9 +14,11 @@ from typing import Any
 
 from reasonsmith.rulelang import (
     BINARY_TEMPORAL_OPERATORS,
+    UnsupportedConstructError,
     counterfactual_atom,
     eval_expression,
     eval_temporal_trace,
+    is_present,
     is_unknown,
     kleene_value,
     parse_property,
@@ -479,13 +481,18 @@ _EVENT_PAIR_FIELDS = (
 )
 
 
-def _event_pair_check(records: list[dict[str, Any]], payload: Any) -> tuple[str, str]:
-    """Re-derive a claimed bounded-response breach with the shared event-time contract.
+def _event_pair_check(
+    req: Any, records: list[dict[str, Any]], payload: Any
+) -> tuple[str, str]:
+    """Re-derive a claimed bounded-response breach from the duty and the trace.
 
-    The arithmetic is `event_time.measure_pair`, the one the built-in engine names as its own
-    checker, so a plug-in cannot claim a deadline lapsed on arithmetic this package would not
-    reproduce. A payload this checker cannot read is uncheckable and keeps the plug-in's ceiling;
-    a payload it reads and disagrees with is refuted.
+    Nothing here is taken on the plug-in's word. The two event names and the deadline come from
+    `req.spec`, the two instants come from the records the payload names, and the arithmetic is
+    `event_time.measure_pair` — the checker the built-in engine already names. A plug-in therefore
+    cannot pick its own deadline, cannot cite an instant the log does not record, and cannot claim
+    a deadline started at a record whose anchor predicate is absent, which is the same rule
+    `_prefix_parts` applies to a trace prefix. A payload this checker cannot read is uncheckable
+    and keeps the plug-in's ceiling; a payload it reads and disagrees with is refuted.
     """
     from reasonsmith.event_time import (
         EventTimeError,
@@ -494,12 +501,26 @@ def _event_pair_check(records: list[dict[str, Any]], payload: Any) -> tuple[str,
         parse_duration,
         parse_timestamp,
     )
+    from reasonsmith.rulelang import bounded_response_arguments, bounded_response_calls
+    from reasonsmith.sut import read_time_domain
 
     if not isinstance(payload, Mapping):
         return _UNCHECKABLE, "the event-pair witness is not a mapping"
     missing = [name for name in _EVENT_PAIR_FIELDS if name not in payload]
     if missing:
         return _UNCHECKABLE, f"the event-pair witness omits {', '.join(missing)}"
+    try:
+        call = next(iter(bounded_response_calls(parse_property(req.spec))), None)
+        if call is None:
+            return _UNCHECKABLE, (
+                f"{req.spec!r} states no bounded response, so an event pair witnesses nothing "
+                "about it"
+            )
+        anchor_event, endpoint_event, duration_text = bounded_response_arguments(call)
+        bound = parse_duration(duration_text)
+    except (UnsupportedConstructError, EventTimeError) as exc:
+        return _UNCHECKABLE, f"the duty's own bounded response could not be read: {exc}"
+
     try:
         anchor_index = int(payload["anchor_record_index"])
         end_index = int(payload["end_record_index"])
@@ -513,17 +534,54 @@ def _event_pair_check(records: list[dict[str, Any]], payload: Any) -> tuple[str,
             f"the event-pair witness names record {out_of_range[0]}, which is outside the "
             f"{len(records)}-record trace"
         )
+
     try:
-        anchor = parse_timestamp(payload["anchor_timestamp"])
-        end = parse_timestamp(payload["end_timestamp"])
-        bound = parse_duration(payload["bound"])
+        claimed_bound = parse_duration(payload["bound"])
+        claimed_anchor = parse_timestamp(payload["anchor_timestamp"])
+        claimed_end = parse_timestamp(payload["end_timestamp"])
     except EventTimeError as exc:
         return _UNCHECKABLE, f"the event-pair witness cannot be read: {exc}"
+    if claimed_bound != bound:
+        return _REFUTED, (
+            f"the event-pair witness measures against a {claimed_bound.text} bound and "
+            f"{req.spec!r} states {bound.text}"
+        )
+
+    try:
+        stated = read_time_domain(records)
+    except (TypeError, ValueError) as exc:
+        return _UNCHECKABLE, f"the trace states no readable event clock: {exc}"
+    instants = stated.instants
+    measured: dict[str, Any] = {}
+    for role, field, event_name, index, claimed in (
+        ("anchor", "anchor_timestamp", anchor_event, anchor_index, claimed_anchor),
+        ("endpoint", "end_timestamp", endpoint_event, end_index, claimed_end),
+    ):
+        record = records[index]
+        if not is_present(record.get(event_name)):
+            return _REFUTED, (
+                f"record {index} does not make {event_name!r} present, so it is no {role} of a "
+                "bounded response"
+            )
+        stamps = instants[index] if index < len(instants) else None
+        recorded = stamps.get(event_name) if isinstance(stamps, Mapping) else None
+        if recorded is None:
+            return _REFUTED, (
+                f"record {index} records no timestamp for {event_name!r}, so the witness's "
+                f"{role} instant is not in the trace"
+            )
+        if recorded != claimed:
+            return _REFUTED, (
+                f"the event-pair witness states a {role} of {payload[field]!r} and record "
+                f"{index} states {format_timestamp(recorded)}"
+            )
+        measured[role] = recorded
+
     try:
         pair = measure_pair(
             str(payload["case_id"]),
-            anchor,
-            end,
+            measured["anchor"],
+            measured["endpoint"],
             bound,
             anchor_record_index=anchor_index,
             end_record_index=end_index,
@@ -535,18 +593,19 @@ def _event_pair_check(records: list[dict[str, Any]], payload: Any) -> tuple[str,
             f"re-measuring the pair puts {pair.delta_seconds}s inside the {bound.text} bound, "
             "so it witnesses no breach of the deadline"
         )
-    for field, measured in (
+    for field, derived in (
         ("delta_seconds", pair.delta_seconds),
         ("deadline_timestamp", format_timestamp(pair.deadline_timestamp)),
         ("within_bound", pair.within_bound),
     ):
-        if field in payload and payload[field] != measured:
+        if field in payload and payload[field] != derived:
             return _REFUTED, (
                 f"the event-pair witness states {field}={payload[field]!r} and re-measuring it "
-                f"gives {measured!r}"
+                f"gives {derived!r}"
             )
     return _CONFIRMED, (
-        f"re-measured the pair at {pair.delta_seconds}s, past the {bound.text} deadline at "
+        f"re-measured the trace's own {anchor_event}/{endpoint_event} instants at "
+        f"{pair.delta_seconds}s, past the {bound.text} deadline at "
         f"{format_timestamp(pair.deadline_timestamp)}"
     )
 
@@ -567,7 +626,7 @@ def _check(
         status, reason = _pair_check(req, sut, payload)
         return status, reason, "reasonsmith.witness._pair_check"
     if kind == "event_pair":
-        status, reason = _event_pair_check(records, payload)
+        status, reason = _event_pair_check(req, records, payload)
         return status, reason, "reasonsmith.witness._event_pair_check"
     return (
         _UNCHECKABLE,

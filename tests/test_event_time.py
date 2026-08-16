@@ -336,3 +336,36 @@ def test_timestamp_and_duration_refuse_naive_or_invalid_values() -> None:
         parse_timestamp("2026-02-30T00:00:00Z")
     with pytest.raises(EventTimeError):
         parse_duration("1y")
+
+
+def test_an_uncorrelated_record_cannot_be_named_by_a_case_id() -> None:
+    """The reader-facing case name is disjoint the way the correlation key already is."""
+    unnamed = _evaluate(
+        [
+            {"aware": True, TIME_DOMAIN_KEY: {"aware": "2026-01-01T00:00:00Z"}},
+            {"report": True, TIME_DOMAIN_KEY: {"report": "2026-01-02T00:00:00Z"}},
+        ]
+    )
+    assert unnamed.verdict is Verdict.INCONCLUSIVE
+    assert [
+        problem for problem in unnamed.details["correlation_problems"]
+        if "<unnamed record 0>" in problem
+    ]
+
+    reserved = _evaluate(
+        [
+            {
+                "case_id": "<unnamed record 0>",
+                "aware": True,
+                TIME_DOMAIN_KEY: {"aware": "2026-01-01T00:00:00Z"},
+            },
+            {
+                "case_id": "<unnamed record 0>",
+                "report": True,
+                TIME_DOMAIN_KEY: {"report": "2026-01-02T00:00:00Z"},
+            },
+        ]
+    )
+    assert reserved.verdict is Verdict.INCONCLUSIVE
+    assert "reserved" in reserved.evidence_summary
+    assert "event_pairs" not in reserved.details
