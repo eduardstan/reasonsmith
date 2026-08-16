@@ -71,3 +71,19 @@ def test_external_verifier_refusals_never_become_observed_results():
     assert unavailable.run.status == "error"
     assert unavailable.witness is None
     assert "artifact" in (unavailable.run.diagnostic or "").lower()
+
+
+def test_decide_refuses_inputs_outside_declared_domain():
+    sut = system_under_test()
+
+    for case in (
+        {"score": 2.0, "applicant_prohibited_basis": 0},
+        {"score": float("nan"), "applicant_prohibited_basis": 0},
+        {"score": 0.0, "applicant_prohibited_basis": 2},
+    ):
+        try:
+            sut.decide(case)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"accepted out-of-domain case: {case!r}")

@@ -118,12 +118,28 @@ class TinyOnnxCreditSUT:
     def decide(self, case: Mapping[str, Any]) -> dict[str, Any]:
         if self._artifact is None:
             raise ValueError("the deployed ONNX artifact is unavailable")
+
         import numpy as np
+
+        score = case.get("score")
+        protected = case.get(PROTECTED_SIGNAL)
+        if isinstance(score, bool) or not isinstance(score, (int, float)):
+            raise ValueError("score must be a finite real in [-1.0, 1.0]")
+        score_slot = INPUT_SPACE.slot("score")
+        if not np.isfinite(score) or not score_slot.lower <= score <= score_slot.upper:
+            raise ValueError("score must be a finite real in [-1.0, 1.0]")
+        protected_slot = INPUT_SPACE.slot(PROTECTED_SIGNAL)
+        if (
+            isinstance(protected, bool)
+            or not isinstance(protected, (int, float))
+            or not np.isfinite(protected)
+            or protected not in protected_slot.values
+        ):
+            raise ValueError("applicant_prohibited_basis must be one of 0 or 1")
+
         from onnx.reference import ReferenceEvaluator
 
-        values = np.asarray(
-            [[float(case["score"]), float(case[PROTECTED_SIGNAL])]], dtype=np.float32
-        )
+        values = np.asarray([[float(score), float(protected)]], dtype=np.float32)
         evaluated = ReferenceEvaluator(self._artifact.model).run(None, {"features": values})
         risk = float(evaluated[0][0, 0])
         decision = "approved" if risk <= 0.6 else "adverse_action"
