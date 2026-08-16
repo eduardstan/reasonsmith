@@ -631,10 +631,9 @@ def _event_metric_result(
     if not anchors:
         # This is the same no-evidence rule as an implication whose trigger never fires.  It is
         # deliberately not a satisfied vacuity, and the details retain the metric contract.
-        if isinstance(property_node, ast.Expression):
-            body = property_node.body
-        else:
-            body = property_node
+        body: ast.AST = (
+            property_node.body if isinstance(property_node, ast.Expression) else property_node
+        )
         if (
             isinstance(body, ast.Call)
             and isinstance(body.func, ast.Name)
@@ -758,7 +757,7 @@ def _event_metric_result(
 
 
 class ObservedEngine:
-    """Temporal monitor engine powered by rtamt."""
+    """Observed temporal engine: rtamt for positions, direct arithmetic for event deadlines."""
 
     @staticmethod
     def evaluate(
@@ -784,9 +783,9 @@ class ObservedEngine:
             return _event_metric_result(req, records, metric_node, time_domain)
 
         # The domain the duty is to be counted on is a stated input, not a convention of this
-        # function. It defaults to `ORDINAL_DOMAIN` — the record index, which is what every
-        # shipped duty is asked for and what a caller passing nothing keeps getting — so a trace
-        # that gained event timestamps does not thereby lose a verdict it used to have.
+        # function. Positional duties default to `ORDINAL_DOMAIN` — the record index, which is
+        # what a caller passing nothing keeps getting — so a trace that gained event timestamps
+        # does not thereby lose a verdict it used to have.
         required = ORDINAL_DOMAIN if time_domain is None else time_domain
         if not required.is_ordinal:
             # The trace's own clock contract is read, never assumed. A trace that states event
@@ -921,8 +920,8 @@ class ObservedEngine:
         magnitude_vars.difference_update(presence_signals)
         magnitude_vars.difference_update(contains_signals)
 
-        # Build dataset for rtamt. The time axis comes from the stated domain and nowhere else,
-        # so a later metric semantics is a new `TimeDomain.kind` rather than an edit here.
+        # Build the positional dataset for rtamt. The event-time metric takes the separate branch
+        # above rather than turning these ordinal ticks into elapsed time.
         time_series: dict[str, list[float]] = {"time": required.ticks(len(records))}
         unmeasured: dict[str, int] = {}
         non_boolean_atoms: dict[str, int] = {}

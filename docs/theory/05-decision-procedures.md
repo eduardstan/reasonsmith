@@ -1,6 +1,6 @@
 # 5 — Decision procedures
 
-There is **no proof system here**. The package has four implementations of one denotation and two
+There is **no proof system here**. The package has five implementations of one denotation and two
 external decision procedures. Soundness is therefore a proposition about each procedure's reported
 answer under its stated assumptions, not a theorem of a calculus. The denotation is Definition 3.1;
 the structures $O(\sigma)$ and $D(L)$ are Definitions 1.5–1.6.
@@ -43,10 +43,16 @@ counterpart `test_the_encoder_and_the_interpreter_compute_the_same_number`).
 
 ## 5.3 rtamt over $O(\sigma)$
 
-`engines/observed.to_stl` renders the supported temporal formula for rtamt over the supplied
-observation structure. rtamt's robustness is a reported margin, not a verdict: the verdict comes
-from the reference finite-trace denotation. A zero margin decides neither side, and strict and
-non-strict comparisons can have the same margin.
+For positional temporal formulas, `engines/observed.to_stl` renders the supported formula for
+rtamt over the supplied observation structure. rtamt's robustness is a reported margin, not a
+verdict: the verdict comes from the reference finite-trace denotation. A zero margin decides
+neither side, and strict and non-strict comparisons can have the same margin.
+
+The bounded response of Definition 3.9a takes a separate path through the same observed engine and
+never reaches rtamt. It correlates exactly one anchor and endpoint per case from the record's event
+predicates and `__time_domain__` timestamps, then calls `event_time.measure_pair`. That shared
+arithmetic also rechecks an installed engine's `event_pair` violation witness; record positions and
+logged latencies are never substituted for missing instants.
 
 > **Proposition 5.3 (monitor rendering).** For every formula shape accepted by the renderer and not
 > on its documented divergence list, the Boolean result obtained from the rendered finite trace
@@ -129,17 +135,23 @@ The optional finite-trace analysis keeps the three-valued runtime-verification d
 ## 5.7 Plug-in violation witnesses
 
 An installed engine may report a violation with a trace position, an absent-presence witness, an
-input valuation, an execution pair, or — for a genuine `until`/`since` shape — a finite trace
-prefix and the position(s) where its obligation ran out. `reasonsmith.witness` dispatches by
-fragment and rung and re-derives that witness using the reference interpreter and the system's own
-replay surface. A confirmed witness is marked `witness-checked`; a missing witness or one the
-checker cannot read remains `trusted-ceiling`. This is deliberately incomplete: an unknown
-interpreter value is `uncheckable`, not a refutation, and satisfied results at a proved ceiling
-have no checked object.
+input valuation, an execution pair, an event pair, or — for a genuine `until`/`since` shape — a
+finite trace prefix and the position(s) where its obligation ran out. `reasonsmith.witness`
+dispatches by fragment and rung and re-derives that witness using the reference interpreter, the
+supplied trace, and the system's own replay surface. For an event pair, the duty supplies the event
+names and bound, while the trace supplies the case, unique occurrences, and instants; the checker
+uses the observed engine's correlation rule and `event_time.measure_pair`, so a plug-in cannot
+bring its own deadline or choose among duplicate occurrences. A confirmed witness is marked
+`witness-checked`; a missing witness or one the checker cannot read remains `trusted-ceiling`. This
+is deliberately incomplete: an unknown interpreter value is `uncheckable`, not a refutation, and
+satisfied results at a proved ceiling have no checked object.
 If the witness is refuted, the result is demoted to `not evaluated`, retaining the unverified
 payload under `details.witness` rather than presenting it as a finding. The prefix emission and
 three checker outcomes are pinned by `test_observed_until_violation_emits_recheckable_prefix` and
 `test_temporal_prefix_witness_is_confirmed_refuted_or_uncheckable`; the other checks are
 `test_a_rechecked_plugin_violation_is_witness_checked`,
 `test_a_witnessless_plugin_violation_is_trusted_at_its_ceiling`, and
-`test_a_refuted_plugin_witness_demotes_without_flipping`.
+`test_a_refuted_plugin_witness_demotes_without_flipping`. Event-pair grounding is pinned by
+`test_an_event_pair_witness_is_re_derived_from_the_duty_and_the_trace`,
+`test_an_event_pair_witness_may_not_bring_its_own_deadline`, and
+`test_a_plugin_may_not_choose_which_duplicate_occurrence_to_measure_from`.

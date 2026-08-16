@@ -138,8 +138,8 @@ CAPABILITY_TAXONOMY = (
 #: and not a closed list.
 TIME_DOMAIN_KEY = "__time_domain__"
 
-#: The time domain the monitor counts on today: the record index, one tick per decision, in the
-#: order the trace supplied them (`docs/semantics.md` §2, *Time is the record index*).
+#: The time domain the positional monitor counts on: the record index, one tick per decision, in
+#: the order the trace supplied them (`docs/semantics.md` §2, *Time is the record index*).
 ORDINAL_TIME = "ordinal"
 
 #: The time domain of a trace whose records carry `TIME_DOMAIN_KEY`. The bounded-response metric

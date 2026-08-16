@@ -42,7 +42,7 @@ import ast
 import io
 import math
 import tokenize
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, cast
 
 from reasonsmith.event_time import EventTimeError, parse_duration
 
@@ -861,7 +861,9 @@ def _validate_bounded_response_shape(node: ast.AST) -> None:
     # The enclosing trigger must be the metric's own anchor. Any other trigger leaves two
     # different signals deciding one duty: the metric measures the anchor, while the no-anchor
     # path reports an unreachable trigger naming a signal the measurement never read.
-    trigger = body.args[0].args[0]
+    enclosing = cast(ast.Call, body)
+    implication = cast(ast.Call, enclosing.args[0])
+    trigger = implication.args[0]
     if not (
         isinstance(trigger, ast.Call)
         and isinstance(trigger.func, ast.Name)

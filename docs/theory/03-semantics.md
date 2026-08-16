@@ -186,13 +186,15 @@ $$
 0 ≤ t_b - t_a ≤ Δ.
 $$
 
-The timestamps must be explicit-offset ISO-8601 values normalised to UTC; the operator never turns
-record positions or a logged latency into time. Records without `case_id` are independent cases,
-while records sharing a non-empty `case_id` may form one case. Missing, duplicate, malformed,
-out-of-order, or ambiguously correlated events make the formula undefined (reported not evaluated),
-and a trace with no anchor is not a vacuous pass. Hour/day bounds are elapsed durations; month
-bounds use calendar arithmetic with end-of-month clamping. The construct stands alone as the whole
-`spec`, or under the one accepted enclosing temporal shape
+Each event instant is carried in that record's `__time_domain__` mapping under the same name as its
+`present()` event predicate; both the predicate and its timestamp are required. Timestamps must be
+explicit-offset ISO-8601 values normalised to UTC; the operator never turns record positions or a
+logged latency into time. Records without `case_id` are independent cases, while records sharing a
+non-empty `case_id` may form one case. Missing, duplicate, malformed, out-of-order, or ambiguously
+correlated events make the formula undefined (reported not evaluated), and a trace with no anchor
+is not a vacuous pass. Hour/day bounds are elapsed durations; month bounds use calendar arithmetic
+with end-of-month clamping. The construct stands alone as the whole `spec`, or under the one
+accepted enclosing temporal shape
 `always(implies(present(a), within_after(present(a), ...)))`, whose trigger the loader refuses
 unless it is the same named anchor the metric measures; no other position is accepted.
 This is a behavioural observed capability, not a proof over a system's possible event times.

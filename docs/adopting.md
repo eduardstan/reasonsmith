@@ -238,8 +238,7 @@ REFINEMENT
   When the clock started. The clause counts from three different events; the property reads one
   latency number the system computes about itself, so which event it was measured from is the
   system's own claim and no engine checks it. A record may now *state* which event started its
-  clock (`sut.TIME_DOMAIN_KEY`, [`docs/theory/03-semantics.md`](theory/03-semantics.md)
-  Definition 3.5), and a metric semantics that reads two such timestamps now exists
+  clock (`sut.TIME_DOMAIN_KEY`), and a metric semantics that reads two such timestamps now exists
   ([`docs/theory/03-semantics.md`](theory/03-semantics.md) Definition 3.9a, `within_after`);
   this property still does not use it, because it reads the one latency number the system
   reports rather than the two events, so the recorded events remain evidence this row has not

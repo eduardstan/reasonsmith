@@ -109,6 +109,7 @@ precision = 2
 # report hundreds of findings that say nothing about whether a verdict is sound, and a list nobody
 # reads is not a check. Widen the list when a module earns it, one at a time.
 files = ["src/reasonsmith/verdict.py", "src/reasonsmith/spec.py"]
+follow_imports = "silent"
 python_version = "3.11"
 strict = true
 
