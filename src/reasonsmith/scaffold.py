@@ -116,8 +116,8 @@ An out-of-tree reasonsmith engine plug-in scaffold. The generated engine decline
 requirement until you implement one deliberately.
 
 - Read the [engine authoring guide](https://github.com/eduardstan/reasonsmith/blob/main/docs/authoring-engines.md).
-- Run `reasonsmith verify-engine {name}` as the documented next step when that command is
-  available in your reasonsmith installation (PR 210).
+- Run `reasonsmith verify-engine {name}` to validate the installed engine entry point
+  against the engine contract.
 - Install this package (`pip install -e .`) to make the entry point discoverable.
 
 The stub's explicit `max_strength` is `observed`; raising it is a claim that your engine must

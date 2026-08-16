@@ -1,0 +1,48 @@
+name: System or model proposal
+description: Propose a system under test — its evidence surfaces, inference artefact, and practical limits.
+labels: ["wanted: model/SUT"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A system under test is assessed through the surfaces it exposes. A good proposal says what the system is, what can be replayed or inspected, and which evidence rung that makes possible.
+  - type: input
+    id: kind
+    attributes:
+      label: What kind of system is it?
+      description: Describe the model or decision system (for example, a neural model, scorer, rules engine, or language model).
+    validations:
+      required: true
+  - type: checkboxes
+    id: surfaces
+    attributes:
+      label: SUT protocol surfaces
+      description: Which surfaces does it expose? Select every applicable one.
+      options:
+        - label: "`capabilities()`"
+        - label: "`decisions()`"
+        - label: "`logic()`"
+        - label: "`artifact()`"
+    validations:
+      required: true
+  - type: textarea
+    id: inference_artifact
+    attributes:
+      label: Inference artefact
+      description: Is a real inference artefact available, or are records and reasons self-declared? Describe what can be independently inspected.
+    validations:
+      required: true
+  - type: input
+    id: evidence_rung
+    attributes:
+      label: Plausible evidence rung
+      description: Which rung could this system support (observed, probed, or proved), and what makes that rung realistic?
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Data and licensing constraints
+      description: Note data access, privacy, model-weight, source-code, runtime, or licensing constraints that affect assessment.
+    validations:
+      required: true

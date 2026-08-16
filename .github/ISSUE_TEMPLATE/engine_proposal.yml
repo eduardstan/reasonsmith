@@ -1,0 +1,50 @@
+name: Engine proposal
+description: Propose an engine or verifier — what it checks, what it can prove, and how it stays honest.
+labels: ["wanted: engine"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An engine contributes evidence at a declared ceiling. A good proposal explains the property fragment it handles, the result it can re-check, and where it must refuse rather than overclaim.
+  - type: input
+    id: purpose
+    attributes:
+      label: What the engine verifies
+      description: What claim does it decide, and for which property fragment (record, logical, temporal, or counterfactual)?
+    validations:
+      required: true
+  - type: input
+    id: max_strength
+    attributes:
+      label: Declared max_strength
+      description: Which evidence rung is the engine's ceiling (observed, probed, or proved), and why is that ceiling justified?
+    validations:
+      required: true
+  - type: textarea
+    id: witness
+    attributes:
+      label: Re-checkable witness
+      description: Can the engine produce a witness that reasonsmith can independently re-check? Describe its shape, or explain why the engine is trusted only up to its declared ceiling.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Install and runtime dependencies
+      description: List external binaries, Python packages, services, supported platforms, and any version pins.
+    validations:
+      required: true
+  - type: input
+    id: licence
+    attributes:
+      label: Licence
+      description: The licence of the engine and any material dependency.
+    validations:
+      required: true
+  - type: textarea
+    id: refusal
+    attributes:
+      label: Unsupported forms and timeouts
+      description: Which inputs, property shapes, resource limits, and timeout cases does the engine refuse, and how does it report those refusals?
+    validations:
+      required: true
