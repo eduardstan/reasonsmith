@@ -43,6 +43,7 @@ DOCUMENTED_PACKAGE_FILES = (
     "reasonsmith/examples/__init__.py",
     "reasonsmith/examples/__main__.py",
     "reasonsmith/examples/neural_scorer.py",
+    "reasonsmith/examples/onnx_credit_scorer.py",
     "reasonsmith/examples/probabilistic_scorer.py",
     "reasonsmith/examples/symbolic_rules.py",
     "reasonsmith/examples/language_model_notices.py",
