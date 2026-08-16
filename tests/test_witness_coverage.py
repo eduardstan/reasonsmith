@@ -761,3 +761,76 @@ def test_witness_direction_boundary_refuses_malformed_and_unreplayable_declarati
         pair_req, _counterfactual_sut(),
         [{"protected": 0, "junk": 1}, {"protected": 1, "junk": 1}],
     )[0] == "refuted"
+
+
+def _event_pair_payload(**overrides):
+    payload = {
+        "case_id": "c1",
+        "anchor_timestamp": "2026-01-01T00:00:00Z",
+        "end_timestamp": "2026-01-02T00:00:01Z",
+        "delta_seconds": 86401.0,
+        "bound": "24h",
+        "deadline_timestamp": "2026-01-02T00:00:00Z",
+        "within_bound": False,
+        "anchor_record_index": 0,
+        "end_record_index": 1,
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _event_pair_records():
+    return [{"aware": True}, {"report": True}]
+
+
+def test_an_event_pair_witness_is_re_derived_rather_than_trusted() -> None:
+    """The core re-measures the deadline with the same contract the built-in engine names."""
+    req = _req("temporal", 'within_after(present(aware), present(report), "24h")')
+    result = _result(
+        details={
+            "witness": {
+                "kind": "event_pair",
+                "provenance": "trusted-ceiling",
+                "payload": _event_pair_payload(),
+            }
+        }
+    )
+    checked = witness.check_plugin_result(req, _NoReplay(), _event_pair_records(), result)
+    assert checked.details["witness"]["provenance"] == "witness-checked"
+    assert checked.details["witness"]["checker"].endswith("_event_pair_check")
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected"),
+    [
+        # The pair re-measures inside the bound, so it witnesses no breach at all.
+        ({"end_timestamp": "2026-01-01T12:00:00Z", "delta_seconds": 43200.0,
+          "within_bound": True}, "refuted"),
+        # The arithmetic the plug-in reported is not the arithmetic this package derives.
+        ({"delta_seconds": 999.0}, "refuted"),
+        ({"deadline_timestamp": "2026-03-01T00:00:00Z"}, "refuted"),
+        # The endpoint precedes its anchor, so no measurable pair exists.
+        ({"anchor_timestamp": "2026-01-03T00:00:00Z"}, "refuted"),
+        # A record the trace does not hold.
+        ({"end_record_index": 7}, "refuted"),
+        # Unreadable rather than wrong: the ceiling stands, the claim is not called false.
+        ({"anchor_timestamp": "2026-01-01"}, "uncheckable"),
+        ({"bound": "1y"}, "uncheckable"),
+        ({"anchor_record_index": "first"}, "uncheckable"),
+    ],
+)
+def test_an_event_pair_witness_the_core_disagrees_with_is_refuted(overrides, expected) -> None:
+    status, _reason = witness._event_pair_check(
+        _event_pair_records(), _event_pair_payload(**overrides)
+    )
+    assert status == expected
+
+
+def test_an_event_pair_witness_missing_its_fields_keeps_the_plugins_ceiling() -> None:
+    assert witness._event_pair_check(_event_pair_records(), ["not", "a", "mapping"])[0] == (
+        "uncheckable"
+    )
+    partial = _event_pair_payload()
+    del partial["bound"]
+    status, reason = witness._event_pair_check(_event_pair_records(), partial)
+    assert status == "uncheckable" and "bound" in reason

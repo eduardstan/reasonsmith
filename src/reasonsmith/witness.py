@@ -469,6 +469,88 @@ def _pair_check(req: Any, sut: Any, payload: Any) -> tuple[str, str]:
     return _CONFIRMED, f"replayed pair differed only in {protected!r} and changed {outcome!r}"
 
 
+_EVENT_PAIR_FIELDS = (
+    "case_id",
+    "anchor_timestamp",
+    "end_timestamp",
+    "bound",
+    "anchor_record_index",
+    "end_record_index",
+)
+
+
+def _event_pair_check(records: list[dict[str, Any]], payload: Any) -> tuple[str, str]:
+    """Re-derive a claimed bounded-response breach with the shared event-time contract.
+
+    The arithmetic is `event_time.measure_pair`, the one the built-in engine names as its own
+    checker, so a plug-in cannot claim a deadline lapsed on arithmetic this package would not
+    reproduce. A payload this checker cannot read is uncheckable and keeps the plug-in's ceiling;
+    a payload it reads and disagrees with is refuted.
+    """
+    from reasonsmith.event_time import (
+        EventTimeError,
+        format_timestamp,
+        measure_pair,
+        parse_duration,
+        parse_timestamp,
+    )
+
+    if not isinstance(payload, Mapping):
+        return _UNCHECKABLE, "the event-pair witness is not a mapping"
+    missing = [name for name in _EVENT_PAIR_FIELDS if name not in payload]
+    if missing:
+        return _UNCHECKABLE, f"the event-pair witness omits {', '.join(missing)}"
+    try:
+        anchor_index = int(payload["anchor_record_index"])
+        end_index = int(payload["end_record_index"])
+    except (TypeError, ValueError):
+        return _UNCHECKABLE, "the event-pair witness does not name two record indices"
+    out_of_range = [
+        index for index in (anchor_index, end_index) if not 0 <= index < len(records)
+    ]
+    if out_of_range:
+        return _REFUTED, (
+            f"the event-pair witness names record {out_of_range[0]}, which is outside the "
+            f"{len(records)}-record trace"
+        )
+    try:
+        anchor = parse_timestamp(payload["anchor_timestamp"])
+        end = parse_timestamp(payload["end_timestamp"])
+        bound = parse_duration(payload["bound"])
+    except EventTimeError as exc:
+        return _UNCHECKABLE, f"the event-pair witness cannot be read: {exc}"
+    try:
+        pair = measure_pair(
+            str(payload["case_id"]),
+            anchor,
+            end,
+            bound,
+            anchor_record_index=anchor_index,
+            end_record_index=end_index,
+        )
+    except EventTimeError as exc:
+        return _REFUTED, f"the claimed pair is not a measurable one: {exc}"
+    if pair.within_bound:
+        return _REFUTED, (
+            f"re-measuring the pair puts {pair.delta_seconds}s inside the {bound.text} bound, "
+            "so it witnesses no breach of the deadline"
+        )
+    for field, measured in (
+        ("delta_seconds", pair.delta_seconds),
+        ("deadline_timestamp", format_timestamp(pair.deadline_timestamp)),
+        ("within_bound", pair.within_bound),
+    ):
+        if field in payload and payload[field] != measured:
+            return _REFUTED, (
+                f"the event-pair witness states {field}={payload[field]!r} and re-measuring it "
+                f"gives {measured!r}"
+            )
+    return _CONFIRMED, (
+        f"re-measured the pair at {pair.delta_seconds}s, past the {bound.text} deadline at "
+        f"{format_timestamp(pair.deadline_timestamp)}"
+    )
+
+
 def _check(
     req: Any, sut: Any, records: list[dict[str, Any]], kind: str, payload: Any
 ) -> tuple[str, str, str]:
@@ -484,6 +566,9 @@ def _check(
     if kind == "execution_pair":
         status, reason = _pair_check(req, sut, payload)
         return status, reason, "reasonsmith.witness._pair_check"
+    if kind == "event_pair":
+        status, reason = _event_pair_check(records, payload)
+        return status, reason, "reasonsmith.witness._event_pair_check"
     return (
         _UNCHECKABLE,
         f"the {kind!r} witness is reserved for a checker not shipped in slice 1",

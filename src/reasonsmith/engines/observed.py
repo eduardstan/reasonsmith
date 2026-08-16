@@ -445,9 +445,14 @@ def _event_metric_result(
     req: Requirement,
     records: list[dict[str, Any]],
     property_node: ast.AST,
-    stated: TimeDomain,
+    time_domain: TimeDomain | None,
 ) -> RequirementResult:
-    """Evaluate the one event-time metric operator without constructing an ordinal monitor."""
+    """Evaluate the one event-time metric operator without constructing an ordinal monitor.
+
+    Every refusal and every verdict this operator can produce leaves through here, so the metric
+    contract a reader meets in `details` is built once. A second copy beside the domain refusals
+    made what a reader was told depend on which branch answered.
+    """
     clause = f"{req.source_document} {req.article_clause}"
     call = next(iter(bounded_response_calls(property_node)), None)
     if call is None:
@@ -456,7 +461,6 @@ def _event_metric_result(
     duration = parse_duration(duration_text)
     common: dict[str, Any] = {
         "time_domain_required": EVENT_TIME,
-        "time_domain_stated_by_trace": EVENT_TIME,
         "timezone_policy": TIMEZONE_POLICY,
         "calendar_policy": CALENDAR_POLICY,
         "anchor_event": anchor,
@@ -484,6 +488,33 @@ def _event_metric_result(
             binding=req.binding,
             scope=req.scope,
         )
+
+    # The clock this operator counts on is selected by its construct.  Asking for the ordinal
+    # domain explicitly is still a refusal: the metric bound must never be downgraded to record
+    # positions or to a latency field the system reports about itself.
+    required = EVENT_DOMAIN if time_domain is None else time_domain
+    if required.is_ordinal:
+        return inconclusive(
+            f"{req.spec!r} is an event-time bounded-response property, but it was asked for on "
+            "the ordinal record-index domain. The metric clock is explicit and is never replaced "
+            "by record positions.",
+            {"time_domain_requested": required.kind},
+        )
+    try:
+        stated = read_time_domain(records)
+    except (TypeError, ValueError) as exc:
+        return inconclusive(
+            f"{req.spec!r} requires a valid event-time clock, but the trace timestamp contract "
+            f"was refused: {exc}",
+            {"time_domain_stated_by_trace": EVENT_TIME, "timestamp_error": str(exc)},
+        )
+    if stated.is_ordinal:
+        return inconclusive(
+            f"{req.spec!r} requires the event-time metric clock, but this trace records no event "
+            "timestamps. No ordinal fallback is permitted.",
+            {"time_domain_stated_by_trace": stated.kind},
+        )
+    common["time_domain_stated_by_trace"] = EVENT_TIME
 
     # A trace record is one case unless it explicitly names a case shared by several event
     # records.  Records without an id are intentionally never merged, so they are keyed in a
@@ -689,87 +720,7 @@ class ObservedEngine:
             # The ordinary parser/refusal path below owns malformed non-metric properties.
             pass
         if metric_node is not None:
-            metric_call = next(iter(bounded_response_calls(metric_node)))
-            metric_anchor, metric_endpoint, metric_bound_text = bounded_response_arguments(
-                metric_call
-            )
-            metric_bound = parse_duration(metric_bound_text)
-            metric_contract: dict[str, Any] = {
-                "time_domain_required": EVENT_TIME,
-                "timezone_policy": TIMEZONE_POLICY,
-                "calendar_policy": CALENDAR_POLICY,
-                "anchor_event": metric_anchor,
-                "endpoint_event": metric_endpoint,
-                "bound": metric_bound.text,
-                "bound_kind": "calendar" if metric_bound.is_calendar else "elapsed",
-                "required_anchor_present": False,
-                "required_endpoint_present": False,
-                "all_required_anchors_present": False,
-            }
-            required = EVENT_DOMAIN if time_domain is None else time_domain
-            if required.is_ordinal:
-                return RequirementResult(
-                    requirement_id=req.id,
-                    source_clause=clause,
-                    verdict=Verdict.INCONCLUSIVE,
-                    strength=None,
-                    signals_required=tuple(req.requires),
-                    evidence_summary=(
-                        f"Not evaluated: {req.spec!r} is an event-time bounded-response property, "
-                        "but it was asked for on the ordinal record-index domain. The metric clock "
-                        "is explicit and is never replaced by record positions."
-                    ),
-                    details={
-                        **metric_contract,
-                        "time_domain_requested": required.kind,
-                        "records_observed": len(records),
-                    },
-                    binding=req.binding,
-                    scope=req.scope,
-                )
-            try:
-                stated = read_time_domain(records)
-            except (TypeError, ValueError) as exc:
-                return RequirementResult(
-                    requirement_id=req.id,
-                    source_clause=clause,
-                    verdict=Verdict.INCONCLUSIVE,
-                    strength=None,
-                    signals_required=tuple(req.requires),
-                    evidence_summary=(
-                        f"Not evaluated: {req.spec!r} requires a valid event-time clock, but the "
-                        f"trace timestamp contract was refused: {exc}"
-                    ),
-                    details={
-                        **metric_contract,
-                        "time_domain_stated_by_trace": EVENT_TIME,
-                        "records_observed": len(records),
-                        "timestamp_error": str(exc),
-                    },
-                    binding=req.binding,
-                    scope=req.scope,
-                )
-            if stated.is_ordinal:
-                return RequirementResult(
-                    requirement_id=req.id,
-                    source_clause=clause,
-                    verdict=Verdict.INCONCLUSIVE,
-                    strength=None,
-                    signals_required=tuple(req.requires),
-                    evidence_summary=(
-                        f"Not evaluated: {req.spec!r} requires the event-time metric clock, "
-                        "but this "
-                        "trace records no event timestamps. No ordinal fallback is permitted."
-                    ),
-                    details={
-                        **metric_contract,
-                        "time_domain_stated_by_trace": stated.kind,
-                        "records_observed": len(records),
-                    },
-                    binding=req.binding,
-                    scope=req.scope,
-                )
-            return _event_metric_result(req, records, metric_node, stated)
+            return _event_metric_result(req, records, metric_node, time_domain)
 
         # The domain the duty is to be counted on is a stated input, not a convention of this
         # function. It defaults to `ORDINAL_DOMAIN` — the record index, which is what every

@@ -239,26 +239,29 @@ REFINEMENT
   latency number the system computes about itself, so which event it was measured from is the
   system's own claim and no engine checks it. A record may now *state* which event started its
   clock (`sut.TIME_DOMAIN_KEY`, [`docs/theory/03-semantics.md`](theory/03-semantics.md)
-  Definition 3.5), and this property still does not read it: the recorded events are evidence
-  waiting for a metric semantics, not a check this row has gained. The paragraph (ii) exception
-  — *unless notice is provided in accordance with paragraph (c)* — is not modelled, so a lawful
-  incomplete-application notice under 1002.9(c) is still held to the 30-day bound.
-  `artifact_logs_counteroffer_not_accepted` is read under the flag encoding of
-  [`docs/theory/03-semantics.md`](theory/03-semantics.md) Definition 3.5, where any present non-
-  numeric value becomes true, so a record that carries prose in that field takes the 90-day
-  branch. Both numbers are the clause's own, not this pack's (`docs/authoring-packs.md`, *a
-  number in a spec*). **And the shipped example systems demonstrate the tool; none is a fixture
-  for this duty, and none will be built to.** Against `reasonsmith.examples.symbolic_rules` this
-  duty is proved satisfied with its trigger firing, and its ninety-day counteroffer branch is
-  vacuously passed: that system's own seven-day batching bounds every notice under thirty days —
-  `notification_queue_days <= 7`, and the notice lands a day after the batch, so
-  `artifact_logs_notification_latency_days <= 8` — which makes the first disjunct true of every
-  admissible input and the second (the only branch the 90-day bound reaches) replaceable by any
-  formula whatsoever without moving the verdict. No shipped system exercises that branch, and
-  none will be built to: a system engineered to light up a branch is a fixture, and a fixture
-  becomes the thing the tool is tuned against — the failure this repository's whole design is
-  arranged to avoid. The adapters of `docs/three-systems.md` and `docs/language-model.md` exist
-  to demonstrate the tool, not to exercise the duties.
+  Definition 3.5), and a metric semantics that reads two such timestamps now exists
+  ([`docs/theory/03-semantics.md`](theory/03-semantics.md) Definition 3.9a, `within_after`);
+  this property still does not use it, because it reads the one latency number the system
+  reports rather than the two events, so the recorded events remain evidence this row has not
+  gained a check from. The paragraph (ii) exception — *unless notice is provided in accordance
+  with paragraph (c)* — is not modelled, so a lawful incomplete-application notice under
+  1002.9(c) is still held to the 30-day bound. `artifact_logs_counteroffer_not_accepted` is read
+  under the flag encoding of [`docs/theory/03-semantics.md`](theory/03-semantics.md) Definition
+  3.5, where any present non-numeric value becomes true, so a record that carries prose in that
+  field takes the 90-day branch. Both numbers are the clause's own, not this pack's
+  (`docs/authoring-packs.md`, *a number in a spec*). **And the shipped example systems
+  demonstrate the tool; none is a fixture for this duty, and none will be built to.** Against
+  `reasonsmith.examples.symbolic_rules` this duty is proved satisfied with its trigger firing,
+  and its ninety-day counteroffer branch is vacuously passed: that system's own seven-day
+  batching bounds every notice under thirty days — `notification_queue_days <= 7`, and the
+  notice lands a day after the batch, so `artifact_logs_notification_latency_days <= 8` — which
+  makes the first disjunct true of every admissible input and the second (the only branch the
+  90-day bound reaches) replaceable by any formula whatsoever without moving the verdict. No
+  shipped system exercises that branch, and none will be built to: a system engineered to light
+  up a branch is a fixture, and a fixture becomes the thing the tool is tuned against — the
+  failure this repository's whole design is arranged to avoid. The adapters of `docs/three-
+  systems.md` and `docs/language-model.md` exist to demonstrate the tool, not to exercise the
+  duties.
 ```
 
 `REQUIRES` is the list your system has to emit for the duty to be answered at all; `FORMULA` is what
