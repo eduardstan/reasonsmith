@@ -66,6 +66,33 @@ def _constraint_holds(space: "DeclaredInputSpace", values: Mapping[str, Any]) ->
     return True
 
 
+def _validate_complete_assignment(
+    space: "DeclaredInputSpace", values: Mapping[str, Any]
+) -> None:
+    """Validate slot domains and constraints for a complete declared assignment."""
+    for slot in space.slots:
+        value = values[slot.signal]
+        allowed = slot.values
+        if slot.kind in ("categorical", "boolean", "string-enum"):
+            if not any(value == candidate for candidate in allowed):
+                raise ValueError(
+                    f"value {value!r} is not in the finite domain of slot {slot.signal!r}"
+                )
+        elif slot.kind == "integer":
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise ValueError(f"slot {slot.signal!r} requires an integer value")
+            if value < slot.lower or value > slot.upper:  # type: ignore[operator]
+                raise ValueError(f"value {value!r} is outside slot {slot.signal!r} bounds")
+        elif slot.kind == "real":
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"slot {slot.signal!r} requires a numeric value")
+            if value < slot.lower or value > slot.upper:  # type: ignore[operator]
+                raise ValueError(f"value {value!r} is outside slot {slot.signal!r} bounds")
+
+    if not _constraint_holds(space, values):
+        raise ValueError("input assignment violates a declared input-space constraint")
+
+
 def render_template(
     space: "DeclaredInputSpace", values: Mapping[str, Any], *, validate: bool = True
 ) -> str:
@@ -93,26 +120,12 @@ def render_template(
             f"(missing={missing}, extra={extra})"
         )
 
+    if validate:
+        _validate_complete_assignment(space, values)
+
     rendered: dict[str, str] = {}
     for slot in space.slots:
         value = values[slot.signal]
-        allowed = slot.values
-        if validate and slot.kind in ("categorical", "boolean", "string-enum"):
-            if not any(value == candidate for candidate in allowed):
-                raise ValueError(
-                    f"value {value!r} is not in the finite domain of slot {slot.signal!r}"
-                )
-        elif validate and slot.kind == "integer":
-            if isinstance(value, bool) or not isinstance(value, int):
-                raise ValueError(f"slot {slot.signal!r} requires an integer value")
-            if value < slot.lower or value > slot.upper:  # type: ignore[operator]
-                raise ValueError(f"value {value!r} is outside slot {slot.signal!r} bounds")
-        elif validate and slot.kind == "real":
-            if isinstance(value, bool) or not isinstance(value, (int, float)):
-                raise ValueError(f"slot {slot.signal!r} requires a numeric value")
-            if value < slot.lower or value > slot.upper:  # type: ignore[operator]
-                raise ValueError(f"value {value!r} is outside slot {slot.signal!r} bounds")
-
         token = slot.value_to_token.get(value) if slot.value_to_token else None
         token = str(value) if token is None else token
         if template.escaping == "json":
@@ -120,9 +133,6 @@ def render_template(
         elif template.escaping == "url":
             token = quote(token, safe="")
         rendered[slot.signal] = token
-
-    if validate and not _constraint_holds(space, values):
-        raise ValueError("input assignment violates a declared input-space constraint")
 
     def replace(match: re.Match[str]) -> str:
         placeholder = match.group(1)
