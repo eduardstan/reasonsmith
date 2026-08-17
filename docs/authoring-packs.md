@@ -44,7 +44,7 @@ loads, because both go through the same loader:
 
 ```sh
 python -m reasonsmith.cli validate-pack my_pack.toml
-# after `pip install -e ".[dev]"` the same command is available as:
+# after `pip install -e ".[dev,neural,pdf]"` the same command is available as:
 reasonsmith validate-pack my_pack.toml
 ```
 
