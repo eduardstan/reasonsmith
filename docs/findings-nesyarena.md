@@ -38,7 +38,7 @@ since, for the duty below. The *numeric* deviation was a tenth signal for one re
 again: the duty that read it now reads a deviation reasonsmith measures for itself, which is a
 thing this adapter cannot supply — see [what changed](#what-changed-since-this-finding).
 
-Fourteen further pack signals were **not** declared, because the system genuinely cannot emit them —
+Seventeen further pack signals were **not** declared, because the system genuinely cannot emit them —
 `provenance_active_exceptions` (definite Horn programs have no defeater mechanism),
 `artifact_logs_notification_latency_days` and `artifact_logs_counteroffer_not_accepted` (no
 notification exists in this domain), `artifact_logs_right_to_reasons_disclosure` (the system issues
@@ -67,14 +67,14 @@ and it is the reason the gate exists.
 
 ## The headline
 
-80 results — 5 systems × 16 requirements across the three packs:
+90 results — 5 systems × 18 requirements across the three packs:
 
 | outcome | count |
 | --- | ---: |
 | satisfied, at strength `observed` | 9 |
 | violated, at strength `observed` | 1 |
 | inconclusive, `unattainable` | 15 |
-| not applicable (no class declared) | 25 |
+| not applicable (no class declared) | 35 |
 | not applicable (no decision domain declared) | 30 |
 | satisfied at `probed` | 0 |
 | satisfied at `proved` | 0 |
@@ -246,9 +246,9 @@ no probed verdict was produced.
 Across all three packs there are four `logical` requirements
 (`gdpr_art22_1_no_prohibited_decision_for_any_input`, `ecoa_reg_b_1002_9_b_2_specific_reasons`,
 `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` and
-`eu_ai_act_art86_1_main_elements_of_the_decision`) and four `temporal` requirements
+`eu_ai_act_art86_1_main_elements_of_the_decision`) and five `temporal` requirements
 (`ecoa_reg_b_1002_9_a_1_timing_of_notice`, `ecoa_reg_b_1002_9_a_2_written_statement`,
-`ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out` and
+`ecoa_reg_b_1002_9_c_2_incompleteness_notice_runs_out`, `eu_ai_act_art50_5_disclosure_timing` and
 `gdpr_recital71_error_risk_minimised`), beside the one `counterfactual` requirement
 (`ecoa_reg_b_1002_4_a_no_disparate_treatment`), which reaches neither rung here for the reason the
 ECOA duties below do not: the domain gate answers it before any engine runs, and a run that did
@@ -290,7 +290,7 @@ over. The replay search never ran because no system in the battery exposes `deci
 here are the same either way — the five systems supply `artifact_logs_reason_explanation` or they
 do not, and none of them discloses a right to request reasons.
 
-That leaves the seven `record` duties these three packs hold, and there is a second cause behind
+That leaves the eight `record` duties these three packs hold, and there is a second cause behind
 them that this finding originally mistook for the first. When this run was first made, a `record` duty could never exceed
 `observed` for *any* system: `formalism` both named the property and picked the engine, so a human
 typing `record` in a TOML file capped the rung regardless of what the system exposed. That defect
@@ -299,7 +299,7 @@ surface allows, and the same property reaches `proved` against exposed `logic()`
 builder after the fix changes nothing in this report.** The counts above are unmoved, and that is
 the correct answer rather than a leftover of the defect: `NesyArenaSUT` implements `decisions()`
 and nothing else, so there is no `decide()` to replay a perturbed input through and no `logic()` to
-reason over. Of the seven record duties, four are the AI Act's and are not applicable on the scope
+reason over. Of the eight record duties, five are the AI Act's and are not applicable on the scope
 gate, one — `gdpr_art22_1_automated_decision_prohibition` — reaches no engine at all, and the two
 that do, `gdpr_art22_3_safeguards_human_intervention` and `gdpr_recital71_meaningful_explanation`,
 stay `observed`, because a bare trace is all the evidence this system offers, which is what
@@ -381,7 +381,7 @@ any way to tell, from the report alone, whether the classification behind them w
 
 ### 4. The AI Act pack said nothing at all
 
-25 of the 80 results — every AI Act requirement for every system — are `not_applicable` because
+35 of the 90 results — every AI Act requirement for every system — are `not_applicable` because
 no regulatory class was declared. That is the designed behaviour and the report says so in full,
 but the honest summary is that running the AI Act pack against this system produced no
 information. The gate is binary: declare `high-risk` and all five duties are reached — four

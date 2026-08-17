@@ -55,14 +55,14 @@ Zoom into any component in the [architecture guide](docs/architecture.md).
 
 The evidence-strength chain is explicit: unattainable, observed trace, recounted reasons, bounded probe, and proof over declared rules. The strongest rung the property and surface both permit wins; an auditor cannot choose it. **Unattainable** means the system cannot emit the evidence the duty needs. **Not applicable** means the system has not declared the regulatory class or decision domain to which the duty is limited. They are different answers, not interchangeable failures.
 
-This tree ships **seven packs**, **seven engines**, and **thirty-nine shipped requirements**. The machine-readable source and every destination are listed in [`docs/README.md`](docs/README.md).
+This tree ships **seven packs**, **seven engines**, and **forty-one shipped requirements**. The machine-readable source and every destination are listed in [`docs/README.md`](docs/README.md).
 
 ### Platform entry points
 
 - **Bring your own engine:** install a `reasonsmith.engines` entry point for a supported fragment. The trusted core enforces its declared ceiling, rechecks a supplied violation witness, and stamps `witness-checked` or `trusted-ceiling`; [`verify-engine`](docs/authoring-engines.md) exercises eight gold triples. Engine plug-ins run in-process, so the normal trusted-code warning still applies.
 - **Neural subject:** install `reasonsmith[neural]` to declare an embedded ONNX artifact and finite input space. The core compiles VNN-LIB 1.0 queries and can call optional Marabou or alpha-beta-CROWN subprocess adapters, replaying SAT witnesses; complete proof modes are refused by the current soundness gates, and this path does not yet create a conformance verdict ([neural verifier boundary](docs/neural-verifiers.md)). A callable language-model adapter with a declared finite input space can still reach the counterfactual duty at `probed`, bounded to that synthetic space ([language-model example](docs/language-model.md)).
 - **Statistical evidence:** `selection_rate_ratio(...)` produces a measurement-only `statistical` basis with simultaneous Clopper–Pearson intervals. `decision_rule` remains `null`, so no ratio becomes satisfied or violated; the employment-selection four-fifths source is an anchor, not a threshold transplanted to another duty ([evidence definition](docs/theory/08-evidence.md)).
-- **Packs and adoption:** seven packs cover 39 duties, including the immutable Seoul Frontier AI Safety Commitments edition; use the GitHub Action, Docker image, `init pack|engine` scaffolds, JSON schema, and [registry](docs/registry.html) as the adoption surface.
+- **Packs and adoption:** seven packs cover 41 duties, including the immutable Seoul Frontier AI Safety Commitments edition; use the GitHub Action, Docker image, `init pack|engine` scaffolds, JSON schema, and [registry](docs/registry.html) as the adoption surface.
 
 ## Five reading paths
 

@@ -1,7 +1,7 @@
 [pack]
 id = "eu_ai_act"
-title = "EU AI Act (Regulation (EU) 2024/1689): Articles 12, 13 & 86"
-description = "Requirements for high-risk AI system record-keeping (Art. 12), transparency to deployers (Art. 13) and the affected person's right to an explanation of an individual decision (Art. 86). Articles 12 and 13 bind the provider, whereas Article 86(1) binds the deployer — and the evidence the property needs comes from the provider's system, not from the deployer, so a run against a system establishes nothing about which party deployed it. Article 12(1) and Article 12(2) carry the same property, so no system can satisfy one and violate the other, and a reader must not take two agreeing verdicts here for two independent checks. They are not differentiated because nothing in the Section 6.3 signal vocabulary stands for the relevance of a logged event to identifying a risk situation or a substantial modification, to post-market monitoring, or to Article 26(5) operation monitoring; a signal invented for it would be this pack's own reading of the Article presented as the Article's. The overlap is recorded in docs/refinement.md instead. Article 86(1) is the one duty here that no log can settle, and the only one that reaches above the record fragment: it refines the clause's main elements of the decision taken against the decision's own inference, so its gate artifact_logs_deleted_reason_count is measured rather than read — reasonsmith enumerates the decision's reasons from an inference artefact the system exposes and switches each one off in turn — and a system exposing no such artefact is reported unattainable on it rather than judged by whether its explanation field is non-blank. What that duty does not reach is stated rather than implied: the right is triggered by a request from an affected person, the clause reaches Annex III systems other than those under point 2, and it bites only on a decision the person considers adversely to affect their health, safety or fundamental rights — none of the three is a fact about a decision record, so no run here establishes that the duty applied at all. Its property is also byte-identical to that of ecoa_reg_b_1002_9_b_2_principal_reasons_complete, on the deliberate reading that the clause's main elements and 12 CFR 1002.9(b)(2)'s principal reasons are the same demand on the same evidence: a system audited against both packs cannot satisfy one and violate the other, so a reader must not take two agreeing verdicts for two independent checks. The two duties keep different gates — this one is limited to the high-risk class and to no decision domain — so neither reaches a system through the other. The clause's other explanation, of the role of the AI system in the decision-making procedure, is not modelled at all. Article 86(2) and Article 86(3) are the clause's own carve-outs and the property carries neither; docs/refinement.md records all of it."
+title = "EU AI Act (Regulation (EU) 2024/1689): Articles 12, 13, 50 & 86"
+description = "Requirements for high-risk AI system record-keeping (Art. 12), transparency to deployers (Art. 13), limited-risk Article 50 transparency for natural-person interaction and synthetic-content marking, and the affected person's right to an explanation of an individual decision (Art. 86). Articles 12 and 13 bind the provider, whereas Article 86(1) binds the deployer — and the evidence the property needs comes from the provider's system, not from the deployer, so a run against a system establishes nothing about which party deployed it. Article 12(1) and Article 12(2) carry the same property, so no system can satisfy one and violate the other, and a reader must not take two agreeing verdicts here for two independent checks. They are not differentiated because nothing in the Section 6.3 signal vocabulary stands for the relevance of a logged event to identifying a risk situation or a substantial modification, to post-market monitoring, or to Article 26(5) operation monitoring; a signal invented for it would be this pack's own reading of the Article presented as the Article's. The overlap is recorded in docs/refinement.md instead. Article 50(5) checks only the ordering signal at recorded interaction boundaries and does not model clarity, distinguishability, accessibility, understanding, or Article 50(1) and 50(2) exceptions; Article 50(2) is a presence check for a marking and does not establish machine-readability or detectability. Both Article 50 duties carry the limited-risk scope, so an undeclared class is reported not applicable rather than satisfied. Article 86(1) is the one duty here that no log can settle, and the only one that reaches above the record fragment: it refines the clause's main elements of the decision taken against the decision's own inference, so its gate artifact_logs_deleted_reason_count is measured rather than read — reasonsmith enumerates the decision's reasons from an inference artefact the system exposes and switches each one off in turn — and a system exposing no such artefact is reported unattainable on it rather than judged by whether its explanation field is non-blank. What that duty does not reach is stated rather than implied: the right is triggered by a request from an affected person, the clause reaches Annex III systems other than those under point 2, and it bites only on a decision the person considers adversely to affect their health, safety or fundamental rights — none of the three is a fact about a decision record, so no run here establishes that the duty applied at all. Its property is also byte-identical to that of ecoa_reg_b_1002_9_b_2_principal_reasons_complete, on the deliberate reading that the clause's main elements and 12 CFR 1002.9(b)(2)'s principal reasons are the same demand on the same evidence: a system audited against both packs cannot satisfy one and violate the other, so a reader must not take two agreeing verdicts for two independent checks. The two duties keep different gates — this one is limited to the high-risk class and to no decision domain — so neither reaches a system through the other. The clause's other explanation, of the role of the AI system in the decision-making procedure, is not modelled at all. Article 86(2) and Article 86(3) are the clause's own carve-outs and the property carries neither; docs/refinement.md records all of it."
 
 [source]
 document = "Regulation (EU) 2024/1689 of the European Parliament and of the Council"
@@ -121,6 +121,43 @@ requires = [
 ]
 binding = true
 scope = "high-risk"
+domains = []
+deontic_type = "obligation"
+defeasibility = "defeasible-unmodelled"
+
+[[requirement]]
+id = "eu_ai_act_art50_5_disclosure_timing"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 50(5)"
+verbatim_text = "The information referred to in paragraphs 1 to 4 shall be provided to the natural persons concerned in a clear and distinguishable manner at the latest at the time of the first interaction or exposure. The information shall conform to the applicable accessibility requirements."
+stakeholder = "affected individual"
+formalism = "temporal"
+spec = "always(present(artifact_logs_natural_person_interaction) -> present(artifact_logs_ai_disclosure))"
+rationale = "At every recorded natural-person interaction boundary, the system records that the AI disclosure was provided at or before the first interaction or exposure. This is an ordering check over the supplied trace, not a finding that the disclosure was clear, distinguishable, accessible, or understood."
+requires = [
+    "artifact_logs_natural_person_interaction",
+    "artifact_logs_ai_disclosure",
+]
+binding = true
+scope = "limited-risk"
+domains = []
+deontic_type = "obligation"
+defeasibility = "defeasible-unmodelled"
+
+[[requirement]]
+id = "eu_ai_act_art50_2_synthetic_content_marking"
+source_document = "EU AI Act (Regulation (EU) 2024/1689)"
+article_clause = "Article 50(2)"
+verbatim_text = "Providers of AI systems, including general-purpose AI systems, generating synthetic audio, image, video or text content, shall ensure that the outputs of the AI system are marked in a machine-readable format and detectable as artificially generated or manipulated."
+stakeholder = "affected individual"
+formalism = "record"
+spec = "present(artifact_logs_synthetic_content_mark)"
+rationale = "A generated-content output record carries a machine-readable synthetic-content marking. This is only a presence check: it does not establish that the marking is detectable, effective, interoperable, robust, reliable, or technically feasible, and it does not decide any Article 50(2) exception."
+requires = [
+    "artifact_logs_synthetic_content_mark",
+]
+binding = true
+scope = "limited-risk"
 domains = []
 deontic_type = "obligation"
 defeasibility = "defeasible-unmodelled"

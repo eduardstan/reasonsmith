@@ -3,7 +3,7 @@
 Every requirement in this repository was written by someone reading a clause of law and deciding
 what formula stands for it. That step — refinement — is where the legal meaning is either preserved
 or quietly lost, and it is the step no pack file records. `docs/authoring-packs.md` documents the
-*fields* of a requirement. This document is the record of the *judgement*: for each of the 39 shipped
+*fields* of a requirement. This document is the record of the *judgement*: for each of the 41 shipped
 requirements, the clause, the duty it states, the property it became, and — the column that matters —
 what the refinement deliberately did not capture.
 
@@ -49,7 +49,7 @@ duty is different for every requirement, and column four is where it is written 
 
 Four kinds of gap recur, and naming them once keeps the table short:
 
-- **Presence is not adequacy.** Twenty-eight of the thirty-nine shipped duties are `record` duties:
+- **Presence is not adequacy.** Twenty-nine of the forty-one shipped duties are `record` duties:
   conjunctions of `present(signal)` atoms. The remaining logical, temporal, counterfactual,
   certificate, and other fragments do not turn a presence claim into an adequacy finding. A reason field containing `"n/a"` is present
   ([`docs/theory/03-semantics.md`](theory/03-semantics.md) §3.5, *record*). Every clause whose content is an adjective — *meaningful*,
@@ -172,7 +172,7 @@ The fourth column reads, over and over, as one sentence: *the general rule is fo
 exception is not*. Said often enough that looked like a single missing construct — a pack language
 built on prioritized defaults, the premise Catala is built on (Merigoux, Chataing & Protzenko, ICFP
 2021) and the shape defeasible deontic logic gives rules (Governatori's PCL / Regorous). Before
-rebuilding anything on that premise it is worth knowing how many of these thirty-nine entries the
+rebuilding anything on that premise it is worth knowing how many of these forty-one entries the
 premise is actually true of. This section is that count, and it is a count rather than an
 impression because every shipped requirement now carries the classification in its own
 `[[requirement]]` block: `deontic_type` and `defeasibility`, required fields with no default,
@@ -203,22 +203,22 @@ still named in its row above. A defeater counts only where the clause states it 
 requirement's own `verbatim_text` or in a source `docs/legal-sources.md` retrieved — the discipline
 every other claim about the law here is held to.
 
-**The count, over all thirty-nine shipped requirements:**
+**The count, over all forty-one shipped requirements:**
 
 | `defeasibility` | Requirements | What it says |
 |---|---|---|
-| `defeasible-unmodelled` | **7** | The law states an exception; the property does not carry it. |
+| `defeasible-unmodelled` | **9** | The law states an exception; the property does not carry it. |
 | `defeasible-modelled` | 2 | The law states an exception; the property carries it. |
 | `trigger-unmodelled` | 14 | No defeater. The clause's condition of application is not modelled. |
 | `strict` | 16 | No defeater, and the property's reach is the clause's. |
 
-The seven are `ecoa_reg_b_1002_9_a_1_timing_of_notice` (paragraph (c)'s incomplete-application
+The nine are `ecoa_reg_b_1002_9_a_1_timing_of_notice` (paragraph (c)'s incomplete-application
 notice defeats the 30-day bound), `gdpr_art22_1_automated_decision_prohibition` (Article 22(2)'s
 three bases disapply paragraph 1), `eu_ai_act_art53_1_b_downstream_documentation` (the clause's
 own *without prejudice to* proviso on intellectual property and trade secrets), the Seoul
 `seoul_frontier_ii_thresholds_and_breach_assessment`, `seoul_frontier_iv_no_deployment_above_threshold`,
 and `seoul_frontier_vii_public_transparency` rows, whose stated exceptions remain outside their
-properties, and `eu_ai_act_art86_1_main_elements_of_the_decision`, whose clause carries **one defeater**
+properties, and the two Article 50 rows, whose paragraph (1) and (2) exceptions remain outside their properties, and `eu_ai_act_art86_1_main_elements_of_the_decision`, whose clause carries **one defeater**
 (Article 86(2), which disapplies paragraph 1 where Union or national law provides an exception or
 restriction) and **one condition of application** (Article 86(3), which applies the Article only to
 the extent the right is not otherwise provided for under Union law). Both are retrieved in
@@ -274,7 +274,7 @@ came out:
 
 | `deontic_type` | Requirements |
 |---|---|
-| `obligation` | 33 |
+| `obligation` | **35** |
 | `prohibition` | 5 |
 | `reparation` | 1 |
 | `permission` | **0** |
@@ -386,8 +386,8 @@ narrowing a regulation that does not narrow itself.
 
 ## EU AI Act (Regulation (EU) 2024/1689) — `src/reasonsmith/packs/eu_ai_act.toml`
 
-All five duties carry `scope = "high-risk"`. A system that declares no class is reported
-`not_applicable` on all five, and reasonsmith never infers the class ([`docs/semantics.md`](semantics.md) §1).
+The four original duties and Article 86(1) carry `scope = "high-risk"`; the two Article 50 duties carry `scope = "limited-risk"`. A system that declares no class is reported
+`not_applicable` on all seven, and reasonsmith never infers the class ([`docs/semantics.md`](semantics.md) §1).
 
 | The clause | The informal duty | The formal property | What was deliberately not captured |
 |---|---|---|---|
@@ -396,6 +396,8 @@ All five duties carry `scope = "high-risk"`. A system that declares no class is 
 | EU AI Act Article 13(1)<br>`eu_ai_act_art13_1_transparency_deployers` | Operation must be sufficiently transparent for deployers to interpret the output and use it appropriately. | `record`: `present(scope_statements_explanation_scope) and present(artifact_logs_reason_explanation) and present(provenance_model_version)` | *Sufficiently transparent to enable deployers to interpret* — a claim about a human reader's comprehension, which no engine here evaluates. Presence of a scope statement is not comprehension of it. The clause's second sentence ties the required degree of transparency to compliance with the provider's and deployer's Section 3 obligations; none of those obligations is in this pack, so the cross-reference is not modelled. | Human sign-off: pending (gold set: `eu_ai_act_art13_1_transparency_deployers.toml`; no candidate approved).
 | EU AI Act Article 13(2)<br>`eu_ai_act_art13_2_instructions_for_use` | The system must be accompanied by instructions for use containing concise, complete, correct and clear information, relevant, accessible and comprehensible to deployers. | `record`: `present(scope_statements_approximation_vs_guarantee) and present(provenance_constraint_set)` | Every adjective in the clause — concise, complete, correct, clear, relevant, accessible, comprehensible — all seven of which are adequacy judgements presence cannot see. More structurally: instructions for use are a *document accompanying the system*, not a per-decision record, and this property reads per-decision signals. A system shipping no instruction manual at all satisfies it if its decision records carry those two fields. Article 13(3)'s enumerated contents (provider identity, performance characteristics, human oversight measures, expected lifetime, and the rest) are not formalised. | Human sign-off: pending (gold set: `eu_ai_act_art13_2_instructions_for_use.toml`; no candidate approved).
 
+| EU AI Act Article 50(5)<br>`eu_ai_act_art50_5_disclosure_timing` | At the latest at the first interaction or exposure, provide the Article 50(1)–(4) information to the natural person. | `temporal`: `always(present(artifact_logs_natural_person_interaction) -> present(artifact_logs_ai_disclosure))` | This checks only that the supplied trace records an AI disclosure at each recorded natural-person interaction boundary. It does not establish that the disclosure happened **at or before the first** interaction rather than later, because a decision record has no prior-event identity and the language has no event-correlation or timestamp construct; the signal is the adapter's record of the disclosure. It does not establish that the information is clear, distinguishable, accessible, understandable, or actually understood, nor that the system is intended to interact directly with natural persons. The exceptions in Article 50(1) (obvious interaction and authorised criminal-offence systems) and the scope of paragraphs 1–4 are not modelled; nor are paragraphs 50(3) and 50(4). The trace is the supplied sample, not the system's lifetime. | Human sign-off: pending (gold set: `eu_ai_act_art50_5_disclosure_timing.toml`; no candidate approved).
+| EU AI Act Article 50(2)<br>`eu_ai_act_art50_2_synthetic_content_marking` | Mark synthetic audio, image, video or text outputs in a machine-readable format so they are detectable as artificially generated or manipulated. | `record`: `present(artifact_logs_synthetic_content_mark)` | Presence only: a non-empty marking field is not proof that the marking is machine-readable, detectable, effective, interoperable, robust, reliable, or technically feasible, and it says nothing about the state of the art or implementation costs. This check does not establish that the output is synthetic content, that the marking is attached to that output, or that any Article 50(2) exception applies: assistive standard editing, no substantial alteration, and legally authorised criminal-offence uses are deliberately unmodelled. The provider's role and the system's general-purpose status are not inferred. | Human sign-off: pending (gold set: `eu_ai_act_art50_2_synthetic_content_marking.toml`; no candidate approved).
 | EU AI Act Article 86(1)<br>`eu_ai_act_art86_1_main_elements_of_the_decision` | An affected person subject to a decision the deployer took on the output of an Annex III high-risk system, other than one under point 2, which produces legal effects or similarly significantly affects them adversely, has the right to obtain from the deployer clear and meaningful explanations of the AI system's role in the decision-making procedure and of the main elements of the decision taken. | `logical`: `present(artifact_logs_reason_explanation) -> (artifact_logs_deleted_reason_count <= 0)` | **Which limb is refined, stated first, because this is the only shipped duty in this pack that reaches above `record` and the reason it does is one phrase.** *The main elements of the decision taken* is read as the elements the decision's own inference used, and the count is measured rather than declared: reasonsmith enumerates the decision's reasons from the inference artefact the system exposes and switches each one off in turn (`docs/theory/07-explanation.md` §§7.1–7.6). That reading is **an assumption of this refinement and not a settled question of law** — it is the same shape 12 CFR 1002.9(b)(2)'s *principal reason(s)* is given by `ecoa_reg_b_1002_9_b_2_principal_reasons_complete`, and if a court or the AI Office reads *main elements* otherwise, this row is where the correction belongs. **The clause names two explanations and this property reaches one of them.** The right is to *clear and meaningful explanations of the role of the AI system in the decision-making procedure* **and** *the main elements of the decision taken*; the second limb is what is refined here and **the first is not modelled at all**. Nothing in this property, and nothing anywhere in this repository, witnesses what part the system played in the deployer's procedure — whether its output was decisive, advisory or one input among several is a fact about how an organisation used a decision, not about the decision record, and it is the same organisational gap the fourth column names for `eu_ai_act_art13_2_instructions_for_use`. So a deployer that explains the elements completely and says nothing about the system's role is `satisfied` on this row. Six further things it does not capture. **The right is triggered by a request**, and a request is not a fact about a decision record: nothing here establishes that any affected person asked, so the property is written against the explanation a decision carries and is silent where none does — the antecedent, and the reason a log with no explanation anywhere leaves this duty *not evaluated* rather than satisfied (`docs/semantics.md` §1). **The Annex III classification is not read.** The clause reaches systems listed in Annex III other than those under point 2, and `scope = "high-risk"` is the Act's own class vocabulary and not that list; a deployer's declaration that its system is high-risk does not say which Annex III point it falls under, and nothing here checks either. **The adverse-effect test is not read**, and it is doubly out of reach: *produces legal effects or similarly significantly affects* is a legal characterisation of a decision's consequences for a natural person, and *in a way that they consider to have an adverse impact* turns on what the affected person considers — a fact about a person, not about a system, and one this repository deliberately does not ask a decision record to carry. **Those unread limbs run in the accusing direction too:** `scope = "high-risk"` is strictly broader than the clause's reach — Article 6 makes a system high-risk through Annex I safety components as well as Annex III, and Article 86(1) reaches Annex III *minus point 2* — so this is the second gate over-reach in the tree (the GPAI section below records the first: *the systemic-risk trigger is not modelled*, for Article 55), which means **a high-risk system that is outside Annex III, or under point 2, or whose decisions produce no adverse effect, is reported `violated` whenever an explanation is logged and the measured count is non-zero.** **The duty-bearer shift:** Articles 12 and 13 bind the provider, while Article 86(1) binds the deployer — and the evidence the property needs (an inference artefact exposed through `artifact()`) comes from the provider's system, not from the deployer, so a run against a system establishes nothing about which party deployed it. **The clause's other adjective pair, *clear and meaningful*, is not modelled**, and this row is deliberately not the first `undetermined` or `graded` duty (ROADMAP objective 6): what is refined here is the completeness limb, which is measurable, and the adequacy limb stays named here rather than being answered by a construct nobody has signed off. Three further limits carried from the mechanism. The duty is `unattainable` on any system exposing no inference artefact — a log-only system, a language model behind `complete()`, a recounted reason trace — so it reports nothing at all about most deployments. Article 86(2) is the clause's own defeater and 86(3) its condition of application, both retrieved in `docs/legal-sources.md` and neither carried by the property (*The defeasibility census*). And **this property is byte-identical to `ecoa_reg_b_1002_9_b_2_principal_reasons_complete`'s**, which is the same disclosure the Article 12(1)/12(2) rows carry and is owed for the same reason: a system audited against both packs cannot satisfy one of the two and violate the other, so two agreeing verdicts here are one measurement reported twice and not two independent checks. The two duties are not merged, and this is why. They are different clauses of different instruments with different gates — this one is limited to the `high-risk` class and no decision domain, its sibling to the `consumer-credit` domain and no class — so a system reaches one, the other, both or neither, and collapsing them would put an EU deployer's verdict behind a US domain declaration. What is shared is the *refinement*, deliberately: *principal reason(s)* and *main elements of the decision taken* are read as the same demand on the same evidence, and if that reading is wrong for one clause it is this row and its sibling that record where the correction goes. | Human sign-off: pending (gold set: `eu_ai_act_art86_1_main_elements_of_the_decision.toml`; no candidate approved).
 ## EU AI Act, general-purpose AI models (Articles 53 & 55) — `src/reasonsmith/packs/gpai.toml`
 
