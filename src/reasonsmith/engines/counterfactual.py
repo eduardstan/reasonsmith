@@ -74,7 +74,7 @@ from typing import Any, Optional
 
 import z3
 
-from reasonsmith.neural import DeclaredInputSpace
+from reasonsmith.neural import DeclaredInputSpace, _validate_complete_assignment
 from reasonsmith.report import PROBE_BUDGET_KEY, RequirementResult
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
@@ -128,16 +128,17 @@ PAIR_SEMANTICS = (
 
 #: What the paired replay does, named on every result it produces.
 STRATEGY = (
-    "each decision the system logged is replayed through its own decide() once per admissible "
+    "each decision the system logged is replayed through its own decide() once per candidate "
     "value of the protected variable, with every other field of the recorded input left exactly "
-    "as it was, and the outcomes compared. The admissible values are enumerated from the system's "
+    "as it was, and the outcomes compared. Candidate values are enumerated from the system's "
     "declared input space (or its declared constraints and sort), never from the trace: the "
     "values recorded for a protected attribute are the one place this search must not look. Each "
-    "value is compared against the first, which finds any disagreement among them without "
-    "replaying every pair"
+    "complete replay assignment is checked against the declared input-space constraints before "
+    "it is run; inadmissible pairs contribute no evidence. Each admissible value is compared "
+    "against the first, which finds any disagreement among them without replaying every pair"
 )
 
-#: How many admissible values of the protected variable the replay enumerates, and how many pairs
+#: How many candidate values of the protected variable the replay enumerates, and how many pairs
 #: it will run. Both are deliberately small: the rung is a bounded search whose whole claim is the
 #: budget it reports, and a default an adopter waits minutes for is a default nobody runs.
 DEFAULT_MAX_VALUES = 4
@@ -761,7 +762,9 @@ def _declared_space_values(
         ):
             right = value
         else:
-            return True  # a cross-slot constraint is checked against each replay base elsewhere
+            # Cross-slot constraints depend on the recorded base and are checked on each complete
+            # replay assignment immediately before decide().
+            return True
         return {
             "<": value < right,
             "<=": value <= right,
@@ -826,6 +829,36 @@ def _admissible_values(
         values.append(_extract_model_value(found))
         solver.add(const != found)
     return sorted(values, key=repr)
+
+
+def _declared_space_assignment(
+    space: DeclaredInputSpace, case: Mapping[str, Any], protected: str, value: Any
+) -> tuple[bool, str | None]:
+    """Check one complete replay assignment against the declared input-space constraints.
+
+    The protected value in ``case`` is deliberately ignored: counterfactual replay enumerates
+    that value from the declaration. Every other slot must be present in the recorded base so
+    that a cross-slot constraint is evaluated rather than silently skipped. Constraint evaluation
+    is delegated to the same semantic helper used by ``neural.render_template``.
+    """
+    assignment = {
+        signal: value if signal == protected else case[signal]
+        for signal in space.signals
+        if signal == protected or signal in case
+    }
+    missing = sorted(set(space.signals) - set(assignment))
+    if missing:
+        return False, f"missing declared input slot(s): {', '.join(missing)}"
+    try:
+        _validate_complete_assignment(space, assignment)
+    except Exception as exc:  # noqa: BLE001 — an unreadable assignment is not evidence
+        if "input-space constraint" in str(exc):
+            constraints = ", ".join(
+                repr(dict(constraint)) for constraint in space.constraints
+            )
+            return False, f"violates declared input-space constraint(s): {constraints}"
+        return False, f"assignment validation failed: {type(exc).__name__}: {exc}"
+    return True, None
 
 
 class PairedReplayEngine:
@@ -997,6 +1030,9 @@ class PairedReplayEngine:
         replayed = 0
         attempted = 0
         calls_made = 0
+        pairs_inadmissible = 0
+        bases_inadmissible = 0
+        inadmissible_reasons: list[dict[str, Any]] = []
 
         planned_pairs = min(len(bases) * len(alternatives), max_pairs)
 
@@ -1007,23 +1043,26 @@ class PairedReplayEngine:
                 "strategy": STRATEGY,
                 "seed": (
                     "none — the base cases are the recorded decisions in the order the system "
-                    "returned them, and the protected values are those the declared constraints "
-                    "admit, sorted"
+                    "returned them, and candidate protected values are enumerated from the "
+                    "declared input space, sorted"
                 ),
                 "input_space": {
                     "base decisions": len(bases),
                     "protected variable": protected,
                     "protected values used": values,
-                    "declared values": values,
+                    "protected values enumerated": values,
                     "pairs planned": planned_pairs,
                 },
+                "bases_inadmissible": bases_inadmissible,
+                "pairs_admissible": attempted - pairs_inadmissible,
+                "pairs_inadmissible": pairs_inadmissible,
+                "inadmissible_reasons": list(inadmissible_reasons),
                 "pairs_errored": errored,
                 "pairs_attempted": attempted,
                 "pairs_completed": replayed,
-                "facts_switched": attempted,
+                "facts_switched": replayed,
                 "calls": calls_made,
                 "calls_made": calls_made,
-                "declared_values": values,
                 "terminated": complete,
                 "termination": "complete" if complete else "pair_budget_exhausted",
                 "termination_reason": "complete" if complete else "pair_budget_exhausted",
@@ -1050,16 +1089,42 @@ class PairedReplayEngine:
                     )
             return left[outcome], right[outcome]
 
-        for case in bases:
+        for base_index, case in enumerate(bases):
             if attempted >= max_pairs:
                 break
+            base_valid = True
+            base_reason: str | None = None
+            if space is not None:
+                base_valid, base_reason = _declared_space_assignment(
+                    space, case, protected, baseline
+                )
+                if not base_valid:
+                    bases_inadmissible += 1
             for other in alternatives:
-                # The cap counts pairs *attempted*, not pairs that came back: a decide() that
-                # raises on every pair would otherwise run the whole product while the budget
-                # reported a bound it was not keeping.
+                # The cap counts candidate pairs, including those rejected before decide(). A
+                # rejected pair is measured, not silently removed from the search budget.
                 if attempted >= max_pairs:
                     break
                 attempted += 1
+                if space is not None:
+                    other_valid, other_reason = _declared_space_assignment(
+                        space, case, protected, other
+                    )
+                    if not base_valid or not other_valid:
+                        pairs_inadmissible += 1
+                        reasons = []
+                        if not base_valid:
+                            reasons.append(f"base: {base_reason}")
+                        if not other_valid:
+                            reasons.append(f"altered assignment: {other_reason}")
+                        inadmissible_reasons.append(
+                            {
+                                "base_index": base_index,
+                                "protected_value": other,
+                                "reason": "; ".join(reasons),
+                            }
+                        )
+                        continue
                 try:
                     left_outcome, right_outcome = run_pair(case, other)
                 except Exception as exc:  # noqa: BLE001 — counted, never read as a pass
@@ -1119,6 +1184,16 @@ class PairedReplayEngine:
                     },
                 )
 
+        if replayed == 0 and attempted and pairs_inadmissible == attempted and not errored:
+            return not_evaluated(
+                f"Not evaluated: every one of the {attempted} planned pair(s) was inadmissible "
+                "under the declared input-space constraints, so no pair produced evidence for "
+                "this duty. Inadmissible assignments are excluded, never treated as satisfied "
+                "or violated.",
+                "all_pairs_inadmissible",
+                **{PROBE_BUDGET_KEY: budget()},
+            )
+
         if replayed == 0:
             return not_evaluated(
                 f"Not evaluated: every one of the {errored} planned pair(s) raised rather than "
@@ -1141,10 +1216,19 @@ class PairedReplayEngine:
         # variable across, which is the whole admitted set only when the enumeration ran out
         # before the bound did.
         searched = (
-            f"{len(values)} of the values the declared constraints admit — the search bound "
-            "stopped the enumeration there and the declaration admits more"
+            f"{len(values)} candidate values enumerated from the declared input space — the "
+            "search bound stopped the enumeration there and the declaration admits more"
             if bounded
-            else f"every one of the {len(values)} values the declared constraints admit"
+            else (
+                f"every one of the {len(values)} candidate values enumerated from the declared "
+                "input space"
+            )
+        )
+        exclusions = (
+            f" {pairs_inadmissible} candidate pair(s) were inadmissible and contributed no "
+            "evidence; see the probe budget for their reasons."
+            if pairs_inadmissible
+            else ""
         )
         return _result(
             req,
@@ -1154,8 +1238,9 @@ class PairedReplayEngine:
                 f"Probed over {replayed} pair(s): no recorded decision changed its {outcome!r} "
                 f"when {protected!r} was moved across {searched} "
                 f"({', '.join(repr(value) for value in values)}) and nothing else was "
-                "changed. This is a bounded search over the decisions the system logged "
-                "and the values the budget below names, not a proof: the property is unchecked for "
+                f"changed.{exclusions} This is a bounded search over the decisions the system "
+                "logged and the values the budget below names, not a proof: the property is "
+                "unchecked for "
                 "every input outside it."
             ),
             details={"engine": "paired-replay", PROBE_BUDGET_KEY: budget()},

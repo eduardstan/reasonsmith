@@ -145,7 +145,7 @@ def test_a_protected_slot_absent_from_the_declared_template_is_refused():
         )
 
 
-def test_counterfactual_budget_carries_declared_values_and_replay_accounting():
+def test_counterfactual_budget_carries_candidate_values_and_replay_accounting():
     module = _adapter()
     result = evaluate_requirement(
         load_pack("ecoa").get_requirement("ecoa_reg_b_1002_4_a_no_disparate_treatment"),
@@ -153,7 +153,7 @@ def test_counterfactual_budget_carries_declared_values_and_replay_accounting():
     )
     assert result.strength == Strength.PROBED
     budget = result.details["probe_budget"]
-    assert budget["declared_values"] == list(module.PROTECTED_VALUES)
+    assert budget["input_space"]["protected values enumerated"] == list(module.PROTECTED_VALUES)
     assert budget["pairs_attempted"] == 4
     assert budget["facts_switched"] == 4
     assert budget["calls_made"] == 8

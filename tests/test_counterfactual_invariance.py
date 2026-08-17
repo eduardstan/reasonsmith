@@ -100,6 +100,7 @@ def test_a_rule_set_reading_the_protected_variable_yields_a_witness_pair(outcome
 # The duty itself.
 # --------------------------------------------------------------------------------------------
 
+from reasonsmith.adapters.callable import CallableAdapter  # noqa: E402
 from reasonsmith.adapters.rules import RulesAdapter  # noqa: E402
 from reasonsmith.engines.counterfactual import (  # noqa: E402
     RUNG_DISAGREEMENT_CAUSES,
@@ -110,6 +111,7 @@ from reasonsmith.engines.counterfactual import (  # noqa: E402
     PairedReplayEngine,
     cross_rung_signal,
 )
+from reasonsmith.neural import DeclaredInputSpace  # noqa: E402
 from reasonsmith.report import evaluate_requirement  # noqa: E402
 from reasonsmith.rulelang import UnsupportedConstructError, classify_fragment  # noqa: E402
 from reasonsmith.spec import Requirement, load_pack  # noqa: E402
@@ -415,6 +417,84 @@ def _opaque(rules=None, test_inputs=None):
     return sut
 
 
+def _declared_space_replay(*, test_inputs: list[dict[str, int]]):
+    space = DeclaredInputSpace(
+        [
+            {"signal": PROTECTED, "type": "integer", "lower": 0, "upper": 1},
+            {"signal": "applicant_age", "type": "integer", "lower": 0, "upper": 100},
+        ],
+        constraints=[{"left": PROTECTED, "op": "<=", "right": "applicant_age"}],
+        outcomes={OUTCOME: OUTCOME},
+    )
+
+    def decide(case):
+        return {
+            **case,
+            OUTCOME: "adverse action" if case[PROTECTED] else "credit granted",
+        }
+
+    return CallableAdapter(
+        decide,
+        declared_capabilities={OUTCOME},
+        test_inputs=test_inputs,
+        input_space=space,
+    )
+
+
+def test_cross_slot_constraint_rejects_an_inadmissible_replay_pair():
+    """A protected twin must satisfy the complete declared assignment before decide()."""
+    sut = _declared_space_replay(
+        test_inputs=[{"applicant_age": 0, PROTECTED: 0}],
+    )
+    result = PairedReplayEngine.evaluate(_requirement(), sut)
+
+    assert (result.verdict, result.strength) == (Verdict.INCONCLUSIVE, None)
+    assert result.details["reason"] == "all_pairs_inadmissible"
+    budget = result.details["probe_budget"]
+    assert budget["pairs_inadmissible"] == 1
+    assert budget["pairs_admissible"] == 0
+    assert budget["bases_inadmissible"] == 0
+    assert "applicant_prohibited_basis" in budget["inadmissible_reasons"][0]["reason"]
+
+
+def test_an_out_of_domain_recorded_base_is_reported_without_replay():
+    sut = _declared_space_replay(
+        test_inputs=[{"applicant_age": -1, PROTECTED: 0}],
+    )
+    result = PairedReplayEngine.evaluate(_requirement(), sut)
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    budget = result.details["probe_budget"]
+    assert budget["bases_inadmissible"] == 1
+    assert budget["pairs_inadmissible"] == 1
+    assert "outside" in budget["inadmissible_reasons"][0]["reason"]
+
+
+def test_an_all_inadmissible_replay_is_not_satisfied():
+    sut = _declared_space_replay(
+        test_inputs=[
+            {"applicant_age": 0, PROTECTED: 0},
+            {"applicant_age": 0, PROTECTED: 1},
+        ],
+    )
+    result = PairedReplayEngine.evaluate(_requirement(), sut)
+
+    assert result.verdict == Verdict.INCONCLUSIVE
+    assert result.details["reason"] == "all_pairs_inadmissible"
+    assert result.details["probe_budget"]["pairs_inadmissible"] == 2
+
+
+def test_admissible_declared_space_pairs_keep_their_previous_verdict():
+    sut = _declared_space_replay(
+        test_inputs=[{"applicant_age": 1, PROTECTED: 0}],
+    )
+    result = PairedReplayEngine.evaluate(_requirement(), sut)
+
+    assert (result.verdict, result.strength) == (Verdict.VIOLATED, Strength.PROBED)
+    assert result.details["probe_budget"]["pairs_admissible"] == 1
+    assert result.details["probe_budget"]["pairs_inadmissible"] == 0
+
+
 def test_paired_replay_reaches_probed_when_the_proof_rung_cannot():
     result = PairedReplayEngine.evaluate(_requirement(), _opaque())
     assert result.verdict == Verdict.SATISFIED
@@ -542,7 +622,7 @@ def test_the_replay_summary_does_not_call_the_values_it_searched_the_admitted_se
     assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.PROBED)
     summary = result.evidence_summary
     assert "moved between the values the declared constraints admit" not in summary
-    assert "4 of the values the declared constraints admit" in summary
+    assert "4 candidate values enumerated from the declared input space" in summary
     assert "the declaration admits more" in summary
 
 
@@ -550,7 +630,10 @@ def test_a_replay_that_did_exhaust_the_admitted_values_says_so():
     """The control: a band the enumeration ran out of before the bound did."""
     result = PairedReplayEngine.evaluate(_requirement(), _aware_system())
     assert (result.verdict, result.strength) == (Verdict.SATISFIED, Strength.PROBED)
-    assert "every one of the 2 values the declared constraints admit" in result.evidence_summary
+    assert (
+        "every one of the 2 candidate values enumerated from the declared input space"
+        in result.evidence_summary
+    )
 
 
 # --- when the two rungs disagree ----------------------------------------------------------------
