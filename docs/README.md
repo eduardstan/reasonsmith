@@ -17,6 +17,7 @@ what those documents say.
 - [`../notebooks/`](../notebooks/) — runnable demonstrations: [quickstart reason deletion](../notebooks/01_quickstart_reason_deletion.ipynb), [three systems and three rungs](../notebooks/02_three_systems_three_rungs.ipynb), [bring your own pack and engine](../notebooks/03_bring_your_own_pack_engine.ipynb), and [one system across US and EU jurisdictions](../notebooks/04_one_system_two_jurisdictions.ipynb).
 - [`authoring-packs.md`](authoring-packs.md) — pack schema and authoring rules.
 - [`authoring-engines.md`](authoring-engines.md) — installed engine contract, witness provenance, and the `verify-engine` conformance kit.
+- [`authoring-scaffolds.md`](authoring-scaffolds.md) — copy/paste walkthrough from `reasonsmith init` to an installed, entry-point-discovered pack or engine; every command on the page runs in CI.
 - [`neural-verifiers.md`](neural-verifiers.md) — optional ONNX query/oracle adapters and their refusal-first subprocess boundary.
 - [`neural-soundness-corpus.md`](neural-soundness-corpus.md) — pinned Marabou and alpha-beta-CROWN soundness-gate evidence.
 - [`registry.html`](registry.html) — generated pack and engine discovery registry.
