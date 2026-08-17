@@ -88,7 +88,7 @@ This tree ships **seven packs**, **seven engines**, and **forty-one shipped requ
 
 Choose the question you are carrying into the report. Each invitation gets you to the right operational document first, then points into the mathematical spine:
 
-- **Developer:** Start with [`docs/adopting.md`](docs/adopting.md), follow the theory spine from [`docs/README.md`](docs/README.md), and finish at [`docs/authoring-engines.md`](docs/authoring-engines.md). Runnable demos: [`notebooks/`](notebooks/) (quickstart, evidence rungs, and contributor scaffolds).
+- **Developer:** Start with [`docs/adopting.md`](docs/adopting.md), follow the theory spine from [`docs/README.md`](docs/README.md), and finish at [`docs/authoring-engines.md`](docs/authoring-engines.md). Runnable demos: the [notebook reader index](notebooks/README.md) routes each one to the reader it is written for.
 - **Deployer:** Compare the three system surfaces in [`docs/three-systems.md`](docs/three-systems.md), use [`docs/adopting.md`](docs/adopting.md), and finish at [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md).
 - **Auditor:** Start with the generated [`docs/example-output.md`](docs/example-output.md), read [`docs/semantics.md`](docs/semantics.md), and finish with [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
 - **Regulator:** Start with the statutory retrieval record in [`docs/legal-sources.md`](docs/legal-sources.md), follow [`docs/refinement.md`](docs/refinement.md), and finish with [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md).
