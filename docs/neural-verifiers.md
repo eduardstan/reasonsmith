@@ -49,6 +49,28 @@ an admission risk, not a footnote; alpha-beta-CROWN is the planned first `proved
 The real integration fixture is skipped unless `marabou --version` reports exactly `2.0.0`; CI uses
 mocked subprocesses for the failure taxonomy, so the base test suite never requires Marabou.
 
+## Packaged ONNX SUT example
+
+`reasonsmith.examples.onnx_credit_scorer` ships a deterministic two-input classifier together with
+its validated `OnnxArtifact`, declared finite input space, replay hook, and two reproduced decision
+records. It compiles the shipped ECOA counterfactual duty into the same product-ONNX/VNN-LIB query
+the external verifier boundary accepts:
+
+The model is an original synthetic fixture authored by Varun Billuri for reasonsmith and
+contributed under this repository's MIT licence. It is the fixed function
+`sigmoid(score + applicant_prohibited_basis)`, serialized as a two-input ONNX `Gemm` plus
+`Sigmoid`; it was not trained or downloaded and contains no third-party model weights or data.
+
+```console
+python -m reasonsmith.examples.onnx_credit_scorer
+```
+
+Install `reasonsmith[neural]` to construct the artifact. The example invokes Marabou when available;
+a missing executable, unsupported operator, timeout, or malformed response is printed as an oracle
+status, never substituted with an `observed` conformance result. A SAT assignment is replayed through
+both the packaged ONNX bytes and the SUT before `witness_replayed` can be true. Bounded UNSAT remains
+provenance-only under the boundary described above.
+
 ## alpha-beta-CROWN (slice 6)
 
 The second adapter is `reasonsmith.neural_verifiers.AlphaBetaCrownVerifier`, an optional
