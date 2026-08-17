@@ -24,10 +24,15 @@ import json
 from collections.abc import Iterable
 from io import StringIO
 from pathlib import Path
-from typing import Any, TextIO
+from typing import Any, NoReturn, TextIO
 
 from reasonsmith.report import _is_present
 from reasonsmith.sut import BaseSUT
+
+
+def _reject_non_standard_constant(constant: str) -> NoReturn:
+    """Reject JavaScript-style constants that are not part of JSON."""
+    raise ValueError(f"non-standard JSON constant {constant!r} is not permitted")
 
 
 class JSONLAdapter(BaseSUT):
@@ -85,8 +90,8 @@ class JSONLAdapter(BaseSUT):
                 if not line_str:
                     continue
                 try:
-                    obj = json.loads(line_str)
-                except json.JSONDecodeError as exc:
+                    obj = json.loads(line_str, parse_constant=_reject_non_standard_constant)
+                except (json.JSONDecodeError, ValueError) as exc:
                     raise ValueError(
                         f"Line {line_num} in JSONL log is not valid JSON: {exc}"
                     ) from exc

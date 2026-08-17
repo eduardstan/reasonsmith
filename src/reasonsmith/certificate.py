@@ -374,7 +374,7 @@ class Certificate:
         """JSON for `to_dict`. Values outside JSON's own types are stringified exactly as
         `render` prints them, so an adapter-supplied value of any type serialises rather than
         raising."""
-        return json.dumps(self.to_dict(), indent=indent, default=str)
+        return json.dumps(self.to_dict(), indent=indent, default=str, allow_nan=False)
 
 
 def _attribute(verdicts, value_gap: float, tol: float) -> str:

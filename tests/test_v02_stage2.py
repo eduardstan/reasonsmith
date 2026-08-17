@@ -224,11 +224,31 @@ class TestJSONLAdapter:
         assert len(list(sut.decisions())) == 4
         assert "artifact_logs_reason_explanation" in sut.capabilities()
 
+    @pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+    def test_non_standard_json_constants_are_refused(self, constant: str):
+        with pytest.raises(ValueError, match=rf"not valid JSON.*{constant}"):
+            JSONLAdapter('{"signal": ' + constant + '}')
+
     def test_invalid_json_raises_value_error(self, tmp_path: Path):
         log_file = tmp_path / "bad.jsonl"
         log_file.write_text("not json\n")
         with pytest.raises(ValueError, match="not valid JSON"):
             JSONLAdapter(log_file)
+
+    def test_report_json_round_trips_through_strict_parser(
+        self, jsonl_fixture_file: Path
+    ):
+        report = check_conformance(
+            JSONLAdapter(jsonl_fixture_file),
+            load_pack("ecoa"),
+        )
+
+        def reject_constant(constant: str):
+            raise ValueError(f"non-standard constant: {constant}")
+
+        decoded = json.loads(report.to_json(), parse_constant=reject_constant)
+        assert decoded["schema_version"] == 2
+        assert len(decoded["results"]) == len(report.results)
 
 
 class TestCallableAdapter:
@@ -1058,6 +1078,20 @@ class TestDefinitionOfDoneEndToEnd:
         captured = capsys.readouterr()
         assert "CONFORMANCE REPORT" in captured.out
         assert "eu_ai_act" in captured.out
+
+    def test_cli_refuses_non_standard_json_without_reporting_a_pass(
+        self, tmp_path: Path, capsys
+    ):
+        log_file = tmp_path / "malformed.jsonl"
+        log_file.write_text('{"artifact_logs_reason_explanation": NaN}\n')
+
+        rc = cli_main(["check", "--system", str(log_file), "--pack", "ecoa"])
+
+        assert rc == 1
+        captured = capsys.readouterr()
+        assert "not valid JSON" in captured.err
+        assert "NaN" in captured.err
+        assert "satisfied" not in captured.out.lower()
 
     def test_cli_exits_zero_when_every_requirement_is_not_applicable(
         self, jsonl_fixture_file: Path, capsys

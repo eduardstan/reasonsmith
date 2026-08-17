@@ -158,7 +158,7 @@ class Record:
         """JSON for `to_dict`. Values outside JSON's own types are stringified exactly as
         `render` prints them, so a field carrying an arbitrary object serialises rather than
         raising."""
-        return json.dumps(self.to_dict(), indent=indent, default=str)
+        return json.dumps(self.to_dict(), indent=indent, default=str, allow_nan=False)
 
 
 def emit(duty_id: str, decision_id: str, fields: dict, attachments: dict | None = None) -> Record:

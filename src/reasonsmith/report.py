@@ -1495,7 +1495,12 @@ class ConformanceReport:
         the projection the caller requested, and nothing is hidden from a machine consumer by a
         display flag.
         """
-        return json.dumps(self.to_dict(audience=audience), indent=indent, default=str)
+        return json.dumps(
+            self.to_dict(audience=audience),
+            indent=indent,
+            default=str,
+            allow_nan=False,
+        )
 
 
 def _audience_block(audience: str | None) -> dict[str, Any]:
