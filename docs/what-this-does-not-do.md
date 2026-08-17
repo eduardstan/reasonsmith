@@ -1,6 +1,6 @@
 # What this does not do
 
-Every compliance checker returns a green tick. This page is the four things reasonsmith cannot do,
+Every compliance checker returns a green tick. This page is the five things reasonsmith cannot do,
 stated together, with the numbers. Nothing here is new: each item is already stated in a committed
 document in this repository, cited beside it, and each of those documents names the test or the
 measured run that keeps the claim honest. If one of these gets closed, this page says when and by
@@ -150,6 +150,37 @@ that the README leads with is the sharpest result this tool produces, and it is 
 because that system exposes the inference artefact behind each decision. A system that cannot be
 opened up is reported `unattainable` on that duty and is never quietly returned to the presence
 check beside it ([`docs/theory/07-explanation.md`](theory/07-explanation.md) §7.5, *The certificate*).
+
+---
+
+## 5. An observed agent trace is not an agent audit
+
+An `observed` result on an agent trace is a claim about the **supplied trace under the formal
+property**, and nothing more. It says that the records delivered to the checker satisfy the formula
+at the observed rung. It is not a finding about the agent's behaviour in general, in production, or
+on any interaction that is absent from that trace. If the agent writes its own trace and nobody has
+established that the trace is complete, the checker may be measuring the agent's account of itself.
+An independent recorder is not an embellishment at this boundary; without one, the honest outcome is
+a field check or a refusal.
+
+The evidence architecture is only as honest as its boundary. A field the agent wrote about itself
+proves that a field is non-blank. `present(disclosure_delivered)` does not prove that a person saw a
+disclosure. A `human_override` field does not prove that a competent person understood the output,
+had the authority to intervene, and actually intervened. A `stop` field does not prove that a safe
+stop was available before the event. The recorder can establish what crossed its boundary; it cannot
+turn an agent's assertion into evidence of a person's experience, competence, or a capability the
+system never exposed.
+
+For EU AI Act Article 50, the checkable fragment here is **ordering**: a disclosure event at or
+before a first-interaction boundary. Clarity, distinguishability, accessibility, whether the person
+understood, and the article's own exceptions are outside that fragment and always will be. No
+presence check or event-order witness settles them. Whether a given agent is subject to the duty is
+also a legal classification about the system and its context. reasonsmith does not make that
+classification and cannot make it.
+
+Nothing here audits an agent's reasoning, planning, tool use, or autonomy. A trace can be useful
+evidence for the narrow property it records; it cannot become an audit of the agent merely because
+the agent produced more fields or the report returned a positive result.
 
 ---
 
