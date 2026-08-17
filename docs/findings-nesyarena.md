@@ -445,7 +445,7 @@ site later:
 ## Reproducing it
 
 ```sh
-pip install -e ".[dev]"
+pip install -e ".[dev,neural,pdf]"
 python docs/build_nesyarena_report.py
 ```
 

@@ -12,8 +12,10 @@ Follow the single pinned installation path:
 git clone https://github.com/eduardstan/reasonsmith.git
 cd reasonsmith
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev,neural,pdf]"
 ```
+
+The `neural` extra provides ONNX support and `pdf` provides PDF text extraction for the full test suite.
 
 *Note:* `nesyarena` is pinned to `nesyarena==0.1.0` on PyPI in `pyproject.toml`. Do not point it at a local sibling checkout or branch when submitting PRs, as measurements must remain reconstructible.
 
