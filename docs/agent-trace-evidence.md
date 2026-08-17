@@ -1,6 +1,6 @@
 # Agent trace-evidence pilot
 
-This page documents the narrow pilot from [issue #273](https://github.com/eduardstan/reasonsmith/issues/273).
+This page documents the narrow pilot from [#273](https://github.com/eduardstan/reasonsmith/issues/273).
 It is an evidence-boundary experiment, not a new conformance property and not a claim that an
 agent is compliant.
 
