@@ -56,6 +56,11 @@ its validated `OnnxArtifact`, declared finite input space, replay hook, and two 
 records. It compiles the shipped ECOA counterfactual duty into the same product-ONNX/VNN-LIB query
 the external verifier boundary accepts:
 
+The model is an original synthetic fixture authored by Varun Billuri for reasonsmith and
+contributed under this repository's MIT licence. It is the fixed function
+`sigmoid(score + applicant_prohibited_basis)`, serialized as a two-input ONNX `Gemm` plus
+`Sigmoid`; it was not trained or downloaded and contains no third-party model weights or data.
+
 ```console
 python -m reasonsmith.examples.onnx_credit_scorer
 ```

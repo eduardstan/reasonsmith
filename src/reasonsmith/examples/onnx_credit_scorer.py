@@ -17,6 +17,7 @@ observed or proved conformance verdict.
 from __future__ import annotations
 
 import base64
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from typing import Any
@@ -38,7 +39,9 @@ MODEL_ID = "tiny-credit-onnx-1"
 
 # A two-input Gemm followed by Sigmoid: risk = sigmoid(score + protected_basis).  Keeping the
 # serialized model literal makes the wheel, decision records, and compiled product-query hashes
-# reproducible without generating a different protobuf at import time.
+# reproducible without generating a different protobuf at import time.  This original synthetic
+# model was authored by Varun Billuri for reasonsmith: it was not trained or downloaded, contains
+# no third-party weights or data, and is contributed under the repository's MIT licence.
 _MODEL_B64 = (
     "CA06uQEKJgoIZmVhdHVyZXMKB3dlaWdodHMKBGJpYXMSBWxvZ2l0IgRHZW1tChYKBWxvZ2l0"
     "EgRyaXNrIgdTaWdtb2lkEhZ0aW55LWNyZWRpdC1jbGFzc2lmaWVyKhkIAggBEAEiCAAAgD8A"
@@ -121,9 +124,11 @@ class TinyOnnxCreditSUT:
         import numpy as np
         from onnx.reference import ReferenceEvaluator
 
-        values = np.asarray(
-            [[float(case["score"]), float(case[PROTECTED_SIGNAL])]], dtype=np.float32
-        )
+        score = float(case["score"])
+        protected = float(case[PROTECTED_SIGNAL])
+        if not math.isfinite(score) or not -1.0 <= score <= 1.0 or protected not in (0.0, 1.0):
+            raise ValueError("case is outside the declared input space")
+        values = np.asarray([[score, protected]], dtype=np.float32)
         evaluated = ReferenceEvaluator(self._artifact.model).run(None, {"features": values})
         risk = float(evaluated[0][0, 0])
         decision = "approved" if risk <= 0.6 else "adverse_action"

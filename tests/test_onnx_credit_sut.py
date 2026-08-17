@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 
+import pytest
+
 from reasonsmith.examples.onnx_credit_scorer import (
     MODEL_SHA256,
     QUERY_SHA256,
@@ -71,3 +73,20 @@ def test_external_verifier_refusals_never_become_observed_results():
     assert unavailable.run.status == "error"
     assert unavailable.witness is None
     assert "artifact" in (unavailable.run.diagnostic or "").lower()
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        {"score": float("nan"), "applicant_prohibited_basis": 0},
+        {"score": float("inf"), "applicant_prohibited_basis": 0},
+        {"score": -1.01, "applicant_prohibited_basis": 0},
+        {"score": 1.01, "applicant_prohibited_basis": 0},
+        {"score": 0.0, "applicant_prohibited_basis": -1},
+        {"score": 0.0, "applicant_prohibited_basis": 0.5},
+        {"score": 0.0, "applicant_prohibited_basis": 2},
+    ],
+)
+def test_decide_rejects_values_outside_the_declared_input_space(case):
+    with pytest.raises(ValueError, match="declared input space"):
+        system_under_test().decide(case)
