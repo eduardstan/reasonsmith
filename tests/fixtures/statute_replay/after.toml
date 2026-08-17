@@ -1,0 +1,24 @@
+[pack]
+id = "synthetic_statute"
+title = "Synthetic statute revision fixture"
+description = "SYNTHETIC ONLY: not a statutory history."
+
+[source]
+document = "Synthetic source (not an official publication)"
+url = "https://example.invalid/synthetic-statute"
+
+[[requirement]]
+id = "synthetic_duty"
+source_document = "Synthetic source"
+article_clause = "Article 12(1)"
+verbatim_text = 'new statutory wording'
+stakeholder = "system"
+formalism = "record"
+spec = "present(flag)"
+rationale = "SYNTHETIC ONLY: exercise the revision comparison."
+requires = ["flag"]
+binding = true
+scope = ""
+domains = []
+deontic_type = "obligation"
+defeasibility = "strict"
