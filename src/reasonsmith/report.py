@@ -70,9 +70,12 @@ from reasonsmith.sut import (
     EVENT_TIME,
     ORDINAL_TIME,
     TIME_DOMAIN_KEY,
+    ExecutionRecordError,
     SystemUnderTest,
     _validate_capability_collection,
     read_time_domain,
+    recorder_event_requirements,
+    validate_recorder_attestation,
 )
 from reasonsmith.verdict import EvidenceBasis, Strength, Verdict
 
@@ -1726,6 +1729,29 @@ def _declared_domains(sut: SystemUnderTest, system_domains: Any) -> tuple[str, .
     return normalize_domains(system_domains, "declared system decision domain")
 
 
+def not_evaluated_for_recorder(
+    req: Requirement, records: list[dict[str, Any]], reason: str
+) -> RequirementResult:
+    """Refuse Article 50 trace evidence before any rung can read a self-reported field."""
+    return RequirementResult(
+        requirement_id=req.id,
+        source_clause=f"{req.source_document} {req.article_clause}",
+        verdict=Verdict.INCONCLUSIVE,
+        strength=None,
+        signals_required=tuple(req.requires),
+        evidence_summary=(
+            f"Not evaluated: the recorder-attested execution-record contract was refused — "
+            f"{reason}. A non-blank self-reported disclosure field is not observed evidence."
+        ),
+        details={
+            "execution_record_refusal": reason,
+            "records_observed": len(records),
+        },
+        binding=req.binding,
+        scope=req.scope,
+    )
+
+
 def _not_applicable(
     req: Requirement, summary: str, details: dict[str, Any] | None = None
 ) -> RequirementResult:
@@ -1953,6 +1979,17 @@ def _evaluate_requirement(
             binding=req.binding,
             scope=req.scope,
         )
+
+    # Article 50(5)'s two fields are a special evidence boundary: a trace may reach the existing
+    # temporal engine only after the external recorder contract has been checked. This is before
+    # `_engine_ladder`, so a system exposing `logic()` cannot prove the same self-report either.
+    required_events = recorder_event_requirements(req.requires)
+    if required_events:
+        trace = records if records is not None else resources.trace()
+        try:
+            validate_recorder_attestation(trace, required_events, req.requires)
+        except ExecutionRecordError as exc:
+            return not_evaluated_for_recorder(req, trace, str(exc))
 
     # The two open-texture fragments return here, before the ladder, and they return *after* the
     # capability gate above rather than before it. That order is the whole of the guarantee that a

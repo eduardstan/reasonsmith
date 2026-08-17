@@ -90,6 +90,13 @@ What a reader must not break:
     positional and nothing else may be relabelled as time, so a duty needing a real clock and
     written without that operator is still reported not evaluated rather than answered off record
     indices.
+  - A recorder-bounded single-agent trace uses the additive `AGENT_TRACE_KEY` envelope around
+    ordinary decision mappings. `read_execution_record` requires schema version 1, an explicit
+    `EVENT_TIME` clock via `TIME_DOMAIN_KEY`, stable execution/event/correlation identifiers,
+    source/provenance and a boolean completeness declaration. `validate_recorder_attestation`
+    refuses missing or agent-sourced Article 50 interaction/disclosure events before any engine
+    can call a self-reported field `observed`; the fixture in `examples.agent_trace` is synthetic
+    and has no cryptographic or legal-compliance meaning.
   - `CAPABILITY_TAXONOMY` documents the four Section 6.3 categories that signal names are
     conventionally prefixed with (`provenance_`, `artifact_logs_`, ...). It is a reference for pack
     and adapter authors, not a validator: nothing here checks a name against it, and a pack is free
@@ -204,6 +211,299 @@ ORDINAL_DOMAIN = TimeDomain(ORDINAL_TIME)
 #: Explicit selection for the bounded-response operator. Metric evaluation does not turn this into
 #: an rtamt axis: the event-time engine reads the timestamp maps directly.
 EVENT_DOMAIN = TimeDomain(EVENT_TIME)
+
+
+# The single-agent execution-record envelope is deliberately an additive contract around the
+# existing decision-record shape.  Its clock is still ``TIME_DOMAIN_KEY``/``EVENT_TIME``; these
+# names only carry the facts that a plain mapping cannot establish: who recorded each event and
+# whether the recorder declares the trace complete.  They are reserved keys, never property
+# signals, and no engine reads them as values of ``present(...)``.
+AGENT_TRACE_KEY = "__execution_record__"
+AGENT_TRACE_SCHEMA_VERSION = 1
+AGENT_TRACE_SCHEMA_VERSION_KEY = "schema_version"
+AGENT_TRACE_EXECUTION_ID_KEY = "execution_id"
+AGENT_TRACE_COMPLETE_KEY = "complete"
+AGENT_TRACE_TIME_DOMAIN_KEY = "time_domain"
+AGENT_TRACE_EVENTS_KEY = "events"
+EVENT_ID_KEY = "event_id"
+EVENT_KIND_KEY = "event_kind"
+EVENT_TIMESTAMP_KEY = "timestamp"
+EVENT_CORRELATION_ID_KEY = "correlation_id"
+EVENT_SOURCE_KEY = "source"
+EVENT_SOURCE_KIND_KEY = "kind"
+EVENT_SOURCE_ID_KEY = "id"
+EVENT_SOURCE_PROVENANCE_KEY = "provenance"
+EVENT_SOURCE_ATTESTED_KEY = "attested"
+BOUNDARY_RECORDER_SOURCE = "boundary_recorder"
+
+#: The two Article 50(5) fields are accepted as evidence only when these externally recorded event
+#: kinds are present.  A self-reported field without this pair is intentionally refused before any
+#: evidence rung is selected.
+RECORDER_ATTESTED_SIGNAL_EVENTS = {
+    "artifact_logs_natural_person_interaction": "natural_person_interaction",
+    "artifact_logs_ai_disclosure": "ai_disclosure",
+    # The plain name is included so a caller cannot evade the boundary by renaming the same
+    # self-reported disclosure field outside the Article 50 pack.
+    "disclosure_delivered": "ai_disclosure",
+}
+
+
+class ExecutionRecordError(ValueError):
+    """A single-agent execution record is absent, malformed, or not independently attested."""
+
+
+@dataclass(frozen=True)
+class ExecutionRecordEnvelope:
+    """Validated metadata and events for one recorder-bounded single-agent trace.
+
+    This is a schema reader, not an evidence engine.  The event list is retained so a caller can
+    inspect the source and correlation identifiers after validation; the property engines continue
+    to consume the ordinary decision mappings returned by ``SystemUnderTest.decisions()``.
+    """
+
+    schema_version: int
+    execution_id: str
+    complete: bool
+    time_domain: TimeDomain
+    events: tuple[Mapping[str, Any], ...]
+
+
+def _nonempty_text(value: Any, field: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ExecutionRecordError(f"{field} must be a non-empty string")
+    return value.strip()
+
+
+def _record_value_is_present(value: Any) -> bool:
+    """Match ``rulelang.present`` without importing the language into the SUT protocol layer."""
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, tuple, set, frozenset, dict)):
+        return bool(value)
+    return True
+
+
+def read_execution_record(records: Iterable[Mapping[str, Any]]) -> ExecutionRecordEnvelope:
+    """Read and validate the versioned recorder envelope around a decision trace.
+
+    The absence of the envelope, its ``complete`` declaration, the existing event clock, or an
+    event's source metadata is an evidence refusal.  In particular, a mapping containing
+    ``artifact_logs_ai_disclosure`` is never promoted to recorder evidence merely because its key
+    is non-blank.  Every record repeats the envelope so that a partially returned trace cannot
+    silently inherit completeness from a neighbouring record.
+    """
+    materialized = tuple(records)
+    if not materialized:
+        raise ExecutionRecordError("the execution trace is empty")
+
+    try:
+        stated_time = read_time_domain(materialized)
+    except (TypeError, ValueError) as exc:
+        raise ExecutionRecordError(f"the event clock was refused: {exc}") from exc
+    if stated_time.kind != EVENT_TIME:
+        raise ExecutionRecordError(
+            f"the execution record must state the {EVENT_TIME!r} time domain; "
+            f"the trace states {stated_time.kind!r}"
+        )
+
+    version: int | None = None
+    execution_id: str | None = None
+    complete: bool | None = None
+    events: list[Mapping[str, Any]] = []
+    event_ids: set[str] = set()
+    for index, record in enumerate(materialized):
+        envelope = record.get(AGENT_TRACE_KEY)
+        if not isinstance(envelope, Mapping):
+            raise ExecutionRecordError(
+                f"record {index} has no {AGENT_TRACE_KEY} envelope; self-reported fields "
+                "are not recorder evidence"
+            )
+        raw_version = envelope.get(AGENT_TRACE_SCHEMA_VERSION_KEY)
+        if (
+            isinstance(raw_version, bool)
+            or not isinstance(raw_version, int)
+            or raw_version != AGENT_TRACE_SCHEMA_VERSION
+        ):
+            raise ExecutionRecordError(
+                f"record {index} declares unsupported execution-record schema version "
+                f"{raw_version!r}; expected {AGENT_TRACE_SCHEMA_VERSION}"
+            )
+        current_version = raw_version
+        current_id = _nonempty_text(
+            envelope.get(AGENT_TRACE_EXECUTION_ID_KEY),
+            f"record {index} execution_id",
+        )
+        raw_complete = envelope.get(AGENT_TRACE_COMPLETE_KEY)
+        if not isinstance(raw_complete, bool):
+            raise ExecutionRecordError(
+                f"record {index} must declare boolean completeness as "
+                f"{AGENT_TRACE_COMPLETE_KEY!r}; absence is not a pass"
+            )
+        if not raw_complete:
+            raise ExecutionRecordError(
+                f"execution record {current_id!r} declares an incomplete trace"
+            )
+        if envelope.get(AGENT_TRACE_TIME_DOMAIN_KEY) != EVENT_TIME:
+            raise ExecutionRecordError(
+                f"record {index} must declare {AGENT_TRACE_TIME_DOMAIN_KEY}={EVENT_TIME!r}"
+            )
+        raw_events = envelope.get(AGENT_TRACE_EVENTS_KEY)
+        if not isinstance(raw_events, (list, tuple)):
+            raise ExecutionRecordError(
+                f"record {index} must carry an events list; an omitted event is not silently "
+                "dropped"
+            )
+
+        if version is None:
+            version, execution_id, complete = current_version, current_id, raw_complete
+        elif (current_version, current_id, raw_complete) != (version, execution_id, complete):
+            raise ExecutionRecordError(
+                f"record {index} disagrees with the execution envelope shared by the trace"
+            )
+
+        raw_stamps = stated_time.events[index]
+        raw_instants = stated_time.instants[index]
+        if raw_stamps is None or raw_instants is None:
+            raise ExecutionRecordError(f"record {index} has no event clock for its events")
+        for event_index, event in enumerate(raw_events):
+            if not isinstance(event, Mapping):
+                raise ExecutionRecordError(
+                    f"record {index} event {event_index} must be a mapping"
+                )
+            event_id = _nonempty_text(
+                event.get(EVENT_ID_KEY), f"record {index} event {event_index} event_id"
+            )
+            if event_id in event_ids:
+                raise ExecutionRecordError(f"event_id {event_id!r} is repeated in the trace")
+            event_ids.add(event_id)
+            event_kind = _nonempty_text(
+                event.get(EVENT_KIND_KEY), f"event {event_id!r} event_kind"
+            )
+            event_timestamp = _nonempty_text(
+                event.get(EVENT_TIMESTAMP_KEY), f"event {event_id!r} timestamp"
+            )
+            _nonempty_text(
+                event.get(EVENT_CORRELATION_ID_KEY), f"event {event_id!r} correlation_id"
+            )
+            source = event.get(EVENT_SOURCE_KEY)
+            if not isinstance(source, Mapping):
+                raise ExecutionRecordError(
+                    f"event {event_id!r} must carry source/provenance metadata"
+                )
+            _nonempty_text(source.get(EVENT_SOURCE_KIND_KEY), f"event {event_id!r} source kind")
+            _nonempty_text(source.get(EVENT_SOURCE_ID_KEY), f"event {event_id!r} source id")
+            _nonempty_text(
+                source.get(EVENT_SOURCE_PROVENANCE_KEY),
+                f"event {event_id!r} source provenance",
+            )
+            if not isinstance(source.get(EVENT_SOURCE_ATTESTED_KEY), bool):
+                raise ExecutionRecordError(
+                    f"event {event_id!r} source attestation must be boolean"
+                )
+            if event_kind not in raw_stamps:
+                raise ExecutionRecordError(
+                    f"event {event_id!r} has no {TIME_DOMAIN_KEY} timestamp for "
+                    f"{event_kind!r}"
+                )
+            try:
+                event_instant = parse_timestamp(event_timestamp)
+            except EventTimeError as exc:
+                raise ExecutionRecordError(
+                    f"event {event_id!r} has an invalid timestamp: {exc}"
+                ) from exc
+            if event_instant != raw_instants[event_kind]:
+                raise ExecutionRecordError(
+                    f"event {event_id!r} timestamp disagrees with the event clock"
+                )
+            events.append(event)
+
+    assert version is not None and execution_id is not None and complete is not None
+    return ExecutionRecordEnvelope(version, execution_id, complete, stated_time, tuple(events))
+
+
+def validate_recorder_attestation(
+    records: Iterable[Mapping[str, Any]],
+    required_events: Mapping[str, str],
+    required_signals: Iterable[str] = (),
+) -> ExecutionRecordEnvelope:
+    """Require one correlated, boundary-recorder-attested event for each required signal.
+
+    ``required_events`` maps the signal a property reads to the event kind that independently
+    establishes it.  The mapping is deliberately explicit: a subject may claim a field, but it
+    cannot make that field reach ``observed`` without the event pair and the recorder provenance.
+    """
+    materialized = tuple(records)
+    envelope = read_execution_record(materialized)
+    by_kind: dict[str, list[Mapping[str, Any]]] = {}
+    for event in envelope.events:
+        kind = str(event[EVENT_KIND_KEY])
+        by_kind.setdefault(kind, []).append(event)
+
+    selected: list[Mapping[str, Any]] = []
+    for signal, event_kind in required_events.items():
+        matches = by_kind.get(event_kind, [])
+        if len(matches) != 1:
+            raise ExecutionRecordError(
+                f"recorder-attested event {event_kind!r} for {signal!r} is missing or "
+                f"ambiguous ({len(matches)} occurrence(s))"
+            )
+        event = matches[0]
+        source = event[EVENT_SOURCE_KEY]
+        assert isinstance(source, Mapping)
+        if source.get(EVENT_SOURCE_KIND_KEY) != BOUNDARY_RECORDER_SOURCE:
+            raise ExecutionRecordError(
+                f"event {event_kind!r} for {signal!r} was sourced by "
+                f"{source.get(EVENT_SOURCE_KIND_KEY)!r}, not the boundary recorder"
+            )
+        if source.get(EVENT_SOURCE_ATTESTED_KEY) is not True:
+            raise ExecutionRecordError(
+                f"event {event_kind!r} for {signal!r} is not recorder-attested"
+            )
+        selected.append(event)
+
+    correlations = {str(event[EVENT_CORRELATION_ID_KEY]) for event in selected}
+    if len(correlations) != 1:
+        raise ExecutionRecordError(
+            "the required interaction/disclosure events do not share one correlation identifier"
+        )
+    missing_signals = [
+        signal
+        for signal in required_signals
+        if not any(_record_value_is_present(record.get(signal)) for record in materialized)
+    ]
+    if missing_signals:
+        raise ExecutionRecordError(
+            "the recorder-attested events are not materialized as required signal(s): "
+            + ", ".join(missing_signals)
+        )
+    return envelope
+
+
+def recorder_event_requirements(signals: Iterable[str]) -> dict[str, str]:
+    """Return the external-event contract for a property that reads a disclosure signal."""
+    names = set(signals)
+    disclosure_names = {
+        signal for signal, event_kind in RECORDER_ATTESTED_SIGNAL_EVENTS.items()
+        if event_kind == "ai_disclosure"
+    }
+    interaction_signal = next(
+        signal
+        for signal, event_kind in RECORDER_ATTESTED_SIGNAL_EVENTS.items()
+        if event_kind == "natural_person_interaction"
+    )
+    if not names & disclosure_names:
+        return {}
+    # A disclosure claim is still required to have a recorder-observed interaction boundary;
+    # otherwise a renamed self-report could bypass the pair requirement. Prefer the pack spelling
+    # if a caller names both aliases so the mapping remains deterministic.
+    disclosure_signal = (
+        "artifact_logs_ai_disclosure"
+        if "artifact_logs_ai_disclosure" in names
+        else "disclosure_delivered"
+    )
+    return {interaction_signal: "natural_person_interaction", disclosure_signal: "ai_disclosure"}
 
 
 def read_time_domain(records: Iterable[Mapping[str, Any]]) -> TimeDomain:
