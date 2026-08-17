@@ -97,7 +97,11 @@ from reasonsmith.event_time import (
     measure_pair,
     parse_duration,
 )
-from reasonsmith.report import RequirementResult, not_evaluated_for_unreachable_trigger
+from reasonsmith.report import (
+    RequirementResult,
+    not_evaluated_for_recorder,
+    not_evaluated_for_unreachable_trigger,
+)
 from reasonsmith.rulelang import (
     BINARY_TEMPORAL_OPERATORS,
     CONTAINS_CALL,
@@ -126,9 +130,12 @@ from reasonsmith.sut import (
     EVENT_DOMAIN,
     EVENT_TIME,
     ORDINAL_DOMAIN,
+    ExecutionRecordError,
     SystemUnderTest,
     TimeDomain,
     read_time_domain,
+    recorder_event_requirements,
+    validate_recorder_attestation,
 )
 from reasonsmith.verdict import Strength, Verdict
 
@@ -767,6 +774,16 @@ class ObservedEngine:
         time_domain: TimeDomain | None = None,
     ) -> RequirementResult:
         clause = f"{req.source_document} {req.article_clause}"
+
+        # The Article 50(5) trace is allowed into this engine only after the external recorder
+        # contract has been validated.  Keeping this guard here as well as in the report path
+        # protects direct engine callers from turning a self-reported field into ``observed``.
+        required_events = recorder_event_requirements(req.requires)
+        if required_events:
+            try:
+                validate_recorder_attestation(records, required_events, req.requires)
+            except ExecutionRecordError as exc:
+                return not_evaluated_for_recorder(req, records, str(exc))
 
         # A bounded-response property selects the event clock by its construct.  Passing an
         # ordinal domain explicitly is still a refusal: the operator must never be downgraded to
