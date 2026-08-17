@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "revision": "after",
+  "pack": {
+    "path": "after.toml",
+    "sha256": "df7cdf8ec05e78f4708644db1353afc89b3de8a25f2ea7bc7c09033eb9a090ce"
+  },
+  "sources": [
+    {
+      "key": "ai_act",
+      "kind": "cellar-xhtml",
+      "path": "after.html",
+      "url": "https://example.invalid/synthetic-statute",
+      "retrieved_at": "2026-01-01T00:00:00+00:00",
+      "sha256": "837716b213570065982699b399c4e1004236b813d89f9af60af2250d227b15b4",
+      "synthetic": true
+    }
+  ]
+}

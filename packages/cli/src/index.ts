@@ -14,9 +14,9 @@
  * What a reader must not break:
  *
  *   - **No command other than `tui` ships from the TypeScript CLI.** The Python CLI carries the
- *     authoritative command surface (`check`, `validate-pack`, `list-packs`, `serve`). Duplicating
- *     any of those here would be a second copy of a thing the Python owns; the TUI consumes the
- *     Python's JSON and that is the whole contract.
+ *     authoritative command surface (`init`, `check`, `validate-pack`, `verify-engine`,
+ *     `published-counts`, `explain`). Duplicating any of those here would be a second copy of a
+ *     thing the Python owns; the TUI consumes the Python's JSON and that is the whole contract.
  *   - **The launcher is one function, `main()`.** yargs is the wrong shape for a single-command
  *     surface, and the argument grammar is the TUI's, not this file's. `--help` is the only flag
  *     the launcher parses; everything else is forwarded verbatim.
@@ -50,8 +50,9 @@ const HELP = [
   "usage: reasonsmith [tui] --system <decisions.jsonl|module:attr> --pack <pack> [options]",
   "",
   "This launcher has no commands other than the default. The Python reasonsmith CLI (`pip install",
-  "reasonsmith`) carries the full command surface (`check`, `validate-pack`, `list-packs`,",
-  "`serve`); the TypeScript side is a thin launcher for the TUI over the JSON output those emit.",
+  "reasonsmith`) carries the full command surface (`init`, `check`, `validate-pack`,",
+  "`verify-engine`, `published-counts`, `explain`); the TypeScript side is a thin launcher for",
+  "the TUI over the JSON output those emit.",
   "",
   "All arguments are forwarded to the TUI binary. Run `reasonsmith-tui --help` for the full",
   "argument grammar.",
