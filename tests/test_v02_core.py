@@ -1015,7 +1015,7 @@ def test_ai_act_pack_high_risk_declaration_outcomes():
     # system could never answer is *not applicable* here rather than unattainable.
     sut_undeclared = SimpleSUT()
     report_undeclared = check_conformance(sut_undeclared, pack)
-    assert report_undeclared.counts["not_applicable"] == 5
+    assert report_undeclared.counts["not_applicable"] == 7
     assert report_undeclared.counts["observed"] == 0
     for r in report_undeclared.results:
         assert r.verdict == Verdict.NOT_APPLICABLE
@@ -1030,16 +1030,19 @@ def test_ai_act_pack_high_risk_declaration_outcomes():
     # rather than satisfied -- the difference the declaration makes is the class gate and not
     # the capability gate.
     report_declared = check_conformance(SimpleSUT(), pack, system_scope="high-risk")
-    assert report_declared.counts["not_applicable"] == 0
+    assert report_declared.counts["not_applicable"] == 2
     assert report_declared.counts["observed"] == 4
     assert report_declared.counts["unattainable"] == 1
     for r in report_declared.results:
-        if r.requirement_id == "eu_ai_act_art86_1_main_elements_of_the_decision":
+        if r.scope == "limited-risk":
+            assert r.verdict == Verdict.NOT_APPLICABLE
+            assert r.strength is None
+        elif r.requirement_id == "eu_ai_act_art86_1_main_elements_of_the_decision":
             assert r.verdict == Verdict.INCONCLUSIVE
             assert r.strength == Strength.UNATTAINABLE
-            continue
-        assert r.verdict == Verdict.SATISFIED
-        assert r.strength == Strength.OBSERVED
+        else:
+            assert r.verdict == Verdict.SATISFIED
+            assert r.strength == Strength.OBSERVED
 
     # Surrounding whitespace and letter case are not a different regulatory class. The whole
     # count map is compared, not the observed row alone: a duty the pack gains must be covered
@@ -1100,9 +1103,10 @@ def test_the_vocabulary_is_the_tool_s_own_not_the_packs():
 def test_a_valid_class_the_pack_does_not_target_is_a_declared_mismatch():
     """Out of scope is an answer, not a usage error, and it says which class was declared.
 
-    Every eu_ai_act duty is limited to high-risk. A system declared limited-risk is genuinely
-    outside all five, which the report states as a mismatch against what was declared — not as
-    an undeclared class, and not as a reason to refuse the run.
+    The original eu_ai_act duties are limited to high-risk. A system declared limited-risk is
+    genuinely outside those five, while the two Article 50 duties target limited-risk; each result
+    states its own mismatch against what was declared — not an undeclared class, and not a reason
+    to refuse the run.
     """
     pack = load_pack("eu_ai_act")
     report = check_conformance(
@@ -1111,12 +1115,17 @@ def test_a_valid_class_the_pack_does_not_target_is_a_declared_mismatch():
 
     assert report.system_scope == "limited-risk"
     assert report.counts["total"] == len(pack.requirements)
-    assert report.counts["not_applicable"] == len(pack.requirements)
+    assert report.counts["not_applicable"] == 5
+    assert report.counts["unattainable"] == 2
     for r in report.results:
-        assert r.verdict == Verdict.NOT_APPLICABLE
-        assert r.strength is None
-        assert "declared as 'limited-risk'" in r.evidence_summary
-        assert "undeclared" not in r.evidence_summary
+        if r.scope == "high-risk":
+            assert r.verdict == Verdict.NOT_APPLICABLE
+            assert r.strength is None
+            assert "declared as 'limited-risk'" in r.evidence_summary
+            assert "undeclared" not in r.evidence_summary
+        else:
+            assert r.verdict == Verdict.INCONCLUSIVE
+            assert r.strength == Strength.UNATTAINABLE
     assert "declared scope: limited-risk" in report.render_text()
 
 
@@ -1196,7 +1205,11 @@ def test_declared_scope_attribute_is_the_applicability_fallback():
     direct = evaluate_requirement(pack.requirements[0], sut)
 
     assert report.system_scope == "high-risk"
-    assert all(result.verdict != Verdict.NOT_APPLICABLE for result in report.results)
+    assert all(
+        result.verdict != Verdict.NOT_APPLICABLE
+        for result in report.results
+        if result.scope == "high-risk"
+    )
     assert direct.verdict != Verdict.NOT_APPLICABLE
 
 
@@ -1209,7 +1222,11 @@ def test_system_scope_precedes_a_conflicting_declared_scope():
     direct = evaluate_requirement(pack.requirements[0], sut)
 
     assert report.system_scope == "limited-risk"
-    assert all(result.verdict == Verdict.NOT_APPLICABLE for result in report.results)
+    assert all(
+        result.verdict == Verdict.NOT_APPLICABLE
+        for result in report.results
+        if result.scope == "high-risk"
+    )
     assert direct.verdict == Verdict.NOT_APPLICABLE
 
 

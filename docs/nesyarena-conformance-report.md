@@ -65,6 +65,9 @@ reported unattainable rather than filled in:
 - `provenance_basis_contract` — the lawful basis for processing is a controller's legal position, not a value any provenance semiring computes
 - `provenance_basis_union_or_member_state_law` — as above
 - `provenance_basis_explicit_consent` — as above
+- `artifact_logs_ai_disclosure` — the provenances do not interact directly with natural persons and emit no AI disclosure event
+- `artifact_logs_natural_person_interaction` — the provenances answer generated graph and Sudoku instances, not natural-person interactions
+- `artifact_logs_synthetic_content_mark` — the provenances do not generate synthetic content and emit no content marking
 - `artifact_logs_semantics_value_gap` — this is the one signal here reasonsmith measures rather than reads, and measuring it needs the model encoding behind a decision — an artifact() this adapter deliberately does not expose. The deviation figures in the inference table below exist because nesyarena ships an exact oracle beside each approximate provenance, which is a property of a measurement harness and not of a deployed system, and handing that oracle to reasonsmith would report agreement this tool established from an artefact the system never gave it. So the error-risk duty of Recital 71 is reported unattainable for all five provenances rather than judged against a number the harness supplied
 
 ## The instance battery
@@ -207,7 +210,7 @@ system: nesyarena:exact-wmc
 declared scope: undeclared
 declared domains: undeclared
 pack: eu_ai_act
-headline: 5 requirements · 5 binding: 5 not applicable
+headline: 7 requirements · 7 binding: 7 not applicable
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] eu_ai_act_art12_1_automatic_logging (EU AI Act (Regulation (EU) 2024/1689) Article 12(1)): not_applicable
@@ -231,6 +234,14 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     scope limit: high-risk
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_5_disclosure_timing (EU AI Act (Regulation (EU) 2024/1689) Article 50(5)): not_applicable
+    requires: artifact_logs_natural_person_interaction, artifact_logs_ai_disclosure
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_2_synthetic_content_marking (EU AI Act (Regulation (EU) 2024/1689) Article 50(2)): not_applicable
+    requires: artifact_logs_synthetic_content_mark
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of the independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about; or the Seoul pack self-asserted frontier_ai_status is undeclared or not-frontier. This tool infers neither the class nor the domain, and it does not infer frontier status, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope, domain, and frontier-status lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against. A wrong frontier declaration remains an audited-system overclaim.
@@ -325,7 +336,7 @@ system: nesyarena:add-mult(clamped)
 declared scope: undeclared
 declared domains: undeclared
 pack: eu_ai_act
-headline: 5 requirements · 5 binding: 5 not applicable
+headline: 7 requirements · 7 binding: 7 not applicable
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] eu_ai_act_art12_1_automatic_logging (EU AI Act (Regulation (EU) 2024/1689) Article 12(1)): not_applicable
@@ -349,6 +360,14 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     scope limit: high-risk
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_5_disclosure_timing (EU AI Act (Regulation (EU) 2024/1689) Article 50(5)): not_applicable
+    requires: artifact_logs_natural_person_interaction, artifact_logs_ai_disclosure
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_2_synthetic_content_marking (EU AI Act (Regulation (EU) 2024/1689) Article 50(2)): not_applicable
+    requires: artifact_logs_synthetic_content_mark
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of the independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about; or the Seoul pack self-asserted frontier_ai_status is undeclared or not-frontier. This tool infers neither the class nor the domain, and it does not infer frontier status, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope, domain, and frontier-status lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against. A wrong frontier declaration remains an audited-system overclaim.
@@ -442,7 +461,7 @@ system: nesyarena:top-1-proofs
 declared scope: undeclared
 declared domains: undeclared
 pack: eu_ai_act
-headline: 5 requirements · 5 binding: 5 not applicable
+headline: 7 requirements · 7 binding: 7 not applicable
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] eu_ai_act_art12_1_automatic_logging (EU AI Act (Regulation (EU) 2024/1689) Article 12(1)): not_applicable
@@ -466,6 +485,14 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     scope limit: high-risk
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_5_disclosure_timing (EU AI Act (Regulation (EU) 2024/1689) Article 50(5)): not_applicable
+    requires: artifact_logs_natural_person_interaction, artifact_logs_ai_disclosure
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_2_synthetic_content_marking (EU AI Act (Regulation (EU) 2024/1689) Article 50(2)): not_applicable
+    requires: artifact_logs_synthetic_content_mark
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of the independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about; or the Seoul pack self-asserted frontier_ai_status is undeclared or not-frontier. This tool infers neither the class nor the domain, and it does not infer frontier status, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope, domain, and frontier-status lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against. A wrong frontier declaration remains an audited-system overclaim.
@@ -559,7 +586,7 @@ system: nesyarena:top-3-proofs
 declared scope: undeclared
 declared domains: undeclared
 pack: eu_ai_act
-headline: 5 requirements · 5 binding: 5 not applicable
+headline: 7 requirements · 7 binding: 7 not applicable
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] eu_ai_act_art12_1_automatic_logging (EU AI Act (Regulation (EU) 2024/1689) Article 12(1)): not_applicable
@@ -583,6 +610,14 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     scope limit: high-risk
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_5_disclosure_timing (EU AI Act (Regulation (EU) 2024/1689) Article 50(5)): not_applicable
+    requires: artifact_logs_natural_person_interaction, artifact_logs_ai_disclosure
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_2_synthetic_content_marking (EU AI Act (Regulation (EU) 2024/1689) Article 50(2)): not_applicable
+    requires: artifact_logs_synthetic_content_mark
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of the independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about; or the Seoul pack self-asserted frontier_ai_status is undeclared or not-frontier. This tool infers neither the class nor the domain, and it does not infer frontier status, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope, domain, and frontier-status lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against. A wrong frontier declaration remains an audited-system overclaim.
@@ -676,7 +711,7 @@ system: nesyarena:min-max-prob
 declared scope: undeclared
 declared domains: undeclared
 pack: eu_ai_act
-headline: 5 requirements · 5 binding: 5 not applicable
+headline: 7 requirements · 7 binding: 7 not applicable
 
 REQUIREMENT FINDINGS:
   [NOT APPLICABLE] eu_ai_act_art12_1_automatic_logging (EU AI Act (Regulation (EU) 2024/1689) Article 12(1)): not_applicable
@@ -700,6 +735,14 @@ REQUIREMENT FINDINGS:
     requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
     scope limit: high-risk
     summary: Not applicable: requirement scope is 'high-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_5_disclosure_timing (EU AI Act (Regulation (EU) 2024/1689) Article 50(5)): not_applicable
+    requires: artifact_logs_natural_person_interaction, artifact_logs_ai_disclosure
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
+  [NOT APPLICABLE] eu_ai_act_art50_2_synthetic_content_marking (EU AI Act (Regulation (EU) 2024/1689) Article 50(2)): not_applicable
+    requires: artifact_logs_synthetic_content_mark
+    scope limit: limited-risk
+    summary: Not applicable: requirement scope is 'limited-risk', but system regulatory class is undeclared. reasonsmith never infers a system's regulatory class.
 
 LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of the independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about; or the Seoul pack self-asserted frontier_ai_status is undeclared or not-frontier. This tool infers neither the class nor the domain, and it does not infer frontier status, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope, domain, and frontier-status lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against. A wrong frontier declaration remains an audited-system overclaim.

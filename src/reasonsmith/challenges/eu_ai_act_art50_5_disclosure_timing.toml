@@ -1,0 +1,31 @@
+formalism = "temporal"
+requirement = "eu_ai_act_art50_5_disclosure_timing"
+rationale = "The trace requires an AI disclosure at the natural-person interaction boundary and rejects a boundary without one."
+
+[[case]]
+id = "disclosure-at-interaction"
+kind = "satisfied"
+expected = "satisfied"
+description = "The first interaction record carries the AI disclosure."
+trace = [
+  { artifact_logs_natural_person_interaction = "first", artifact_logs_ai_disclosure = "disclosed" },
+]
+
+[[case]]
+id = "interaction-without-disclosure"
+kind = "violated"
+expected = "violated"
+description = "The interaction boundary has no disclosure record."
+trace = [
+  { artifact_logs_natural_person_interaction = "first" },
+]
+
+[[case]]
+id = "later-disclosure"
+kind = "near-miss"
+expected = "violated"
+description = "A disclosure after the interaction does not repair the boundary record."
+trace = [
+  { artifact_logs_natural_person_interaction = "first" },
+  { artifact_logs_ai_disclosure = "disclosed" },
+]

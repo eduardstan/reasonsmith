@@ -167,6 +167,20 @@ UNDECLARED_SIGNALS = (
         "as above",
     ),
     (
+        "artifact_logs_ai_disclosure",
+        "the provenances do not interact directly with natural persons and emit no AI disclosure "
+        "event",
+    ),
+    (
+        "artifact_logs_natural_person_interaction",
+        "the provenances answer generated graph and Sudoku instances, not natural-person "
+        "interactions",
+    ),
+    (
+        "artifact_logs_synthetic_content_mark",
+        "the provenances do not generate synthetic content and emit no content marking",
+    ),
+    (
         "artifact_logs_semantics_value_gap",
         "this is the one signal here reasonsmith measures rather than reads, and measuring it "
         "needs the model encoding behind a decision — an artifact() this adapter deliberately "

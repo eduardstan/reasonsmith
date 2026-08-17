@@ -608,4 +608,4 @@ that module's tests skip, which is the arrangement `pip install reasonsmith` has
 
 ## Current Seoul corpus note
 
-The shipped tree now contains 39 requirements, including eight Seoul challenge sets; the 29-row measurement above is retained as a historical pre-Seoul run.
+The shipped tree now contains 41 requirements, including eight Seoul challenge sets; the 29-row measurement above is retained as a historical pre-Seoul run.

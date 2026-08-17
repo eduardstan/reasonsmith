@@ -1,0 +1,26 @@
+formalism = "record"
+requirement = "eu_ai_act_art50_2_synthetic_content_marking"
+rationale = "The record-presence check distinguishes a marked output from an unmarked one."
+
+[[case]]
+id = "marked-output"
+kind = "satisfied"
+expected = "satisfied"
+description = "The output record carries a synthetic-content marking."
+[case.signals]
+artifact_logs_synthetic_content_mark = "machine-readable-mark"
+
+[[case]]
+id = "unmarked-output"
+kind = "violated"
+expected = "violated"
+description = "No synthetic-content marking is recorded."
+[case.signals]
+
+[[case]]
+id = "blank-marking"
+kind = "near-miss"
+expected = "violated"
+description = "A blank marking value is not present under record semantics."
+[case.signals]
+artifact_logs_synthetic_content_mark = "   "

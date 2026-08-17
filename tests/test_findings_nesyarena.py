@@ -120,7 +120,7 @@ REQS = _requirements()
 _NUM_WORDS = {
     0: "zero", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
     7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen",
-    14: "fourteen", 15: "fifteen",
+    14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen",
 }
 
 
@@ -271,7 +271,7 @@ def _results_for(ids: set[str]) -> list:
 def test_headline_scale():
     """'80 results — 5 systems × 16 requirements' is the product of the real battery."""
     document = _document()
-    assert len(REQS) == 16, f"the three packs now hold {len(REQS)} requirements, not 16"
+    assert len(REQS) == 18, f"the three packs now hold {len(REQS)} requirements, not 18"
     scale = f"{len(SYSTEMS)} systems × {len(REQS)} requirements"
     assert scale in document, (
         "docs/findings-nesyarena.md's headline scale is stale: the run is "
@@ -477,9 +477,9 @@ def test_finding_2_formalism_census():
     prose = _prose()
     counts = Counter(req.formalism for req in REQS.values())
     assert dict(counts) == {
-        "record": 7,
+        "record": 8,
         "logical": 4,
-        "temporal": 4,
+        "temporal": 5,
         "counterfactual": 1,
     }, (
         f"the packs now hold {dict(counts)} requirements by formalism; the document's census "
@@ -585,16 +585,16 @@ def test_finding_2_top_rungs_never_ran():
 
 
 def test_finding_2_record_duty_split():
-    """Of the seven record duties: four scope-gated, one unattainable, two observed."""
+    """Of the eight record duties: five scope-gated, one unattainable, two observed."""
     record_ids = {rid for rid, req in REQS.items() if req.formalism == "record"}
-    assert len(record_ids) == 7
+    assert len(record_ids) == 8
     outcomes = _per_requirement_outcomes()
     na_scope = {rid for rid in record_ids if set(outcomes[rid]) == {"NOT_APPLICABLE"}}
     unattainable = {rid for rid in record_ids if outcomes[rid]["INCONCLUSIVE"]}
     observed = {
         rid for rid in record_ids if outcomes[rid]["SATISFIED"] or outcomes[rid]["VIOLATED"]
     }
-    assert len(na_scope) == 4 and unattainable == {"gdpr_art22_1_automated_decision_prohibition"}
+    assert len(na_scope) == 5 and unattainable == {"gdpr_art22_1_automated_decision_prohibition"}
     assert observed == {
         "gdpr_art22_3_safeguards_human_intervention",
         MEANINGFUL_EXPLANATION,
@@ -664,8 +664,8 @@ def test_finding_4_ai_act_not_applicable():
     """Every AI Act requirement for every system is not applicable, 25 results in all."""
     prose = _prose()
     eu_results = _results_for(_eu_ids())
-    assert len(eu_results) == 25, (
-        f"the EU AI Act pack now produces {len(eu_results)} results, not 25"
+    assert len(eu_results) == 35, (
+        f"the EU AI Act pack now produces {len(eu_results)} results, not 35"
     )
     assert all(r.verdict is Verdict.NOT_APPLICABLE for r in eu_results)
     assert f"{len(eu_results)} of the {len(RESULTS)} results" in prose
