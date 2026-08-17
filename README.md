@@ -21,6 +21,26 @@ On decision `APP-1042`, the system stated one reason while its inference used fi
 
 In the committed conformance finding, reasonsmith could not tell two systems with wrong decisions apart from the correct `exact-wmc` system: it gave both the same conformance verdicts as the exact oracle — satisfied on every duty then checkable. `top-1-proofs` disagreed with its claimed semantics on **8 of 16 instances** and with `exact-wmc`'s decisions on **8 of 16**, while `min-max-prob` disagreed with its claimed semantics on **16 of 16** and with `exact-wmc`'s decisions on **4 of 16**. The current report is more honest: the approximation-error duty now measures what an exposed model encoding supports, so these systems are **unattainable** on it — not falsely cleared, and not yet caught. Closing that gap requires the adapter to expose its declarative model encoding through `artifact()`. Read the full record in [`docs/findings-nesyarena.md`](docs/findings-nesyarena.md) and [`docs/what-this-does-not-do.md`](docs/what-this-does-not-do.md); the planned change is tracked in [`ROADMAP.md`](ROADMAP.md) §5.
 
+## Why won't reasonsmith just tell me I'm compliant?
+
+Because **compliant** is a legal judgement about a system in a particular context, not a property that
+can be read off a report. It depends on whether the duty applies, whether the formalisation captures
+the law, and whether the evidence is complete and trustworthy. reasonsmith cannot infer those things
+from a supplied trace or a system declaration.
+
+Instead, reasonsmith produces evidence and refusals. It says whether a stated formal property held on
+the evidence supplied, how that result was reached, and where the available evidence could not answer.
+A satisfied finding supports that formal claim at its reported rung; a violated finding gives a
+witness; `not evaluated`, `unattainable`, and `not applicable` preserve questions that remain open. A
+tool that stamped **compliant** would erase those boundaries and turn missing evidence into assurance.
+That is the one thing that would make its output worthless: you could no longer tell a measured
+finding from a conclusion the tool had no basis to make.
+
+Use the report as a bounded input to an audit or legal review: check the formalisation, preserve the
+witnesses, identify what evidence is missing, and decide what the system or its recorder must expose
+next. The output can support a compliance determination made in context; it cannot make that
+determination for you. For the full boundaries, read [what this does not do](docs/what-this-does-not-do.md).
+
 ## The organising question
 
 Start with a clause of law and the evidence your system actually exposes. reasonsmith records the clause as a formal property and asks which evidence rung that property and surface can support. This is not a pipeline: applicability comes first, evidence then branches, and each finding can be read five ways.
