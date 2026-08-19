@@ -1,4 +1,4 @@
-"""Holds `docs/three-systems.md` and its three adapters to what they actually do.
+"""Holds `docs/three-systems.md` and its four adapters to what they actually do.
 
 What this module is for:
   `docs/three-systems.md` is the answer to "how does any model get fed into this tool and have a
@@ -32,6 +32,8 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
+
 from reasonsmith.engines.probed import ProbedEngine
 from reasonsmith.report import check_conformance, evaluate_requirement
 from reasonsmith.rulelang import STATE_FRAGMENTS
@@ -57,7 +59,7 @@ def _duty(module):
 def test_committed_transcripts_are_the_real_stdout():
     text = THREE_SYSTEMS.read_text(encoding="utf-8")
     pairs = PAIR_RE.findall(text)
-    assert len(pairs) == 3, "expected three command/transcript pairs in docs/three-systems.md"
+    assert len(pairs) == 4, "expected four command/transcript pairs in docs/three-systems.md"
 
     env = {**os.environ, "PYTHONPATH": str(REPO_ROOT / "src"), "PYTHONIOENCODING": "utf-8"}
     for command, transcript in pairs:
@@ -181,3 +183,43 @@ def test_the_chosen_duty_is_binding_and_reaches_an_undeclared_system():
     for name in ("neural_scorer", "probabilistic_scorer", "symbolic_rules"):
         module = _load(name)
         assert module.system_under_test().system_domains == ("consumer-credit",)
+
+
+def test_the_recounted_example_reaches_recounted_without_an_encoding():
+    """The example's ceiling is the self-reported reason set, not a missing adapter feature."""
+    module = _load("recounted_reason_trace")
+    sut = module.system_under_test()
+    result = evaluate_requirement(_duty(module), sut)
+
+    assert result.verdict == Verdict.SATISFIED
+    assert result.strength == Strength.RECOUNTED
+    assert result.details["reason_set_is_exact"] is False
+    assert sut.logic() is None
+    assert not hasattr(sut, "decide")
+    assert "system recounted" in result.evidence_summary
+
+
+def test_the_recounted_example_cannot_be_promoted_to_probed():
+    """The result model refuses the stronger rung when the reason set was only recounted."""
+    from reasonsmith.report import RequirementResult
+
+    module = _load("recounted_reason_trace")
+    req = _duty(module)
+    with pytest.raises(ValueError, match="recounted cannot be reported probed"):
+        RequirementResult(
+            requirement_id=req.id,
+            source_clause=f"{req.source_document} {req.article_clause}",
+            verdict=Verdict.SATISFIED,
+            strength=Strength.PROBED,
+            signals_required=tuple(req.requires),
+            evidence_summary="synthetic promotion attempt",
+            details={
+                "reason_set_is_exact": False,
+                "probe_budget": {
+                    "trials": 3,
+                    "strategy": "deletion probe",
+                    "seed": "none",
+                    "input_space": {"facts switched off": 2},
+                },
+            },
+        )
