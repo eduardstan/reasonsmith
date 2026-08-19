@@ -1,4 +1,4 @@
-# One duty, three systems, three rungs
+# Evidence ladder: four systems, four rungs
 
 > **Demonstration only:** The reports below are demonstrations on frozen synthetic data — not evidence about any real decision.
 
@@ -6,16 +6,18 @@ How does a model — neural, probabilistic, symbolic — get fed into this tool 
 property verified on it? By writing an adapter that says what the system exposes. Nothing else
 about the system matters, and nothing else is asked of it.
 
-The three files in [`reasonsmith.examples`](../src/reasonsmith/examples/) are complete, runnable
+The four files in [`reasonsmith.examples`](../src/reasonsmith/examples/) are complete, runnable
 systems, and they ship inside the package, so every command below runs after `pip install
-reasonsmith` with no checkout. Each is a
-plausible credit decisioner; each exposes a different surface; each is checked against the **same
-binding duty**. They come back at three different rungs of the evidence lattice.
+reasonsmith` with no checkout. The first three are plausible credit decisioners checked against one
+shared binding duty; the fourth is checked against that clause's separate reason-adequacy duty,
+which is the shipped duty that admits the `recounted` rung. Together they expose four different
+surfaces and demonstrate all four attainable rungs.
 
 | system | file | what it exposes | rung reached |
 |---|---|---|---|
 | neural risk network, served behind an inference API | [`neural_scorer.py`](../src/reasonsmith/examples/neural_scorer.py) | `decisions()` — an exported decision log, nothing else | `observed` |
 | probabilistic log-odds scorer, in-process | [`probabilistic_scorer.py`](../src/reasonsmith/examples/probabilistic_scorer.py) | `decisions()` + `decide(case)` replay | `probed`, carrying its search budget |
+| synthetic notice generator | [`recounted_reason_trace.py`](../src/reasonsmith/examples/recounted_reason_trace.py) | `decisions()` + `artifact()` returning its own reason trace | `recounted`, over the reasons it states |
 | symbolic underwriting rule set | [`symbolic_rules.py`](../src/reasonsmith/examples/symbolic_rules.py) | `decisions()` + `logic()` | `proved`, over every input the constraints admit |
 
 > **Produced with reasonsmith `0.10.2` — the version of the tree these blocks were generated
@@ -26,7 +28,7 @@ binding duty**. They come back at three different rungs of the evidence lattice.
 > that your install is broken; upgrade to `0.10.2` or newer and re-run before comparing.
 
 Every block below is stdout pasted unedited from a real run.
-`tests/test_docs_three_systems.py` re-runs all three commands and holds each committed block to
+`tests/test_docs_three_systems.py` re-runs all four commands and holds each committed block to
 its real stdout, and asserts the neural system's ceiling separately.
 
 ## The duty
@@ -46,28 +48,31 @@ Three things made it the right duty for this demonstration, and it is worth sayi
   adverse action, not a recital. A headline table built on an interpretive item invites the reply
   that it is not even a legal obligation. This one is.
 - **It is limited to no regulatory class.** `scope = ""`, so it reaches a system that has declared
-  none, and the same duty genuinely applies to all three systems below. A duty scoped to
+  none, and the same duty genuinely applies to the first three systems below. The fourth system is
+  shown in §4 on the paired reason-adequacy duty. A duty scoped to
   `high-risk` would have come back *not applicable* for any system that did not declare itself
   into that class, and the table would have been about a declaration rather than about evidence.
-- **It is limited to one decision domain, and all three systems are in it.** `domains =
-  ["consumer-credit"]`, and each of the three declares `system_domains = ("consumer-credit",)` —
+- **It is limited to one decision domain, and the first three systems are in it.** `domains =
+  ["consumer-credit"], and each of those three declares `system_domains = ("consumer-credit",)` —
   they are consumer lenders, so the declaration is true of them and the duty genuinely governs
-  them. This is the one place the table *does* rest on a declaration, and it must: a system that
-  declared no domain would be reported *not applicable* here rather than judged, which is the point
-  of the gate (`docs/authoring-packs.md`, *the decision-domain vocabulary is yours, not the
-  regulation's*). What must not be read into the three rungs below is that any of them was reached
-  by declaring a domain — the domain decides whether the duty is answered at all, and the rung
-  decides how strongly, from what the system exposes and nothing else.
+  them. The recounted example makes the same domain declaration for its paired duty. This is the
+  one place the table *does* rest on a declaration, and it must: a system that declared no domain
+  would be reported *not applicable* here rather than judged, which is the point of the gate
+  (`docs/authoring-packs.md`, *the decision-domain vocabulary is yours, not the regulation's*).
+  What must not be read into the four examples below is that any rung was reached by declaring a
+  domain — the domain decides whether the duty is answered at all, and the rung decides how
+  strongly, from what the system exposes and nothing else.
 - **Its property is a state property.** The spec is an implication about a *single decision*:
   where that decision carries a statement of reasons, the statement names the model version and the
   scope it speaks for and is not one of the two the clause itself calls insufficient. That is what
-  lets all three rungs be in play — the solver and the replay search each reason about one decision
-  at a time. A temporal duty reaches the solver only where it reduces to a property of one decision,
-  which `always(f)` does and no other shape here does — see [`theory/05-decision-procedures.md`](theory/05-decision-procedures.md) §§5.1–5.2, *`proved`, over a trace*.
+  lets all four rungs be in play — the solver and the replay search each reason about one decision
+  at a time. The fourth section uses a different duty because reason adequacy is measured from an
+  inference artefact rather than the notice fields. A temporal duty reaches the solver only where it
+  reduces to a property of one decision, which `always(f)` does and no other shape here does — see [`theory/05-decision-procedures.md`](theory/05-decision-procedures.md) §§5.1–5.2, *`proved`, over a trace*.
 
   It is worth knowing what this duty used to be, because the change is the reason the demonstration
   is worth more than it was. Until recently the property was a conjunction of `present()` atoms:
-  *the reason field is not blank*, and nothing else. All three systems below satisfied it, and a
+  *the reason field is not blank*, and nothing else. The first three systems below satisfied it, and a
   system whose every reason read `"n/a"` would have satisfied it too — so `proved` was a strong
   claim about a weak property. The clause supplies its own **negative** constraint, naming two
   statements that are insufficient, and the property now checks it, so the symbolic system's
@@ -203,23 +208,65 @@ LIMITS OF THIS REPORT
   This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of the independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about; or the Seoul pack self-asserted frontier_ai_status is undeclared or not-frontier. This tool infers neither the class nor the domain, and it does not infer frontier status, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope, domain, and frontier-status lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against. A wrong frontier declaration remains an audited-system overclaim.
 ```
 
+## 4. Recounted — `recounted`
+
+This notice generator states the two reasons it says its decision used. It can be re-run while
+reasonsmith suppresses each of those facts, so the same deletion measurement checks whether the
+answer depends on the stated reasons. It exposes no rule set or model encoding, though: the reason
+set is only a `ReasonTraceArtifact` recount from the system. That is why the result is `recounted`,
+not `probed`.
+
+The distinction is not that the deletion search is weaker. Both rungs run that search. The
+difference is what was searched: `probed` measures reasons enumerated from an exposed model
+encoding; `recounted` measures the reasons the system says it used, without checking that its list
+is complete. A rationale may omit a fact the inference used, and this probe cannot discover that
+omission. `logic()` stays `None` on purpose, so adding an encoding would change the system being
+demonstrated and raise it to the other family.
+
+```sh
+python -m reasonsmith.examples.recounted_reason_trace
+```
+
+```text
+CONFORMANCE REPORT
+system: recounted-notice (synthetic reason trace)
+declared scope: undeclared
+declared domains: consumer-credit
+pack: ecoa:ecoa_reg_b_1002_9_b_2_principal_reasons_complete
+headline: 1 requirements · 1 binding: 1 recounted
+
+REQUIREMENT FINDINGS:
+  [RECOUNTED] ecoa_reg_b_1002_9_b_2_principal_reasons_complete (ECOA / Regulation B (12 CFR 1002.9) 12 CFR 1002.9(b)(2)): satisfied
+    evidence basis: artifact — this duty is measured against the inference artefact behind a decision rather than against what the system decided. No trace holds that artefact and the enumeration is exact only on the one artefact it ran over, so the rungs above unattainable are recounted and probed, and neither observed nor proved is reachable however much the system exposes. Which of the two a verdict reaches is a fact about the artefact and not about the search: probed measures a reason set enumerated from a model encoding, recounted measures one the system recounted about its own inference.
+    requires: artifact_logs_reason_explanation, artifact_logs_deleted_reason_count
+    domain limit: consumer-credit
+    summary: Probed over 1 certified decision(s): every reason exact bounded proof enumeration found is one the system's own answer depends on, so no reason was shown deleted. Holds on the decisions whose artefact was exposed and within the probes the budget below names; nothing here extends the claim to a decision the system did not open up. Read at recounted: the reason set this verdict is measured against is one the system recounted, not one enumerated from a model encoding, so the probe answers whether the system's own answer depends on the reasons it says it used and not whether those are all the reasons it had. A rationale can be complete, or can omit a reason the inference used, and no deletion probe over the rationale itself can tell the two apart.
+    Scope of this positive result: this formal property was satisfied only on the bounded search (3 input(s) replayed, seed none — the proof enumeration and the deletion probes are deterministic, input space: decisions certified (1 values), decisions whose joint search did not finish (0 values), facts switched off (2 values), joint deletion patterns tried (0 values); strategy: for each decision the system exposed an inference artefact for, its reasons are enumerated exactly by bounded proof enumeration over the ground program and scored by exact weighted model counting; every fact of a reason that no other reason uses is then switched off alone and the system's own engine re-run on the perturbed interpretation. A reason a single deletion moves the engine on is one its answer depends on. A reason no single deletion moves is then put to a second search, because two reasons jointly necessary and individually removable look exactly like two dropped ones: the subset-minimal *joint* deletions the engine notices are enumerated over the remaining facts, and a reason is counted here only where that enumeration ran to exhaustion and met no fact of it. The probe only ever switches a fact off, never on) at the recounted evidence rung; this run did not establish that the searched inputs are complete, representative, or unfiltered, and it did not determine legal adequacy or compliance outside that search.
+    Formalized subset only — see explain ecoa_reg_b_1002_9_b_2_principal_reasons_complete rationale.
+    probe budget: 3 input(s) replayed, seed none — the proof enumeration and the deletion probes are deterministic, input space: decisions certified (1 values), decisions whose joint search did not finish (0 values), facts switched off (2 values), joint deletion patterns tried (0 values). Strategy: for each decision the system exposed an inference artefact for, its reasons are enumerated exactly by bounded proof enumeration over the ground program and scored by exact weighted model counting; every fact of a reason that no other reason uses is then switched off alone and the system's own engine re-run on the perturbed interpretation. A reason a single deletion moves the engine on is one its answer depends on. A reason no single deletion moves is then put to a second search, because two reasons jointly necessary and individually removable look exactly like two dropped ones: the subset-minimal *joint* deletions the engine notices are enumerated over the remaining facts, and a reason is counted here only where that enumeration ran to exhaustion and met no fact of it. The probe only ever switches a fact off, never on
+
+LIMITS OF THIS REPORT
+  This report is not a compliance guarantee and is not legal advice. It assesses system capability information and trace evidence against formal specifications. Whether these findings discharge legal duties remains a determination this tool does not make and cannot make. A requirement reported without a strength was not evaluated or is not applicable, and no verdict on it should be read from this report. Recital and guidance items inform how statutory duties are interpreted but create no obligation of their own; interpretive requirements are evaluated and reported separately, and are never folded into the binding headline counts. A requirement reported not applicable was excluded on one of the independent gates. Either no regulatory class was declared for the system at all, or the class that was declared is not the one the requirement is limited to; or no decision domain was declared for the system at all, or none of the domains that were declared is one the requirement is about; or the Seoul pack self-asserted frontier_ai_status is undeclared or not-frontier. This tool infers neither the class nor the domain, and it does not infer frontier status, so an undeclared system is neither placed in scope nor cleared of the duty: read the declared scope, domain, and frontier-status lines before reading a not-applicable result. The decision-domain vocabulary is written by the pack author and by no regulation, and a duty declaring no domain reaches every system it is run against. A wrong frontier declaration remains an audited-system overclaim.
+```
+
 ## From a shell
 
-The three transcripts above run each system's own `main()`, which narrows the pack to the one duty
+The four transcripts above run each system's own `main()`, which narrows the pack to the one duty
 so the reader sees one finding. The CLI reaches exactly the same systems, against a whole pack:
 
 ```sh
 reasonsmith check --system-module reasonsmith.examples.symbolic_rules:system_under_test --pack ecoa
 reasonsmith check --system-module reasonsmith.examples.probabilistic_scorer:system_under_test --pack ecoa
 reasonsmith check --system-module reasonsmith.examples.neural_scorer:system_under_test --pack ecoa
+reasonsmith check --system-module reasonsmith.examples.recounted_reason_trace:system_under_test --pack ecoa
 ```
 
 **`--system-module` imports the named module, which executes it**, and takes the attribute after
 the colon as the system under test — the `module:attribute` spelling pytest's `-p` and gunicorn's
 application path use. The module is searched on `sys.path`, which includes the current directory —
-the three modules above are installed with the package, so those commands need no checkout, and
+the four modules above are installed with the package, so those commands need no checkout, and
 your own module resolves the same way from the directory you run in. The attribute may be a
-`SystemUnderTest` or, as in all three files here, a zero-argument factory returning one.
+`SystemUnderTest` or, as in all four files here, a zero-argument factory returning one.
 
 That is what makes `probed` and `proved` reachable from a shell at all: `--system <decisions.jsonl>`
 constructs a log-reading adapter, which exposes neither `decide()` nor `logic()`, so it cannot rise
@@ -230,15 +277,15 @@ system declares its own capabilities.
 The rungs are unchanged by the route: run against the whole `ecoa` pack, the symbolic system still
 comes back `proved` and the probabilistic one `probed` on `ecoa_reg_b_1002_9_b_2_specific_reasons`.
 Of the pack's four other duties, `ecoa_reg_b_1002_9_b_2_principal_reasons_complete` is unattainable
-on all three systems, because none of these adapters exposes the inference artefact its
+on the first three systems, because none of those adapters exposes the inference artefact its
 `artifact_logs_deleted_reason_count` is measured from — and that duty is never answered by anything
-weaker ([`docs/theory/07-explanation.md`](theory/07-explanation.md) §7.5, *certificate*). The two `temporal` duties are unattainable on the
+weaker ([`docs/theory/07-explanation.md`](theory/07-explanation.md) §7.5, *certificate*). The recounted example exposes a self-reported reason trace, so this same duty reaches `recounted` there. The two `temporal` duties are unattainable on the
 probabilistic and neural systems, which declare no `artifact_logs_decision_record`. The symbolic
 system declares one, and there the two split on the shape of the property rather than on the
 surface: `1002.9(a)(1)` is `always(f)` over a state property, so it reduces and the solver proves it,
 while `1002.9(a)(2)` reads `artifact_logs_right_to_reasons_disclosure` — a signal these rules never
 assign, so the presence atom cannot be proved and the duty lands on the trace at `observed`. The
-pack's fifth duty is the one relational one: `1002.4(a)` comes back `unattainable` on all three
+pack's fifth duty is the one relational one: `1002.4(a)` comes back `unattainable` on the first three
 systems, and the engine reports that rather than `satisfied` — none of these lenders reads an
 `applicant_prohibited_basis` the property could hold fixed, and unawareness of one is not a
 discharge ([`docs/theory/04-decision-problems.md`](theory/04-decision-problems.md) §4.4, *counterfactual*). Two
@@ -253,7 +300,7 @@ engine the property's fragment *and* the system's exposed surface allow, and
 pack author typed in `formalism` does not decide it; neither does the vendor's confidence in the
 model.
 
-**The rung is not a score.** The neural system is not failing. All three verdicts above are
+**The rung is not a score.** The neural system is not failing. All four verdicts above are
 `satisfied`. What differs is how far the claim reaches: `observed` reaches the three logged
 decisions and no further, `probed` reaches 200 replayed inputs and no further, `proved` reaches
 every input the declared constraints admit.
@@ -271,7 +318,7 @@ nobody quietly lifts it later.
 
 ## Adapting your own system
 
-Start from whichever of the three files is closest, and change the system, not the plumbing:
+Start from whichever of the four files is closest, and change the system, not the plumbing:
 
 - a decision log and nothing else → [`JSONLAdapter`](../src/reasonsmith/adapters/jsonl.py); pass
   `declared_capabilities` when the system genuinely declares what it emits, and leave it out when
