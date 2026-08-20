@@ -25,6 +25,7 @@ What a reader must not break:
 
 from __future__ import annotations
 
+import math
 from itertools import combinations
 
 LIMITS = (
@@ -36,8 +37,11 @@ LIMITS = (
 
 def value_measured(cert) -> bool:
     """Whether the engine and exact-inference values were measured for this case."""
-    return all(isinstance(value, (int, float)) and value == value for value in
-               (cert.exact_value, cert.engine_value, cert.value_gap))
+    return all(
+        isinstance(value, (int, float))
+        and (not isinstance(value, float) or not math.isnan(value))
+        for value in (cert.exact_value, cert.engine_value, cert.value_gap)
+    )
 
 
 def measured(cert) -> bool:
@@ -54,7 +58,7 @@ def retained_share(cert) -> float | None:
     """Exact-answer value retained by the engine, over the value-measured cohort."""
     if not value_measured(cert):
         return None
-    return 1.0 if cert.exact_value == 0.0 else cert.engine_value / cert.exact_value
+    return 1.0 if not cert.exact_value else cert.engine_value / cert.exact_value
 
 
 def coverage(cert) -> float | None:
