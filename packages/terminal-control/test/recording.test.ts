@@ -30,8 +30,8 @@ describe("Recorder", () => {
     const data = rec.stop()
     expect(data.events.length).toBe(2)
     expect(data.markers.length).toBe(1)
-    expect(data.markers[0]!.name).toBe("after-hello")
-    expect(data.events[0]!.data).toBe("hello")
+    expect(data.markers[0].name).toBe("after-hello")
+    expect(data.events[0].data).toBe("hello")
     expect(data.width).toBe(10)
   })
 
@@ -56,7 +56,7 @@ describe("replay", () => {
       command: "demo",
       args: [] as string[],
       startedAt: 0,
-      duration: events.length ? events[events.length - 1]!.time : 0,
+      duration: events.length ? events[events.length - 1].time : 0,
       events,
       markers,
     }
@@ -81,9 +81,9 @@ describe("replay", () => {
     ])
     const frames = sampleFrames(rec, { fps: 2 })
     expect(frames.length).toBeGreaterThan(1)
-    expect(frames[0]!.time).toBe(0)
+    expect(frames[0].time).toBe(0)
     // Last sampled frame shows the full output.
-    expect(renderText(frames[frames.length - 1]!.frame)).toContain("3")
+    expect(renderText(frames[frames.length - 1].frame)).toContain("3")
   })
 
   test("clipBetweenMarkers extracts a sub-recording", () => {
@@ -100,7 +100,7 @@ describe("replay", () => {
     )
     const clip = clipBetweenMarkers(rec, "a", "b")
     expect(clip.events.length).toBe(2)
-    expect(clip.events[0]!.time).toBe(0) // re-based
+    expect(clip.events[0].time).toBe(0) // re-based
     expect(duration(clip)).toBe(100)
   })
 
@@ -114,11 +114,11 @@ describe("replay", () => {
     )
     const cast = toAsciicast(rec)
     const lines = cast.trim().split("\n")
-    const header = JSON.parse(lines[0]!)
+    const header = JSON.parse(lines[0])
     expect(header.version).toBe(2)
     expect(header.width).toBe(20)
     // event lines parse as [time, kind, payload]
-    const ev = JSON.parse(lines[1]!)
+    const ev = JSON.parse(lines[1])
     expect(ev[1]).toBe("o")
     expect(typeof ev[0]).toBe("number")
     // marker present as "m"

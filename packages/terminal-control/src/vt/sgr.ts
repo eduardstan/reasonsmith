@@ -53,7 +53,7 @@ export function applySGR(attrs: MutableAttributes, params: number[]): void {
   }
 
   for (let i = 0; i < params.length; i++) {
-    const p = params[i]!
+    const p = params[i]
     switch (true) {
       case p === 0:
         resetAttributes(attrs)

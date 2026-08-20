@@ -200,7 +200,7 @@ const SEPARATOR = {
   dot: "·",
 } as const
 
-function Tab(props: {
+function Tab(props: Readonly<{
   label: string
   active: boolean
   hovered: boolean
@@ -208,7 +208,7 @@ function Tab(props: {
   onLeave: () => void
   onClick: () => void
   accent?: boolean
-}) {
+}>) {
   const t = useTheme()
   const fg = () => {
     if (props.active) return t.color.text

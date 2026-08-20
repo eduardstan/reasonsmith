@@ -88,7 +88,7 @@ export const { use: useKeybind, provider: KeybindProvider } = createSimpleContex
       }
     }
 
-    const matches = (spec: string, event: KeyEvent, inLeader: boolean): boolean => {
+    const matches = (spec: string, event: Readonly<KeyEvent>, inLeader: boolean): boolean => {
       const parsed = Keybind.fromParsedKey(event, inLeader)
       return Keybind.parse(spec).some((candidate) => Keybind.match(candidate, parsed))
     }

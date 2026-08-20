@@ -39,4 +39,5 @@ jobs:
       # any of this code") that this workflow addresses: every change to `packages/**` is now
       # typechecked and tested in CI, on every push.
       - run: bun run typecheck
+      - run: bun run lint
       - run: bun run test

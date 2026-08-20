@@ -323,10 +323,10 @@ function parseResult(value: unknown, path: string): RequirementResult {
   }
   // Narrowed to the vocabularies by the checks above; the type cast is required because TypeScript
   // cannot narrow `unknown` to `Strength | null` through an `if (!isStrength()) throw` alone.
-  const verdict = verdictRaw as Verdict
-  const outcome = outcomeRaw as OperationalOutcome
+  const verdict = verdictRaw
+  const outcome = outcomeRaw
   const strength = strengthRaw as StrengthOrNull
-  const basis = basisRaw as EvidenceBasis
+  const basis = basisRaw
   if (
     obj["details"] === null ||
     typeof obj["details"] !== "object" ||

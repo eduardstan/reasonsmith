@@ -102,7 +102,7 @@ export function DialogCommandPalette() {
       list.push(cmd)
       map.set(cmd.group, list)
     }
-    return GROUP_ORDER.filter((g) => map.has(g)).map((g) => ({ group: g, items: map.get(g)! }))
+    return GROUP_ORDER.filter((g) => map.has(g)).map((g) => ({ group: g, items: map.get(g) }))
   })
 
   const indexOf = (cmd: Command) => filtered().indexOf(cmd)
@@ -179,7 +179,7 @@ export function DialogCommandPalette() {
                             fg={theme.color.textMuted}
                             attributes={theme.attr.dim}
                             wrapMode="none"
-                            content={cmd.keys!}
+                            content={cmd.keys}
                           />
                         </Show>
                       </Clickable>

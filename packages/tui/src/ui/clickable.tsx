@@ -26,7 +26,8 @@ export interface ClickableProps {
   readonly paddingRight?: number
 }
 
-export function Clickable(props: ClickableProps) {
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- OpenTUI JSX props are immutable at the component boundary.
+export function Clickable(props: Readonly<ClickableProps>) {
   const t = useTheme()
   const renderer = useRenderer()
   const [hovered, setHovered] = createSignal(false)

@@ -89,8 +89,8 @@ export class Screen implements ParserSink {
     const next = makeGrid(cols, rows)
     const copyRows = Math.min(rows, grid.length)
     for (let y = 0; y < copyRows; y++) {
-      const copyCols = Math.min(cols, grid[y]!.length)
-      for (let x = 0; x < copyCols; x++) next[y]![x] = grid[y]![x]!
+      const copyCols = Math.min(cols, grid[y].length)
+      for (let x = 0; x < copyCols; x++) next[y][x] = grid[y][x]!
     }
     return next
   }
@@ -100,9 +100,9 @@ export class Screen implements ParserSink {
     const cells: Cell[][] = []
     for (let y = 0; y < this.rows; y++) {
       const row: Cell[] = []
-      const src = this.grid[y]!
+      const src = this.grid[y]
       for (let x = 0; x < this.cols; x++) {
-        const c = src[x]!
+        const c = src[x]
         row.push({
           char: c.char,
           fg: c.fg,
@@ -139,7 +139,7 @@ export class Screen implements ParserSink {
       this.lineFeed()
       this.pendingWrap = false
     }
-    const cell = this.grid[this.cursorY]![this.cursorX]!
+    const cell = this.grid[this.cursorY][this.cursorX]
     cell.char = ch === "" ? " " : ch
     this.copyAttrsInto(cell)
     if (this.cursorX >= this.cols - 1) {
@@ -208,7 +208,7 @@ export class Screen implements ParserSink {
 
   private scrollUp(n: number): void {
     for (let i = 0; i < n; i++) {
-      const removed = this.grid.splice(this.scrollTop, 1)[0]!
+      const removed = this.grid.splice(this.scrollTop, 1)[0]
       this.clearRow(removed)
       this.grid.splice(this.scrollBottom, 0, removed)
     }
@@ -216,7 +216,7 @@ export class Screen implements ParserSink {
 
   private scrollDown(n: number): void {
     for (let i = 0; i < n; i++) {
-      const removed = this.grid.splice(this.scrollBottom, 1)[0]!
+      const removed = this.grid.splice(this.scrollBottom, 1)[0]
       this.clearRow(removed)
       this.grid.splice(this.scrollTop, 0, removed)
     }
@@ -397,14 +397,14 @@ export class Screen implements ParserSink {
     if (mode === 0) {
       // cursor to end
       this.eraseLineRange(this.cursorY, this.cursorX, this.cols)
-      for (let y = this.cursorY + 1; y < this.rows; y++) this.clearRow(this.grid[y]!)
+      for (let y = this.cursorY + 1; y < this.rows; y++) this.clearRow(this.grid[y])
     } else if (mode === 1) {
       // start to cursor
-      for (let y = 0; y < this.cursorY; y++) this.clearRow(this.grid[y]!)
+      for (let y = 0; y < this.cursorY; y++) this.clearRow(this.grid[y])
       this.eraseLineRange(this.cursorY, 0, this.cursorX + 1)
     } else {
       // entire display (2 and 3)
-      for (let y = 0; y < this.rows; y++) this.clearRow(this.grid[y]!)
+      for (let y = 0; y < this.rows; y++) this.clearRow(this.grid[y])
     }
   }
 
@@ -428,7 +428,7 @@ export class Screen implements ParserSink {
 
   private insertChars(n: number): void {
     this.pendingWrap = false
-    const row = this.grid[this.cursorY]!
+    const row = this.grid[this.cursorY]
     for (let i = 0; i < n; i++) {
       row.splice(this.cols - 1, 1)
       row.splice(this.cursorX, 0, blankMCell())
@@ -437,7 +437,7 @@ export class Screen implements ParserSink {
 
   private deleteChars(n: number): void {
     this.pendingWrap = false
-    const row = this.grid[this.cursorY]!
+    const row = this.grid[this.cursorY]
     for (let i = 0; i < n; i++) {
       row.splice(this.cursorX, 1)
       row.push(blankMCell())
@@ -449,7 +449,7 @@ export class Screen implements ParserSink {
     this.pendingWrap = false
     for (let i = 0; i < n; i++) {
       this.grid.splice(this.scrollBottom, 1)
-      this.grid.splice(this.cursorY, 0, makeGrid(this.cols, 1)[0]!)
+      this.grid.splice(this.cursorY, 0, makeGrid(this.cols, 1)[0])
     }
   }
 
@@ -458,7 +458,7 @@ export class Screen implements ParserSink {
     this.pendingWrap = false
     for (let i = 0; i < n; i++) {
       this.grid.splice(this.cursorY, 1)
-      this.grid.splice(this.scrollBottom, 0, makeGrid(this.cols, 1)[0]!)
+      this.grid.splice(this.scrollBottom, 0, makeGrid(this.cols, 1)[0])
     }
   }
 
@@ -489,7 +489,7 @@ export class Screen implements ParserSink {
       this.altGrid = primary
       this.inAlt = true
       // Clear the alt screen on entry.
-      for (let y = 0; y < this.rows; y++) this.clearRow(this.grid[y]!)
+      for (let y = 0; y < this.rows; y++) this.clearRow(this.grid[y])
       this.cursorX = 0
       this.cursorY = 0
       this.pendingWrap = false

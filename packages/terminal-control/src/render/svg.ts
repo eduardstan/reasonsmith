@@ -89,10 +89,10 @@ export function svgLayers(frame: Frame, options: SvgOptions = {}): SvgLayers {
   const texts: string[] = []
 
   for (let y = 0; y < frame.rows; y++) {
-    const row = frame.cells[y]! as Cell[]
+    const row = frame.cells[y] as Cell[]
     // Background rects — merge horizontally adjacent cells with identical bg.
     let runStart = 0
-    let runBg = effectiveColors(row[0]!, resolve).bg
+    let runBg = effectiveColors(row[0], resolve).bg
     const flushRect = (endX: number) => {
       const hex = rgbToHex(runBg)
       if (hex !== pageBg) {
@@ -104,7 +104,7 @@ export function svgLayers(frame: Frame, options: SvgOptions = {}): SvgLayers {
       }
     }
     for (let x = 1; x < frame.cols; x++) {
-      const bg = effectiveColors(row[x]!, resolve).bg
+      const bg = effectiveColors(row[x], resolve).bg
       if (rgbToHex(bg) !== rgbToHex(runBg)) {
         flushRect(x)
         runStart = x
@@ -117,7 +117,7 @@ export function svgLayers(frame: Frame, options: SvgOptions = {}): SvgLayers {
     const baseline = padding + y * cellH + cellH * 0.78
     let tx = 0
     while (tx < frame.cols) {
-      const cell = row[tx]!
+      const cell = row[tx]
       const ch = cell.char || " "
       if (ch === " " && !cell.underline && !cell.strikethrough) {
         tx++
@@ -128,7 +128,7 @@ export function svgLayers(frame: Frame, options: SvgOptions = {}): SvgLayers {
       let run = ""
       const startX = tx
       while (tx < frame.cols) {
-        const c = row[tx]!
+        const c = row[tx]
         const cc = effectiveColors(c, resolve)
         if (rgbToHex(cc.fg) !== rgbToHex(fg) || styleAttrs(c) !== style) break
         run += c.char || " "

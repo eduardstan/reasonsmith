@@ -15,6 +15,7 @@ export interface ModalPanelProps {
   readonly footer?: JSX.Element
 }
 
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- OpenTUI JSX props are immutable at the component boundary.
 export function ModalPanel(props: ModalPanelProps) {
   const t = useTheme()
   const width = () => props.width ?? 64
@@ -31,7 +32,7 @@ export function ModalPanel(props: ModalPanelProps) {
           </Show>
         </box>
         <box flexDirection="row" gap={1}>
-          <Show when={props.stackDepth && props.stackDepth > 1}>
+          <Show when={Boolean(props.stackDepth && props.stackDepth > 1)}>
             <text fg={t.color.warn} wrapMode="none" content={`${props.stackDepth}`} />
           </Show>
           <text fg={t.color.textMuted} wrapMode="none" content="esc" />

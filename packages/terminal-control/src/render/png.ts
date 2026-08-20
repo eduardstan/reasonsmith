@@ -14,14 +14,12 @@ export interface PngOptions extends SvgOptions {
 let resvgModule: Promise<unknown> | undefined
 
 async function loadResvg(): Promise<any> {
-  if (!resvgModule) {
-    resvgModule = import("@resvg/resvg-js").catch((cause) => {
-      throw new Error(
-        "PNG rendering requires the optional dependency '@resvg/resvg-js'. Install it to capture PNG frames.",
-        { cause: cause as Error },
-      )
-    })
-  }
+  resvgModule ??= import("@resvg/resvg-js").catch((cause) => {
+    throw new Error(
+      "PNG rendering requires the optional dependency '@resvg/resvg-js'. Install it to capture PNG frames.",
+      { cause: cause as Error },
+    )
+  })
   return resvgModule
 }
 

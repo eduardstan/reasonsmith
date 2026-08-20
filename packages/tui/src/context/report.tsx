@@ -31,7 +31,7 @@ import { createSimpleContext } from "./helper.tsx"
 
 export const { use: useReport, provider: ReportProvider } = createSimpleContext({
   name: "Report",
-  init: (props: { report: ConformanceReport }) => {
+  init: (props: Readonly<{ report: ConformanceReport }>) => {
     const report = props.report
     const [audience, setAudience] = createSignal<Audience>("auditor")
     const [selected, setSelected] = createSignal(0)

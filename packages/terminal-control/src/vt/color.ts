@@ -34,12 +34,12 @@ const CUBE_STEPS = [0, 95, 135, 175, 215, 255]
 
 /** Resolve an xterm palette index (0–255) to RGB. */
 export function indexedToRGB(index: number): RGB {
-  if (index < 16) return ANSI_16[index] ?? ANSI_16[0]!
+  if (index < 16) return ANSI_16[index] ?? ANSI_16[0]
   if (index < 232) {
     const i = index - 16
-    const r = CUBE_STEPS[Math.floor(i / 36) % 6]!
-    const g = CUBE_STEPS[Math.floor(i / 6) % 6]!
-    const b = CUBE_STEPS[i % 6]!
+    const r = CUBE_STEPS[Math.floor(i / 36) % 6]
+    const g = CUBE_STEPS[Math.floor(i / 6) % 6]
+    const b = CUBE_STEPS[i % 6]
     return { r, g, b }
   }
   // 232–255: 24-step grayscale ramp.

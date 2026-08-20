@@ -12,7 +12,7 @@ import { useKeybind } from "../context/keybind.tsx"
 import { useReport } from "../context/report.tsx"
 import { useTheme } from "../context/theme.tsx"
 
-export function SettingsBody(props: { compact?: boolean }) {
+export function SettingsBody(props: Readonly<{ compact?: boolean }>) {
   const theme = useTheme()
   const report = useReport()
   const keybind = useKeybind()
@@ -80,7 +80,8 @@ export function SettingsBody(props: { compact?: boolean }) {
   )
 }
 
-function Section(props: { heading: string; children: import("solid-js").JSX.Element }) {
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Solid JSX children are immutable at the component boundary.
+function Section(props: Readonly<{ heading: string; children: import("solid-js").JSX.Element }>) {
   const t = useTheme()
   return (
     <box
@@ -98,7 +99,7 @@ function Section(props: { heading: string; children: import("solid-js").JSX.Elem
   )
 }
 
-function Row(props: { label: string; value: string; onClick?: () => void }) {
+function Row(props: Readonly<{ label: string; value: string; onClick?: () => void }>) {
   const t = useTheme()
   if (props.onClick) {
     return (
@@ -130,7 +131,7 @@ function Row(props: { label: string; value: string; onClick?: () => void }) {
   )
 }
 
-function ShowRow(props: { when: boolean; label: string; value: string }) {
+function ShowRow(props: Readonly<{ when: boolean; label: string; value: string }>) {
   const t = useTheme()
   if (!props.when) return null
   return <Row label={props.label} value={props.value} />
