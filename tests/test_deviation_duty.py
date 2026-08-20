@@ -175,7 +175,7 @@ class _BooleanAdapter(SilentDropAdapter):
     """A boolean answer must not be coerced to the real number one."""
 
     def infer(self, program, base, queries):
-        return {query: True for query in queries}
+        return dict.fromkeys(queries, True)
 
 
 class _FixedArtifact:
@@ -595,7 +595,7 @@ def test_a_system_exposing_no_artefact_is_unattainable_never_satisfied():
     """Silence is not compliance, and no weaker rung stands in for the measurement."""
     req = requirement()
     sut = BaseSUT(set(req.requires))
-    result = evaluate_requirement(req, sut, [{name: 0.0 for name in req.requires}])
+    result = evaluate_requirement(req, sut, [dict.fromkeys(req.requires, 0.0)])
 
     assert result.verdict == Verdict.INCONCLUSIVE
     assert result.strength == Strength.UNATTAINABLE

@@ -70,7 +70,7 @@ from __future__ import annotations
 import ast
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import replace
-from typing import Any, Optional
+from typing import Any
 
 import z3
 
@@ -370,7 +370,7 @@ class CounterfactualProofEngine:
     def evaluate(
         req: Requirement,
         sut: SystemUnderTest,
-        records: Optional[list[dict[str, Any]]] = None,
+        records: list[dict[str, Any]] | None = None,
         timeout_ms: int = 5000,
         *,
         logic_data: Any = _UNSET_LOGIC,
@@ -868,7 +868,7 @@ class PairedReplayEngine:
     def evaluate(
         req: Requirement,
         sut: SystemUnderTest,
-        records: Optional[list[dict[str, Any]]] = None,
+        records: list[dict[str, Any]] | None = None,
         *,
         trace_provider: Callable[[], Iterable[dict[str, Any]]] | None = None,
         max_values: int = DEFAULT_MAX_VALUES,

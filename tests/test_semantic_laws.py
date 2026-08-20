@@ -290,7 +290,7 @@ def test_the_monotonicity_law_fires_on_an_engine_that_falls_when_a_fact_is_raise
             self.fact = fact
 
         def infer(self, program, base, queries):
-            return {query: 1.0 - base[self.fact] for query in queries}
+            return dict.fromkeys(queries, 1.0 - base[self.fact])
 
     artefact = GroundProgramArtifact(
         instance.program,

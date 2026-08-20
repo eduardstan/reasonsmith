@@ -56,7 +56,8 @@ What a reader must not break:
 from __future__ import annotations
 
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from reasonsmith.adapters.callable import CallableAdapter
 from reasonsmith.neural import DeclaredInputSpace, render_template

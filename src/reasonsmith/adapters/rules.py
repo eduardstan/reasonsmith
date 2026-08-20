@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import ast
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any
 
 from reasonsmith.rulelang import (
     UnsupportedConstructError,
@@ -92,11 +92,11 @@ class RulesAdapter(BaseSUT):
     def __init__(
         self,
         rules: list[str] | str,
-        variables: Optional[dict[str, str]] = None,
-        constraints: Optional[list[str] | str] = None,
-        declared_capabilities: Optional[set[str] | Iterable[str]] = None,
-        test_inputs: Optional[Iterable[dict[str, Any]]] = None,
-        computes: Optional[Iterable[str]] = None,
+        variables: dict[str, str] | None = None,
+        constraints: list[str] | str | None = None,
+        declared_capabilities: set[str] | Iterable[str] | None = None,
+        test_inputs: Iterable[dict[str, Any]] | None = None,
+        computes: Iterable[str] | None = None,
         frontier_ai_status: str | None = None,
     ):
         if isinstance(rules, str):
@@ -126,7 +126,7 @@ class RulesAdapter(BaseSUT):
         if variables is not None:
             self._variables = dict(variables)
         else:
-            self._variables = {v: "real" for v in sorted(discovered_vars)}
+            self._variables = dict.fromkeys(sorted(discovered_vars), "real")
 
         if isinstance(computes, (str, bytes)):
             raise ValueError(

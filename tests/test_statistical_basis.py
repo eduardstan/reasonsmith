@@ -20,13 +20,13 @@ from reasonsmith.sut import BaseSUT
 
 
 def plan():
-    value = {name: "declared" for name in SAMPLING_REQUIRED_FIELDS}
+    value = dict.fromkeys(SAMPLING_REQUIRED_FIELDS, "declared")
     value.update(design="iid_binomial", weights="none", clustering="none")
     return value
 
 
 def authority():
-    return {name: "declared" for name in AUTHORITY_REQUIRED_FIELDS}
+    return dict.fromkeys(AUTHORITY_REQUIRED_FIELDS, "declared")
 
 
 def rows():

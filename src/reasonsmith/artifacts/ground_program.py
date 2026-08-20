@@ -130,7 +130,7 @@ class GroundProgramArtifact:
         """This fact's probability under the base interpretation — half of the wider surface."""
         return float(self.base[fact])
 
-    def at(self, fact: Atom, probability: float) -> "GroundProgramArtifact":
+    def at(self, fact: Atom, probability: float) -> GroundProgramArtifact:
         """The same inference at `probability` for `fact`, and the same reason set to score it over.
 
         The widened perturbation. It re-scores what the base enumeration found and never
@@ -151,6 +151,6 @@ class GroundProgramArtifact:
             decision_threshold=self.decision_threshold,
         )
 
-    def without(self, fact: Atom) -> "GroundProgramArtifact":
+    def without(self, fact: Atom) -> GroundProgramArtifact:
         """The same inference with `fact` at probability zero — the deletion probe's one call."""
         return self.at(fact, 0.0)

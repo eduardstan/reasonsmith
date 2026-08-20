@@ -173,7 +173,7 @@ class ReasonTraceArtifact:
         """The system's own answer, re-run with the suppressed facts withheld."""
         return float(self._answer(self._suppressed))
 
-    def without(self, fact: Any) -> "ReasonTraceArtifact":
+    def without(self, fact: Any) -> ReasonTraceArtifact:
         return ReasonTraceArtifact(
             self.query,
             self._reasons,

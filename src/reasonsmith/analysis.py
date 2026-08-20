@@ -54,7 +54,7 @@ from __future__ import annotations
 import ast
 import copy
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 import z3
 
@@ -173,7 +173,7 @@ class PackAnalysis:
     """What the four questions answered, and every one skipped rather than answered."""
 
     pack_id: str
-    satisfiable: Optional[bool]
+    satisfiable: bool | None
     unsatisfiable_core: tuple[str, ...] = ()
     relations: tuple[Relation, ...] = ()
     vacuities: tuple[VacuityFinding, ...] = ()
@@ -183,7 +183,7 @@ class PackAnalysis:
     notes: tuple[str, ...] = field(default_factory=tuple)
     #: `None` when the optional decision procedure is not installed, which is not the same fact as
     #: "it was installed and found nothing" and must not render as it.
-    temporal: Optional[TemporalAnalysis] = None
+    temporal: TemporalAnalysis | None = None
 
 
 class _PackScope(_Scope):
@@ -223,7 +223,7 @@ class _PackScope(_Scope):
         return atom
 
 
-def _state_property(req: Requirement) -> tuple[Optional[ast.Expression], str]:
+def _state_property(req: Requirement) -> tuple[ast.Expression | None, str]:
     """The state property this analysis encodes for a requirement, or a reason it encodes none."""
     if req.formalism == "counterfactual":
         return None, (
@@ -273,7 +273,7 @@ def _encoded(node: ast.AST, scope: _Scope, what: str) -> Any:
     return _as_bool(_ast_to_z3(node, scope), what)
 
 
-def _valid(assertions: list[Any], formula: Any, timeout_ms: int) -> Optional[bool]:
+def _valid(assertions: list[Any], formula: Any, timeout_ms: int) -> bool | None:
     """Whether `formula` holds everywhere the assertions admit; `None` if the solver cannot say."""
     solver = z3.Solver()
     solver.set("timeout", timeout_ms)
@@ -287,8 +287,8 @@ def _valid(assertions: list[Any], formula: Any, timeout_ms: int) -> Optional[boo
     return None
 
 
-def _parents(tree: ast.AST) -> dict[int, tuple[ast.AST, str, Optional[int]]]:
-    parents: dict[int, tuple[ast.AST, str, Optional[int]]] = {}
+def _parents(tree: ast.AST) -> dict[int, tuple[ast.AST, str, int | None]]:
+    parents: dict[int, tuple[ast.AST, str, int | None]] = {}
     for node in ast.walk(tree):
         for name, value in ast.iter_fields(node):
             if isinstance(value, list):
@@ -392,7 +392,7 @@ def vacuous_subformulas(
 
 def _has_reported_ancestor(
     node: ast.AST,
-    parents: dict[int, tuple[ast.AST, str, Optional[int]]],
+    parents: dict[int, tuple[ast.AST, str, int | None]],
     reported: set[int],
 ) -> bool:
     current = node
@@ -405,7 +405,7 @@ def _has_reported_ancestor(
 
 def _satisfiability_and_relations(
     pack: Pack, timeout_ms: int
-) -> tuple[Optional[bool], tuple[str, ...], tuple[Relation, ...], list[str], list[str]]:
+) -> tuple[bool | None, tuple[str, ...], tuple[Relation, ...], list[str], list[str]]:
     """Encode every encodable requirement of a pack once, then ask the two formula questions."""
     skipped: list[str] = []
     encoded: list[tuple[str, ast.Expression]] = []
@@ -435,7 +435,7 @@ def _satisfiability_and_relations(
     for req_id, formula in formulas.items():
         solver.assert_and_track(formula, req_id)
     outcome = solver.check()
-    satisfiable: Optional[bool] = None
+    satisfiable: bool | None = None
     core: tuple[str, ...] = ()
     if outcome == z3.sat:
         satisfiable = True
@@ -463,7 +463,7 @@ def _satisfiability_and_relations(
     return satisfiable, core, tuple(relations), skipped, notes
 
 
-def _temporal_analysis(pack: Pack) -> tuple[Optional[TemporalAnalysis], list[str], list[str]]:
+def _temporal_analysis(pack: Pack) -> tuple[TemporalAnalysis | None, list[str], list[str]]:
     """Decide the pack's temporal duties as finite-trace formulas, or say why one was not.
 
     The whole fragment reaches this, not only the shapes the Z3 reduction misses: an entailment
@@ -608,7 +608,7 @@ def _mutation_coverage(
     pack: Pack,
     sut: SystemUnderTest,
     system_domains: tuple[str, ...],
-    system_scope: Optional[str],
+    system_scope: str | None,
 ) -> tuple[tuple[MutationScore, ...], str, list[str]]:
     """Re-run the pack against every mutant of the system's declared rules.
 
@@ -640,7 +640,7 @@ def _mutation_coverage(
     domains = system_domains or tuple(getattr(sut, "system_domains", ()) or ())
     scope = system_scope or getattr(sut, "system_scope", getattr(sut, "declared_scope", None))
 
-    def build(mutated: list[str]) -> Optional[RulesAdapter]:
+    def build(mutated: list[str]) -> RulesAdapter | None:
         try:
             adapter = RulesAdapter(
                 rules=mutated,
@@ -692,9 +692,9 @@ def _mutation_coverage(
 def _verdict_map(
     pack: Pack,
     sut: SystemUnderTest,
-    system_scope: Optional[str],
+    system_scope: str | None,
     system_domains: tuple[str, ...],
-) -> dict[str, tuple[str, Optional[str]]]:
+) -> dict[str, tuple[str, str | None]]:
     report = check_conformance(
         sut, pack, system_scope=system_scope, system_domains=system_domains or None
     )
@@ -709,9 +709,9 @@ def _verdict_map(
 
 def analyse_pack(
     pack: Pack,
-    sut: Optional[SystemUnderTest] = None,
+    sut: SystemUnderTest | None = None,
     *,
-    system_scope: Optional[str] = None,
+    system_scope: str | None = None,
     system_domains: tuple[str, ...] = (),
     timeout_ms: int = 5000,
 ) -> PackAnalysis:
@@ -734,7 +734,7 @@ def analyse_pack(
 
     vacuities: list[VacuityFinding] = []
     domain_label = "every assignment to the signals the properties read"
-    logic_scope: Optional[_Scope] = None
+    logic_scope: _Scope | None = None
     logic_assertions: list[Any] = []
     declared_computes: Any = None
     if sut is not None:

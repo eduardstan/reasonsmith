@@ -85,7 +85,7 @@ class _IgnoresEveryProof:
     claimed_semantics = "distribution semantics"
 
     def infer(self, program, base, queries):
-        return {query: 0.0 for query in queries}
+        return dict.fromkeys(queries, 0.0)
 
 
 def _artifact(**overrides) -> dict:
@@ -260,7 +260,7 @@ def test_a_partial_enumeration_degrades_to_undetermined_and_never_to_deleted():
 def test_no_budget_makes_this_instrument_name_more_missing_reasons_than_a_complete_search():
     """Stated as a sweep, because it is the one property a budget must not be able to invert."""
     complete = set(certify(**_artifact()).missing_reasons())
-    for budget in range(0, 12):
+    for budget in range(12):
         named = set(certify(**_artifact(budget=budget)).missing_reasons())
         assert named <= complete, (
             f"a {budget}-probe search named {named - complete} that a complete search does not"
@@ -396,7 +396,7 @@ def test_a_reason_the_probe_cannot_separate_is_never_promoted_to_deleted():
         claimed_semantics = "distribution semantics"
 
         def infer(self, program, base, queries):
-            return {q: 0.5 for q in queries}
+            return dict.fromkeys(queries, 0.5)
 
     q, a, b, c, d = Atom("q"), Atom("a"), Atom("b"), Atom("c"), Atom("d")
     program = GroundProgram((Rule(q, (a, b)), Rule(q, (a, c)), Rule(q, (b, d))))

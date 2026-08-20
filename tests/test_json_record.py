@@ -134,7 +134,7 @@ def test_an_unseparable_reason_keeps_its_status_through_the_record_and_json():
         claimed_semantics = "distribution semantics"
 
         def infer(self, program, base, queries):
-            return {q: 0.5 for q in queries}
+            return dict.fromkeys(queries, 0.5)
 
     q, a, b, c, d = Atom("q"), Atom("a"), Atom("b"), Atom("c"), Atom("d")
     program = GroundProgram((Rule(q, (a, b)), Rule(q, (a, c)), Rule(q, (b, d))))

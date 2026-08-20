@@ -792,7 +792,7 @@ def test_gdpr_art22_without_exposed_logic_is_never_proved_on_the_strength_of_a_s
             # Every atom of the property is a bare Boolean, so every record must establish that
             # kind. These two are lawful: automated and significant, but on an Article 22(2)(b)
             # basis, which is the one branch that does not require the intervention route.
-            lawful = {signal: False for signal in req.requires}
+            lawful = dict.fromkeys(req.requires, False)
             lawful["artifact_logs_solely_automated"] = True
             lawful["artifact_logs_significant_effect"] = True
             lawful["provenance_basis_union_or_member_state_law"] = True
@@ -1704,7 +1704,7 @@ def test_article_22_still_quantifies_over_flags_the_rules_never_assign():
     )
     sut = RulesAdapter(
         rules=["approved = score >= 650"],
-        variables={"score": "int", "approved": "bool", **{flag: "bool" for flag in flags}},
+        variables={"score": "int", "approved": "bool", **dict.fromkeys(flags, "bool")},
         constraints=["score >= 0", "score <= 1000"],
         test_inputs=[{"score": 700}, {"score": 300}],
         declared_capabilities=set(flags),
