@@ -9,7 +9,7 @@ fixture fetcher for the network, so the suite never touches the live sources.
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -434,7 +434,7 @@ class TestWorkflow:
 
 class TestReport:
     def test_render_and_json_round_trip(self, tmp_path):
-        now = datetime(2026, 8, 1, 3, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 8, 1, 3, 0, tzinfo=UTC)
         results = (
             DriftResult("gdpr", "r1", "Article 22(1)", "http://x/", "match", "q", ""),
             DriftResult("gdpr", "r2", "Article 22(3)", "http://x/", "differ", "old", "new"),

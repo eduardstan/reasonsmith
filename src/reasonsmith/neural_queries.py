@@ -81,7 +81,7 @@ class VerifierRun:
 class NeuralVerifier(Protocol):
     def verify(
         self,
-        query: "CompiledNeuralQuery",
+        query: CompiledNeuralQuery,
         *,
         timeout: float | None = None,
         mode: str = "bounded-search",
@@ -97,11 +97,11 @@ class FakeNeuralVerifier:
         self._runs = [run if isinstance(run, VerifierRun) else VerifierRun(**run) for run in runs]
         if not self._runs:
             raise ValueError("fake verifier needs at least one controlled run")
-        self.calls: list[tuple["CompiledNeuralQuery", float | None, str]] = []
+        self.calls: list[tuple[CompiledNeuralQuery, float | None, str]] = []
 
     def verify(
         self,
-        query: "CompiledNeuralQuery",
+        query: CompiledNeuralQuery,
         *,
         timeout: float | None = None,
         mode: str = "bounded-search",
@@ -155,7 +155,7 @@ class CompiledNeuralQuery:
     def query(self) -> str:
         return self.vnnlib
 
-    def validate(self) -> "CompiledNeuralQuery":
+    def validate(self) -> CompiledNeuralQuery:
         validate_compiled_query(self)
         return self
 
@@ -596,7 +596,7 @@ def compile_local_robustness_query(
             raise ValueError(f"local-robustness centre is outside bounds for {c.signal!r}")
         centre_values[c.signal] = value
     radii = (
-        {signal: radius for signal in centre_values}
+        dict.fromkeys(centre_values, radius)
         if isinstance(radius, (int, float))
         else dict(radius)
     )
@@ -903,26 +903,26 @@ check_neural_witness = check_witness
 
 __all__ = [
     "VERIFIER_STATUSES",
-    "VerifierStatus",
-    "QueryShape",
-    "VerifierRun",
-    "NeuralVerifier",
-    "FakeNeuralVerifier",
-    "FakeVerifier",
-    "FakeOracle",
-    "WitnessCheck",
-    "OracleCheck",
     "CompiledNeuralQuery",
     "CompiledQuery",
+    "FakeNeuralVerifier",
+    "FakeOracle",
+    "FakeVerifier",
+    "NeuralVerifier",
+    "OracleCheck",
     "OracleResult",
+    "QueryShape",
+    "VerifierRun",
+    "VerifierStatus",
+    "WitnessCheck",
+    "check_neural_witness",
+    "check_witness",
     "compile_counterfactual_query",
     "compile_ecoa_counterfactual_query",
-    "compile_monotonicity_query",
-    "compile_local_robustness_query",
     "compile_linf_robustness_query",
-    "validate_compiled_query",
-    "check_witness",
-    "check_neural_witness",
-    "verify_query",
+    "compile_local_robustness_query",
+    "compile_monotonicity_query",
     "run_neural_query",
+    "validate_compiled_query",
+    "verify_query",
 ]

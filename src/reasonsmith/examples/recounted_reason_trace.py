@@ -68,7 +68,7 @@ class RecountedNoticeSystem:
 
     def logic(self) -> None:
         """This system has no exposed encoding for reasonsmith to enumerate."""
-        return None
+        return
 
     def artifact(self, decision: dict[str, Any]) -> ReasonTraceArtifact:
         """Return only the system's own account of the reasons for this decision."""

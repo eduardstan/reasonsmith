@@ -70,7 +70,7 @@ from __future__ import annotations
 
 import ast
 import math
-from typing import Any, Optional
+from typing import Any
 
 import z3
 
@@ -98,9 +98,9 @@ __all__ = [
     "REAL_ARITHMETIC_LIMIT",
     "LogicDeclarationError",
     "ProvedEngine",
+    "UnsupportedConstructError",
     "decision_runner",
     "encode_logic_domain",
-    "UnsupportedConstructError",
     "read_declared_logic",
 ]
 
@@ -209,7 +209,7 @@ class _Scope:
     is the empty namespace, so a single-copy encoding is labelled exactly as it always was.
     """
 
-    def __init__(self, var_types: Optional[dict[str, str]], namespace: str = ""):
+    def __init__(self, var_types: dict[str, str] | None, namespace: str = ""):
         self.var_types: dict[str, str] = dict(var_types or {})
         self.namespace = namespace
         self.current: dict[str, Any] = {}
@@ -855,7 +855,7 @@ def _values_agree(encoded: Any, computed: Any) -> bool:
 
 def _check_encoding_against_interpreter(
     rules: list[str], scope: _Scope, model: z3.ModelRef
-) -> Optional[tuple[str, str]]:
+) -> tuple[str, str] | None:
     """Check the Z3 encoding against the reference interpreter on one witness the solver chose.
 
     Returns `None` when they agree, else the kind of divergence and a message naming the witness.
@@ -947,7 +947,7 @@ class ProvedEngine:
     def evaluate(
         req: Requirement,
         sut: SystemUnderTest,
-        records: Optional[list[dict[str, Any]]] = None,
+        records: list[dict[str, Any]] | None = None,
         timeout_ms: int = 5000,
         *,
         logic_data: Any = _UNSET_LOGIC,

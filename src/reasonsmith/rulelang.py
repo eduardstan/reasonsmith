@@ -42,7 +42,8 @@ import ast
 import io
 import math
 import tokenize
-from typing import Any, Iterable, Mapping, cast
+from collections.abc import Iterable, Mapping
+from typing import Any, cast
 
 from reasonsmith.event_time import EventTimeError, parse_duration
 
@@ -243,7 +244,6 @@ def is_present(value: Any) -> bool:
 class UnsupportedConstructError(Exception):
     """Raised when rule or specification text uses a construct this language does not model."""
 
-    pass
 
 
 class NotAStatementError(UnsupportedConstructError):
@@ -259,7 +259,6 @@ class NotAStatementError(UnsupportedConstructError):
     message string is not an interface, and nothing may tell the two apart by reading one.
     """
 
-    pass
 
 
 def fold_ascii_case(text: str) -> str:
@@ -1798,7 +1797,7 @@ def eval_temporal_trace(node: ast.AST, records: list[dict[str, Any]]) -> list[An
                     kleene_or(
                         [
                             kleene_and_binary(right[j], kleene_and(left[j + 1 : i + 1]))
-                            for j in range(0, i + 1)
+                            for j in range(i + 1)
                         ]
                     )
                     for i in range(n)

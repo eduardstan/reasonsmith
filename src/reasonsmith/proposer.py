@@ -458,17 +458,17 @@ def main(argv: list[str] | None = None) -> int:
 
 
 __all__ = [
+    "DEFAULT_ATTEMPTS",
+    "PROPOSER_EXTRA",
+    "UNAVAILABLE_NOTE",
     "AgreementMeasurement",
     "AgreementRow",
     "ClaudeModel",
     "CommandModel",
-    "DEFAULT_ATTEMPTS",
     "ModelUnavailable",
     "OllamaModel",
-    "PROPOSER_EXTRA",
     "Proposal",
     "ProposalAttempt",
-    "UNAVAILABLE_NOTE",
     "measure_agreement",
     "model_from_environment",
     "propose",

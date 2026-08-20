@@ -15,10 +15,10 @@ from reasonsmith.adapters.jsonl import JSONLAdapter, JsonlSUT
 from reasonsmith.adapters.rules import RulesAdapter, RulesSUT
 
 __all__ = [
-    "JSONLAdapter",
-    "JsonlSUT",
     "CallableAdapter",
     "CallableSUT",
+    "JSONLAdapter",
+    "JsonlSUT",
     "RulesAdapter",
     "RulesSUT",
 ]

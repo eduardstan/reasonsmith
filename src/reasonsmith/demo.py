@@ -1153,7 +1153,7 @@ class TruncatingCreditSystem:
 
     def logic(self):
         """No rule set to reason over: the deployed engine is proof search over a ground program."""
-        return None
+        return
 
     def artifact(self, decision: dict) -> dict | None:
         """The inference this decision came from, as the keyword arguments of `certify`."""

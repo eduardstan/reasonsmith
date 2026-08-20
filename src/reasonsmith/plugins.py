@@ -50,10 +50,11 @@ from __future__ import annotations
 
 import copy
 import warnings
+from collections.abc import Callable
 from dataclasses import replace
 from importlib.metadata import entry_points
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from reasonsmith.verdict import Strength, Verdict
 

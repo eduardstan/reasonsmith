@@ -487,8 +487,8 @@ def _challenge_result(candidate: str, case: ChallengeCase, requirement: Requirem
             raise ValueError("counterfactual case pairs do not have one expected classification")
         return results[0]
 
-    var_types: dict[str, str] = {name: "bool" for name in bare_boolean_names(node)}
-    var_types.update({name: "real" for name in measured_magnitude_names(node)})
+    var_types: dict[str, str] = dict.fromkeys(bare_boolean_names(node), "bool")
+    var_types.update(dict.fromkeys(measured_magnitude_names(node), "real"))
     scope = _ChallengeScope(var_types, case.signals)
     value = _formula(scope, node)
     solver = z3.Solver()
@@ -674,12 +674,12 @@ __all__ = [
     "ChallengeSet",
     "RoundTripCheck",
     "SignOff",
-    "candidate_ready",
     "candidate_acceptable",
-    "verify_candidate",
+    "candidate_ready",
     "challenge_requirements",
     "check_challenges",
     "load_challenge_sets",
     "round_trip_check",
     "signoff",
+    "verify_candidate",
 ]

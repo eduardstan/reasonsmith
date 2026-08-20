@@ -19,7 +19,7 @@ What a reader must not break:
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from typing import Any, Optional
+from typing import Any
 
 from reasonsmith.neural import DeclaredInputSpace
 from reasonsmith.sut import BaseSUT
@@ -32,8 +32,8 @@ class CallableAdapter(BaseSUT):
         self,
         target: Any,
         declared_capabilities: set[str] | Iterable[str],
-        test_inputs: Optional[Iterable[Any]] = None,
-        decisions: Optional[Iterable[dict[str, Any]]] = None,
+        test_inputs: Iterable[Any] | None = None,
+        decisions: Iterable[dict[str, Any]] | None = None,
         input_space: DeclaredInputSpace | Mapping[str, Any] | None = None,
         frontier_ai_status: str | None = None,
     ):

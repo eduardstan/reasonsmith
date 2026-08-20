@@ -51,7 +51,7 @@ from __future__ import annotations
 
 import ast
 from dataclasses import replace
-from typing import Any, Optional
+from typing import Any
 
 from reasonsmith.report import RequirementResult
 from reasonsmith.rulelang import (
@@ -129,7 +129,7 @@ class TemporalProofEngine:
     def evaluate(
         req: Requirement,
         sut: SystemUnderTest,
-        records: Optional[list[dict[str, Any]]] = None,
+        records: list[dict[str, Any]] | None = None,
         timeout_ms: int = 5000,
         *,
         logic_data: Any = _UNSET_LOGIC,

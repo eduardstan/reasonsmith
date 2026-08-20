@@ -12,7 +12,7 @@ from __future__ import annotations
 import calendar
 import re
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Final
 
 
@@ -111,7 +111,7 @@ def parse_timestamp(value: str) -> datetime:
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         raise EventTimeError(f"timestamp {value!r} is naive; an explicit offset is required")
     try:
-        return parsed.astimezone(timezone.utc)
+        return parsed.astimezone(UTC)
     except (OverflowError, ValueError) as exc:
         raise EventTimeError(f"timestamp {value!r} cannot be normalised to UTC: {exc}") from exc
 
@@ -120,7 +120,7 @@ def _utc_instant(value: datetime) -> datetime:
     """Return an aware UTC instant, refusing the host machine's local timezone fallback."""
     if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
         raise EventTimeError("event arithmetic requires an aware timestamp with an explicit offset")
-    return value.astimezone(timezone.utc)
+    return value.astimezone(UTC)
 
 
 def format_timestamp(value: datetime) -> str:
@@ -237,10 +237,10 @@ CALENDAR_POLICY = (
 
 __all__ = [
     "CALENDAR_POLICY",
+    "TIMEZONE_POLICY",
     "Duration",
     "EventPair",
     "EventTimeError",
-    "TIMEZONE_POLICY",
     "add_calendar_months",
     "deadline_for",
     "format_timestamp",

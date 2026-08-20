@@ -79,4 +79,4 @@ def compare_checks(left: OracleCheck, right: OracleCheck) -> DifferentialResult:
     return result
 
 
-__all__ = ["DifferentialResult", "compare_runs", "compare_checks"]
+__all__ = ["DifferentialResult", "compare_checks", "compare_runs"]

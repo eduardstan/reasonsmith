@@ -37,7 +37,7 @@ _SLOT_TYPES = frozenset(("real", "integer", "categorical", "boolean", "string-en
 _PLACEHOLDER = re.compile(r"(?<!\{)\{([A-Za-z_][A-Za-z0-9_.-]*)\}(?!\})")
 
 
-def _constraint_holds(space: "DeclaredInputSpace", values: Mapping[str, Any]) -> bool:
+def _constraint_holds(space: DeclaredInputSpace, values: Mapping[str, Any]) -> bool:
     """Evaluate constraints that are decidable from one complete assignment."""
     def compare(left: Any, op: str, right: Any) -> bool:
         return {
@@ -67,7 +67,7 @@ def _constraint_holds(space: "DeclaredInputSpace", values: Mapping[str, Any]) ->
 
 
 def _validate_complete_assignment(
-    space: "DeclaredInputSpace", values: Mapping[str, Any]
+    space: DeclaredInputSpace, values: Mapping[str, Any]
 ) -> None:
     """Validate slot domains and constraints for a complete declared assignment."""
     for slot in space.slots:
@@ -94,7 +94,7 @@ def _validate_complete_assignment(
 
 
 def render_template(
-    space: "DeclaredInputSpace", values: Mapping[str, Any], *, validate: bool = True
+    space: DeclaredInputSpace, values: Mapping[str, Any], *, validate: bool = True
 ) -> str:
     """Render a declared template deterministically for one complete input assignment.
 
@@ -142,7 +142,7 @@ def render_template(
     return _PLACEHOLDER.sub(replace, template.text)
 
 
-def render_declared_template(space: "DeclaredInputSpace", values: Mapping[str, Any]) -> str:
+def render_declared_template(space: DeclaredInputSpace, values: Mapping[str, Any]) -> str:
     """Compatibility spelling for the shared declared-template renderer."""
     return render_template(space, values)
 
@@ -221,7 +221,7 @@ class InputSlot:
         return self.kind
 
     @classmethod
-    def from_value(cls, value: Any) -> "InputSlot":
+    def from_value(cls, value: Any) -> InputSlot:
         if isinstance(value, cls):
             return value
         if not isinstance(value, Mapping):
@@ -319,7 +319,7 @@ class TemplateSpec:
     escaping: str
 
     @classmethod
-    def from_value(cls, value: Any, signals: set[str]) -> "TemplateSpec":
+    def from_value(cls, value: Any, signals: set[str]) -> TemplateSpec:
         if isinstance(value, cls):
             return value
         if isinstance(value, str):
@@ -477,7 +477,7 @@ class DeclaredInputSpace:
         object.__setattr__(self, "outcomes", MappingProxyType(normalized_outcomes))
 
     @classmethod
-    def from_value(cls, value: Any) -> "DeclaredInputSpace":
+    def from_value(cls, value: Any) -> DeclaredInputSpace:
         if isinstance(value, cls):
             return value
         if not isinstance(value, Mapping):
@@ -508,7 +508,7 @@ class OutputDecoder:
     classes: tuple[Any, ...]
 
     @classmethod
-    def from_value(cls, value: Any, signal: str) -> "OutputDecoder":
+    def from_value(cls, value: Any, signal: str) -> OutputDecoder:
         if not isinstance(value, Mapping):
             _fail(f"decoder for output signal {signal!r} must be a total mapping")
         kind = value.get("kind", "threshold")
@@ -840,7 +840,7 @@ class OnnxArtifact:
         )
 
     @staticmethod
-    def from_value(value: Any) -> "OnnxArtifact":
+    def from_value(value: Any) -> OnnxArtifact:
         if isinstance(value, OnnxArtifact):
             return value
         if not isinstance(value, Mapping):
@@ -851,12 +851,12 @@ class OnnxArtifact:
 __all__ = [
     "SUPPORTED_SCHEMA_VERSION",
     "SUPPORTED_VNNLIB_VERSIONS",
-    "InputSlot",
-    "TemplateSpec",
     "DeclaredInputSpace",
-    "render_template",
-    "render_declared_template",
-    "OutputDecoder",
-    "TensorBinding",
+    "InputSlot",
     "OnnxArtifact",
+    "OutputDecoder",
+    "TemplateSpec",
+    "TensorBinding",
+    "render_declared_template",
+    "render_template",
 ]
