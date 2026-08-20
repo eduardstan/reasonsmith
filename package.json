@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@tsconfig/bun": "catalog:",
-    "turbo": "2.10.9",
+    "turbo": "2.10.10",
     "typescript": "catalog:",
     "@types/bun": "catalog:"
   },
