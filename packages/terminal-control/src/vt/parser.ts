@@ -51,7 +51,7 @@ export class Parser {
   /** Feed a chunk of terminal output. Safe to call repeatedly; state persists. */
   write(chunk: string): void {
     for (let i = 0; i < chunk.length; i++) {
-      this.consume(chunk.charCodeAt(i), chunk[i]!)
+      this.consume(chunk.charCodeAt(i), chunk[i])
     }
     this.flushPrint()
   }

@@ -103,8 +103,8 @@ export function diffFrames(a: Frame, b: Frame): Array<{ x: number; y: number }> 
   const cols = Math.min(a.cols, b.cols)
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
-      const ca = a.cells[y]![x]!
-      const cb = b.cells[y]![x]!
+      const ca = a.cells[y][x]
+      const cb = b.cells[y][x]
       if (ca.char !== cb.char || !attributesEqual(ca, cb)) diffs.push({ x, y })
     }
   }

@@ -215,8 +215,8 @@ describe("the JSON parser", () => {
   test("accepts a well-formed record", () => {
     const parsed = parseReport(rawReport())
     expect(parsed.results.length).toBe(1)
-    expect(parsed.results[0]!.verbatim_text).toBe("")
-    expect(parsed.results[0]!.findings).toEqual([])
+    expect(parsed.results[0].verbatim_text).toBe("")
+    expect(parsed.results[0].findings).toEqual([])
   })
 
   test("refuses a record with no `undeclared_domain_notice`, naming the additive key", () => {
@@ -273,7 +273,7 @@ describe("a failed certificate beside a satisfied duty", () => {
       findings: [{ type: "certificate", verdict: "FAIL", decision_index: 2 }],
     }))
     const parsed = parseReport({ ...raw, results })
-    const result = parsed.results[0]!
+    const result = parsed.results[0]
     // Both facts survive the parse. The duty was cleared on what its engine could check; the
     // certificate measurement over decision 2 failed. Neither is allowed to overwrite the other.
     expect(result.verdict).toBe("satisfied")
@@ -291,7 +291,7 @@ describe("the category filter", () => {
       basis: "behavioural",
       evidence_summary: "e",
     },
-  ]).results[0]!
+  ]).results[0]
   const interpretive: RequirementResult = makeReport([
     {
       requirement_id: "interpretive_violated",
@@ -302,7 +302,7 @@ describe("the category filter", () => {
       evidence_summary: "e",
       binding: false,
     },
-  ]).results[0]!
+  ]).results[0]
 
   test("matches only binding results, because the counts it answers for are binding-only", () => {
     expect(matchesCategory(binding, "violated")).toBe(true)
@@ -319,7 +319,7 @@ describe("the category filter", () => {
         basis: "artifact",
         evidence_summary: "e",
       },
-    ]).results[0]!
+    ]).results[0]
     expect(matchesCategory(violatedAtProbed, "probed")).toBe(false)
     expect(matchesCategory(violatedAtProbed, "violated")).toBe(true)
   })
@@ -343,10 +343,10 @@ describe("the category filter", () => {
         evidence_summary: "e",
       },
     ]).results
-    expect(matchesCategory(graded!, "on_an_assessment")).toBe(true)
-    expect(matchesCategory(graded!, "not_evaluated")).toBe(false)
-    expect(matchesCategory(unsettled!, "not_evaluated")).toBe(true)
-    expect(matchesCategory(unsettled!, "on_an_assessment")).toBe(false)
+    expect(matchesCategory(graded, "on_an_assessment")).toBe(true)
+    expect(matchesCategory(graded, "not_evaluated")).toBe(false)
+    expect(matchesCategory(unsettled, "not_evaluated")).toBe(true)
+    expect(matchesCategory(unsettled, "on_an_assessment")).toBe(false)
   })
 
   test("an unrecognised category matches nothing rather than everything", () => {
@@ -370,24 +370,24 @@ describe("the evidence basis sentence", () => {
 
 describe("the not-evaluated-vs-satisfied distinction", () => {
   test("a not evaluated result has null strength", () => {
-    expect(NOT_EVALUATED.results[0]!.strength).toBeNull()
-    expect(NOT_EVALUATED.results[0]!.verdict).toBe("inconclusive")
+    expect(NOT_EVALUATED.results[0].strength).toBeNull()
+    expect(NOT_EVALUATED.results[0].verdict).toBe("inconclusive")
   })
 
   test("a satisfied result carries a strength", () => {
-    expect(SATISFIED.results[0]!.strength).toBe("observed")
-    expect(SATISFIED.results[0]!.verdict).toBe("satisfied")
+    expect(SATISFIED.results[0].strength).toBe("observed")
+    expect(SATISFIED.results[0].verdict).toBe("satisfied")
   })
 
   test("the two are visibly different in `resultTone` and `strengthWord`", async () => {
     const { resultTone, strengthWord } = await import("./theme.ts")
     const notTone = resultTone(
-      NOT_EVALUATED.results[0]!.verdict,
-      NOT_EVALUATED.results[0]!.strength,
+      NOT_EVALUATED.results[0].verdict,
+      NOT_EVALUATED.results[0].strength,
     )
     const satTone = resultTone(
-      SATISFIED.results[0]!.verdict,
-      SATISFIED.results[0]!.strength,
+      SATISFIED.results[0].verdict,
+      SATISFIED.results[0].strength,
     )
     expect(notTone.label).not.toBe(satTone.label)
     expect(notTone.mark).not.toBe(satTone.mark)
@@ -397,11 +397,11 @@ describe("the not-evaluated-vs-satisfied distinction", () => {
   })
 
   test("the lay projection's `evaluated()` predicate keeps the two apart", () => {
-    expect(isEvaluated(NOT_EVALUATED.results[0]!)).toBe(true)
-    expect(isEvaluated(SATISFIED.results[0]!)).toBe(true)
+    expect(isEvaluated(NOT_EVALUATED.results[0])).toBe(true)
+    expect(isEvaluated(SATISFIED.results[0])).toBe(true)
     expect(
       isEvaluated({
-        ...NOT_EVALUATED.results[0]!,
+        ...NOT_EVALUATED.results[0],
         verdict: "not_applicable",
         strength: null,
       }),
@@ -411,8 +411,8 @@ describe("the not-evaluated-vs-satisfied distinction", () => {
 
 describe("violated runs carry the documented exit code", () => {
   test("violated results are reached, not just satisfied", () => {
-    expect(VIOLATED.results[0]!.verdict).toBe("violated")
-    expect(VIOLATED.results[0]!.strength).toBe("probed")
+    expect(VIOLATED.results[0].verdict).toBe("violated")
+    expect(VIOLATED.results[0].strength).toBe("probed")
   })
 })
 

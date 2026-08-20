@@ -129,7 +129,7 @@ export function Detail() {
   )
 }
 
-function Body(props: { result: RequirementResult }) {
+function Body(props: Readonly<{ result: RequirementResult }>) {
   const t = useTheme()
   const report = useReport()
   const view = () => report.view()
@@ -256,7 +256,8 @@ function Body(props: { result: RequirementResult }) {
   )
 }
 
-function Field(props: { label: string; value: string; color?: Color }) {
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Solid color values are immutable component props.
+function Field(props: Readonly<{ label: string; value: string; color?: Color }>) {
   const t = useTheme()
   const layout = useLayout()
   return (
@@ -269,7 +270,7 @@ function Field(props: { label: string; value: string; color?: Color }) {
   )
 }
 
-function Paragraph(props: { label: string; text: string }) {
+function Paragraph(props: Readonly<{ label: string; text: string }>) {
   const t = useTheme()
   const layout = useLayout()
   return (
@@ -295,7 +296,7 @@ function Paragraph(props: { label: string; text: string }) {
  * wider than the terminal — the one reflow a fixed grid leaves no choice about, and it is marked by
  * indenting the continuation so a reader can see which breaks are the clause's and which are ours.
  */
-function Verbatim(props: { label: string; text: string }) {
+function Verbatim(props: Readonly<{ label: string; text: string }>) {
   const t = useTheme()
   const layout = useLayout()
   const lines = () =>
@@ -323,7 +324,7 @@ function Verbatim(props: { label: string; text: string }) {
  * `evidence_summary` because the field is free-form prose and bold/italic in the source should
  * survive into the panel — the way they survive into the text rendering this command also reaches.
  */
-function MarkdownField(props: { label: string; text: string }) {
+function MarkdownField(props: Readonly<{ label: string; text: string }>) {
   const t = useTheme()
   return (
     <box flexDirection="column" marginTop={1}>
@@ -346,7 +347,7 @@ function MarkdownField(props: { label: string; text: string }) {
  * two facts and not a contradiction. The block is drawn in the violation colour whatever the
  * verdict is, because the finding's own severity is not the verdict's.
  */
-function Findings(props: { result: RequirementResult; showDecisionIndex: boolean }) {
+function Findings(props: Readonly<{ result: RequirementResult; showDecisionIndex: boolean }>) {
   const t = useTheme()
   const layout = useLayout()
   const certificateFailures = () => props.result.findings.filter((f) => f.type === "certificate")
@@ -400,7 +401,7 @@ function Findings(props: { result: RequirementResult; showDecisionIndex: boolean
  * value outside it is named as unrecognised rather than printed as though it were one more
  * semantics this tool knows how to compare — an author's prose is not a semantics.
  */
-function SemanticsGap(props: { result: RequirementResult }) {
+function SemanticsGap(props: Readonly<{ result: RequirementResult }>) {
   const t = useTheme()
   const records = () => {
     const raw = props.result.details[CERTIFICATE_KEY]
@@ -409,7 +410,7 @@ function SemanticsGap(props: { result: RequirementResult }) {
   const gaps = () =>
     records().filter((r) => r.claimed_semantics !== undefined || r.exact_semantics !== undefined)
 
-  const claim = (record: Record<string, unknown>): string => {
+  const claim = (record: Readonly<Record<string, unknown>>): string => {
     const claimed = record.claimed_semantics
     if (claimed === null || claimed === undefined) return "no semantics declared"
     if (!isClaimedSemantics(claimed)) {
@@ -460,7 +461,7 @@ function SemanticsGap(props: { result: RequirementResult }) {
   )
 }
 
-function Witnesses(props: { result: RequirementResult }) {
+function Witnesses(props: Readonly<{ result: RequirementResult }>) {
   const t = useTheme()
   const segment = () => {
     const raw = props.result.details[OFFENDING_TRACE_SEGMENT_KEY]
@@ -492,7 +493,7 @@ function Witnesses(props: { result: RequirementResult }) {
   )
 }
 
-function ProbeBudget(props: { result: RequirementResult }) {
+function ProbeBudget(props: Readonly<{ result: RequirementResult }>) {
   const t = useTheme()
   const budget = () => props.result.details[PROBE_BUDGET_KEY] as Record<string, unknown> | undefined
 
@@ -528,7 +529,7 @@ function ProbeBudget(props: { result: RequirementResult }) {
   )
 }
 
-function VacuousTrigger(props: { result: RequirementResult }) {
+function VacuousTrigger(props: Readonly<{ result: RequirementResult }>) {
   const t = useTheme()
   const layout = useLayout()
   const trigger = () =>
@@ -565,7 +566,7 @@ function VacuousTrigger(props: { result: RequirementResult }) {
  * algebra, and on a result that carries **no** strength — so `0.7` can never read as a fraction of
  * a rung.
  */
-function TruthDegree(props: { result: RequirementResult }) {
+function TruthDegree(props: Readonly<{ result: RequirementResult }>) {
   const t = useTheme()
   const degree = () => props.result.details[TRUTH_DEGREE_KEY] as Record<string, unknown> | undefined
 
@@ -581,7 +582,7 @@ function TruthDegree(props: { result: RequirementResult }) {
   )
 }
 
-function Certificates(props: { result: RequirementResult; showDecisionIndex: boolean }) {
+function Certificates(props: Readonly<{ result: RequirementResult; showDecisionIndex: boolean }>) {
   const t = useTheme()
   const layout = useLayout()
   const certs = () => {

@@ -36,7 +36,7 @@ export const { use: useRoute, provider: RouteProvider } = createSimpleContext({
     const [route, setRoute] = createSignal<Route>({ type: "findings" })
     return {
       route,
-      navigate: (next: Route) => setRoute(next),
+      navigate: (next: Readonly<Route>) => setRoute(next),
       /** Back is always to the findings list — the only screen that is a starting point. */
       back: () => setRoute({ type: "findings" }),
     }

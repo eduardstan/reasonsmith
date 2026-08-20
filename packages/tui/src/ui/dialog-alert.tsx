@@ -10,9 +10,9 @@ import { Button } from "./button.tsx"
 import { ModalPanel } from "./modal-panel.tsx"
 
 export interface DialogAlertProps {
-  title: string
-  message: string
-  onConfirm?: () => void
+  readonly title: string
+  readonly message: string
+  readonly onConfirm?: () => void
 }
 
 export function DialogAlert(props: DialogAlertProps) {
@@ -41,7 +41,7 @@ export function DialogAlert(props: DialogAlertProps) {
   )
 }
 
-DialogAlert.show = (dialog: DialogContext, title: string, message: string): Promise<void> => {
+DialogAlert.show = (dialog: Readonly<DialogContext>, title: string, message: string): Promise<void> => {
   return new Promise<void>((resolve) => {
     dialog.push(() => <DialogAlert title={title} message={message} onConfirm={() => resolve()} />)
   })

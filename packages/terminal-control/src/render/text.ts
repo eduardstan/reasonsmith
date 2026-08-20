@@ -21,7 +21,7 @@ export function renderText(frame: Frame, options: TextOptions = {}): string {
   }
 
   if (trimEmptyLines) {
-    while (lines.length > 0 && lines[lines.length - 1]!.length === 0) lines.pop()
+    while (lines.length > 0 && lines[lines.length - 1].length === 0) lines.pop()
   }
 
   return lines.join("\n")

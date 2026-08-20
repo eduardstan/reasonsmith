@@ -26,7 +26,9 @@ interface DialogEntry {
 export interface DialogContext {
   readonly stack: () => readonly DialogEntry[]
   readonly isOpen: () => boolean
+  // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- JSX elements are immutable dialog entries.
   push(input: JSX.Element | (() => JSX.Element), options?: { size?: DialogSize; onClose?: () => void }): void
+  // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- JSX elements are immutable dialog entries.
   replace(input: JSX.Element | (() => JSX.Element), options?: { size?: DialogSize; onClose?: () => void }): void
   pop(): void
   clear(): void
@@ -104,12 +106,13 @@ function panelWidth(size: DialogSize): number | "100%" {
   }
 }
 
-function Overlay(props: {
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Solid JSX children are immutable at the component boundary.
+function Overlay(props: Readonly<{
   children: JSX.Element
   size: DialogSize
   depth: number
   onBackdropClick: () => void
-}) {
+}>) {
   const t = useTheme()
 
   return (
@@ -149,7 +152,8 @@ function Overlay(props: {
   )
 }
 
-export function DialogProviderWithOverlay(props: ParentProps) {
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Solid ParentProps are immutable at the component boundary.
+export function DialogProviderWithOverlay(props: Readonly<ParentProps>) {
   return (
     <DialogProvider>
       <DialogConsumers>{props.children}</DialogConsumers>
@@ -157,7 +161,8 @@ export function DialogProviderWithOverlay(props: ParentProps) {
   )
 }
 
-function DialogConsumers(props: { children: JSX.Element }) {
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Solid JSX children are immutable at the component boundary.
+function DialogConsumers(props: Readonly<{ children: JSX.Element }>) {
   const value = useDialog()
   const top = () => value.stack().at(-1)
 

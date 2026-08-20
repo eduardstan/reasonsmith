@@ -26,8 +26,8 @@ describe("Screen — printing & control", () => {
     const s = new Screen(3, 3)
     s.write("abcd")
     const frame = s.snapshot()
-    expect(frame.cells[0]!.map((c) => c.char).join("")).toBe("abc")
-    expect(frame.cells[1]![0]!.char).toBe("d")
+    expect(frame.cells[0].map((c) => c.char).join("")).toBe("abc")
+    expect(frame.cells[1][0].char).toBe("d")
   })
 
   test("backspace moves cursor left without erasing", () => {
@@ -42,7 +42,7 @@ describe("Screen — cursor positioning", () => {
     const s = new Screen(10, 5)
     s.write("\x1b[3;5HX")
     const frame = s.snapshot()
-    expect(frame.cells[2]![4]!.char).toBe("X")
+    expect(frame.cells[2][4].char).toBe("X")
   })
 
   test("CUF/CUB/CUU/CUD move relatively", () => {
@@ -52,7 +52,7 @@ describe("Screen — cursor positioning", () => {
     s.write("\x1b[1B") // down 1 -> row3
     s.write("Z")
     const frame = s.snapshot()
-    expect(frame.cells[2]![4]!.char).toBe("Z")
+    expect(frame.cells[2][4].char).toBe("Z")
   })
 })
 
@@ -78,8 +78,8 @@ describe("Screen — SGR attributes", () => {
     const s = new Screen(10, 2)
     s.write("\x1b[1;31mR\x1b[0mN")
     const frame = s.snapshot()
-    const r = frame.cells[0]![0]!
-    const n = frame.cells[0]![1]!
+    const r = frame.cells[0][0]
+    const n = frame.cells[0][1]
     expect(r.bold).toBe(true)
     expect(r.fg).toEqual({ type: "indexed", index: 1 })
     expect(n.bold).toBe(false)
@@ -91,8 +91,8 @@ describe("Screen — SGR attributes", () => {
     s.write("\x1b[38;5;200mA")
     s.write("\x1b[38;2;10;20;30mB")
     const frame = s.snapshot()
-    expect(frame.cells[0]![0]!.fg).toEqual({ type: "indexed", index: 200 })
-    expect(frame.cells[0]![1]!.fg).toEqual({ type: "rgb", r: 10, g: 20, b: 30 })
+    expect(frame.cells[0][0].fg).toEqual({ type: "indexed", index: 200 })
+    expect(frame.cells[0][1].fg).toEqual({ type: "rgb", r: 10, g: 20, b: 30 })
   })
 })
 
@@ -131,6 +131,6 @@ describe("Screen — robustness", () => {
     s.write("\x1b[")
     s.write("31m")
     s.write("X")
-    expect(s.snapshot().cells[0]![0]!.fg).toEqual({ type: "indexed", index: 1 })
+    expect(s.snapshot().cells[0][0].fg).toEqual({ type: "indexed", index: 1 })
   })
 })

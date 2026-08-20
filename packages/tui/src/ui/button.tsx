@@ -6,7 +6,7 @@ import { TextAttributes } from "@opentui/core"
 import { useTheme } from "../context/theme.tsx"
 import { Clickable } from "./clickable.tsx"
 
-export function Button(props: { label: string; onClick: () => void; primary?: boolean }) {
+export function Button(props: Readonly<{ label: string; onClick: () => void; primary?: boolean }>) {
   const t = useTheme()
   return (
     <Clickable

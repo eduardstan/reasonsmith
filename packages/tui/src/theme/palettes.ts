@@ -103,5 +103,5 @@ export function getPalette(id: PaletteId): Palette {
 
 export function nextPalette(id: PaletteId): PaletteId {
   const index = PALETTE_IDS.indexOf(id)
-  return PALETTE_IDS[(index + 1) % PALETTE_IDS.length]!
+  return PALETTE_IDS[(index + 1) % PALETTE_IDS.length]
 }

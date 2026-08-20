@@ -35,11 +35,11 @@ function formatError(error: unknown): string {
 
 export const { use: useExit, provider: ExitProvider } = createSimpleContext({
   name: "Exit",
-  init: (input: {
+  init: (input: Readonly<{
     onExit?: () => Promise<void>
     onBeforeExit?: () => Promise<void>
     onRestart?: () => Promise<void>
-  }) => {
+  }>) => {
     const renderer = useRenderer()
     let exiting = false
     let summary: (() => string | undefined) | undefined

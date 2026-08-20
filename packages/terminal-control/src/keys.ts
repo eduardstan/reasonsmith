@@ -72,7 +72,7 @@ export function translateKey(token: string): string | null {
     const parts = raw.split(/[+\-]/).filter(Boolean)
     if (parts.length >= 2) {
       const mods = parts.slice(0, -1).map((m) => m.toLowerCase())
-      const base = parts[parts.length - 1]!
+      const base = parts[parts.length - 1]
       let seq = NAMED[base.toLowerCase()] ?? base
       if (mods.includes("ctrl") || mods.includes("c")) {
         const cb = ctrlByte(base)

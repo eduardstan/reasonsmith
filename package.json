@@ -11,7 +11,8 @@
     "test": "bun turbo test",
     "dev:tui": "bun run --cwd packages/tui dev",
     "record:tui": "bash scripts/record-tui.sh",
-    "install-skill": "bun run --cwd packages/terminal-control install-skill"
+    "install-skill": "bun run --cwd packages/terminal-control install-skill",
+    "lint": "bun turbo lint"
   },
   "workspaces": {
     "packages": [
@@ -30,7 +31,8 @@
     "@tsconfig/bun": "catalog:",
     "turbo": "2.10.9",
     "typescript": "catalog:",
-    "@types/bun": "catalog:"
+    "@types/bun": "catalog:",
+    "typescript-eslint": "8.46.0"
   },
   "license": "MIT"
 }

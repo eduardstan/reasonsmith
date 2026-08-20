@@ -83,7 +83,8 @@ export function useLayout(): Layout {
   return layout
 }
 
-export function LayoutProvider(props: { children: JSX.Element }): JSX.Element {
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Solid JSX children are immutable at the component boundary.
+export function LayoutProvider(props: Readonly<{ children: JSX.Element }>): JSX.Element {
   const renderer = useRenderer()
   const [cols, setCols] = createSignal(renderer.width || 80)
   const [rows, setRows] = createSignal(renderer.height || 24)

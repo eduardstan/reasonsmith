@@ -76,7 +76,7 @@ export function StatusBar() {
       const label = layout.showCounterLabels() ? spec.label.length + 1 : 0
       return sum + digits(value) + label + 3
     }, 0)
-    const chip = activeFilter() ? activeFilter()!.length + 12 : 0
+    const chip = activeFilter() ? activeFilter().length + 12 : 0
     return `${total()} req`.length + 2 + counted + chip
   }
 

@@ -61,7 +61,7 @@ export function renderAnsi(frame: Frame, options: AnsiOptions = {}): string {
   }
 
   if (trimEmptyLines) {
-    while (lines.length > 0 && /^(\x1b\[0m)?$/.test(lines[lines.length - 1]!)) lines.pop()
+    while (lines.length > 0 && /^(\x1b\[0m)?$/.test(lines[lines.length - 1])) lines.pop()
   }
 
   return lines.join("\n")

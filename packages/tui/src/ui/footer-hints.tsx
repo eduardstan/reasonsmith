@@ -39,7 +39,7 @@ export function FooterHints() {
   const tailWidth = () => `  for: ${report.audience()}`.length
 
   /** Cells one hint costs, plus the `  ·  ` that precedes it when it is not the first. */
-  const hintWidth = (binding: { keys: string; label: string }, first: boolean) =>
+  const hintWidth = (binding: Readonly<{ keys: string; label: string }>, first: boolean) =>
     binding.keys.length + 1 + binding.label.length + (first ? 0 : 5)
 
   /**

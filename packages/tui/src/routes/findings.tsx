@@ -160,7 +160,7 @@ export function Findings() {
   )
 }
 
-function Row(props: { result: RequirementResult; selected: boolean; onHover: () => void; onOpen: () => void }) {
+function Row(props: Readonly<{ result: RequirementResult; selected: boolean; onHover: () => void; onOpen: () => void }>) {
   const t = useTheme()
   const report = useReport()
   const layout = useLayout()

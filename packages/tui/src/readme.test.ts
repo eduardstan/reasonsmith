@@ -53,7 +53,7 @@ describe("the TUI README", () => {
   test("the documented launch example names a system that ships", () => {
     const reference = README.match(/reasonsmith(\.[\w]+)+:[\w]+/)?.[0]
     expect(reference).toBeString()
-    const [modulePath, attribute] = reference!.split(":")
+    const [modulePath, attribute] = reference.split(":")
     const source = readFileSync(
       resolve(REPO_ROOT, "src", ...modulePath.split(".")) + ".py",
       "utf8",

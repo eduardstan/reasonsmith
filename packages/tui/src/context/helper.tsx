@@ -14,14 +14,14 @@
 
 import { createContext, type ParentProps, useContext } from "solid-js"
 
-export function createSimpleContext<T, Props extends Record<string, unknown>>(input: {
+export function createSimpleContext<T, Props extends Record<string, unknown>>(input: Readonly<{
   name: string
   init: (props: Props) => T
-}) {
+}>) {
   const ctx = createContext<T>()
 
   return {
-    provider: (props: ParentProps<Props>) => {
+    provider: (props: Readonly<ParentProps<Props>>) => {
       const value = input.init(props as unknown as Props)
       return <ctx.Provider value={value}>{props.children}</ctx.Provider>
     },

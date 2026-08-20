@@ -8,6 +8,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test ./src/",
+    "lint": "eslint .",
     "run": "bun ./src/index.ts"
   },
   "dependencies": {},

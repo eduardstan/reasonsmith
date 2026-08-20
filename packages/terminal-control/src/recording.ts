@@ -168,8 +168,8 @@ export function sampleFrames(rec: RecordingData, options: SampleOptions = {}): S
 
   for (let i = 0; i < count; i++) {
     const t = i === count - 1 ? to : from + i * step
-    while (eventIdx < rec.events.length && rec.events[eventIdx]!.time <= t) {
-      screen.write(rec.events[eventIdx]!.data)
+    while (eventIdx < rec.events.length && rec.events[eventIdx].time <= t) {
+      screen.write(rec.events[eventIdx].data)
       eventIdx++
     }
     frames.push({ time: t, frame: screen.snapshot() })

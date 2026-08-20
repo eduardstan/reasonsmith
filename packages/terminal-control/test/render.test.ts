@@ -35,7 +35,7 @@ describe("renderJSON", () => {
     const json = toJSONFrame(s.snapshot())
     expect(json.cols).toBe(20)
     expect(json.rows).toBe(4)
-    expect(json.rows_cells[0]![0]).toMatchObject({ char: "A", bold: true })
+    expect(json.rows_cells[0][0]).toMatchObject({ char: "A", bold: true })
     // Round-trips through JSON.stringify.
     expect(() => JSON.parse(renderJSON(s.snapshot()))).not.toThrow()
   })

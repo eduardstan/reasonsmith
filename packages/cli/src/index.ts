@@ -77,7 +77,7 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
     env: process.env,
   })
 
-  return (await proc.exited) as number
+  return (await proc.exited)
 }
 
 if (import.meta.main) {

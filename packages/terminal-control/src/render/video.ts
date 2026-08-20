@@ -31,7 +31,7 @@ export function renderAnimatedSvg(rec: RecordingData, options: AnimatedSvgOption
     return `<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>`
   }
 
-  const geom = svgLayers(frames[0]!.frame, options)
+  const geom = svgLayers(frames[0].frame, options)
   const { width, height, fontFamily, fontSize, pageBg } = geom
 
   const styles: string[] = []
@@ -39,7 +39,7 @@ export function renderAnimatedSvg(rec: RecordingData, options: AnimatedSvgOption
   const n = frames.length
 
   for (let i = 0; i < n; i++) {
-    const { rects, texts } = svgLayers(frames[i]!.frame, options)
+    const { rects, texts } = svgLayers(frames[i].frame, options)
     const p0 = ((i / n) * 100).toFixed(3)
     const p1 = (((i + 1) / n) * 100).toFixed(3)
     // step-end holds each value until the next stop: 0 before p0, 1 from p0, 0 from p1.

@@ -14,12 +14,12 @@
 import { Show } from "solid-js"
 import { useTheme } from "../context/theme.tsx"
 
-export function VerdictChip(props: {
+export function VerdictChip(props: Readonly<{
   verdict: string
   strength: string | null
   showStrength: boolean
   bold?: boolean
-}) {
+}>) {
   const t = useTheme()
   const tone = () => t.resultTone(props.verdict, props.strength)
 

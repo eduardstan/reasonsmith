@@ -15,6 +15,7 @@ export interface ModalPanelProps {
   readonly footer?: JSX.Element
 }
 
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- OpenTUI JSX props are immutable at the component boundary.
 export function ModalPanel(props: ModalPanelProps) {
   const t = useTheme()
   const width = () => props.width ?? 64

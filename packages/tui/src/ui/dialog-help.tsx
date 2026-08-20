@@ -32,9 +32,9 @@ export function DialogHelp() {
 
   const audienceRows = createMemo(() =>
     report.audiences.map((a) => ({
-      audience: a as Audience,
-      name: AUDIENCE_LABELS[a as Audience] ?? a,
-      description: AUDIENCE_HELP[a as Audience] ?? "",
+      audience: a,
+      name: AUDIENCE_LABELS[a] ?? a,
+      description: AUDIENCE_HELP[a] ?? "",
     })),
   )
 
