@@ -259,7 +259,7 @@ REASON_SIGNAL = "artifact_logs_reason_explanation"
 _is_present = is_present
 
 
-def certificate_findings(result: "RequirementResult") -> list[dict[str, Any]]:
+def certificate_findings(result: RequirementResult) -> list[dict[str, Any]]:
     """Expose failed certificate measurements as findings without changing the duty verdict."""
     return [
         {
@@ -328,7 +328,7 @@ def _probe_scope_line(budget: Mapping[str, Any]) -> str:
     )
 
 
-def positive_scope_boundary(result: "RequirementResult") -> str | None:
+def positive_scope_boundary(result: RequirementResult) -> str | None:
     """Return the run-specific boundary a satisfied result must carry on every surface."""
     if result.verdict is not Verdict.SATISFIED or result.strength is None:
         return None

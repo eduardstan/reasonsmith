@@ -51,9 +51,9 @@ What a reader must not break:
 from __future__ import annotations
 
 import ast
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from reasonsmith.rulelang import (
     DEGREE_CALL,

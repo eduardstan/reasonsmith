@@ -111,7 +111,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from reasonsmith.event_time import EventTimeError, parse_timestamp
 from reasonsmith.neural import DeclaredInputSpace
@@ -707,9 +707,9 @@ class FullCapabilitySUT(BaseSUT):
 
     def __init__(
         self,
-        extra_capabilities: Optional[set[str]] = None,
+        extra_capabilities: set[str] | None = None,
         system_scope: str = "high-risk",
-        system_domains: Optional[Iterable[str]] = None,
+        system_domains: Iterable[str] | None = None,
     ):
         declared = _table7_signals() | {"decision", "timestamp"} | (extra_capabilities or set())
         super().__init__(declared)
@@ -737,7 +737,7 @@ class NoReasonsSUT(BaseSUT):
     """
 
     def __init__(
-        self, system_scope: str = "high-risk", system_domains: Optional[Iterable[str]] = None
+        self, system_scope: str = "high-risk", system_domains: Iterable[str] | None = None
     ):
         super().__init__((_table7_signals() | {"decision", "timestamp"}) - REASON_SIGNALS)
         self.was_executed = False

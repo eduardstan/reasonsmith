@@ -567,12 +567,12 @@ MarabouAdapter = MarabouVerifier
 
 
 __all__ = [
-    "MARABOU_VERSION",
-    "VNNLIB_VERSION",
     "BOUNDED_SEARCH_MODE",
     "COMPLETE_MODE",
     "DEFAULT_SUPPORTED_OPERATORS",
-    "ResourceLimits",
-    "MarabouVerifier",
+    "MARABOU_VERSION",
+    "VNNLIB_VERSION",
     "MarabouAdapter",
+    "MarabouVerifier",
+    "ResourceLimits",
 ]

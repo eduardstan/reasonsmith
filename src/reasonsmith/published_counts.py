@@ -7,7 +7,7 @@ artefact therefore carries both the source verification date and its own generat
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from reasonsmith.drift import STATUTORY_PACKS, quote_corpus_sha256
@@ -70,7 +70,7 @@ def published_counts() -> dict[str, object]:
     # A quote is a requirement in a statutory pack; Table 7 rows quote the paper instead.
     return {
         "schema_version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "source": "reasonsmith tree (verdict.py, spec.py, packs/, docs/legal-sources.md)",
         "rungs": [strength.value for strength in Strength],
         "pack_count": len(packs),

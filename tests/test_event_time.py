@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -91,7 +91,7 @@ def test_offsets_are_normalised_before_subtraction_including_a_dst_transition() 
     result = _evaluate(_trace("2026-03-08T01:30:00-05:00", "2026-03-09T02:30:00-04:00"))
     assert result.verdict is Verdict.SATISFIED
     assert result.details["event_pairs"][0]["delta_seconds"] == 86400.0
-    assert parse_timestamp("2026-03-08T01:30:00-05:00").tzinfo is timezone.utc
+    assert parse_timestamp("2026-03-08T01:30:00-05:00").tzinfo is UTC
 
 
 def test_leap_day_is_an_actual_elapsed_day() -> None:
@@ -468,11 +468,11 @@ def test_timestamp_parser_defends_against_backend_naive_and_normalization_failur
         event_time.parse_timestamp("2026-01-01T00:00:00Z")
 
     class BrokenAware:
-        tzinfo = timezone.utc
+        tzinfo = UTC
 
         @staticmethod
         def utcoffset():
-            return timezone.utc.utcoffset(None)
+            return UTC.utcoffset(None)
 
         @staticmethod
         def astimezone(zone):

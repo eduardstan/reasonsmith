@@ -72,7 +72,7 @@ import ast
 import copy
 import random
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any, Optional
+from typing import Any
 
 from reasonsmith.report import (
     PROBE_BUDGET_KEY,
@@ -292,7 +292,7 @@ def _shared_mutable_path(
     original: Any,
     cloned: Any,
     path: str = "input",
-    seen: Optional[set[tuple[int, int]]] = None,
+    seen: set[tuple[int, int]] | None = None,
 ) -> str | None:
     if isinstance(original, (type(None), bool, int, float, complex, str, bytes)):
         return None
@@ -477,7 +477,7 @@ class ProbedEngine:
     def evaluate(
         req: Requirement,
         sut: SystemUnderTest,
-        records: Optional[list[dict[str, Any]]] = None,
+        records: list[dict[str, Any]] | None = None,
         trials: int = DEFAULT_TRIALS,
         seed: int = DEFAULT_SEED,
         *,

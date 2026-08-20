@@ -17,10 +17,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable, Literal
+from typing import Any, Literal
 
 from reasonsmith.drift import (
     PROVISIONS,
@@ -108,7 +109,7 @@ class SourceSnapshot:
         retrieved_at: str,
         synthetic: bool = False,
         kind: str | None = None,
-    ) -> "SourceSnapshot":
+    ) -> SourceSnapshot:
         raw = Path(path).read_bytes()
         source_kind = kind or SOURCES_BY_KEY[key].kind
         data: SourcePayload = raw if source_kind == "pdf" else raw.decode("utf-8")
@@ -150,7 +151,7 @@ class StatuteRevision:
             raise ValueError("a statutory revision requires the pack file SHA-256")
 
     @classmethod
-    def from_manifest(cls, manifest: str | Path) -> "StatuteRevision":
+    def from_manifest(cls, manifest: str | Path) -> StatuteRevision:
         manifest_path = Path(manifest)
         data = json.loads(manifest_path.read_text(encoding="utf-8"))
         if data.get("schema_version") != SCHEMA_VERSION:

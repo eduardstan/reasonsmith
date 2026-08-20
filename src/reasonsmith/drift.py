@@ -48,11 +48,12 @@ import json
 import re
 import sys
 import urllib.request
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Callable, Iterable, Literal, cast
+from typing import Literal, cast
 
 from reasonsmith.spec import load_pack
 
@@ -792,7 +793,7 @@ def check_statute_drift(
             )
     return DriftReport(
         results=tuple(results),
-        checked_at=now if now is not None else datetime.now(timezone.utc),
+        checked_at=now if now is not None else datetime.now(UTC),
     )
 
 

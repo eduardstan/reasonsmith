@@ -108,9 +108,9 @@ import os
 import re
 import shutil
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from functools import lru_cache
-from typing import Sequence
+from functools import cache
 
 from reasonsmith.rulelang import (
     BOUNDED_RESPONSE_CALL,
@@ -126,10 +126,10 @@ from reasonsmith.rulelang import (
 
 __all__ = [
     "ATOM_BUDGET",
-    "Abstraction",
     "LTLF_ABSTRACTION_LIMIT",
     "LTLF_EXTRA",
     "UNAVAILABLE_NOTE",
+    "Abstraction",
     "accepts",
     "atom_count",
     "available",
@@ -180,7 +180,7 @@ _BINARY_RENDERING = {"until": "U"}
 _PAST_OPERATORS = TEMPORAL_OPERATORS - set(_UNARY_RENDERING) - set(_BINARY_RENDERING)
 
 
-@lru_cache(maxsize=None)
+@cache
 def _verify_black_binary(path: str) -> bool:
     try:
         res = subprocess.run(

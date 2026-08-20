@@ -64,9 +64,9 @@ What a reader must not break:
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from enum import Enum
 from functools import total_ordering
-from typing import Iterable
 
 
 @total_ordering

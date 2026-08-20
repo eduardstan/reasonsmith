@@ -26,10 +26,10 @@ from reasonsmith.engines.record import RecordEngine
 from reasonsmith.engines.temporal import TemporalProofEngine
 
 __all__ = [
-    "RecordEngine",
+    "CertificateEngine",
     "ObservedEngine",
     "ProbedEngine",
     "ProvedEngine",
-    "CertificateEngine",
+    "RecordEngine",
     "TemporalProofEngine",
 ]
