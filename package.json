@@ -31,9 +31,9 @@
     "@tsconfig/bun": "catalog:",
     "@types/bun": "catalog:",
     "eslint": "9.39.5",
-    "turbo": "2.10.9",
+    "turbo": "2.10.10",
     "typescript": "catalog:",
-    "typescript-eslint": "8.46.0"
+    "typescript-eslint": "8.67.0"
   },
   "license": "MIT"
 }
