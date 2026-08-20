@@ -32,7 +32,7 @@ export function ModalPanel(props: ModalPanelProps) {
           </Show>
         </box>
         <box flexDirection="row" gap={1}>
-          <Show when={props.stackDepth && props.stackDepth > 1}>
+          <Show when={Boolean(props.stackDepth && props.stackDepth > 1)}>
             <text fg={t.color.warn} wrapMode="none" content={`${props.stackDepth}`} />
           </Show>
           <text fg={t.color.textMuted} wrapMode="none" content="esc" />
