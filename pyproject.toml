@@ -34,7 +34,7 @@ dependencies = [
     # reason as the two above: the solver picks which counterexample to return, and that value is
     # printed verbatim in the evidence summary and the HTML report, so an unpinned solver moves
     # reported output between installs.
-    "z3-solver==5.0.0.0",
+    "z3-solver==5.1.0.0",
 ]
 
 [project.optional-dependencies]
