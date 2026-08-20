@@ -258,7 +258,7 @@ class NesyArenaSUT(BaseSUT):
             value = self.provenance.value(proofs, inst.probs)
             oracle = self.provenance.oracle(proofs, inst.probs)
             grad = self.provenance.grad(proofs, inst.probs)
-            attribution = {f: w for f, w in grad.items() if w != 0.0}
+            attribution = {f: w for f, w in grad.items() if w}
             out.append(
                 {
                     "label": label,
@@ -288,7 +288,7 @@ class NesyArenaSUT(BaseSUT):
             guarantee = (
                 f"guarantee: value equals the {claim} oracle on this input (measured "
                 f"deviation {_fmt(deviation)})"
-                if deviation == 0.0
+                if not deviation
                 else (
                     f"approximation: value deviates from the {claim} oracle it claims by "
                     f"{row['error']:+.6f} on this input"

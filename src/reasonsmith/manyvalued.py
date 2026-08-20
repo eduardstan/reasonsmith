@@ -123,6 +123,14 @@ def _product_residuum(x: float, y: float) -> float:
     return 1.0 if x <= y else y / x
 
 
+def _crisp_negation(x: float) -> float:
+    """Return 1 exactly at zero and 0 elsewhere because crisp logic defines it that way.
+
+    The boundary is exact by construction, not a tolerance.
+    """
+    return 1.0 if not x else 0.0
+
+
 #: The algebras a pack may declare, by the name it declares. Not a default and not a fallback:
 #: `algebra_named` refuses a name outside this table rather than picking one.
 ALGEBRAS: dict[str, Algebra] = {
@@ -147,7 +155,7 @@ ALGEBRAS: dict[str, Algebra] = {
         ),
         conjunction=min,
         disjunction=max,
-        negation=lambda x: 1.0 if x == 0.0 else 0.0,
+        negation=_crisp_negation,
         residuum=_godel_residuum,
     ),
     "product": Algebra(
@@ -159,7 +167,7 @@ ALGEBRAS: dict[str, Algebra] = {
         ),
         conjunction=lambda x, y: x * y,
         disjunction=lambda x, y: x + y - x * y,
-        negation=lambda x: 1.0 if x == 0.0 else 0.0,
+        negation=_crisp_negation,
         residuum=_product_residuum,
     ),
 }

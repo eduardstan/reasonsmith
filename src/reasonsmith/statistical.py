@@ -143,11 +143,11 @@ def ratio_enclosure(intervals: Mapping[str, Sequence[float]]) -> tuple[float, fl
         lows.append(low)
         highs.append(high)
     denominator = max(highs)
-    if denominator == 0.0:
+    if not denominator:
         raise ValueError("the population denominator is not identified: every upper bound is zero")
     lower = min(lows) / denominator
     max_lower = max(lows)
-    upper = 1.0 if max_lower == 0.0 else min(1.0, min(highs) / max_lower)
+    upper = 1.0 if not max_lower else min(1.0, min(highs) / max_lower)
     return lower, upper
 
 
