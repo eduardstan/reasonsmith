@@ -49,6 +49,9 @@ proposer = []
 # Typed neural exposures validate ONNX bytes but do not bundle a verifier. The import remains lazy,
 # so the base install retains the repository's light dependency surface.
 neural = ["onnx==1.22.0"]
+# Worked example using a deterministic scikit-learn model.
+# Kept optional so the base reasonsmith installation does not gain a heavyweight ML dependency.
+sklearn = ["scikit-learn==1.9.0"]
 # Deterministic statute-drift PDF extraction. The route refuses any other pdfminer.six release.
 pdf = ["pdfminer.six==20250506"]
 dev = [
