@@ -69,6 +69,8 @@ constructed at all without the search budget that produced it — trials, seed, 
 [`language-model.md`](language-model.md) is the same rung reached by a language model behind one
 `complete(prompt) -> str`: a model you can call adds no rung.
 
+**A mainstream ML model.** `sklearn_model.py` is the worked example for bringing a model from a widely used ML library through the same callable boundary. Scikit-learn was chosen because its `LogisticRegression` estimator is familiar, deterministic, and can be wrapped without adding a framework-specific adapter to reasonsmith. The example fixes the model parameters and fixture inputs, derives a local reason from the model's feature contributions, and exposes only the signals it actually produces. Because the wrapped model provides predictions rather than a formal `logic()` representation, the example reaches `probed`, not `proved`.
+
 ### A callable with an input space (and a fairness duty)
 
 `CallableAdapter` is enough when the question is about the records your callable emits. Its public
