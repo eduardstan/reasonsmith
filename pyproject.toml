@@ -50,7 +50,7 @@ proposer = []
 # so the base install retains the repository's light dependency surface.
 neural = ["onnx==1.22.0"]
 # Deterministic statute-drift PDF extraction. The route refuses any other pdfminer.six release.
-pdf = ["pdfminer.six==20250506"]
+pdf = ["pdfminer.six==20260107"]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
