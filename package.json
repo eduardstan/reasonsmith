@@ -19,21 +19,21 @@
       "packages/*"
     ],
     "catalog": {
-      "@opentui/core": "0.4.5",
-      "@opentui/solid": "0.4.5",
-      "@tsconfig/bun": "1.0.9",
-      "solid-js": "1.9.10",
+      "@opentui/core": "0.6.1",
+      "@opentui/solid": "0.6.1",
+      "@tsconfig/bun": "1.0.11",
+      "solid-js": "1.9.17",
       "typescript": "5.8.2",
-      "@types/bun": "1.3.14"
+      "@types/bun": "1.4.2"
     }
   },
   "devDependencies": {
     "@tsconfig/bun": "catalog:",
     "@types/bun": "catalog:",
     "eslint": "9.39.5",
-    "turbo": "2.10.9",
+    "turbo": "2.11.7",
     "typescript": "catalog:",
-    "typescript-eslint": "8.46.0"
+    "typescript-eslint": "8.71.1"
   },
   "license": "MIT"
 }
